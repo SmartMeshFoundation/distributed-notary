@@ -31,7 +31,7 @@ func SetUpDB(dbtype, path string) (mdb *DB) {
 	//db.SetLogger(gorm.Logger{revel.TRACE})
 	db.SetLogger(log.New(os.Stdout, "\r\n", 0))
 	db.AutoMigrate(&PrivateKeyInfoModel{})
-	db.AutoMigrate(&LockoutModel{})
+	db.AutoMigrate(&SignMessgeModel{})
 	//db.Model(&ChannelParticipantInfo{}).AddForeignKey("channel_id", "channels(channel_id)", "CASCADE", "CASCADE") // Foreign key need to define manually
 	//db.AutoMigrate(&SettledChannel{})
 	//db.AutoMigrate(&latestBlockNumber{})

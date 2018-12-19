@@ -9,7 +9,7 @@ import (
 )
 
 func TestDB_NewLockedout(t *testing.T) {
-	l := &Lockout{
+	l := &SignMessage{
 		Key:            utils.NewRandomHash(),
 		UsedPrivateKey: utils.NewRandomHash(),
 		S:              []int{1, 2, 3},

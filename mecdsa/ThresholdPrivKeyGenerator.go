@@ -1,10 +1,8 @@
 package mecdsa
 
 import (
-	"fmt"
-
 	"crypto/rand"
-
+	"fmt"
 	"math/big"
 
 	"github.com/SmartMeshFoundation/distributed-notary/curv/feldman"
@@ -16,21 +14,31 @@ import (
 	"github.com/nkbai/goutils"
 )
 
-type LockedIn struct {
+/*
+ThresholdPrivKeyGenerator 一次协商私钥的过程,
+所有参与的公证人都参与,最终形成一个分布式私钥,每个公证人只能持有一部分私钥片,
+没有一个公证人知道完整的私钥. 但是后续这些公证人可以在不暴露自己私钥片的基础上进行签名.
+*/
+type ThresholdPrivKeyGenerator struct {
 	srv *NotaryService
 	db  *models.DB
-	Key common.Hash //此次lockedin唯一的key
+	Key common.Hash //此次协商唯一的key
 }
 
-func NewLockedIn(srv *NotaryService, db *models.DB, key common.Hash) *LockedIn {
-	return &LockedIn{
+/*
+NewThresholdPrivKeyGenerator 生成此次协商起始所需参数
+key: 此次协商唯一标志
+暗含的其他公证人都已知的信息,包括 ThresholdCount和ShareCount
+*/
+func NewThresholdPrivKeyGenerator(srv *NotaryService, db *models.DB, key common.Hash) *ThresholdPrivKeyGenerator {
+	return &ThresholdPrivKeyGenerator{
 		srv: srv,
 		db:  db,
 		Key: key,
 	}
 }
 
-//生成自己的随机数,所有公证人的私钥片都会从这里面取走一部分
+//phase1.1 生成自己的随机数,所有公证人的私钥片都会从这里面取走一部分
 func createKeys() (share.SPrivKey, *proofs.PrivateKey) {
 	ui := share.RandomPrivateKey()
 	dk, err := proofs.GenerateKey(rand.Reader, 2048)
@@ -39,7 +47,14 @@ func createKeys() (share.SPrivKey, *proofs.PrivateKey) {
 	}
 	return ui, dk
 }
-func (l *LockedIn) GeneratePhase1PubKeyProof() (msg *models.KeyGenBroadcastMessage1, err error) {
+
+/*
+GeneratePhase1PubKeyProof phase1.1 生成自己的随机数,这是后续feldman vss的种子
+同时也生成了第二步所需的同态加密公钥私钥.
+这一步生成的同态公钥需要在第二步告诉其他所有公证人
+这一步生成的随机数对应的公钥片,需要告诉所有其他公证人.
+*/
+func (l *ThresholdPrivKeyGenerator) GeneratePhase1PubKeyProof() (msg *models.KeyGenBroadcastMessage1, err error) {
 	ui, dk := createKeys()
 	p := &models.PrivateKeyInfo{
 		Key:             l.Key,
@@ -51,12 +66,18 @@ func (l *LockedIn) GeneratePhase1PubKeyProof() (msg *models.KeyGenBroadcastMessa
 	if err != nil {
 		return
 	}
+	//用dlogproof 传播我自己的公钥片,包含相关的零知识证明
 	proof := proofs.Prove(ui)
 	msg = &models.KeyGenBroadcastMessage1{proof}
 	return
 }
 
-func (l *LockedIn) ReceivePhase1PubKeyProof(m *models.KeyGenBroadcastMessage1, index int) (finish bool, err error) {
+/*
+ReceivePhase1PubKeyProof phase 1.2 接受其他公证人传递过来的公钥片证明信息,
+如果凑齐了所有公证人(params.ShareCount)的公钥片信息,那么就可以组合出来此次协商最终的公钥.
+但是到目前为止没有一个公证人知道最终公钥对应的私钥片
+*/
+func (l *ThresholdPrivKeyGenerator) ReceivePhase1PubKeyProof(m *models.KeyGenBroadcastMessage1, index int) (finish bool, err error) {
 	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
 	if err != nil {
 		return
@@ -95,23 +116,26 @@ func (l *LockedIn) ReceivePhase1PubKeyProof(m *models.KeyGenBroadcastMessage1, i
 	return
 }
 
-//const
-func CreateCommitmentWithUserDefinedRandomNess(message *big.Int, blindingFactor *big.Int) *big.Int {
+func createCommitmentWithUserDefinedRandomNess(message *big.Int, blindingFactor *big.Int) *big.Int {
 	hash := utils.Sha256(message.Bytes(), blindingFactor.Bytes())
 	b := new(big.Int)
 	b.SetBytes(hash[:])
 	return b
 }
 
-func (l *LockedIn) GeneratePhase2PaillierKeyProof() (msg *models.KeyGenBroadcastMessage2, err error) {
+/*
+GeneratePhase2PaillierKeyProof phase 2.1 广播给其他所有公证人的同态加密公钥以及Proof
+*/
+func (l *ThresholdPrivKeyGenerator) GeneratePhase2PaillierKeyProof() (msg *models.KeyGenBroadcastMessage2, err error) {
 	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
 	if err != nil {
 		return
 	}
 	blindFactor := share.RandomBigInt()
+	//生成关于同态加密私钥的零知识证明
 	correctKeyProof := proofs.CreateNICorrectKeyProof(p.PaillierPrivkey)
 	x, _ := share.S.ScalarBaseMult(p.UI.Bytes())
-	com := CreateCommitmentWithUserDefinedRandomNess(x, blindFactor)
+	com := createCommitmentWithUserDefinedRandomNess(x, blindFactor)
 	msg = &models.KeyGenBroadcastMessage2{
 		Com:             com,
 		PaillierPubkey:  &p.PaillierPrivkey.PublicKey,
@@ -120,27 +144,30 @@ func (l *LockedIn) GeneratePhase2PaillierKeyProof() (msg *models.KeyGenBroadcast
 	}
 	p.PaillierKeysProof2 = make(map[int]*models.KeyGenBroadcastMessage2)
 	p.PaillierKeysProof2[l.srv.NotaryShareArg.Index] = msg
+	//保存自己的信息到数据库中,方便后续计算使用
 	err = l.db.KGUpdatePaillierKeysProof2(p)
 	return
 }
 
-func (l *LockedIn) ReceivePhase2PaillierPubKeyProof(m *models.KeyGenBroadcastMessage2,
+//ReceivePhase2PaillierPubKeyProof phase 2.2 收到其他公证人的同态加密公钥信息
+func (l *ThresholdPrivKeyGenerator) ReceivePhase2PaillierPubKeyProof(m *models.KeyGenBroadcastMessage2,
 	index int) (finish bool, err error) {
 	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
 	if err != nil {
 		return
 	}
-
+	//不接受重复的消息
 	_, ok := p.PaillierKeysProof2[index]
 	if ok {
 		err = fmt.Errorf("Paillier pubkey roof for %d already exist", index)
 		return
 	}
+	//对方证明私钥我确实知道,虽然没有告诉我
 	if !m.CorrectKeyProof.Verify(m.PaillierPubkey) {
 		err = fmt.Errorf("Paillier pubkey roof for %d verify not pass", index)
 		return
 	}
-	if CreateCommitmentWithUserDefinedRandomNess(p.PubKeysProof1[index].Proof.PK.X, m.BlindFactor).Cmp(m.Com) != 0 {
+	if createCommitmentWithUserDefinedRandomNess(p.PubKeysProof1[index].Proof.PK.X, m.BlindFactor).Cmp(m.Com) != 0 {
 		err = fmt.Errorf("blind factor error for %d", index)
 		return
 	}
@@ -149,17 +176,33 @@ func (l *LockedIn) ReceivePhase2PaillierPubKeyProof(m *models.KeyGenBroadcastMes
 	if err != nil {
 		return
 	}
-	//vss,secretSahres:=feldman.Share(ThresholdCount,ShareCount,p.UI)
 	//所有因素都凑齐了
 	finish = len(p.PaillierKeysProof2) == params.ShareCount
 	return
 }
 
-func (l *LockedIn) GeneratePhase3SecretShare() (msgs map[int]*models.KeyGenBroadcastMessage3, err error) {
+/*
+GeneratePhase3SecretShare phase 3.1基于第一步的随机数生成SecretShares,
+假设有三个公证人,我的编号是0
+0 生成的shares[s00,s01,s02]
+1 生成的shares[s10,s11,s12]
+2 生成的shares[s20,s21,s22]
+那么分发过程是
+0: s01->1 s02->2
+1: s10->0 s12->2
+2: s20->0 s21->1
+最终收集齐以后:
+0 持有[s00,s10,s20] 累加即为私钥片x0
+1 持有[s01,s11,s21] 累加即为私钥片x1
+2 持有[202,s12,s22] 累加即为私钥片x2
+每个公证人务必保管好自己的xi,这是后续签名必须.
+*/
+func (l *ThresholdPrivKeyGenerator) GeneratePhase3SecretShare() (msgs map[int]*models.KeyGenBroadcastMessage3, err error) {
 	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
 	if err != nil {
 		return
 	}
+
 	vss, secretShares := feldman.Share(params.ThresholdCount, params.ShareCount, p.UI)
 	msg := &models.KeyGenBroadcastMessage3{
 		Vss:         vss,
@@ -187,7 +230,8 @@ func (l *LockedIn) GeneratePhase3SecretShare() (msgs map[int]*models.KeyGenBroad
 	return
 }
 
-func (l *LockedIn) ReceivePhase3SecretShare(msg *models.KeyGenBroadcastMessage3, index int) (finish bool, err error) {
+//ReceivePhase3SecretShare 接收来自其他公证人定向分发给我的secret share.
+func (l *ThresholdPrivKeyGenerator) ReceivePhase3SecretShare(msg *models.KeyGenBroadcastMessage3, index int) (finish bool, err error) {
 	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
 	if err != nil {
 		return
@@ -197,10 +241,12 @@ func (l *LockedIn) ReceivePhase3SecretShare(msg *models.KeyGenBroadcastMessage3,
 		err = fmt.Errorf("secret shares for %d already received", index)
 		return
 	}
+	//vss的第0号证据对应的就是第一步随机数对应的公钥片,必须用的是那一个
 	if !EqualGE(p.PubKeysProof1[index].Proof.PK, msg.Vss.Commitments[0]) {
 		err = fmt.Errorf("pubkey not match for %d", index)
 		return
 	}
+	//必须经过feldman vss验证,符合规则.如果某个公证人给的secret share发错了,比如s11发送给了2号公证人,这里会检测出错误.
 	if !msg.Vss.ValidateShare(msg.SecretShare, l.srv.NotaryShareArg.Index+1) {
 		err = fmt.Errorf("secret share error for %d", index)
 		return
@@ -211,14 +257,7 @@ func (l *LockedIn) ReceivePhase3SecretShare(msg *models.KeyGenBroadcastMessage3,
 		return
 	}
 	finish = len(p.SecretShareMessage3) == params.ShareCount
-	//if finish{
-	//	var secretShares [] share.SPrivKey
-	//	for i:=0;i<ShareCount;i++{
-	//		secretShares=append(secretShares,p.SecretShareMessage3[i].SecretShare)
-	//	}
-	//	p.SecretShareMessage3[0].Vss.ValidateShare()
-	//}
-	//所有因素都凑齐了.可以计算我自己持有的私钥片
+	//所有因素都凑齐了.可以计算我自己持有的私钥片 sum(f(i)) f(i)解释:公证人生成了n个多项式 ,把所有第i个多项式的结果相加)
 	if len(p.SecretShareMessage3) == params.ShareCount {
 		p.XI = share.SPrivKey{new(big.Int)}
 		for _, s := range p.SecretShareMessage3 {
@@ -228,7 +267,13 @@ func (l *LockedIn) ReceivePhase3SecretShare(msg *models.KeyGenBroadcastMessage3,
 	err = l.db.KGUpdateXI(p)
 	return
 }
-func (l *LockedIn) GeneratePhase4PubKeyProof() (msg *models.KeyGenBroadcastMessage4, err error) {
+
+/*
+GeneratePhase4PubKeyProof phase4.1 生成我自己对我持有私钥片的证明,
+todo 目前问题就在于对方无法验证对方给我的XI是真实有效的,和公钥是关联在一起的真实私钥片,
+有可能对方在GeneratePhase3SecretShare 就广播一个错误的secret share,但是我也无法证明
+*/
+func (l *ThresholdPrivKeyGenerator) GeneratePhase4PubKeyProof() (msg *models.KeyGenBroadcastMessage4, err error) {
 	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
 	if err != nil {
 		return
@@ -243,7 +288,11 @@ func (l *LockedIn) GeneratePhase4PubKeyProof() (msg *models.KeyGenBroadcastMessa
 	err = l.db.KGUpdateLastPubKeyProof4(p)
 	return
 }
-func (l *LockedIn) ReceivePhase4VerifyTotalPubKey(msg *models.KeyGenBroadcastMessage4, index int) (finish bool, err error) {
+
+/*
+ReceivePhase4VerifyTotalPubKey phase4.2 接收对方持有的Xi的证明,并验证其有效性. 但是我怎么知道他是有效的呢? 目前为止是没有办法的.
+*/
+func (l *ThresholdPrivKeyGenerator) ReceivePhase4VerifyTotalPubKey(msg *models.KeyGenBroadcastMessage4, index int) (finish bool, err error) {
 	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
 	if err != nil {
 		return

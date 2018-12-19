@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/SmartMeshFoundation/distributed-notary/params"
+
 	"math/big"
 
 	"bytes"
@@ -18,25 +20,36 @@ import (
 	"github.com/nkbai/log"
 )
 
-type Lockout struct {
+/*
+DistributedSignMessage 由某个公证人主导发起,其他一组公证人参与的,相互协调最终生成有效签名的过程.
+*/
+type DistributedSignMessage struct {
 	db                 *models.DB
 	srv                *NotaryService
-	Key                common.Hash
-	PrivateKey         common.Hash
-	Message            []byte
-	S                  []int
-	XI                 share.SPrivKey //协商好的私钥片
-	PaillierPubKeys    map[int]*proofs.PublicKey
-	PaillierPrivateKey *proofs.PrivateKey
-	PublicKey          *share.SPubKey
-	Vss                *feldman.VerifiableSS
-	L                  *models.Lockout
+	Key                common.Hash               //此次签名的唯一key,由签名主导公证人指定
+	PrivateKey         common.Hash               //此次签名用到的分布式私钥, 在数据库中的key
+	Message            []byte                    //此次签名的消息
+	S                  []int                     //由签名主导公证人指定的此次签名参与的公证人.
+	XI                 share.SPrivKey            //协商好的私钥片
+	PaillierPubKeys    map[int]*proofs.PublicKey //其他公证人的同态加密公钥
+	PaillierPrivateKey *proofs.PrivateKey        //我的同态加密私钥
+	PublicKey          *share.SPubKey            //上次协商生成的总公钥
+	Vss                *feldman.VerifiableSS     //上次协商生成的feldman vss
+	L                  *models.SignMessage       //此次签名生成过程中需要保存到数据库的信息
 	index              int
 }
 
-func NewLockout(db *models.DB, srv *NotaryService, message []byte, key common.Hash, privateKey common.Hash, s []int) (l *Lockout, err error) {
-
-	l = &Lockout{
+/*
+NewDistributedSignMessage 一开始就要确定哪些公证人参与此次签名生成,
+人数t > ThresholdCount && t <= ShareCount
+指出要签名的交易,公证人应该对此交易做校验,是否是一个合法的交易
+*/
+func NewDistributedSignMessage(db *models.DB, srv *NotaryService, message []byte, key common.Hash, privateKey common.Hash, s []int) (l *DistributedSignMessage, err error) {
+	if len(s) <= params.ThresholdCount {
+		err = fmt.Errorf("candidates notary too less")
+		return
+	}
+	l = &DistributedSignMessage{
 		db:         db,
 		srv:        srv,
 		Key:        key,
@@ -45,7 +58,7 @@ func NewLockout(db *models.DB, srv *NotaryService, message []byte, key common.Ha
 		S:          s,
 		index:      srv.NotaryShareArg.Index,
 	}
-	l2 := &models.Lockout{
+	l2 := &models.SignMessage{
 		Key:            l.Key,
 		UsedPrivateKey: l.PrivateKey,
 		Message:        l.Message,
@@ -63,7 +76,8 @@ func NewLockout(db *models.DB, srv *NotaryService, message []byte, key common.Ha
 	return
 }
 
-func (l *Lockout) loadLockout() error {
+// 从数据库中载入相关信息,可以做缓存
+func (l *DistributedSignMessage) loadLockout() error {
 	//if l.L != nil {
 	//	return nil
 	//}
@@ -91,12 +105,12 @@ func (l *Lockout) loadLockout() error {
 		//参数：自己的私钥片、系数点乘集合和我的多项式y集合、签名人的原始编号、所有签名人的编号
 //==>每个公证人的公私钥、公钥片、{{{t,n},t+1个系数点乘G的结果(c1...c2)},y1...yn}
 */
-func (l *Lockout) createSignKeys() {
-	li := l.Vss.MapShareToNewParams(l.srv.NotaryShareArg.Index, l.S) //lamda_i 解释：通过lamda_i对原所有证明人的群来映射出签名者群
-	wi := share.ModMul(li, l.XI)                                     //wi： 我原来的编号在对应签名群编号的映射关系 ，原来我是xi(私钥片) 现在是wi（我在新的签名群中的私钥片）
-	gwiX, gwiY := share.S.ScalarBaseMult(wi.Bytes())                 //我在签名群中的公钥片
-	gammaI := share.RandomPrivateKey()                               //临时私钥
-	gGammaIX, gGammaIY := share.S.ScalarBaseMult(gammaI.Bytes())     //临时公钥
+func (l *DistributedSignMessage) createSignKeys() {
+	lambdaI := l.Vss.MapShareToNewParams(l.srv.NotaryShareArg.Index, l.S) //lamda_i 解释：通过lamda_i对原所有证明人的群来映射出签名者群
+	wi := share.ModMul(lambdaI, l.XI)                                     //wi： 我原来的编号在对应签名群编号的映射关系 ，原来我是xi(私钥片) 现在是wi（我在新的签名群中的私钥片）
+	gwiX, gwiY := share.S.ScalarBaseMult(wi.Bytes())                      //我在签名群中的公钥片
+	gammaI := share.RandomPrivateKey()                                    //临时私钥
+	gGammaIX, gGammaIY := share.S.ScalarBaseMult(gammaI.Bytes())          //临时公钥
 	l.L.SignedKey = &models.SignedKey{
 		WI:      wi,
 		Gwi:     &share.SPubKey{gwiX, gwiY},
@@ -106,10 +120,13 @@ func (l *Lockout) createSignKeys() {
 	}
 }
 
-func (l *Lockout) GeneratePhase1Broadcast() (msg *models.SignBroadcastPhase1, err error) {
+/*
+GeneratePhase1Broadcast 确定此次签名所用临时私钥,不能再换了.
+*/
+func (l *DistributedSignMessage) GeneratePhase1Broadcast() (msg *models.SignBroadcastPhase1, err error) {
 	blindFactor := share.RandomBigInt()
 	gGammaIX, _ := share.S.ScalarBaseMult(l.L.SignedKey.GammaI.Bytes())
-	com := CreateCommitmentWithUserDefinedRandomNess(gGammaIX, blindFactor)
+	com := createCommitmentWithUserDefinedRandomNess(gGammaIX, blindFactor)
 	msg = &models.SignBroadcastPhase1{
 		Com:         com,
 		BlindFactor: blindFactor,
@@ -120,7 +137,8 @@ func (l *Lockout) GeneratePhase1Broadcast() (msg *models.SignBroadcastPhase1, er
 	return
 }
 
-func (l *Lockout) ReceivePhase1Broadcast(msg *models.SignBroadcastPhase1, index int) (finish bool, err error) {
+//ReceivePhase1Broadcast 收集此次签名中,其他公证人所用临时公钥,保证在后续步骤中不会被替换
+func (l *DistributedSignMessage) ReceivePhase1Broadcast(msg *models.SignBroadcastPhase1, index int) (finish bool, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -136,15 +154,20 @@ func (l *Lockout) ReceivePhase1Broadcast(msg *models.SignBroadcastPhase1, index 
 	return
 }
 
-//const
-func newMessageA(ecdsaPrivateKey share.SPrivKey, paillierPubKey *proofs.PublicKey) (*models.MessageA, error) {
-	ca, err := proofs.Encrypt(paillierPubKey, ecdsaPrivateKey.Bytes())
+//p2p告知E(ki) 签名发起人，告诉其他所有人 步骤1 生成ki， 保证后续ki不会发生变化
+func newMessageA(ki share.SPrivKey, paillierPubKey *proofs.PublicKey) (*models.MessageA, error) {
+	ca, err := proofs.Encrypt(paillierPubKey, ki.Bytes())
 	if err != nil {
 		return nil, err
 	}
 	return &models.MessageA{ca}, nil
 }
-func (l *Lockout) GeneratePhase2MessageA() (msg *models.MessageA, err error) {
+
+/*
+GeneratePhase2MessageA p2p告知E(ki) 签名发起人，告诉其他所有人 步骤1 生成ki， 保证后续ki不会发生变化,
+同时其他人是无法获取到ki,只有自己知道自己的ki
+*/
+func (l *DistributedSignMessage) GeneratePhase2MessageA() (msg *models.MessageA, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -161,14 +184,16 @@ func (l *Lockout) GeneratePhase2MessageA() (msg *models.MessageA, err error) {
 	return ma, err
 }
 
-//NewMessageB
+/*NewMessageB
 //我(bob)签名key中的临时私钥gammaI、(alice)paillier公钥、(alice)paillier公钥加密ki的结果
 //返回：cB和两个证明(其他人验证)
+我（alice）收到其他人（bob)给我的ma以后， 立即计算mb和两个证明，发送给bob
+gammaI: alice的临时私钥
+paillierPubKey: bob的同态加密公钥
+ca: bob发送给alice的E(Ki)
+*/
 func NewMessageB(gammaI share.SPrivKey, paillierPubKey *proofs.PublicKey, ca *models.MessageA) (*models.MessageB, error) {
-	betaTag := share.RandomBigInt()
-	//todo fixme bai
-	//betaTag = big.NewInt(39)
-	betaTagPrivateKey := share.BigInt2PrivateKey(betaTag.Mod(betaTag, share.S.N))
+	betaTagPrivateKey := share.RandomPrivateKey()
 	cBetaTag, err := proofs.Encrypt(paillierPubKey, betaTagPrivateKey.Bytes()) //paillier加密一个随机数
 	if err != nil {
 		return nil, err
@@ -189,7 +214,13 @@ func NewMessageB(gammaI share.SPrivKey, paillierPubKey *proofs.PublicKey, ca *mo
 		Beta:         beta,
 	}, nil
 }
-func (l *Lockout) ReceivePhase2MessageA(msg *models.MessageA, index int) (mb *models.MessageBPhase2, err error) {
+
+/*
+ReceivePhase2MessageA alice 收到来自bob的E(ki), 向bob提供证明,自己持有着gammaI和WI
+其中gammaI是临时私钥
+WI包含着XI
+*/
+func (l *DistributedSignMessage) ReceivePhase2MessageA(msg *models.MessageA, index int) (mb *models.MessageBPhase2, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -211,8 +242,7 @@ func (l *Lockout) ReceivePhase2MessageA(msg *models.MessageA, index int) (mb *mo
 	return
 }
 
-//const
-func VerifyProofsGetAlpha(m *models.MessageB, dk *proofs.PrivateKey, a share.SPrivKey) (share.SPrivKey, error) {
+func verifyProofsGetAlpha(m *models.MessageB, dk *proofs.PrivateKey, a share.SPrivKey) (share.SPrivKey, error) {
 	ashare, err := proofs.Decrypt(dk, m.C) //用dk解密cB
 	if err != nil {
 		return share.SPrivKey{}, err
@@ -229,16 +259,18 @@ func VerifyProofsGetAlpha(m *models.MessageB, dk *proofs.PrivateKey, a share.SPr
 	}
 	return share.SPrivKey{}, errors.New("invalid key")
 }
-func (l *Lockout) ReceivePhase2MessageB(msg *models.MessageBPhase2, index int) (finish bool, err error) {
+
+//ReceivePhase2MessageB 收集并验证MessageB证明信息
+func (l *DistributedSignMessage) ReceivePhase2MessageB(msg *models.MessageBPhase2, index int) (finish bool, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
 	}
-	alphaijGamma, err := VerifyProofsGetAlpha(msg.MessageBGamma, l.PaillierPrivateKey, l.L.SignedKey.KI)
+	alphaijGamma, err := verifyProofsGetAlpha(msg.MessageBGamma, l.PaillierPrivateKey, l.L.SignedKey.KI)
 	if err != nil {
 		return
 	}
-	alphaijWi, err := VerifyProofsGetAlpha(msg.MessageBWi, l.PaillierPrivateKey, l.L.SignedKey.KI)
+	alphaijWi, err := verifyProofsGetAlpha(msg.MessageBWi, l.PaillierPrivateKey, l.L.SignedKey.KI)
 	if err != nil {
 		return
 	}
@@ -256,8 +288,7 @@ func (l *Lockout) ReceivePhase2MessageB(msg *models.MessageBPhase2, index int) (
 	return
 }
 
-//const
-func (l *Lockout) phase2DeltaI() share.SPrivKey {
+func (l *DistributedSignMessage) phase2DeltaI() share.SPrivKey {
 	var k *models.SignedKey
 	k = l.L.SignedKey
 	if len(l.L.AlphaGamma) != len(l.S)-1 {
@@ -275,7 +306,7 @@ func (l *Lockout) phase2DeltaI() share.SPrivKey {
 	}
 	return kiGammaI
 }
-func (l *Lockout) phase2SigmaI() share.SPrivKey {
+func (l *DistributedSignMessage) phase2SigmaI() share.SPrivKey {
 	if len(l.L.AlphaWI) != len(l.S)-1 {
 		panic("length error")
 	}
@@ -291,7 +322,12 @@ func (l *Lockout) phase2SigmaI() share.SPrivKey {
 	}
 	return kiwi
 }
-func (l *Lockout) GeneratePhase3DeltaI() (msg *models.DeltaPhase3, err error) {
+
+/*
+GeneratePhase3DeltaI 依据上一步协商信息,生成我自己的DeltaI,然后广播给所有其他人,需要这些参与公证人得到完整的的Delta
+但是生成的SigmaI自己保留,在生成自己的签名片的时候使用
+*/
+func (l *DistributedSignMessage) GeneratePhase3DeltaI() (msg *models.DeltaPhase3, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -309,7 +345,8 @@ func (l *Lockout) GeneratePhase3DeltaI() (msg *models.DeltaPhase3, err error) {
 	return
 }
 
-func (l *Lockout) ReceivePhase3DeltaI(msg *models.DeltaPhase3, index int) (finish bool, err error) {
+//ReceivePhase3DeltaI 收集所有的deltaI
+func (l *DistributedSignMessage) ReceivePhase3DeltaI(msg *models.DeltaPhase3, index int) (finish bool, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -325,7 +362,6 @@ func (l *Lockout) ReceivePhase3DeltaI(msg *models.DeltaPhase3, index int) (finis
 	return
 }
 
-//const
 func phase4(delta share.SPrivKey,
 	gammaIProof map[int]*models.MessageBPhase2,
 	phase1Broadcast map[int]*models.SignBroadcastPhase1) (*share.SPubKey, error) {
@@ -333,7 +369,9 @@ func phase4(delta share.SPrivKey,
 		panic("length must equal")
 	}
 	for i, p := range gammaIProof {
-		if CreateCommitmentWithUserDefinedRandomNess(p.MessageBGamma.BProof.PK.X, phase1Broadcast[i].BlindFactor).Cmp(phase1Broadcast[i].Com) == 0 {
+		//校验第一步广播的参数没有发生变化
+		if createCommitmentWithUserDefinedRandomNess(p.MessageBGamma.BProof.PK.X,
+			phase1Broadcast[i].BlindFactor).Cmp(phase1Broadcast[i].Com) == 0 {
 			continue
 		}
 		return nil, errors.New("invliad key")
@@ -364,7 +402,8 @@ func phase3ReconstructDelta(delta map[int]share.SPrivKey) share.SPrivKey {
 	return share.InvertN(sum)
 }
 
-func (l *Lockout) GeneratePhase4R() (R *share.SPubKey, err error) {
+//GeneratePhase4R 所有公证人都应该得到相同的R,其中R.X就是最后签名(r,s,v)中的r
+func (l *DistributedSignMessage) GeneratePhase4R() (R *share.SPubKey, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -413,7 +452,6 @@ func phase5LocalSignature(ki share.SPrivKey, message *big.Int,
 
 }
 
-//const
 //com:commit的Ci(广播)
 //Phase5ADecom1 :commit的Di(广播)
 func phase5aBroadcast5bZkproof(l *models.LocalSignature) (*models.Phase5Com1, *models.Phase5ADecom1, *proofs.HomoELGamalProof) {
@@ -432,7 +470,7 @@ func phase5aBroadcast5bZkproof(l *models.LocalSignature) (*models.Phase5Com1, *m
 	inputhash := proofs.CreateHashFromGE([]*share.SPubKey{
 		{vix, viy}, {aix, aiy}, {bix, biy},
 	})
-	com := CreateCommitmentWithUserDefinedRandomNess(inputhash.D, blindFactor)
+	com := createCommitmentWithUserDefinedRandomNess(inputhash.D, blindFactor)
 
 	//proof是5b的zkp构造
 	witness := proofs.NewHomoElGamalWitness(l.LI, l.SI) //li si
@@ -454,7 +492,13 @@ func phase5aBroadcast5bZkproof(l *models.LocalSignature) (*models.Phase5Com1, *m
 		},
 		proof
 }
-func (l *Lockout) GeneratePhase5a5bZkProof() (msg *models.Phase5A, err error) {
+
+/*
+GeneratePhase5a5bZkProof 从此步骤开始,互相不断交换信息来判断对方能够生成正确的Si(也就是签名片),
+如果所有参与者都能生成最终的签名片,那么我才能把自己的签名片告诉对方.
+si的累加和就是签名(r,s,v)中的s
+*/
+func (l *DistributedSignMessage) GeneratePhase5a5bZkProof() (msg *models.Phase5A, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -471,7 +515,7 @@ func (l *Lockout) GeneratePhase5a5bZkProof() (msg *models.Phase5A, err error) {
 	return
 }
 
-func (l *Lockout) ReceivePhase5A5BProof(msg *models.Phase5A, index int) (finish bool, err error) {
+func (l *DistributedSignMessage) ReceivePhase5A5BProof(msg *models.Phase5A, index int) (finish bool, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -493,7 +537,7 @@ func (l *Lockout) ReceivePhase5A5BProof(msg *models.Phase5A, index int) (finish 
 		msg.Phase5ADecom1.Ai,
 		msg.Phase5ADecom1.Bi,
 	})
-	e := CreateCommitmentWithUserDefinedRandomNess(inputhash.D, msg.Phase5ADecom1.BlindFactor)
+	e := createCommitmentWithUserDefinedRandomNess(inputhash.D, msg.Phase5ADecom1.BlindFactor)
 	if e.Cmp(msg.Phase5Com1.Com) == 0 &&
 		msg.Proof.Verify(delta) {
 
@@ -507,23 +551,17 @@ func (l *Lockout) ReceivePhase5A5BProof(msg *models.Phase5A, index int) (finish 
 	return
 }
 
-//const
-//decomVec:Di
-//comVec: Ci
-func phase5c(l *models.LocalSignature, decomVec []*models.Phase5ADecom1,
-
-	vi *share.SPubKey,
-
-) (*models.Phase5Com2, *models.Phase5DDecom2, error) {
+func phase5c(l *models.LocalSignature, deCommitments []*models.Phase5ADecom1,
+	vi *share.SPubKey) (*models.Phase5Com2, *models.Phase5DDecom2, error) {
 
 	//从广播的commit(Ci,Di)得到vi,ai
 	v := vi.Clone()
-	for i := 0; i < len(decomVec); i++ {
-		v.X, v.Y = share.PointAdd(v.X, v.Y, decomVec[i].Vi.X, decomVec[i].Vi.Y)
+	for i := 0; i < len(deCommitments); i++ {
+		v.X, v.Y = share.PointAdd(v.X, v.Y, deCommitments[i].Vi.X, deCommitments[i].Vi.Y)
 	}
-	a := decomVec[0].Ai.Clone()
-	for i := 1; i < len(decomVec); i++ {
-		a.X, a.Y = share.PointAdd(a.X, a.Y, decomVec[i].Ai.X, decomVec[i].Ai.Y)
+	a := deCommitments[0].Ai.Clone()
+	for i := 1; i < len(deCommitments); i++ {
+		a.X, a.Y = share.PointAdd(a.X, a.Y, deCommitments[i].Ai.X, deCommitments[i].Ai.Y)
 	}
 	r := share.BigInt2PrivateKey(l.R.X)
 	yrx, yry := share.S.ScalarMult(l.Y.X, l.Y.Y, r.Bytes())
@@ -543,7 +581,7 @@ func phase5c(l *models.LocalSignature, decomVec []*models.Phase5ADecom1,
 		{tix, tiy},
 	})
 	blindFactor := share.RandomBigInt()
-	com := CreateCommitmentWithUserDefinedRandomNess(inputhash.D, blindFactor)
+	com := createCommitmentWithUserDefinedRandomNess(inputhash.D, blindFactor)
 	return &models.Phase5Com2{com},
 		&models.Phase5DDecom2{
 			Ui:          &share.SPubKey{uix, uiy}, //Ci
@@ -553,7 +591,8 @@ func phase5c(l *models.LocalSignature, decomVec []*models.Phase5ADecom1,
 		nil
 }
 
-func (l *Lockout) GeneratePhase5CProof() (msg *models.Phase5C, err error) {
+//GeneratePhase5CProof  fixme 提供一个好的注释
+func (l *DistributedSignMessage) GeneratePhase5CProof() (msg *models.Phase5C, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -579,7 +618,8 @@ func (l *Lockout) GeneratePhase5CProof() (msg *models.Phase5C, err error) {
 	return
 }
 
-func (l *Lockout) ReceivePhase5cProof(msg *models.Phase5C, index int) (finish bool, err error) {
+//ReceivePhase5cProof   fixme 暂时没有好的解释
+func (l *DistributedSignMessage) ReceivePhase5cProof(msg *models.Phase5C, index int) (finish bool, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -587,7 +627,7 @@ func (l *Lockout) ReceivePhase5cProof(msg *models.Phase5C, index int) (finish bo
 	//验证5c的hash(ui,ti)=5c的Ci
 
 	inputhash := proofs.CreateHashFromGE([]*share.SPubKey{msg.Phase5DDecom2.Ui, msg.Phase5DDecom2.Ti})
-	inputhash.D = CreateCommitmentWithUserDefinedRandomNess(inputhash.D, msg.Phase5DDecom2.BlindFactor)
+	inputhash.D = createCommitmentWithUserDefinedRandomNess(inputhash.D, msg.Phase5DDecom2.BlindFactor)
 	if inputhash.D.Cmp(msg.Phase5Com2.Com) != 0 {
 		err = errors.New("invalid com")
 		return
@@ -603,7 +643,12 @@ func (l *Lockout) ReceivePhase5cProof(msg *models.Phase5C, index int) (finish bo
 	return
 }
 
-func (l *Lockout) Generate5dProof() (si share.SPrivKey, err error) {
+/*
+Generate5dProof
+接受所有签名人的si的广播，有可能某个公证人会保留信息，最终生成有效的签名，私自保留下来,但是不告诉其他人自己的si是多少.
+但是这种情况其他公证人可以知道,没有收到某个公证人的si
+*/
+func (l *DistributedSignMessage) Generate5dProof() (si share.SPrivKey, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -616,6 +661,7 @@ func (l *Lockout) Generate5dProof() (si share.SPrivKey, err error) {
 		commitments2 = append(commitments2, m.Phase5Com2)
 		deCommitments1 = append(deCommitments1, l.L.Phase5A[i].Phase5ADecom1)
 	}
+	//校验收到的关于si的信息,都是真实的,正确的,只有通过了,才能把自己的si告诉给其他公证人
 	si, err = phase5d(l.L.LocalSignature, deCommitments2, commitments2, deCommitments1)
 	if err != nil {
 		return
@@ -626,10 +672,9 @@ func (l *Lockout) Generate5dProof() (si share.SPrivKey, err error) {
 	return
 }
 
-//const
-//decom_vec2:	5c-Di
-//com_vec2:		5c-Ci
-//decom_vec1:	5a-Di
+/*
+ 校验收到的关于si的信息,都是真实的,正确的,只有通过了,才能把自己的si告诉给其他公证人
+*/
 func phase5d(l *models.LocalSignature, deCommitments2 []*models.Phase5DDecom2,
 	commitments2 []*models.Phase5Com2,
 	deCommitments1 []*models.Phase5ADecom1) (share.SPrivKey, error) {
@@ -664,7 +709,8 @@ func phase5d(l *models.LocalSignature, deCommitments2 []*models.Phase5DDecom2,
 	return share.PrivKeyZero, errors.New("invalid key")
 }
 
-func (l *Lockout) RecevieSI(si share.SPrivKey, index int) (signature []byte, finish bool, err error) {
+//RecevieSI 收集签名片,收集齐以后就可以得到完整的签名.所有公证人都应该得到有效的签名.
+func (l *DistributedSignMessage) RecevieSI(si share.SPrivKey, index int) (signature []byte, finish bool, err error) {
 	err = l.loadLockout()
 	if err != nil {
 		return
@@ -698,7 +744,10 @@ func (l *Lockout) RecevieSI(si share.SPrivKey, index int) (signature []byte, fin
 	return
 }
 
-//const
+/*
+由于目前的信息只有r,s,没有v,应该有办法直接得到v是0还是1,
+但是目前只能通过尝试.
+*/
 func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bool) {
 	b := share.InvertN(s)
 	a := share.BigInt2PrivateKey(message)
@@ -710,9 +759,13 @@ func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bo
 	gu1x, gu1y := share.S.ScalarBaseMult(u1.Bytes())
 	yu2x, yu2y := share.S.ScalarMult(y.X, y.Y, u2.Bytes())
 	gu1x, gu1y = share.PointAdd(gu1x, gu1y, yu2x, yu2y)
+	//已经确认是一个有效的签名
 	if share.BigInt2PrivateKey(gu1x).D.Cmp(r.D) == 0 {
 		//return true
+	} else {
+		return nil, false
 	}
+	//缺少信息v(0或者1),所以尝试这两种情况,只要有一个可以被矿工验证,那就认为得到了有效签名.
 	key, _ := crypto.GenerateKey()
 	pubkey := key.PublicKey
 	pubkey.X = y.X

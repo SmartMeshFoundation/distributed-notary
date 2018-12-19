@@ -15,14 +15,14 @@ func TestLockout(t *testing.T) {
 	message := []byte{1, 2, 3}
 	key := utils.NewRandomHash()
 	s := []int{0, 3, 4}
-	l0, err := NewLockout(li0.db, li0.srv, message, key, li0.Key, s)
+	l0, err := NewDistributedSignMessage(li0.db, li0.srv, message, key, li0.Key, s)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	l3, err := NewLockout(li3.db, li3.srv, message, key, li3.Key, s)
+	l3, err := NewDistributedSignMessage(li3.db, li3.srv, message, key, li3.Key, s)
 	assert.EqualValues(t, err, nil)
-	l4, err := NewLockout(li4.db, li4.srv, message, key, li4.Key, s)
+	l4, err := NewDistributedSignMessage(li4.db, li4.srv, message, key, li4.Key, s)
 	//第一步: 生成--------------------------
 	assert.EqualValues(t, err, nil)
 	msg01, err := l0.GeneratePhase1Broadcast()

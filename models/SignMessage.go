@@ -15,7 +15,7 @@ type SignedKey struct {
 	GammaI  share.SPrivKey
 	GGammaI *share.SPubKey
 }
-type LockoutModel struct {
+type SignMessgeModel struct {
 	Key             []byte `gorm:"primary_key"`
 	UsedPrivateKey  []byte //使用哪个privatekey foreign key
 	Message         []byte `gorm:"type:varchar(4096);"` //代签名消息
@@ -99,7 +99,7 @@ type MessageB struct {
 	Beta         share.SPrivKey //这个能否分开
 }
 
-type Lockout struct {
+type SignMessage struct {
 	Key             common.Hash
 	UsedPrivateKey  common.Hash //使用哪个privatekey
 	Message         []byte      //代签名消息
@@ -138,95 +138,95 @@ type LocalSignature struct {
 	Y    *share.SPubKey
 }
 
-func Byte2SignBroadcastPhase1Map(data []byte) map[int]*SignBroadcastPhase1 {
+func byte2SignBroadcastPhase1Map(data []byte) map[int]*SignBroadcastPhase1 {
 	if len(data) < 3 {
 		return nil
 	}
 	var k map[int]*SignBroadcastPhase1
-	Byte2Interface(data, &k)
+	byte2Interface(data, &k)
 	return k
 }
-func Byte2MessageBPhase2(data []byte) map[int]*MessageBPhase2 {
+func byte2MessageBPhase2(data []byte) map[int]*MessageBPhase2 {
 	if len(data) < 3 {
 		return nil
 	}
 	var k map[int]*MessageBPhase2
-	Byte2Interface(data, &k)
+	byte2Interface(data, &k)
 	return k
 }
-func Byte2DeltaPhase3(data []byte) map[int]*DeltaPhase3 {
+func byte2DeltaPhase3(data []byte) map[int]*DeltaPhase3 {
 	if len(data) < 3 {
 		return nil
 	}
 	var k map[int]*DeltaPhase3
-	Byte2Interface(data, &k)
+	byte2Interface(data, &k)
 	return k
 }
-func Byte2Phase5A(data []byte) map[int]*Phase5A {
+func byte2Phase5A(data []byte) map[int]*Phase5A {
 	if len(data) < 3 {
 		return nil
 	}
 	var k map[int]*Phase5A
-	Byte2Interface(data, &k)
+	byte2Interface(data, &k)
 	return k
 }
-func Byte2Phase5C(data []byte) map[int]*Phase5C {
+func byte2Phase5C(data []byte) map[int]*Phase5C {
 	if len(data) < 3 {
 		return nil
 	}
 	var k map[int]*Phase5C
-	Byte2Interface(data, &k)
+	byte2Interface(data, &k)
 	return k
 }
-func Byte2SPrivKeyMap(data []byte) map[int]share.SPrivKey {
+func byte2SPrivKeyMap(data []byte) map[int]share.SPrivKey {
 	if len(data) < 3 {
 		return nil
 	}
 	var k map[int]share.SPrivKey
-	Byte2Interface(data, &k)
+	byte2Interface(data, &k)
 	return k
 }
-func Byte2S(data []byte) []int {
+func byte2S(data []byte) []int {
 	if len(data) < 3 {
 		return nil
 	}
 	var k []int
-	Byte2Interface(data, &k)
+	byte2Interface(data, &k)
 	return k
 }
-func Byte2SignedKey(data []byte) *SignedKey {
+func byte2SignedKey(data []byte) *SignedKey {
 	if len(data) < 3 {
 		return nil
 	}
 	var k SignedKey
-	Byte2Interface(data, &k)
+	byte2Interface(data, &k)
 	return &k
 }
-func Byte2LocalSignature(data []byte) *LocalSignature {
+func byte2LocalSignature(data []byte) *LocalSignature {
 	if len(data) < 3 {
 		return nil
 	}
 	var k LocalSignature
-	Byte2Interface(data, &k)
+	byte2Interface(data, &k)
 	return &k
 }
-func fromLockoutModel(p *LockoutModel) *Lockout {
-	p2 := &Lockout{
-		Phase1BroadCast: Byte2SignBroadcastPhase1Map(p.Phase1BroadCast),
-		Phase2MessageB:  Byte2MessageBPhase2(p.Phase2MessageB),
-		Phase3Delta:     Byte2DeltaPhase3(p.Phase3Delta),
-		Phase5A:         Byte2Phase5A(p.Phase5A),
-		Phase5C:         Byte2Phase5C(p.Phase5C),
-		Phase5D:         Byte2SPrivKeyMap(p.Phase5D),
-		AlphaGamma:      Byte2SPrivKeyMap(p.AlphaGamma),
-		AlphaWI:         Byte2SPrivKeyMap(p.AlphaWI),
-		Delta:           Byte2SPrivKeyMap(p.Delta),
+func fromLockoutModel(p *SignMessgeModel) *SignMessage {
+	p2 := &SignMessage{
+		Phase1BroadCast: byte2SignBroadcastPhase1Map(p.Phase1BroadCast),
+		Phase2MessageB:  byte2MessageBPhase2(p.Phase2MessageB),
+		Phase3Delta:     byte2DeltaPhase3(p.Phase3Delta),
+		Phase5A:         byte2Phase5A(p.Phase5A),
+		Phase5C:         byte2Phase5C(p.Phase5C),
+		Phase5D:         byte2SPrivKeyMap(p.Phase5D),
+		AlphaGamma:      byte2SPrivKeyMap(p.AlphaGamma),
+		AlphaWI:         byte2SPrivKeyMap(p.AlphaWI),
+		Delta:           byte2SPrivKeyMap(p.Delta),
 		Status:          p.Status,
-		Sigma:           Byte2SPrivKey(p.Sigma),
-		R:               Byte2SPubKey(p.R),
-		SignedKey:       Byte2SignedKey(p.SignedKey),
-		S:               Byte2S(p.S),
-		LocalSignature:  Byte2LocalSignature(p.LocalSignature),
+		Sigma:           byte2SPrivKey(p.Sigma),
+		R:               byte2SPubKey(p.R),
+		SignedKey:       byte2SignedKey(p.SignedKey),
+		S:               byte2S(p.S),
+		LocalSignature:  byte2LocalSignature(p.LocalSignature),
 		//MessageA:        &MessageA{p.MessageA},
 	}
 	p2.Key.SetBytes(p.Key)
@@ -241,38 +241,38 @@ func fromLockoutModel(p *LockoutModel) *Lockout {
 	return p2
 }
 
-func toLockoutModle(p *Lockout) *LockoutModel {
-	p2 := &LockoutModel{
+func toLockoutModle(p *SignMessage) *SignMessgeModel {
+	p2 := &SignMessgeModel{
 		Key:             p.Key[:],
 		UsedPrivateKey:  p.UsedPrivateKey[:],
 		Message:         p.Message,
-		S:               Interface2Byte(p.S, p.S == nil),
-		SignedKey:       Interface2Byte(p.SignedKey, p.SignedKey == nil),
-		Phase1BroadCast: Interface2Byte(p.Phase1BroadCast, p.Phase1BroadCast == nil),
-		MessageA:        Interface2Byte(p.MessageA, p.MessageA == nil),
-		Phase2MessageB:  Interface2Byte(p.Phase2MessageB, p.Phase2MessageB == nil),
-		Phase3Delta:     Interface2Byte(p.Phase3Delta, p.Phase3Delta == nil),
-		Sigma:           Interface2Byte(p.Sigma, false),
-		R:               Interface2Byte(p.R, p.R == nil),
-		LocalSignature:  Interface2Byte(p.LocalSignature, p.LocalSignature == nil),
-		Phase5A:         Interface2Byte(p.Phase5A, p.Phase5A == nil),
-		Phase5C:         Interface2Byte(p.Phase5C, p.Phase5C == nil),
-		Phase5D:         Interface2Byte(p.Phase5D, p.Phase5D == nil),
-		AlphaGamma:      Interface2Byte(p.AlphaGamma, p.AlphaGamma == nil),
-		AlphaWI:         Interface2Byte(p.AlphaWI, p.AlphaWI == nil),
-		Delta:           Interface2Byte(p.Delta, p.Delta == nil),
+		S:               interface2Byte(p.S, p.S == nil),
+		SignedKey:       interface2Byte(p.SignedKey, p.SignedKey == nil),
+		Phase1BroadCast: interface2Byte(p.Phase1BroadCast, p.Phase1BroadCast == nil),
+		MessageA:        interface2Byte(p.MessageA, p.MessageA == nil),
+		Phase2MessageB:  interface2Byte(p.Phase2MessageB, p.Phase2MessageB == nil),
+		Phase3Delta:     interface2Byte(p.Phase3Delta, p.Phase3Delta == nil),
+		Sigma:           interface2Byte(p.Sigma, false),
+		R:               interface2Byte(p.R, p.R == nil),
+		LocalSignature:  interface2Byte(p.LocalSignature, p.LocalSignature == nil),
+		Phase5A:         interface2Byte(p.Phase5A, p.Phase5A == nil),
+		Phase5C:         interface2Byte(p.Phase5C, p.Phase5C == nil),
+		Phase5D:         interface2Byte(p.Phase5D, p.Phase5D == nil),
+		AlphaGamma:      interface2Byte(p.AlphaGamma, p.AlphaGamma == nil),
+		AlphaWI:         interface2Byte(p.AlphaWI, p.AlphaWI == nil),
+		Delta:           interface2Byte(p.Delta, p.Delta == nil),
 		Status:          p.Status,
 	}
 	return p2
 }
 
-func (db *DB) NewLockedout(p *Lockout) error {
+func (db *DB) NewLockedout(p *SignMessage) error {
 	return db.Create(toLockoutModle(p)).Error
 }
 
-func (db *DB) LoadLockout(key common.Hash) (*Lockout, error) {
-	var pi LockoutModel
-	err := db.Where(&LockoutModel{
+func (db *DB) LoadLockout(key common.Hash) (*SignMessage, error) {
+	var pi SignMessgeModel
+	err := db.Where(&SignMessgeModel{
 		Key: key[:],
 	}).First(&pi).Error
 	if err != nil {
@@ -281,6 +281,7 @@ func (db *DB) LoadLockout(key common.Hash) (*Lockout, error) {
 	return fromLockoutModel(&pi), nil
 }
 
-func (db *DB) UpdateLockout(l *Lockout) error {
+//UpdateLockout 这个需要像lockin一样进行拆分,不要每次都存完整的
+func (db *DB) UpdateLockout(l *SignMessage) error {
 	return db.Save(toLockoutModle(l)).Error
 }
