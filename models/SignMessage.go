@@ -210,7 +210,7 @@ func byte2LocalSignature(data []byte) *LocalSignature {
 	byte2Interface(data, &k)
 	return &k
 }
-func fromLockoutModel(p *SignMessgeModel) *SignMessage {
+func fromSignMessageModel(p *SignMessgeModel) *SignMessage {
 	p2 := &SignMessage{
 		Phase1BroadCast: byte2SignBroadcastPhase1Map(p.Phase1BroadCast),
 		Phase2MessageB:  byte2MessageBPhase2(p.Phase2MessageB),
@@ -241,7 +241,7 @@ func fromLockoutModel(p *SignMessgeModel) *SignMessage {
 	return p2
 }
 
-func toLockoutModle(p *SignMessage) *SignMessgeModel {
+func toSignMessageModle(p *SignMessage) *SignMessgeModel {
 	p2 := &SignMessgeModel{
 		Key:             p.Key[:],
 		UsedPrivateKey:  p.UsedPrivateKey[:],
@@ -266,11 +266,11 @@ func toLockoutModle(p *SignMessage) *SignMessgeModel {
 	return p2
 }
 
-func (db *DB) NewLockedout(p *SignMessage) error {
-	return db.Create(toLockoutModle(p)).Error
+func (db *DB) NewSignMessage(p *SignMessage) error {
+	return db.Create(toSignMessageModle(p)).Error
 }
 
-func (db *DB) LoadLockout(key common.Hash) (*SignMessage, error) {
+func (db *DB) LoadSignMessage(key common.Hash) (*SignMessage, error) {
 	var pi SignMessgeModel
 	err := db.Where(&SignMessgeModel{
 		Key: key[:],
@@ -278,10 +278,10 @@ func (db *DB) LoadLockout(key common.Hash) (*SignMessage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return fromLockoutModel(&pi), nil
+	return fromSignMessageModel(&pi), nil
 }
 
-//UpdateLockout 这个需要像lockin一样进行拆分,不要每次都存完整的
-func (db *DB) UpdateLockout(l *SignMessage) error {
-	return db.Save(toLockoutModle(l)).Error
+//UpdateSignMessage 这个需要像lockin一样进行拆分,不要每次都存完整的
+func (db *DB) UpdateSignMessage(l *SignMessage) error {
+	return db.Save(toSignMessageModle(l)).Error
 }

@@ -21,12 +21,12 @@ func TestDB_NewLockedout(t *testing.T) {
 		},
 	}
 	db := SetupTestDB()
-	err := db.NewLockedout(l)
+	err := db.NewSignMessage(l)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	l2, err := db.LoadLockout(l.Key)
+	l2, err := db.LoadSignMessage(l.Key)
 	if err != nil {
 		t.Error(err)
 		return
@@ -37,12 +37,12 @@ func TestDB_NewLockedout(t *testing.T) {
 
 	l.AlphaGamma = make(map[int]share.SPrivKey)
 	l.AlphaGamma[3] = share.RandomPrivateKey()
-	err = db.UpdateLockout(l)
+	err = db.UpdateSignMessage(l)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	l2, err = db.LoadLockout(l.Key)
+	l2, err = db.LoadSignMessage(l.Key)
 	if err != nil {
 		t.Error(err)
 		return

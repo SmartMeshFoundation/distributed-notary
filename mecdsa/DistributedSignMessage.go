@@ -64,7 +64,7 @@ func NewDistributedSignMessage(db *models.DB, srv *NotaryService, message []byte
 		Message:        l.Message,
 		S:              s,
 	}
-	err = l.db.NewLockedout(l2)
+	err = l.db.NewSignMessage(l2)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (l *DistributedSignMessage) loadLockout() error {
 	l.PublicKey = &share.SPubKey{p.PublicKeyX, p.PublicKeyY}
 	l.Vss = p.SecretShareMessage3[l.srv.NotaryShareArg.Index].Vss
 
-	l.L, err = l.db.LoadLockout(l.Key)
+	l.L, err = l.db.LoadSignMessage(l.Key)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (l *DistributedSignMessage) GeneratePhase1Broadcast() (msg *models.SignBroa
 	}
 	l.L.Phase1BroadCast = make(map[int]*models.SignBroadcastPhase1)
 	l.L.Phase1BroadCast[l.index] = msg
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	return
 }
 
@@ -149,7 +149,7 @@ func (l *DistributedSignMessage) ReceivePhase1Broadcast(msg *models.SignBroadcas
 		return
 	}
 	l.L.Phase1BroadCast[index] = msg
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	finish = len(l.L.Phase1BroadCast) == len(l.S)
 	return
 }
@@ -180,7 +180,7 @@ func (l *DistributedSignMessage) GeneratePhase2MessageA() (msg *models.MessageA,
 	l.L.Phase2MessageB = make(map[int]*models.MessageBPhase2)
 	l.L.AlphaGamma = make(map[int]share.SPrivKey)
 	l.L.AlphaWI = make(map[int]share.SPrivKey)
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	return ma, err
 }
 
@@ -280,7 +280,7 @@ func (l *DistributedSignMessage) ReceivePhase2MessageB(msg *models.MessageBPhase
 	l.L.Phase2MessageB[index] = msg
 	l.L.AlphaGamma[index] = alphaijGamma
 	l.L.AlphaWI[index] = alphaijWi
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	if err != nil {
 		return
 	}
@@ -337,7 +337,7 @@ func (l *DistributedSignMessage) GeneratePhase3DeltaI() (msg *models.DeltaPhase3
 	l.L.Sigma = sigmaI
 	l.L.Delta = make(map[int]share.SPrivKey)
 	l.L.Delta[l.index] = deltaI
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	if err != nil {
 		return
 	}
@@ -357,7 +357,7 @@ func (l *DistributedSignMessage) ReceivePhase3DeltaI(msg *models.DeltaPhase3, in
 		return
 	}
 	l.L.Delta[index] = msg.Delta
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	finish = len(l.L.Delta) == len(l.S)
 	return
 }
@@ -420,7 +420,7 @@ func (l *DistributedSignMessage) GeneratePhase4R() (R *share.SPubKey, err error)
 		return
 	}
 	l.L.R = R
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	return
 }
 
@@ -511,7 +511,7 @@ func (l *DistributedSignMessage) GeneratePhase5a5bZkProof() (msg *models.Phase5A
 	l.L.Phase5A = make(map[int]*models.Phase5A)
 	l.L.Phase5A[l.index] = msg
 	l.L.LocalSignature = localSignature
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	return
 }
 
@@ -547,7 +547,7 @@ func (l *DistributedSignMessage) ReceivePhase5A5BProof(msg *models.Phase5A, inde
 	}
 	l.L.Phase5A[index] = msg
 	finish = len(l.L.Phase5A) == len(l.S)
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	return
 }
 
@@ -614,7 +614,7 @@ func (l *DistributedSignMessage) GeneratePhase5CProof() (msg *models.Phase5C, er
 	msg = &models.Phase5C{phase5com2, phase5decom2}
 	l.L.Phase5C = make(map[int]*models.Phase5C)
 	l.L.Phase5C[l.index] = msg
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	return
 }
 
@@ -638,7 +638,7 @@ func (l *DistributedSignMessage) ReceivePhase5cProof(msg *models.Phase5C, index 
 		return
 	}
 	l.L.Phase5C[index] = msg
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	finish = len(l.L.Phase5C) == len(l.S)
 	return
 }
@@ -668,7 +668,7 @@ func (l *DistributedSignMessage) Generate5dProof() (si share.SPrivKey, err error
 	}
 	l.L.Phase5D = make(map[int]share.SPrivKey)
 	l.L.Phase5D[l.index] = si
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	return
 }
 
@@ -720,7 +720,7 @@ func (l *DistributedSignMessage) RecevieSI(si share.SPrivKey, index int) (signat
 		return
 	}
 	l.L.Phase5D[index] = si
-	err = l.db.UpdateLockout(l.L)
+	err = l.db.UpdateSignMessage(l.L)
 	if err != nil {
 		return
 	}
