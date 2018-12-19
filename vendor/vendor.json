@@ -1,0 +1,171 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "rVylau8TcVvagAdXLW6qCn7qq4g=",
+			"path": "github.com/SmartMeshFoundation/Photon/log",
+			"revision": "fd5c289c971af4dd2cf3fb2b7feb2a6782653917",
+			"revisionTime": "2018-12-05T06:07:20Z"
+		},
+		{
+			"checksumSHA1": "mTiZ1XOXEVxUQxZ9zwRjkgyrcR4=",
+			"path": "github.com/SmartMeshFoundation/Photon/utils",
+			"revision": "fd5c289c971af4dd2cf3fb2b7feb2a6782653917",
+			"revisionTime": "2018-12-05T06:07:20Z"
+		},
+		{
+			"checksumSHA1": "eVH6ttDfEiYTzPMf4UO0W6mrpTk=",
+			"origin": "github.com/SmartMeshFoundation/Photon/vendor/github.com/btcsuite/btcd/btcec",
+			"path": "github.com/btcsuite/btcd/btcec",
+			"revision": "fd5c289c971af4dd2cf3fb2b7feb2a6782653917",
+			"revisionTime": "2018-12-05T06:07:20Z"
+		},
+		{
+			"checksumSHA1": "mrz/kicZiUaHxkyfvC/DyQcr8Do=",
+			"path": "github.com/davecgh/go-spew/spew",
+			"revision": "adab96458c51a58dc1783b3335dcce5461522e75",
+			"revisionTime": "2017-07-11T18:34:51Z"
+		},
+		{
+			"checksumSHA1": "Yh3wM/Zt0k14OGTIaGMG0CDkTEA=",
+			"path": "github.com/ethereum/go-ethereum/common",
+			"revision": "870efeef01ad45f1e06bbe4479e5afa9986f3518",
+			"revisionTime": "2018-11-08T20:37:19Z"
+		},
+		{
+			"checksumSHA1": "2EkKilu0Q1uuX7XoHks8qnW/LXo=",
+			"path": "github.com/ethereum/go-ethereum/common/hexutil",
+			"revision": "870efeef01ad45f1e06bbe4479e5afa9986f3518",
+			"revisionTime": "2018-11-08T20:37:19Z"
+		},
+		{
+			"checksumSHA1": "BP3m/oEeoC9ustdCYzAVS/gabqg=",
+			"path": "github.com/ethereum/go-ethereum/common/math",
+			"revision": "870efeef01ad45f1e06bbe4479e5afa9986f3518",
+			"revisionTime": "2018-11-08T20:37:19Z"
+		},
+		{
+			"checksumSHA1": "pHVxq5ihwkctBKM3n7Trj7D2UYw=",
+			"path": "github.com/ethereum/go-ethereum/crypto",
+			"revision": "870efeef01ad45f1e06bbe4479e5afa9986f3518",
+			"revisionTime": "2018-11-08T20:37:19Z"
+		},
+		{
+			"checksumSHA1": "6FNy+ljIirVAtXlAq7gDyUX70mw=",
+			"path": "github.com/ethereum/go-ethereum/crypto/secp256k1",
+			"revision": "870efeef01ad45f1e06bbe4479e5afa9986f3518",
+			"revisionTime": "2018-11-08T20:37:19Z"
+		},
+		{
+			"checksumSHA1": "pQzUVRi0z/3Z4FpRyExSg1ROLSA=",
+			"path": "github.com/ethereum/go-ethereum/crypto/sha3",
+			"revision": "870efeef01ad45f1e06bbe4479e5afa9986f3518",
+			"revisionTime": "2018-11-08T20:37:19Z"
+		},
+		{
+			"checksumSHA1": "zrskypwp1RbmLX2f/47diH1vxQc=",
+			"path": "github.com/ethereum/go-ethereum/rlp",
+			"revision": "870efeef01ad45f1e06bbe4479e5afa9986f3518",
+			"revisionTime": "2018-11-08T20:37:19Z"
+		},
+		{
+			"checksumSHA1": "xmTgJXWHguGKHPuZE50FIbs88L0=",
+			"path": "github.com/go-sql-driver/mysql",
+			"revision": "a0583e0143b1624142adab07e0e97fe106d99561",
+			"revisionTime": "2016-12-01T11:50:36Z"
+		},
+		{
+			"checksumSHA1": "luu+ud4XYZhlCoNnSAwCJlbh0Bg=",
+			"path": "github.com/go-stack/stack",
+			"revision": "259ab82a6cad3992b4e21ff5cac294ccb06474bc",
+			"revisionTime": "2017-11-12T03:14:02Z"
+		},
+		{
+			"checksumSHA1": "qUfWkFlJqc24xFWAsWxKkyyO+zw=",
+			"path": "github.com/jinzhu/gorm",
+			"revision": "742154be9a26e849f02d296073c077e0a7c23828",
+			"revisionTime": "2018-10-07T00:49:37Z"
+		},
+		{
+			"checksumSHA1": "eECxSkwh0WmhLwaxHfkvcLOWS08=",
+			"path": "github.com/jinzhu/gorm/dialects/mysql",
+			"revision": "742154be9a26e849f02d296073c077e0a7c23828",
+			"revisionTime": "2018-10-07T00:49:37Z"
+		},
+		{
+			"checksumSHA1": "0Pry12nZ6UQBd1iXEtszySSfFpI=",
+			"path": "github.com/jinzhu/gorm/dialects/postgres",
+			"revision": "742154be9a26e849f02d296073c077e0a7c23828",
+			"revisionTime": "2018-10-07T00:49:37Z"
+		},
+		{
+			"checksumSHA1": "4VZ1gLZHMumRjV3fclS1aX8S1aQ=",
+			"path": "github.com/jinzhu/gorm/dialects/sqlite",
+			"revision": "742154be9a26e849f02d296073c077e0a7c23828",
+			"revisionTime": "2018-10-07T00:49:37Z"
+		},
+		{
+			"checksumSHA1": "9Fb+a7sS7os6y+72DjHAVegPBwY=",
+			"path": "github.com/jinzhu/inflection",
+			"revision": "3272df6c21d04180007eb3349844c89a3856bc25",
+			"revisionTime": "2015-10-09T08:41:29Z"
+		},
+		{
+			"checksumSHA1": "avqi4lkviHdrNJ92cXCwrw9x870=",
+			"path": "github.com/lib/pq",
+			"revision": "4a82388ebc5138c8289fe9bc602cb0b3e32cd617",
+			"revisionTime": "2016-11-29T22:14:28Z"
+		},
+		{
+			"checksumSHA1": "jaCQF1par6Jl8g+V2Cgp0n/0wSc=",
+			"path": "github.com/lib/pq/hstore",
+			"revision": "4a82388ebc5138c8289fe9bc602cb0b3e32cd617",
+			"revisionTime": "2016-11-29T22:14:28Z"
+		},
+		{
+			"checksumSHA1": "xppHi82MLqVx1eyQmbhTesAEjx8=",
+			"path": "github.com/lib/pq/oid",
+			"revision": "4a82388ebc5138c8289fe9bc602cb0b3e32cd617",
+			"revisionTime": "2016-11-29T22:14:28Z"
+		},
+		{
+			"checksumSHA1": "Nm+klNHvQ/HKn//55PVDHD9VoeQ=",
+			"path": "github.com/mattn/go-sqlite3",
+			"revision": "8a4c825cfc99b620bd78dbeac30348782a3b3eb9",
+			"revisionTime": "2017-07-01T11:48:21Z"
+		},
+		{
+			"checksumSHA1": "cLWiIA+zM8C8H0WC1FEb75c/V/w=",
+			"path": "github.com/nkbai/goutils",
+			"revision": "2fa82e8abe130bdf5742264b99027c2a992e5a17",
+			"revisionTime": "2018-12-19T01:56:12Z"
+		},
+		{
+			"checksumSHA1": "QKxIA4TrBD5Uk1fVtutfF1suWxU=",
+			"path": "github.com/nkbai/log",
+			"revision": "86998e435e8c493f244a3fc3a93407978e39dcfb",
+			"revisionTime": "2018-05-19T14:16:59Z"
+		},
+		{
+			"checksumSHA1": "zKKp5SZ3d3ycKe4EKMNT0BqAWBw=",
+			"origin": "github.com/stretchr/testify/vendor/github.com/pmezard/go-difflib/difflib",
+			"path": "github.com/pmezard/go-difflib/difflib",
+			"revision": "976c720a22c8eb4eb6a0b4348ad85ad12491a506",
+			"revisionTime": "2016-09-25T22:06:09Z"
+		},
+		{
+			"checksumSHA1": "Q2V7Zs3diLmLfmfbiuLpSxETSuY=",
+			"path": "github.com/stretchr/testify/assert",
+			"revision": "976c720a22c8eb4eb6a0b4348ad85ad12491a506",
+			"revisionTime": "2016-09-25T22:06:09Z"
+		},
+		{
+			"checksumSHA1": "GtamqiJoL7PGHsN454AoffBFMa8=",
+			"path": "golang.org/x/net/context",
+			"revision": "5f9ae10d9af5b1c89ae6904293b14b064d4ada23",
+			"revisionTime": "2018-04-20T07:04:21Z"
+		}
+	],
+	"rootPath": "github.com/SmartMeshFoundation/distributed-notary"
+}
