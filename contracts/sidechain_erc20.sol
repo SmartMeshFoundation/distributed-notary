@@ -137,9 +137,9 @@ contract EthereumToken is StandardToken {
         uint256 value; //转入金额
     }
     mapping(address=>LockinInfo) public lockin_htlc; //lockin过程中的htlc
-    event PrepareLockin(address account,bytes32 secret_hash,uint256 expiration,uint256 value);
+    event PrepareLockin(address indexed account, uint256 value);
     event LockinSecret(bytes32 secret);
-    event PrePareLockedOut(address indexed _from, uint256 _value);
+    event PrePareLockedOut(address indexed account, uint256 _value);
     struct LockoutInfo {
         bytes32 SecretHash; //转出时指定的密码hash
         uint256 Expiration; //超期以后可以撤销
@@ -167,7 +167,7 @@ contract EthereumToken is StandardToken {
         li.SecretHash=secret_hash;
         li.Expiration=expiration;
         li.value=value;
-        emit PrepareLockin(account,secret_hash,expiration,value);
+        emit PrepareLockin(account,value);
     }
     //由用户提供密码,真正的为自己的账户分配token,其他任何知道密码的人也都可以做.
     function lockin(address account,bytes32 secret)   public {
@@ -251,4 +251,13 @@ contract EthereumToken is StandardToken {
         //退回到个人账户上
         balances[msg.sender]+=value;
     }
+    function queryLockin(address account) view external returns(bytes32,uint256,uint256) {
+        LockinInfo storage li=lockin_htlc[account];
+        return (li.SecretHash, li.Expiration,li.value);
+    }
+    function queryLockout(address account)   view external returns(bytes32,uint256,uint256,bytes32) {
+        LockoutInfo storage li=lockout_htlc[account];
+        return  (li.SecretHash, li.Expiration,li.value,li.Data);
+    }
+
 }

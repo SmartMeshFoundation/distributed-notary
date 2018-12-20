@@ -58,9 +58,9 @@ contract LockedEthereum is Owned {
         bytes32 Data; //转入附加信息
     }
     mapping(address=>LockinInfo) public lockin_htlc; //lockin过程中的htlc
-    event PrepareLockin(address account,bytes32 secret_hash,uint256 expiration,uint256 value);
+    event PrepareLockin(address indexed account,uint256 value);
     event LockoutSecret(bytes32 secret);
-    event PrePareLockedOut(address indexed _from, uint256 _value);
+    event PrePareLockedOut(address indexed account, uint256 _value);
     struct LockoutInfo {
         bytes32 SecretHash; //转出时指定的密码hash
         uint256 Expiration; //超期以后可以撤销
@@ -89,7 +89,7 @@ contract LockedEthereum is Owned {
         li.Expiration=expiration;
         li.value=msg.value;
         li.Data=data;
-        emit PrepareLockin(msg.sender ,secret_hash,expiration,msg.value);
+        emit PrepareLockin(msg.sender ,msg.value);
     }
     //公证人观察到侧链上用户提供的密码,凭密码销毁凭据,防止用户在过期以后再次获取到token
     function lockin(address account,bytes32 secret)   public {
@@ -160,5 +160,13 @@ contract LockedEthereum is Owned {
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
+    }
+    function queryLockin(address account)   view external returns(bytes32,uint256,uint256,bytes32) {
+        LockinInfo storage li=lockin_htlc[account];
+        return  (li.SecretHash, li.Expiration,li.value,li.Data);
+    }
+    function queryLockout(address account) view external returns(bytes32,uint256,uint256) {
+        LockoutInfo storage li=lockout_htlc[account];
+        return (li.SecretHash, li.Expiration,li.value);
     }
 }
