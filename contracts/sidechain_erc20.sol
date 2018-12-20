@@ -51,7 +51,8 @@ contract Owned {
     address public owner;
 
     /// @notice The Constructor assigns the message sender to be `owner`
-    function Owned() public {
+
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -132,38 +133,43 @@ contract EthereumToken is StandardToken {
     mapping(address => uint256) nonces;
     struct LockinInfo  {
      bytes32 SecretHash; //这是lockin发起人提供的hash
-        int64 Expiration; //锁过期时间
+        uint256 Expiration; //锁过期时间
         uint256 value; //转入金额
     }
     mapping(address=>LockinInfo) public lockin_htlc; //lockin过程中的htlc
-    event LockinHTLC(address account,bytes32 secret_hash,int64 expiration,uint256 value);
-
+    event PrepareLockin(address account,bytes32 secret_hash,uint256 expiration,uint256 value);
+    event LockinSecret(bytes32 secret);
+    event PrePareLockedOut(address indexed _from, uint256 _value);
     struct LockoutInfo {
         bytes32 SecretHash; //转出时指定的密码hash
-        int64 Expiration; //超期以后可以撤销
+        uint256 Expiration; //超期以后可以撤销
         uint256 value; //金额是多少
         bytes32 Data;  //附加数据
     }
     mapping(address=>LockoutInfo) public lockout_htlc; //lockout 过程中的HTLC
 
-    function EthereumToken() public {
+    constructor() public {
         totalSupply=1; //保证total supply大于等于0,符合ERC20规范
     }
-
+    //ze:主链expiration
+    //ce:侧链expiration
+    //z:主链确认块数转换到侧链的确认块数(比如spectrum和以太坊都是15秒,那转换比率就是1)
+    //c:侧链确认块数
+    //用户:交易发起人
     //只能公证人提供HTLC
     // lockin分为两步,
-    //第一步:公证人为根据收到的请求在侧连上prepareLockin,
-    //第二步: 公证人在观察到主链上发生了相应的交易,会执行lockin
-    //如果交易发起人没有在规定时间内在主链上进行相应的转入交易,公证人可以在过期以后撤销HTLC
-    function prepareLockinHTLC(address account,bytes32 secret_hash,int64 expiration,uint256 value) onlyOwner public{
+    //第一步:公证人收到用户lockin请求,并且观察到主链上发生了prepareLockin,在侧链进行prepareLockin  要求ze>ce+z
+    //第二步:  公证人观察到侧连上真正发生了lockin(由用户发起),就会知道密码,这时公证人可以在有效期内将主链资产转移到指定合约中去
+    //如果交易发起人没有在规定时间内在侧连上进行相应的lockin,公证人(任何人)可以在过期以后,在侧链撤销HTLC(cancel lockin)
+    function prepareLockin(address account,bytes32 secret_hash,uint256 expiration,uint256 value) onlyOwner public{
         require(lockin_htlc[account].value==0);
         LockinInfo storage li=lockin_htlc[account];
         li.SecretHash=secret_hash;
         li.Expiration=expiration;
         li.value=value;
-        emit LockinHTLC(account,secret_hash,expiration,value);
+        emit PrepareLockin(account,secret_hash,expiration,value);
     }
-    //正常应该有公证人来为账户分配token,如果公证人没有在指定期限内做,其他任何知道密码的人都可以做.
+    //由用户提供密码,真正的为自己的账户分配token,其他任何知道密码的人也都可以做.
     function lockin(address account,bytes32 secret)   public {
         LockinInfo storage li=lockin_htlc[account];
         //验证密码匹配,并且在有效期内
@@ -183,8 +189,10 @@ contract EthereumToken is StandardToken {
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
+        emit LockinSecret(secret);
     }
-    function cancelLockin(address account) onlyOwner public {
+    //lockin过程出错,expiration过期以后,任何人都可以撤销此次交易
+    function cancelLockin(address account)   public {
         LockinInfo storage li=lockin_htlc[account];
         //已经过期了
         require(li.value>0);
@@ -196,13 +204,13 @@ contract EthereumToken is StandardToken {
         li.Expiration=0;
     }
 
-    //退出的过程和lockin过程类似,也分为两步,第一步是退出人提出退出请求,公证人在收到相应的事件以后,会在主链上发起相应交易
-    //第二步 退出人观察到主链上发生了相应的交易,会用密码解锁交易,
-    //第三部,公证人则根据观察到的密码,销毁相应的token
-    event PrePareLockedOut(address indexed _from, uint256 _value);
+    //退出的过程和lockin过程类似,第一步是退出人(用户)在侧链PrePareLockedOut,公证人在接收到用户请求,并且收到相应的事件以后(需要足够的确认块数),会在主链上PrePareLockedOut 要求ce>c+ze
+    //第二步 用户观察到主链上发生了PrePareLockedOut,会在过期时间之内,用密码在主链上进行lockout
+    //第三部,公证人则根据主链上观察到的密码,销毁相应的token
     //准备退出,需要在合约里记录,公证人需要监控这里的事件,采用相应的操作, 后续应该提供PrePareLockedOutProxy函数,可以保证交易方没有侧链主币的情况下,仍然可以发起合约
-    function prePareLockedOutHTLC(bytes32 secret_hash,int64 expiration,uint256 value, bytes32 data) public{
+    function prePareLockedOut(bytes32 secret_hash,uint256 expiration,uint256 value, bytes32 data) public{
         LockoutInfo storage li=lockout_htlc[msg.sender];
+        require(value>0);
         require(li.value==0); // 没有正在退出的历史交易
         require(balances[msg.sender]>=value);
         li.value=value;
@@ -214,9 +222,9 @@ contract EthereumToken is StandardToken {
 
         emit PrePareLockedOut(msg.sender,value);
     }
-    //公证人在主链上转账到具体地址后,销毁相应记录
+    //用户在主链上提交secret,资产已经转移走, 公证人(任何人)观察到密码,销毁相应的token
     function lockedOut(address from,bytes32 secret)   public {
-        LockoutInfo storage li=lockout_htlc[msg.sender];
+        LockoutInfo storage li=lockout_htlc[from];
         uint256 value=li.value;
         require(value>0);
         require(li.Expiration>block.number);
@@ -226,8 +234,11 @@ contract EthereumToken is StandardToken {
         li.SecretHash=bytes32(0);
         li.Expiration=0;
         li.Data=bytes32(0);
+        //侧链发行总量要降低
+        totalSupply-=value;
+        require(totalSupply>=1);
     }
-    //锁过期以后,由自己取消
+    //锁过期以后,由用户取消 其他任何人也都可以做
     function cancleLockOut( ) public {
         LockoutInfo storage li=lockout_htlc[msg.sender];
         uint256 value=li.value;
