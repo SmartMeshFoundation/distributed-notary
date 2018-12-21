@@ -14,22 +14,22 @@ import (
 	"github.com/SmartMeshFoundation/Photon/log"
 	"github.com/SmartMeshFoundation/Photon/utils"
 	"github.com/SmartMeshFoundation/distributed-notary/commons"
-	"github.com/SmartMeshFoundation/distributed-notary/spectrum/client"
-	"github.com/SmartMeshFoundation/distributed-notary/spectrum/events"
-	"github.com/SmartMeshFoundation/distributed-notary/spectrum/proxy"
+	"github.com/SmartMeshFoundation/distributed-notary/ethereum/client"
+	"github.com/SmartMeshFoundation/distributed-notary/ethereum/events"
+	"github.com/SmartMeshFoundation/distributed-notary/ethereum/proxy"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// SMCService :
-type SMCService struct {
+// ETHService :
+type ETHService struct {
 	c               *client.SafeEthClient
 	host            string
 	lastBlockNumber uint64
 
-	tokenProxyMap     map[common.Address]*proxy.SideChainErc20TokenProxy
+	tokenProxyMap     map[common.Address]*proxy.LockedEthereumProxy
 	tokenProxyMapLock sync.Mutex
 
 	connectStatus                  commons.ConnectStatus
@@ -42,8 +42,8 @@ type SMCService struct {
 	listenerQuitChan chan struct{}
 }
 
-// NewSMCService :
-func NewSMCService(host string, lastBlockNumber uint64, contractAddresses ...common.Address) (ss *SMCService, err error) {
+// NewETHService :
+func NewETHService(host string, lastBlockNumber uint64, contractAddresses ...common.Address) (ss *ETHService, err error) {
 	// init client
 	var c *ethclient.Client
 	ctx, cancelFunc := context.WithTimeout(context.Background(), spectrumRPCTimeout)
@@ -52,12 +52,12 @@ func NewSMCService(host string, lastBlockNumber uint64, contractAddresses ...com
 	if err != nil {
 		return
 	}
-	ss = &SMCService{
+	ss = &ETHService{
 		c:                          client.NewSafeClient(c),
 		host:                       host,
 		connectStatus:              commons.Disconnected,
 		lastBlockNumber:            lastBlockNumber,
-		tokenProxyMap:              make(map[common.Address]*proxy.SideChainErc20TokenProxy),
+		tokenProxyMap:              make(map[common.Address]*proxy.LockedEthereumProxy),
 		connectStatusChangeChanMap: make(map[string]chan commons.ConnectStatusChange),
 		eventChan:                  make(chan events.Event, 100),
 		eventsDone:                 make(map[common.Hash]uint64),
@@ -79,9 +79,9 @@ func NewSMCService(host string, lastBlockNumber uint64, contractAddresses ...com
 }
 
 // RegisterEventListenContract :
-func (ss *SMCService) RegisterEventListenContract(contractAddresses ...common.Address) error {
+func (ss *ETHService) RegisterEventListenContract(contractAddresses ...common.Address) error {
 	if ss.connectStatus != commons.Connected {
-		return errors.New("SmcService can not register when not connected")
+		return errors.New("ETHService can not register when not connected")
 	}
 	ss.tokenProxyMapLock.Lock()
 	for _, addr := range contractAddresses {
@@ -97,7 +97,7 @@ func (ss *SMCService) RegisterEventListenContract(contractAddresses ...common.Ad
 }
 
 // UnRegisterEventListenContract :
-func (ss *SMCService) UnRegisterEventListenContract(contractAddresses ...common.Address) {
+func (ss *ETHService) UnRegisterEventListenContract(contractAddresses ...common.Address) {
 	ss.tokenProxyMapLock.Lock()
 	for _, addr := range contractAddresses {
 		delete(ss.tokenProxyMap, addr)
@@ -106,14 +106,14 @@ func (ss *SMCService) UnRegisterEventListenContract(contractAddresses ...common.
 }
 
 // StartEventListener :
-func (ss *SMCService) StartEventListener() error {
+func (ss *ETHService) StartEventListener() error {
 	ss.listenerQuitChan = make(chan struct{})
 	go ss.loop()
 	return nil
 }
 
 // StopEventListener :
-func (ss *SMCService) StopEventListener() error {
+func (ss *ETHService) StopEventListener() error {
 	if ss.listenerQuitChan != nil {
 		close(ss.listenerQuitChan)
 		ss.listenerQuitChan = nil
@@ -122,15 +122,15 @@ func (ss *SMCService) StopEventListener() error {
 }
 
 // GetEventChan :
-func (ss *SMCService) GetEventChan() <-chan events.Event {
+func (ss *ETHService) GetEventChan() <-chan events.Event {
 	return ss.eventChan
 }
 
 // RegisterConnectStatusChangeChan :
-func (ss *SMCService) RegisterConnectStatusChangeChan(name string) <-chan commons.ConnectStatusChange {
+func (ss *ETHService) RegisterConnectStatusChangeChan(name string) <-chan commons.ConnectStatusChange {
 	ch, ok := ss.connectStatusChangeChanMap[name]
 	if ok {
-		log.Warn("SmcService RegisterConnectStatusChangeChan should only call once")
+		log.Warn("ETHService RegisterConnectStatusChangeChan should only call once")
 		return ch
 	}
 	ch = make(chan commons.ConnectStatusChange, 1)
@@ -141,7 +141,7 @@ func (ss *SMCService) RegisterConnectStatusChangeChan(name string) <-chan common
 }
 
 // UnRegisterConnectStatusChangeChan :
-func (ss *SMCService) UnRegisterConnectStatusChangeChan(name string) {
+func (ss *ETHService) UnRegisterConnectStatusChangeChan(name string) {
 	ch, ok := ss.connectStatusChangeChanMap[name]
 	ss.connectStatusChangeChanMapLock.Lock()
 	delete(ss.connectStatusChangeChanMap, name)
@@ -152,7 +152,7 @@ func (ss *SMCService) UnRegisterConnectStatusChangeChan(name string) {
 }
 
 // RecoverDisconnect :
-func (ss *SMCService) RecoverDisconnect() {
+func (ss *ETHService) RecoverDisconnect() {
 	var err error
 	var c *ethclient.Client
 	ss.changeStatus(commons.Reconnecting)
@@ -160,7 +160,7 @@ func (ss *SMCService) RecoverDisconnect() {
 		ss.c.Client.Close()
 	}
 	for {
-		log.Info("SmcService tyring to reconnect smc ...")
+		log.Info("ETHService tyring to reconnect geth ...")
 		select {
 		case <-ss.listenerQuitChan:
 			ss.changeStatus(commons.Closed)
@@ -180,12 +180,12 @@ func (ss *SMCService) RecoverDisconnect() {
 			ss.changeStatus(commons.Connected)
 			return
 		}
-		log.Info(fmt.Sprintf("SmcService reconnect to %s error: %s", ss.host, err))
+		log.Info(fmt.Sprintf("ETHService reconnect to %s error: %s", ss.host, err))
 		time.Sleep(time.Second * 3)
 	}
 }
 
-func (ss *SMCService) changeStatus(newStatus commons.ConnectStatus) {
+func (ss *ETHService) changeStatus(newStatus commons.ConnectStatus) {
 	sc := &commons.ConnectStatusChange{
 		OldStatus:  ss.connectStatus,
 		NewStatus:  newStatus,
@@ -201,10 +201,10 @@ func (ss *SMCService) changeStatus(newStatus commons.ConnectStatus) {
 		}
 	}
 	ss.connectStatusChangeChanMapLock.Unlock()
-	log.Info(fmt.Sprintf("SmcService connect status change from %d to %d", sc.OldStatus, sc.NewStatus))
+	log.Info(fmt.Sprintf("ETHService connect status change from %d to %d", sc.OldStatus, sc.NewStatus))
 }
 
-func (ss *SMCService) checkConnectStatus() (err error) {
+func (ss *ETHService) checkConnectStatus() (err error) {
 	if ss.c == nil || ss.c.Client == nil {
 		return client.ErrNotConnected
 	}
@@ -218,15 +218,15 @@ func (ss *SMCService) checkConnectStatus() (err error) {
 }
 
 // 事件监听主线程,理论上常驻,自动重连
-func (ss *SMCService) loop() {
-	log.Trace(fmt.Sprintf("SmcService.EventListener start getting lasted block number from blocknubmer=%d", ss.lastBlockNumber))
+func (ss *ETHService) loop() {
+	log.Trace(fmt.Sprintf("ETHService.EventListener start getting lasted block number from blocknubmer=%d", ss.lastBlockNumber))
 	currentBlock := ss.lastBlockNumber
 	retryTime := 0
 	for {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), spectrumRPCTimeout)
 		h, err := ss.c.HeaderByNumber(ctx, nil)
 		if err != nil {
-			log.Error(fmt.Sprintf("SmcService.EventListener HeaderByNumber err=%s", err))
+			log.Error(fmt.Sprintf("ETHService.EventListener HeaderByNumber err=%s", err))
 			cancelFunc()
 			if ss.listenerQuitChan != nil {
 				go ss.RecoverDisconnect()
@@ -235,12 +235,12 @@ func (ss *SMCService) loop() {
 				for {
 					sc := <-ch
 					if sc.NewStatus == commons.Closed {
-						log.Info("SmcService.EventListener end because user closed SmcService")
+						log.Info("ETHService.EventListener end because user closed SmcService")
 						return
 					}
 					if sc.NewStatus == commons.Connected {
 						ss.UnRegisterConnectStatusChangeChan("self")
-						log.Trace(fmt.Sprintf("SmcService.EventListener reconnected success, start getting lasted block number from blocknubmer=%d", ss.lastBlockNumber))
+						log.Trace(fmt.Sprintf("ETHService.EventListener reconnected success, start getting lasted block number from blocknubmer=%d", ss.lastBlockNumber))
 						// 重连成功,刷新proxy
 						ss.refreshContractProxy()
 						break
@@ -256,16 +256,16 @@ func (ss *SMCService) loop() {
 			time.Sleep(pollPeriod / 2)
 			retryTime++
 			if retryTime > 10 {
-				log.Warn(fmt.Sprintf("SmcService.EventListener get same block number %d from chain %d times,maybe something wrong with smc ...", lastedBlock, retryTime))
+				log.Warn(fmt.Sprintf("ETHService.EventListener get same block number %d from chain %d times,maybe something wrong with geth ...", lastedBlock, retryTime))
 			}
 			continue
 		}
 		retryTime = 0
 		if lastedBlock != currentBlock+1 {
-			log.Warn(fmt.Sprintf("SmcService.EventListener missed %d blocks", lastedBlock-currentBlock-1))
+			log.Warn(fmt.Sprintf("ETHService.EventListener missed %d blocks", lastedBlock-currentBlock-1))
 		}
 		if lastedBlock%logPeriod == 0 {
-			log.Trace(fmt.Sprintf("SmcService.EventListener new block : %d", lastedBlock))
+			log.Trace(fmt.Sprintf("ETHService.EventListener new block : %d", lastedBlock))
 		}
 		var fromBlockNumber, toBlockNumber uint64
 		if currentBlock < 2*confirmBlockNumber {
@@ -281,7 +281,7 @@ func (ss *SMCService) loop() {
 		// get all events between currentBlock and confirmBlock
 		es, err := ss.queryAllEvents(fromBlockNumber, toBlockNumber)
 		if err != nil {
-			log.Error(fmt.Sprintf("SmcService.EventListener queryAllStateChange err=%s", err))
+			log.Error(fmt.Sprintf("ETHService.EventListener queryAllStateChange err=%s", err))
 			// 如果这里出现err,不能继续处理该blocknumber,否则会丢事件,直接从该块重新处理即可
 			time.Sleep(pollPeriod / 2)
 			continue
@@ -311,13 +311,13 @@ func (ss *SMCService) loop() {
 		case <-time.After(pollPeriod):
 		case <-ss.listenerQuitChan:
 			ss.listenerQuitChan = nil
-			log.Info(fmt.Sprintf("SmcService.EventListener quit complete"))
+			log.Info(fmt.Sprintf("ETHService.EventListener quit complete"))
 			return
 		}
 	}
 }
 
-func (ss *SMCService) refreshContractProxy() {
+func (ss *ETHService) refreshContractProxy() {
 	ss.tokenProxyMapLock.Lock()
 	for tokenAddress := range ss.tokenProxyMap {
 		// rebuild proxy TODO
@@ -326,7 +326,7 @@ func (ss *SMCService) refreshContractProxy() {
 	ss.tokenProxyMapLock.Unlock()
 }
 
-func (ss *SMCService) queryAllEvents(fromBlockNumber uint64, toBlockNumber uint64) (es []events.Event, err error) {
+func (ss *ETHService) queryAllEvents(fromBlockNumber uint64, toBlockNumber uint64) (es []events.Event, err error) {
 	/*
 		get all event of contract TokenNetworkRegistry, SecretRegistry , TokenNetwork
 	*/
@@ -337,7 +337,7 @@ func (ss *SMCService) queryAllEvents(fromBlockNumber uint64, toBlockNumber uint6
 	return ss.parserLogsToEventsAndSort(logs)
 }
 
-func (ss *SMCService) getLogsFromChain(fromBlock uint64, toBlock uint64) (logs []types.Log, err error) {
+func (ss *ETHService) getLogsFromChain(fromBlock uint64, toBlock uint64) (logs []types.Log, err error) {
 	if len(ss.tokenProxyMap) == 0 {
 		return
 	}
@@ -355,7 +355,7 @@ func (ss *SMCService) getLogsFromChain(fromBlock uint64, toBlock uint64) (logs [
 	return ss.c.FilterLogs(getQueryContext(), *q)
 }
 
-func (ss *SMCService) parserLogsToEventsAndSort(logs []types.Log) (es []events.Event, err error) {
+func (ss *ETHService) parserLogsToEventsAndSort(logs []types.Log) (es []events.Event, err error) {
 	if len(logs) == 0 {
 		return
 	}
@@ -367,29 +367,29 @@ func (ss *SMCService) parserLogsToEventsAndSort(logs []types.Log) (es []events.E
 				//log.Trace(fmt.Sprintf("get event txhash=%s repeated,ignore...", l.TxHash.String()))
 				continue
 			}
-			log.Warn(fmt.Sprintf("SmcService.EventListener event tx=%s happened at %d, but now happend at %d ", l.TxHash.String(), doneBlockNumber, l.BlockNumber))
+			log.Warn(fmt.Sprintf("ETHService.EventListener event tx=%s happened at %d, but now happend at %d ", l.TxHash.String(), doneBlockNumber, l.BlockNumber))
 		}
 		switch eventName {
-		case events.EthereumTokenPrepareLockinEventName:
+		case events.LockedEthereumPrepareLockinEventName:
 			e, err2 := events.CreatePrepareLockinEvent(l)
 			if err = err2; err != nil {
 				return
 			}
 			es = append(es, e)
-		case events.EthereumTokenLockinSecretEventName:
-			e, err2 := events.CreateLockinSecretEvent(l)
+		case events.LockedEthereumLockoutSecretEventName:
+			e, err2 := events.CreateLockoutSecretEvent(l)
 			if err = err2; err != nil {
 				return
 			}
 			es = append(es, e)
-		case events.EthereumTokenPrePareLockedOutEventName:
+		case events.LockedEthereumPrePareLockedOutEventName:
 			e, err2 := events.CreatePrepareLockoutEvent(l)
 			if err = err2; err != nil {
 				return
 			}
 			es = append(es, e)
 		default:
-			log.Warn(fmt.Sprintf("SmcService.EventListener receive unkonwn type event from chain : \n%s\n", utils.StringInterface(l, 3)))
+			log.Warn(fmt.Sprintf("ETHService.EventListener receive unkonwn type event from chain : \n%s\n", utils.StringInterface(l, 3)))
 		}
 		// 记录处理流水
 		ss.eventsDone[l.TxHash] = l.BlockNumber
