@@ -81,6 +81,11 @@ func NewSMCService(host string, lastBlockNumber uint64, contractAddresses ...com
 	return
 }
 
+// GetProxyByTokenAddress :
+func (ss *SMCService) GetProxyByTokenAddress(address common.Address) *proxy.SideChainErc20TokenProxy {
+	return ss.tokenProxyMap[address]
+}
+
 // RegisterEventListenContract :
 func (ss *SMCService) RegisterEventListenContract(contractAddresses ...common.Address) error {
 	if ss.connectStatus != commons.Connected {
