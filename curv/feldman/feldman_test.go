@@ -226,6 +226,8 @@ func TestLsh(t *testing.T) {
 func TestPointAdd(t *testing.T) {
 	x1, y1 := share.Strtoxy("4a74630709c49150d10f0e607670f2c73dc2865c8850c5d7514e386eed5cb299b34852ce4e6f4b192e8ffca93f502fe4e877d52065805e11c0899fefbf447a07")
 	x2, y2 := share.Strtoxy("b2cdbce035a29196c7dc1c79de6da01555645ada71174e7686111d00a55b8fa879ffb8a40c7bef590a944dd6a2d63d4472b30ac40b0f99d373350d0c8246d42d")
+	log.Trace(fmt.Sprintf("x1=%s,y1=%s", x1.Text(16), y1.Text(16)))
+	log.Trace(fmt.Sprintf("x2=%s,y2=%s", x2.Text(16), y2.Text(16)))
 	x, y := share.PointAdd(x1, y1, x2, y2)
 	t.Logf("x=%s,y=%s", x.Text(16), y.Text(16))
 	x, y = share.PointAdd(x2, y2, x1, y1)

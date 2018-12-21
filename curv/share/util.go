@@ -1,10 +1,10 @@
 package share
 
 import (
-	"crypto/ecdsa"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"github.com/btcsuite/btcd/btcec"
 	"math/big"
 
 	"github.com/SmartMeshFoundation/Photon/utils"
@@ -13,6 +13,7 @@ import (
 )
 
 var S = secp256k1.S256()
+
 var BigOne = big.NewInt(1)
 var PrivKeyZero = BigInt2PrivateKey(big.NewInt(0))
 
@@ -89,27 +90,8 @@ func BigInt2PrivateKey(i *big.Int) SPrivKey {
 }
 
 func PointAdd(x1, y1, x2, y2 *big.Int) (x, y *big.Int) {
-	key1 := &ecdsa.PublicKey{
-		Curve: S,
-		X:     x1,
-		Y:     y1,
-	}
-	key2 := &ecdsa.PublicKey{
-		Curve: S,
-		X:     x2,
-		Y:     y2,
-	}
-	key1bin := crypto.FromECDSAPub(key1)
-	key2bin := crypto.FromECDSAPub(key2)
-	k, err := secp256k1.AddPoint(key1bin, key2bin)
-	if err != nil {
-		panic(fmt.Sprintf("add err %s", err))
-	}
-	k2, err := crypto.UnmarshalPubkey(k)
-	if err != nil {
-		panic(fmt.Sprintf("UnmarshalPubkey err %s", err))
-	}
-	return k2.X, k2.Y
+	x,y=btcec.S256().Add(x1,y1,x2,y2)
+	return
 }
 func PointSub(x1, y1, x2, y2 *big.Int) (x, y *big.Int) {
 	order := new(big.Int).Set(S.P)
