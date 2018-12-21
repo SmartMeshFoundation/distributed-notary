@@ -1,5 +1,7 @@
 package events
 
+import "time"
+
 // NewBlockEvent :
 type NewBlockEvent struct {
 	BaseEvent
@@ -11,6 +13,7 @@ func CreateNewBlockEvent(blockNumber uint64) NewBlockEvent {
 		BaseEvent{
 			Name:        NewBlockEventName,
 			BlockNumber: blockNumber,
+			Time:        time.Now(),
 		},
 	}
 }

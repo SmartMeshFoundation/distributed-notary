@@ -9,6 +9,8 @@ import (
 
 	"math/big"
 
+	"errors"
+
 	"github.com/SmartMeshFoundation/Photon/log"
 	"github.com/SmartMeshFoundation/Photon/utils"
 	"github.com/SmartMeshFoundation/distributed-notary/commons"
@@ -77,7 +79,10 @@ func NewSMCService(host string, lastBlockNumber uint64, contractAddresses ...com
 }
 
 // RegisterEventListenContract :
-func (ss *SMCService) RegisterEventListenContract(contractAddresses ...common.Address) {
+func (ss *SMCService) RegisterEventListenContract(contractAddresses ...common.Address) error {
+	if ss.connectStatus != commons.Connected {
+		return errors.New("SmcService can not register when not connected")
+	}
 	ss.tokenProxyMapLock.Lock()
 	for _, addr := range contractAddresses {
 		if proxy, ok := ss.tokenProxyMap[addr]; ok && proxy != nil {
@@ -88,6 +93,7 @@ func (ss *SMCService) RegisterEventListenContract(contractAddresses ...common.Ad
 		ss.tokenProxyMap[addr] = nil
 	}
 	ss.tokenProxyMapLock.Unlock()
+	return nil
 }
 
 // UnRegisterEventListenContract :

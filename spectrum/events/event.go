@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"time"
+
 	"github.com/SmartMeshFoundation/distributed-notary/spectrum/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 var EthereumTokenABI abi.ABI
@@ -49,4 +52,14 @@ BaseEvent :
 type BaseEvent struct {
 	Name        EventName
 	BlockNumber uint64
+	Time        time.Time
+}
+
+func createBaseEventFromLog(e *BaseEvent, name EventName, log types.Log) {
+	if e == nil {
+		e = &BaseEvent{}
+	}
+	e.Name = name
+	e.BlockNumber = log.BlockNumber
+	e.Time = time.Now()
 }

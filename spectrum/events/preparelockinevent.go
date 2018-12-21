@@ -24,9 +24,7 @@ func CreatePrepareLockinEvent(log types.Log) (event PrepareLockinEvent, err erro
 	if err != nil {
 		return
 	}
-	// BaseEvent
-	event.Name = EthereumTokenPrepareLockinEventName
-	event.BlockNumber = log.BlockNumber
+	createBaseEventFromLog(&event.BaseEvent, EthereumTokenPrepareLockinEventName, log)
 	// params
 	event.TokenAddress = log.Address
 	event.Account = e.Account

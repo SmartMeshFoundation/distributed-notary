@@ -23,9 +23,7 @@ func CreatePrepareLockoutEvent(log types.Log) (event PrepareLockoutEvent, err er
 	if err != nil {
 		return
 	}
-	// BaseEvent
-	event.Name = EthereumTokenPrePareLockedOutEventName
-	event.BlockNumber = log.BlockNumber
+	createBaseEventFromLog(&event.BaseEvent, EthereumTokenPrePareLockedOutEventName, log)
 	// params
 	event.TokenAddress = log.Address
 	event.Account = e.Account

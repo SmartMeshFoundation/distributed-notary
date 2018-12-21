@@ -20,9 +20,7 @@ func CreateLockinSecretEvent(log types.Log) (event LockinSecretEvent, err error)
 	if err != nil {
 		return
 	}
-	// BaseEvent
-	event.Name = EthereumTokenLockinSecretEventName
-	event.BlockNumber = log.BlockNumber
+	createBaseEventFromLog(&event.BaseEvent, EthereumTokenLockinSecretEventName, log)
 	// params
 	event.TokenAddress = log.Address
 	event.Secret = e.Secret
