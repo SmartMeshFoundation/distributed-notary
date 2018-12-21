@@ -14,9 +14,7 @@ type PrepareLockinEvent struct {
 	TokenAddress common.Address // prepareLockin发生的token合约地址
 	Account      common.Address // lockin的用户地址
 	// htlc
-	SecretHash common.Hash
-	Expiration uint64
-	Amount     *big.Int
+	Amount *big.Int
 }
 
 // CreatePrepareLockinEvent :
@@ -32,8 +30,6 @@ func CreatePrepareLockinEvent(log types.Log) (event PrepareLockinEvent, err erro
 	// params
 	event.TokenAddress = log.Address
 	event.Account = e.Account
-	event.SecretHash = e.SecretHash
-	event.Expiration = e.Expiration.Uint64()
 	event.Amount = e.Value
 	return
 }

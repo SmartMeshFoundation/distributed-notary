@@ -28,7 +28,7 @@ func CreatePrepareLockoutEvent(log types.Log) (event PrepareLockoutEvent, err er
 	event.BlockNumber = log.BlockNumber
 	// params
 	event.TokenAddress = log.Address
-	event.Account = e.From
+	event.Account = e.Account
 	event.Amount = e.Value
 	return
 }

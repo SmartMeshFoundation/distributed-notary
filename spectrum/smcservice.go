@@ -27,7 +27,7 @@ type SMCService struct {
 	host            string
 	lastBlockNumber uint64
 
-	tokenProxyMap     map[common.Address]*proxy.SideChainErc20Proxy
+	tokenProxyMap     map[common.Address]*proxy.SideChainErc20TokenProxy
 	tokenProxyMapLock sync.Mutex
 
 	connectStatus                  commons.ConnectStatus
@@ -55,7 +55,7 @@ func NewSMCService(host string, lastBlockNumber uint64, contractAddresses ...com
 		host:                       host,
 		connectStatus:              commons.Disconnected,
 		lastBlockNumber:            lastBlockNumber,
-		tokenProxyMap:              make(map[common.Address]*proxy.SideChainErc20Proxy),
+		tokenProxyMap:              make(map[common.Address]*proxy.SideChainErc20TokenProxy),
 		connectStatusChangeChanMap: make(map[string]chan commons.ConnectStatusChange),
 		eventChan:                  make(chan events.Event, 100),
 		eventsDone:                 make(map[common.Hash]uint64),
