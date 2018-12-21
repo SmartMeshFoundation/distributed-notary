@@ -81,6 +81,11 @@ func NewETHService(host string, lastBlockNumber uint64, contractAddresses ...com
 	return
 }
 
+// GetProxyByLockedEthereumAddress :
+func (ss *ETHService) GetProxyByLockedEthereumAddress(address common.Address) *proxy.LockedEthereumProxy {
+	return ss.lockedEthereumProxyMap[address]
+}
+
 // RegisterEventListenContract :
 func (ss *ETHService) RegisterEventListenContract(contractAddresses ...common.Address) error {
 	if ss.connectStatus != commons.Connected {

@@ -17,7 +17,7 @@ func TestChain(t *testing.T) {
 	var contractAddress common.Address
 	contractAddress = common.HexToAddress("0x720bF7a52fDb3f656E0E653E09C4e57DC1e655eE")
 	// 1. 创建service
-	smc, err := NewETHService(ethHost, 0, contractAddress)
+	eth, err := NewETHService(ethHost, 0, contractAddress)
 	if err != nil {
 		t.Error(err)
 		return
@@ -26,13 +26,22 @@ func TestChain(t *testing.T) {
 	//smc.RegisterEventListenContract(spectrumContract1Address)
 	//smc.UnRegisterEventListenContract(spectrumContract1Address)
 	// 3. 启动service.listener
-	smc.StartEventListener()
+	eth.StartEventListener()
 	go func() {
 		for {
-			e := <-smc.GetEventChan()
+			e := <-eth.GetEventChan()
 			fmt.Println("收到事件:\n", utils.ToJsonStringFormat(e))
 		}
 	}()
+
+	proxy := eth.GetProxyByLockedEthereumAddress(contractAddress)
+	name, err := proxy.Contract.Name(nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println("name : ", name)
+	// end
 	time.Sleep(30 * time.Second)
-	smc.StopEventListener()
+	eth.StopEventListener()
 }

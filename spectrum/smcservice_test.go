@@ -33,6 +33,14 @@ func TestChain(t *testing.T) {
 			fmt.Println("收到事件:\n", utils.ToJsonStringFormat(e))
 		}
 	}()
+	proxy := smc.GetProxyByTokenAddress(spectrumContract1Address)
+	name, err := proxy.Contract.Name(nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println("name : ", name)
+	// end
 	time.Sleep(30 * time.Second)
 	smc.StopEventListener()
 }

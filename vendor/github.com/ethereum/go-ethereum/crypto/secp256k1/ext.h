@@ -130,7 +130,7 @@ static int  secp256k1_ext_add_pubkey(
 	if (!secp256k1_ec_pubkey_parse(ctx, &pubkey[1], pubkeydata2, pubkeylen)) {
     		return 0;
     }
-    if (!secp256k1_ec_pubkey_combine(ctx,&pubkey_out,tmp,2)) {
+    if (!secp256k1_ec_pubkey_combine(ctx,&pubkey_out,(const secp256k1_pubkey * const *)tmp,2)) {
         return 0;
     }
     ret= secp256k1_ec_pubkey_serialize(ctx, pubkeydataout, &pubkeylen, &pubkey_out, SECP256K1_EC_UNCOMPRESSED);
