@@ -175,6 +175,12 @@
 			"revisionTime": "2018-08-28T13:59:05Z"
 		},
 		{
+			"checksumSHA1": "K6exl2ouL7d8cR2i378EzZOdRVI=",
+			"path": "github.com/howeyc/gopass",
+			"revision": "bf9dde6d0d2c004a008c27aaee91170c786f6db8",
+			"revisionTime": "2017-01-09T16:22:49Z"
+		},
+		{
 			"checksumSHA1": "6IA7ns1SUD3DWOwt+J+iNJNnQws=",
 			"origin": "github.com/SmartMeshFoundation/Photon/vendor/github.com/huin/goupnp",
 			"path": "github.com/huin/goupnp",
@@ -434,6 +440,12 @@
 			"revisionTime": "2018-08-02T22:11:18Z"
 		},
 		{
+			"checksumSHA1": "BGm8lKZmvJbf/YOJLeL1rw2WVjA=",
+			"path": "golang.org/x/crypto/ssh/terminal",
+			"revision": "56440b844dfe139a8ac053f4ecac0b20b79058f4",
+			"revisionTime": "2018-08-02T22:11:18Z"
+		},
+		{
 			"checksumSHA1": "Y+HGqEkYM15ir+J93MEaHdyFy0c=",
 			"origin": "github.com/ethereum/go-ethereum/vendor/golang.org/x/net/context",
 			"path": "golang.org/x/net/context",
@@ -477,6 +489,12 @@
 		{
 			"checksumSHA1": "f3Wxw5WLLQ3ss7Fn2lBZiMzj6NQ=",
 			"path": "golang.org/x/sys/unix",
+			"revision": "0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe",
+			"revisionTime": "2018-08-02T19:25:30Z"
+		},
+		{
+			"checksumSHA1": "Hi7BmkvZh4plNNLGDHfPnCKy3i8=",
+			"path": "golang.org/x/sys/windows",
 			"revision": "0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe",
 			"revisionTime": "2018-08-02T19:25:30Z"
 		},

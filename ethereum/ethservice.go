@@ -12,11 +12,11 @@ import (
 	"errors"
 
 	"github.com/SmartMeshFoundation/Photon/log"
-	"github.com/SmartMeshFoundation/Photon/utils"
 	"github.com/SmartMeshFoundation/distributed-notary/commons"
 	"github.com/SmartMeshFoundation/distributed-notary/ethereum/client"
 	"github.com/SmartMeshFoundation/distributed-notary/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/ethereum/proxy"
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -29,8 +29,8 @@ type ETHService struct {
 	host            string
 	lastBlockNumber uint64
 
-	tokenProxyMap     map[common.Address]*proxy.LockedEthereumProxy
-	tokenProxyMapLock sync.Mutex
+	lockedEthereumProxyMap map[common.Address]*proxy.LockedEthereumProxy
+	tokenProxyMapLock      sync.Mutex
 
 	connectStatus                  commons.ConnectStatus
 	connectStatusChangeChanMap     map[string]chan commons.ConnectStatusChange
@@ -57,7 +57,7 @@ func NewETHService(host string, lastBlockNumber uint64, contractAddresses ...com
 		host:                       host,
 		connectStatus:              commons.Disconnected,
 		lastBlockNumber:            lastBlockNumber,
-		tokenProxyMap:              make(map[common.Address]*proxy.LockedEthereumProxy),
+		lockedEthereumProxyMap:     make(map[common.Address]*proxy.LockedEthereumProxy),
 		connectStatusChangeChanMap: make(map[string]chan commons.ConnectStatusChange),
 		eventChan:                  make(chan events.Event, 100),
 		eventsDone:                 make(map[common.Hash]uint64),
@@ -71,8 +71,11 @@ func NewETHService(host string, lastBlockNumber uint64, contractAddresses ...com
 	if len(contractAddresses) > 0 {
 		for _, addr := range contractAddresses {
 			// init proxy
-			// TODO
-			ss.tokenProxyMap[addr] = nil
+			p, err2 := proxy.NewLockedEthereumProxy(ss.c, addr)
+			if err = err2; err != nil {
+				return
+			}
+			ss.lockedEthereumProxyMap[addr] = p
 		}
 	}
 	return
@@ -85,12 +88,15 @@ func (ss *ETHService) RegisterEventListenContract(contractAddresses ...common.Ad
 	}
 	ss.tokenProxyMapLock.Lock()
 	for _, addr := range contractAddresses {
-		if proxy, ok := ss.tokenProxyMap[addr]; ok && proxy != nil {
+		if proxy, ok := ss.lockedEthereumProxyMap[addr]; ok && proxy != nil {
 			continue
 		}
 		// init proxy
-		// TODO
-		ss.tokenProxyMap[addr] = nil
+		p, err := proxy.NewLockedEthereumProxy(ss.c, addr)
+		if err != nil {
+			return err
+		}
+		ss.lockedEthereumProxyMap[addr] = p
 	}
 	ss.tokenProxyMapLock.Unlock()
 	return nil
@@ -100,7 +106,7 @@ func (ss *ETHService) RegisterEventListenContract(contractAddresses ...common.Ad
 func (ss *ETHService) UnRegisterEventListenContract(contractAddresses ...common.Address) {
 	ss.tokenProxyMapLock.Lock()
 	for _, addr := range contractAddresses {
-		delete(ss.tokenProxyMap, addr)
+		delete(ss.lockedEthereumProxyMap, addr)
 	}
 	ss.tokenProxyMapLock.Unlock()
 }
@@ -287,7 +293,7 @@ func (ss *ETHService) loop() {
 			continue
 		}
 		if len(es) > 0 {
-			log.Trace(fmt.Sprintf("receive %d events of %d contracts between block %d - %d", len(es), len(ss.tokenProxyMap), currentBlock+1, lastedBlock))
+			log.Trace(fmt.Sprintf("receive %d events of %d contracts between block %d - %d", len(es), len(ss.lockedEthereumProxyMap), currentBlock+1, lastedBlock))
 		}
 
 		// refresh block number and notify PhotonService
@@ -319,9 +325,14 @@ func (ss *ETHService) loop() {
 
 func (ss *ETHService) refreshContractProxy() {
 	ss.tokenProxyMapLock.Lock()
-	for tokenAddress := range ss.tokenProxyMap {
-		// rebuild proxy TODO
-		ss.tokenProxyMap[tokenAddress] = nil
+	for addr := range ss.lockedEthereumProxyMap {
+		// rebuild proxy
+		p, err := proxy.NewLockedEthereumProxy(ss.c, addr)
+		if err != nil {
+			log.Error(fmt.Sprintf("ETHService refreshContractProxy err : %s", err.Error()))
+			continue
+		}
+		ss.lockedEthereumProxyMap[addr] = p
 	}
 	ss.tokenProxyMapLock.Unlock()
 }
@@ -338,13 +349,13 @@ func (ss *ETHService) queryAllEvents(fromBlockNumber uint64, toBlockNumber uint6
 }
 
 func (ss *ETHService) getLogsFromChain(fromBlock uint64, toBlock uint64) (logs []types.Log, err error) {
-	if len(ss.tokenProxyMap) == 0 {
+	if len(ss.lockedEthereumProxyMap) == 0 {
 		return
 	}
 	ss.tokenProxyMapLock.Lock()
 	defer ss.tokenProxyMapLock.Unlock()
 	var contractsAddress []common.Address
-	for key := range ss.tokenProxyMap {
+	for key := range ss.lockedEthereumProxyMap {
 		contractsAddress = append(contractsAddress, key)
 	}
 	var q *ethereum.FilterQuery
@@ -389,7 +400,7 @@ func (ss *ETHService) parserLogsToEventsAndSort(logs []types.Log) (es []events.E
 			}
 			es = append(es, e)
 		default:
-			log.Warn(fmt.Sprintf("ETHService.EventListener receive unkonwn type event from chain : \n%s\n", utils.StringInterface(l, 3)))
+			log.Warn(fmt.Sprintf("ETHService.EventListener receive unkonwn type event from chain : \n%s\n", utils.ToJsonStringFormat(l)))
 		}
 		// 记录处理流水
 		ss.eventsDone[l.TxHash] = l.BlockNumber

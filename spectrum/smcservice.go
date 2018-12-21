@@ -12,11 +12,11 @@ import (
 	"errors"
 
 	"github.com/SmartMeshFoundation/Photon/log"
-	"github.com/SmartMeshFoundation/Photon/utils"
 	"github.com/SmartMeshFoundation/distributed-notary/commons"
 	"github.com/SmartMeshFoundation/distributed-notary/spectrum/client"
 	"github.com/SmartMeshFoundation/distributed-notary/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/spectrum/proxy"
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -71,8 +71,11 @@ func NewSMCService(host string, lastBlockNumber uint64, contractAddresses ...com
 	if len(contractAddresses) > 0 {
 		for _, addr := range contractAddresses {
 			// init proxy
-			// TODO
-			ss.tokenProxyMap[addr] = nil
+			p, err2 := proxy.NewSideChainErc20TokenProxy(ss.c, addr)
+			if err = err2; err != nil {
+				return
+			}
+			ss.tokenProxyMap[addr] = p
 		}
 	}
 	return
@@ -89,8 +92,11 @@ func (ss *SMCService) RegisterEventListenContract(contractAddresses ...common.Ad
 			continue
 		}
 		// init proxy
-		// TODO
-		ss.tokenProxyMap[addr] = nil
+		p, err := proxy.NewSideChainErc20TokenProxy(ss.c, addr)
+		if err != nil {
+			return err
+		}
+		ss.tokenProxyMap[addr] = p
 	}
 	ss.tokenProxyMapLock.Unlock()
 	return nil
@@ -320,8 +326,13 @@ func (ss *SMCService) loop() {
 func (ss *SMCService) refreshContractProxy() {
 	ss.tokenProxyMapLock.Lock()
 	for tokenAddress := range ss.tokenProxyMap {
-		// rebuild proxy TODO
-		ss.tokenProxyMap[tokenAddress] = nil
+		// rebuild proxy
+		p, err := proxy.NewSideChainErc20TokenProxy(ss.c, tokenAddress)
+		if err != nil {
+			log.Error(fmt.Sprintf("SMCService refreshContractProxy err : %s", err.Error()))
+			continue
+		}
+		ss.tokenProxyMap[tokenAddress] = p
 	}
 	ss.tokenProxyMapLock.Unlock()
 }
@@ -389,7 +400,7 @@ func (ss *SMCService) parserLogsToEventsAndSort(logs []types.Log) (es []events.E
 			}
 			es = append(es, e)
 		default:
-			log.Warn(fmt.Sprintf("SmcService.EventListener receive unkonwn type event from chain : \n%s\n", utils.StringInterface(l, 3)))
+			log.Warn(fmt.Sprintf("SmcService.EventListener receive unkonwn type event from chain : \n%s\n", utils.ToJsonStringFormat(l)))
 		}
 		// 记录处理流水
 		ss.eventsDone[l.TxHash] = l.BlockNumber

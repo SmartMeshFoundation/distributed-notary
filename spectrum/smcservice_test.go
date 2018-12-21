@@ -13,11 +13,15 @@ import (
 
 func TestChain(t *testing.T) {
 	// params
-	spectrumHost := "http://127.0.0.1:9001"
+	spectrumHost := "http://192.168.124.13:28545"
 	var spectrumContract1Address common.Address
-	spectrumContract1Address = common.HexToAddress("0x63d6014616112d528A9cdc5e4A043267932E659d")
+	spectrumContract1Address = common.HexToAddress("0x0f75Cc3e01d6802bca296094cEcdBb88fc50e0a6")
 	// 1. 创建service
-	smc, _ := NewSMCService(spectrumHost, 0, spectrumContract1Address)
+	smc, err := NewSMCService(spectrumHost, 0, spectrumContract1Address)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	// 2. 注册需要监听的合约
 	//smc.RegisterEventListenContract(spectrumContract1Address)
 	//smc.UnRegisterEventListenContract(spectrumContract1Address)

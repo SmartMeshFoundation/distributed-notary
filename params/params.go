@@ -2,6 +2,9 @@ package params
 
 import (
 	"crypto/ecdsa"
+	"path/filepath"
+
+	"github.com/ethereum/go-ethereum/node"
 )
 
 //ListenIP my listen ip
@@ -29,4 +32,9 @@ type NotatoryInfo struct {
 	Name string
 	Addr string //how to contact with this notary
 	Key  *ecdsa.PublicKey
+}
+
+//DefaultKeyStoreDir keystore path of ethereum
+func DefaultKeyStoreDir() string {
+	return filepath.Join(node.DefaultDataDir(), "keystore")
 }
