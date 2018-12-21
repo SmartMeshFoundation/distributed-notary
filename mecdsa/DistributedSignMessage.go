@@ -782,7 +782,7 @@ func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bo
 	if err != nil {
 		return nil, false
 	}
-	pubkey2, _ := crypto.UnmarshalPubkey(pubkeybin)
+	pubkey2 := crypto.ToECDSAPub(pubkeybin)
 	addr2 := crypto.PubkeyToAddress(*pubkey2)
 	if addr2 == addr {
 		return bs, true
@@ -792,7 +792,7 @@ func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bo
 	if err != nil {
 		return nil, false
 	}
-	pubkey2, _ = crypto.UnmarshalPubkey(pubkeybin)
+	pubkey2 = crypto.ToECDSAPub(pubkeybin)
 	addr2 = crypto.PubkeyToAddress(*pubkey2)
 	if addr2 == addr {
 		return bs, true
