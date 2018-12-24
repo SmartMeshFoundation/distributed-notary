@@ -11,9 +11,9 @@ import (
 	"crypto/ecdsa"
 
 	"github.com/SmartMeshFoundation/distributed-notary/accounts"
-	ethcontracts "github.com/SmartMeshFoundation/distributed-notary/ethereum/contracts"
+	ethcontracts "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
+	smccontracts "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
-	smccontracts "github.com/SmartMeshFoundation/distributed-notary/spectrum/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethutils "github.com/ethereum/go-ethereum/cmd/utils"
 	"github.com/ethereum/go-ethereum/common"

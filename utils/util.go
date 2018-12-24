@@ -28,6 +28,12 @@ func NewRandomHash() common.Hash {
 	return Sha3(Random(64))
 }
 
+//NewRandomAddress generate a address,there maybe no corresponding priv key
+func NewRandomAddress() common.Address {
+	hash := Sha3([]byte(Random(10)))
+	return common.BytesToAddress(hash[12:])
+}
+
 func readFullOrPanic(r io.Reader, v []byte) int {
 	n, err := io.ReadFull(r, v)
 	if err != nil {
