@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// SignedKey :
 type SignedKey struct {
 	WI      share.SPrivKey
 	Gwi     *share.SPubKey
@@ -15,6 +16,8 @@ type SignedKey struct {
 	GammaI  share.SPrivKey
 	GGammaI *share.SPubKey
 }
+
+// SignMessgeModel :
 type SignMessgeModel struct {
 	Key             []byte `gorm:"primary_key"`
 	UsedPrivateKey  []byte //使用哪个privatekey foreign key
@@ -44,54 +47,68 @@ type SignMessgeModel struct {
 	Delta  []byte `gorm:"type:varchar(4096);"` //收集其他人发过来的delta 齐了以后求和,得到总delta
 	Status int    //签名进行到哪个地步了? 失败应该重新协商,
 }
+
+// Phase5A :
 type Phase5A struct {
 	Phase5Com1    *Phase5Com1
 	Phase5ADecom1 *Phase5ADecom1
 	Proof         *proofs.HomoELGamalProof
 }
+
+// Phase5C :
 type Phase5C struct {
 	*Phase5Com2
 	*Phase5DDecom2
 }
 
+// Phase5Com1 :
 type Phase5Com1 struct {
 	Com *big.Int
 }
+
+// Phase5Com2 :
 type Phase5Com2 struct {
 	Com *big.Int
 }
+
+// Phase5ADecom1 :
 type Phase5ADecom1 struct {
 	Vi          *share.SPubKey
 	Ai          *share.SPubKey
 	Bi          *share.SPubKey
 	BlindFactor *big.Int
 }
+
+// Phase5DDecom2 :
 type Phase5DDecom2 struct {
-	Ui          *share.SPubKey
+	UI          *share.SPubKey
 	Ti          *share.SPubKey
 	BlindFactor *big.Int
 }
 
+// MessageBPhase2 :
 type MessageBPhase2 struct {
 	MessageBGamma *MessageB
 	MessageBWi    *MessageB
 }
+
+// DeltaPhase3 :
 type DeltaPhase3 struct {
 	Delta share.SPrivKey
 }
 
-//广播给所有其他签名参与者
+// SignBroadcastPhase1 广播给所有其他签名参与者
 type SignBroadcastPhase1 struct {
 	Com         *big.Int
 	BlindFactor *big.Int
 }
 
-//一对一定向传播给指定公证人,要一对一传递到所有此次签名参与者,不需要保存到数据库中,临时用即可
+// MessageA 一对一定向传播给指定公证人,要一对一传递到所有此次签名参与者,不需要保存到数据库中,临时用即可
 type MessageA struct {
 	C []byte //paillier encion 文本
 }
 
-//对于A的计算结果,计算完毕立即返回给指定公证人
+// MessageB 对于A的计算结果,计算完毕立即返回给指定公证人
 type MessageB struct {
 	C            []byte //pailler加密文本
 	BProof       *proofs.DLogProof
@@ -99,6 +116,7 @@ type MessageB struct {
 	Beta         share.SPrivKey //这个能否分开
 }
 
+// SignMessage :
 type SignMessage struct {
 	Key             common.Hash
 	UsedPrivateKey  common.Hash //使用哪个privatekey
@@ -129,6 +147,8 @@ type SignMessage struct {
 	Status int                    //签名进行到哪个地步了? 失败应该重新协商,
 
 }
+
+// LocalSignature :
 type LocalSignature struct {
 	LI   share.SPrivKey
 	RhoI share.SPrivKey //ρi
@@ -266,10 +286,12 @@ func toSignMessageModle(p *SignMessage) *SignMessgeModel {
 	return p2
 }
 
+// NewSignMessage :
 func (db *DB) NewSignMessage(p *SignMessage) error {
 	return db.Create(toSignMessageModle(p)).Error
 }
 
+// LoadSignMessage :
 func (db *DB) LoadSignMessage(key common.Hash) (*SignMessage, error) {
 	var pi SignMessgeModel
 	err := db.Where(&SignMessgeModel{

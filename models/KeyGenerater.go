@@ -20,6 +20,7 @@ var errKeyLength = errors.New("key length error")
 /*
 每个公证人都有一个唯一的编号,0,1,2,3 ..., 不重复,
 */
+
 /*
 KeyGenBroadcastMessage1 第一步,广播证明自己随机数对应公钥,这是最终总公钥的一部分
 */
@@ -52,15 +53,20 @@ type KeyGenBroadcastMessage4 struct {
 }
 
 const (
+	// PrivateKeyNegotiateStatusInit :
 	PrivateKeyNegotiateStatusInit = iota
+	// PrivateKeyNegotiateStatusPubKey :
 	PrivateKeyNegotiateStatusPubKey
+	// PrivateKeyNegotiateStatusPaillierPubKey :
 	PrivateKeyNegotiateStatusPaillierPubKey
+	// PrivateKeyNegotiateStatusSecretShare :
 	PrivateKeyNegotiateStatusSecretShare
+	// PrivateKeyNegotiateStatusFinished :
 	PrivateKeyNegotiateStatusFinished
 )
 
 /*
-lockedin 过程中互相之间协商的结果
+PrivateKeyInfo lockedin 过程中互相之间协商的结果
 */
 type PrivateKeyInfo struct {
 	Key                 common.Hash
@@ -75,6 +81,8 @@ type PrivateKeyInfo struct {
 	LastPubkeyProof4    map[int]*KeyGenBroadcastMessage4 //第四步,校验所有人收到的xi对应的pubkey,加总和一开始的总公钥是相同的.
 	Status              int                              //Status
 }
+
+// PrivateKeyInfoModel :
 type PrivateKeyInfoModel struct {
 	Key                 []byte `gorm:"primary_key"` //a random hash
 	PublicKeyX          string // 此次协商生成的私钥对应的公钥 X,Y *big.Int
@@ -240,6 +248,7 @@ func (db *DB) LoadPrivatedKeyInfo(key common.Hash) (*PrivateKeyInfo, error) {
 	return fromPrivateKeyInfoModel(&pi), nil
 }
 
+// TestSave :
 func (db *DB) TestSave(p *PrivateKeyInfo) error {
 	return db.Save(toPrivateKeyInfoModel(p)).Error
 }
@@ -283,6 +292,8 @@ func (db *DB) KGUpdateSecretShareMessage3(p *PrivateKeyInfo) error {
 		Status:              PrivateKeyNegotiateStatusSecretShare,
 	}).Error
 }
+
+// KGUpdateLastPubKeyProof4 :
 func (db *DB) KGUpdateLastPubKeyProof4(p *PrivateKeyInfo) error {
 	return db.Model(&PrivateKeyInfoModel{
 		Key: p.Key[:],
@@ -291,6 +302,7 @@ func (db *DB) KGUpdateLastPubKeyProof4(p *PrivateKeyInfo) error {
 	}).Error
 }
 
+// KGUpdateKeyGenStatus :
 func (db *DB) KGUpdateKeyGenStatus(p *PrivateKeyInfo) error {
 	return db.Model(&PrivateKeyInfoModel{
 		Key: p.Key[:],
@@ -299,6 +311,7 @@ func (db *DB) KGUpdateKeyGenStatus(p *PrivateKeyInfo) error {
 	}).Error
 }
 
+// KGUpdateXI :
 func (db *DB) KGUpdateXI(p *PrivateKeyInfo) error {
 	return db.Model(&PrivateKeyInfoModel{
 		Key: p.Key[:],

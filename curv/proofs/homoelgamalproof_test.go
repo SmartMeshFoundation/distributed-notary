@@ -27,11 +27,11 @@ func TestCreateHomoELGamalProof(t *testing.T) {
 
 	Ex, Ey := S.ScalarBaseMult(witness.r.Bytes())
 	delta := &HomoElGamalStatement{
-		G: &share.SPubKey{S.Gx, S.Gy},
-		H: &share.SPubKey{Hx, Hy},
-		Y: &share.SPubKey{Yx, Yy},
-		D: &share.SPubKey{Dx, Dy},
-		E: &share.SPubKey{Ex, Ey},
+		G: &share.SPubKey{X: S.Gx, Y: S.Gy},
+		H: &share.SPubKey{X: Hx, Y: Hy},
+		Y: &share.SPubKey{X: Yx, Y: Yy},
+		D: &share.SPubKey{X: Dx, Y: Dy},
+		E: &share.SPubKey{X: Ex, Y: Ey},
 	}
 
 	prove := CreateHomoELGamalProof(witness, delta)
@@ -78,7 +78,7 @@ func TestCreateHashFromGE(t *testing.T) {
 	x2, y2 := share.Strtoxy("f30bc95889e783507bc64fcb6e9a8f5e83dc3b0917bf38759bdc79331edd179a399c0dd1ccf2793d83652c31848613baa10fb23333ec59b4147a6f18cd9ae6eb")
 	r := share.Str2bigint("eeaef14a20bfe6e2470b5ddfeef9ae3de244b47d2cd2cbb06785e861b035bca9")
 	rs := CreateHashFromGE([]*share.SPubKey{
-		{x1, y1}, {x2, y2},
+		{X: x1, Y: y1}, {X: x2, Y: y2},
 	})
 	if r.Cmp(rs.D) != 0 {
 		t.Error("not equal")

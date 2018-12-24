@@ -49,6 +49,7 @@ func Sha3(data ...[]byte) common.Hash {
 	return crypto.Keccak256Hash(data...)
 }
 
+// ToJsonStringFormat :
 func ToJsonStringFormat(v interface{}) string {
 	buf, err := json.MarshalIndent(v, "", "\t")
 	if err != nil {

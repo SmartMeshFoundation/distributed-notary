@@ -103,6 +103,7 @@ type PrivateKey struct {
 	n         *big.Int
 }
 
+// NewPrivateKey :
 func NewPrivateKey(p, q *big.Int) *PrivateKey {
 	n := new(big.Int).Mul(p, q)
 	pp := new(big.Int).Mul(p, p)
@@ -133,7 +134,7 @@ func NewPrivateKey(p, q *big.Int) *PrivateKey {
 	}
 }
 
-//for save
+// GetPQ :for save
 func (p *PrivateKey) GetPQ() (*big.Int, *big.Int) {
 	return p.p, p.q
 }
@@ -145,6 +146,7 @@ type PublicKey struct {
 	NSquared *big.Int
 }
 
+// Clone :
 func (p *PublicKey) Clone() *PublicKey {
 	return &PublicKey{
 		N:        new(big.Int).Set(p.N),
@@ -278,7 +280,7 @@ func Mul(pubKey *PublicKey, cipher []byte, constant []byte) []byte {
 	return new(big.Int).Exp(c, x, pubKey.NSquared).Bytes()
 }
 
-/// Extract randomness component of a zero ciphertext.
+// ExtractNroot randomness component of a zero ciphertext.
 func ExtractNroot(key *PrivateKey, z *big.Int) *big.Int {
 	zp, zq := crtDecompose(z, key.p, key.q)
 	rp := new(big.Int).Exp(zp, key.dp, key.p)

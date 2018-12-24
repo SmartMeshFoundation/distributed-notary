@@ -14,14 +14,14 @@ import (
 
 func TestEvaluatePolynomial(t *testing.T) {
 	cf := []share.SPrivKey{
-		{share.Str2bigint("34930839620e77f1a7560698d20469b9e5f102f20980d204f73e6d37bb91f18c")},
-		{share.Str2bigint("c5a8645d5d9c9f7362ccc677491a309c6e232573c7ed7a0bf1de65e25ac80772")},
-		{share.Str2bigint("723981eb59fe890d67e536a2efc91f53d56a2bd37db7a0694bc46fbeb77b059c")},
+		{D: share.Str2bigint("34930839620e77f1a7560698d20469b9e5f102f20980d204f73e6d37bb91f18c")},
+		{D: share.Str2bigint("c5a8645d5d9c9f7362ccc677491a309c6e232573c7ed7a0bf1de65e25ac80772")},
+		{D: share.Str2bigint("723981eb59fe890d67e536a2efc91f53d56a2bd37db7a0694bc46fbeb77b059c")},
 	}
 	//point := Str2bigint("0x0000000000000000000000000000000000000000000000000000000000000001")
 	//res := Str2bigint("0x0bf422f5b4f7012edc2057ba2fca02eb89c6519a955ee611efc0afdf3825620a")
-	secret_shares := EvaluatePolynomial(cf, []int{1, 2, 3, 4, 5})
-	t.Logf("secret_shares=%s", utils.StringInterface(secret_shares, 5))
+	secretShares := EvaluatePolynomial(cf, []int{1, 2, 3, 4, 5})
+	t.Logf("secret_shares=%s", utils.StringInterface(secretShares, 5))
 	//assert.EqualValues(t, res, secret_shares[0])
 	/*
 		15f8236f16cd73c8aff4bf2b6b071e208c7907767ae348d9827101f4303883a8

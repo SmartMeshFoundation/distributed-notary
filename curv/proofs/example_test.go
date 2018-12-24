@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"testing"
 )
 
 // This example demonstrates basic usage of this library.
@@ -12,7 +13,7 @@ import (
 //   * Homomorphic cipher text addition
 //   * Homomorphic addition with constant
 //   * Homomorphic multiplication with constant
-func ExampleTest() {
+func TestExample(t *testing.T) {
 	// Generate a 128-bit private key.
 	privKey, err := GenerateKey(rand.Reader, 128)
 	if err != nil {

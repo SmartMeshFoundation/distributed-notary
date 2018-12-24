@@ -18,19 +18,19 @@ func init() {
 
 func newFiveNotaryService() (ns0, ns1, ns2, ns3, ns4 *NotaryService) {
 	ns0 = &NotaryService{
-		NotaryShareArg: &params.NotaryShareArg{0},
+		NotaryShareArg: &params.NotaryShareArg{Index: 0},
 	}
 	ns1 = &NotaryService{
-		NotaryShareArg: &params.NotaryShareArg{1},
+		NotaryShareArg: &params.NotaryShareArg{Index: 1},
 	}
 	ns2 = &NotaryService{
-		NotaryShareArg: &params.NotaryShareArg{2},
+		NotaryShareArg: &params.NotaryShareArg{Index: 2},
 	}
 	ns3 = &NotaryService{
-		NotaryShareArg: &params.NotaryShareArg{3},
+		NotaryShareArg: &params.NotaryShareArg{Index: 3},
 	}
 	ns4 = &NotaryService{
-		NotaryShareArg: &params.NotaryShareArg{4},
+		NotaryShareArg: &params.NotaryShareArg{Index: 4},
 	}
 	return
 }

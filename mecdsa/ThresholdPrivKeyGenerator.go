@@ -68,7 +68,7 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase1PubKeyProof() (msg *models.Key
 	}
 	//用dlogproof 传播我自己的公钥片,包含相关的零知识证明
 	proof := proofs.Prove(ui)
-	msg = &models.KeyGenBroadcastMessage1{proof}
+	msg = &models.KeyGenBroadcastMessage1{Proof: proof}
 	return
 }
 
@@ -159,12 +159,12 @@ func (l *ThresholdPrivKeyGenerator) ReceivePhase2PaillierPubKeyProof(m *models.K
 	//不接受重复的消息
 	_, ok := p.PaillierKeysProof2[index]
 	if ok {
-		err = fmt.Errorf("Paillier pubkey roof for %d already exist", index)
+		err = fmt.Errorf("paillier pubkey roof for %d already exist", index)
 		return
 	}
 	//对方证明私钥我确实知道,虽然没有告诉我
 	if !m.CorrectKeyProof.Verify(m.PaillierPubkey) {
-		err = fmt.Errorf("Paillier pubkey roof for %d verify not pass", index)
+		err = fmt.Errorf("paillier pubkey roof for %d verify not pass", index)
 		return
 	}
 	if createCommitmentWithUserDefinedRandomNess(p.PubKeysProof1[index].Proof.PK.X, m.BlindFactor).Cmp(m.Com) != 0 {
@@ -259,7 +259,7 @@ func (l *ThresholdPrivKeyGenerator) ReceivePhase3SecretShare(msg *models.KeyGenB
 	finish = len(p.SecretShareMessage3) == params.ShareCount
 	//所有因素都凑齐了.可以计算我自己持有的私钥片 sum(f(i)) f(i)解释:公证人生成了n个多项式 ,把所有第i个多项式的结果相加)
 	if len(p.SecretShareMessage3) == params.ShareCount {
-		p.XI = share.SPrivKey{new(big.Int)}
+		p.XI = share.SPrivKey{D: new(big.Int)}
 		for _, s := range p.SecretShareMessage3 {
 			share.ModAdd(p.XI, s.SecretShare)
 		}
@@ -282,7 +282,7 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase4PubKeyProof() (msg *models.Key
 		panic("must wait for phase 3 finish")
 	}
 	proof := proofs.Prove(p.XI)
-	msg = &models.KeyGenBroadcastMessage4{proof}
+	msg = &models.KeyGenBroadcastMessage4{Proof: proof}
 	p.LastPubkeyProof4 = make(map[int]*models.KeyGenBroadcastMessage4)
 	p.LastPubkeyProof4[l.srv.NotaryShareArg.Index] = msg
 	err = l.db.KGUpdateLastPubKeyProof4(p)
@@ -330,6 +330,8 @@ func (l *ThresholdPrivKeyGenerator) ReceivePhase4VerifyTotalPubKey(msg *models.K
 	err = l.db.KGUpdateKeyGenStatus(p)
 	return
 }
+
+// EqualGE :
 func EqualGE(pubGB *share.SPubKey, mtaGB *share.SPubKey) bool {
 	return pubGB.X.Cmp(mtaGB.X) == 0 && pubGB.Y.Cmp(mtaGB.Y) == 0
 }

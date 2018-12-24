@@ -12,11 +12,11 @@ import (
 	"github.com/nkbai/log"
 )
 
-/// This is a proof of knowledge that a pair of group elements {D, E}
-/// form a valid homomorphic ElGamal encryption (”in the exponent”) using public key Y .
-/// (HEG is defined in B. Schoenmakers and P. Tuyls. Practical Two-Party Computation Based on the Conditional Gate)
-/// Specifically, the witness is ω = (x, r), the statement is δ = (G, H, Y, D, E).
-/// The relation R outputs 1 if D = xH+rY , E = rG (for the case of G=H this is ElGamal)
+// HomoELGamalProof This is a proof of knowledge that a pair of group elements {D, E}
+// form a valid homomorphic ElGamal encryption (”in the exponent”) using public key Y .
+// (HEG is defined in B. Schoenmakers and P. Tuyls. Practical Two-Party Computation Based on the Conditional Gate)
+// Specifically, the witness is ω = (x, r), the statement is δ = (G, H, Y, D, E).
+// The relation R outputs 1 if D = xH+rY , E = rG (for the case of G=H this is ElGamal)
 type HomoELGamalProof struct {
 	T  *share.SPubKey
 	A3 *share.SPubKey
@@ -24,15 +24,18 @@ type HomoELGamalProof struct {
 	z2 share.SPrivKey
 }
 
+// HomoElGamalWitness :
 type HomoElGamalWitness struct {
 	r share.SPrivKey
 	x share.SPrivKey
 }
 
+// NewHomoElGamalWitness :
 func NewHomoElGamalWitness(r, x share.SPrivKey) *HomoElGamalWitness {
 	return &HomoElGamalWitness{r.Clone(), x.Clone()}
 }
 
+// HomoElGamalStatement :
 type HomoElGamalStatement struct {
 	G *share.SPubKey
 	H *share.SPubKey
@@ -41,7 +44,7 @@ type HomoElGamalStatement struct {
 	E *share.SPubKey
 }
 
-//const
+//CreateHomoELGamalProof const
 func CreateHomoELGamalProof(w *HomoElGamalWitness, delta *HomoElGamalStatement) *HomoELGamalProof {
 	s1 := share.RandomPrivateKey()
 	s2 := share.RandomPrivateKey()
@@ -49,7 +52,7 @@ func CreateHomoELGamalProof(w *HomoElGamalWitness, delta *HomoElGamalStatement) 
 	A2x, A2y := S.ScalarMult(delta.Y.X, delta.Y.Y, s2.Bytes())
 	A3x, A3y := S.ScalarMult(delta.G.X, delta.G.Y, s2.Bytes())
 	tx, ty := share.PointAdd(A1x, A1y, A2x, A2y)
-	e := CreateHashFromGE([]*share.SPubKey{{tx, ty}, {A3x, A3y}, delta.G, delta.H, delta.Y, delta.D, delta.E})
+	e := CreateHashFromGE([]*share.SPubKey{{X: tx, Y: ty}, {X: A3x, Y: A3y}, delta.G, delta.H, delta.Y, delta.D, delta.E})
 	z1 := s1.Clone()
 	if w.x.D.Cmp(big.NewInt(0)) != 0 {
 		t := e.Clone()
@@ -61,15 +64,15 @@ func CreateHomoELGamalProof(w *HomoElGamalWitness, delta *HomoElGamalStatement) 
 	z2 := s2.Clone()
 	share.ModAdd(z2, t)
 	return &HomoELGamalProof{
-		T:  &share.SPubKey{tx, ty},
-		A3: &share.SPubKey{A3x, A3y},
+		T:  &share.SPubKey{X: tx, Y: ty},
+		A3: &share.SPubKey{X: A3x, Y: A3y},
 		z1: z1,
 		z2: z2,
 	}
 
 }
 
-//const 不会修改proof
+//Verify : const 不会修改proof
 func (proof *HomoELGamalProof) Verify(delta *HomoElGamalStatement) bool {
 	e := CreateHashFromGE([]*share.SPubKey{proof.T, proof.A3, delta.G, delta.H, delta.Y, delta.D, delta.E})
 	//z12=z1*H+z2*Y
@@ -93,6 +96,8 @@ func (proof *HomoELGamalProof) Verify(delta *HomoElGamalStatement) bool {
 	}
 	return false
 }
+
+// CreateHashFromGE :
 func CreateHashFromGE(ge []*share.SPubKey) share.SPrivKey {
 	var bs [][]byte
 	for _, g := range ge {
@@ -123,6 +128,6 @@ func CreateHashFromGE(ge []*share.SPubKey) share.SPrivKey {
 	return new(big.Int).SetBytes(digest.Sum([]byte{}))
 }*/
 
-func pk_to_key_slice() {
+func pkToKeySlice() {
 
 }

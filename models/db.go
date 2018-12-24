@@ -13,6 +13,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"   //for gorm
 )
 
+// DB :
 type DB struct {
 	*gorm.DB
 }
@@ -55,6 +56,7 @@ func SetupTestDB() (db *DB) {
 	return SetupTestDB2("test.db")
 }
 
+// SetupTestDB2 :
 func SetupTestDB2(name string) (db *DB) {
 	dbPath := filepath.Join(os.TempDir(), name)
 	err := os.Remove(dbPath)

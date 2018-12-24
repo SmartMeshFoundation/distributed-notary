@@ -11,9 +11,10 @@ import (
 	"github.com/nkbai/goutils"
 )
 
+// S :
 var S = secp256k1.S256()
 
-//证明Pk这个公钥对应的私钥,我有
+//DLogProof 证明Pk这个公钥对应的私钥,我有
 type DLogProof struct {
 	PK                *share.SPubKey
 	PkTRandCommitment *share.SPubKey
@@ -27,6 +28,8 @@ func (d *DLogProof) String() string {
 		d.ChallengeResponse,
 	)
 }
+
+// Prove :
 func Prove(sk share.SPrivKey) *DLogProof {
 	//todo fixme bai
 	//key.D = big.NewInt(37)
@@ -44,13 +47,13 @@ func Prove(sk share.SPrivKey) *DLogProof {
 
 	challengeResponse := share.ModSub(skTRandCommitment, challengeSK)
 	return &DLogProof{
-		PK:                &share.SPubKey{pkx, pky},
-		PkTRandCommitment: &share.SPubKey{randCommitmentX, randCommitmentY},
+		PK:                &share.SPubKey{X: pkx, Y: pky},
+		PkTRandCommitment: &share.SPubKey{X: randCommitmentX, Y: randCommitmentY},
 		ChallengeResponse: challengeResponse,
 	}
 }
 
-//不会修改任何proof的内容 const
+//Verify 不会修改任何proof的内容 const
 func Verify(proof *DLogProof) bool {
 	challenge := utils.Sha256(
 		proof.PkTRandCommitment.X.Bytes(),

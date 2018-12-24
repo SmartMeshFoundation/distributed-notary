@@ -11,16 +11,19 @@ import (
 	"github.com/nkbai/log"
 )
 
+// ShamirSecretSharing :
 type ShamirSecretSharing struct {
 	Threshold  int
 	ShareCount int
 }
 
+// VerifiableSS :
 type VerifiableSS struct {
 	Parameters  ShamirSecretSharing
 	Commitments []*share.SPubKey //多项式的commit,第0个,也就是常数项,是secret对应的公钥
 }
 
+// Share :
 func Share(t, n int, secret share.SPrivKey) (*VerifiableSS, []share.SPrivKey) {
 	poly := SamplePolynomial(t, secret)
 	var index []int
@@ -32,7 +35,7 @@ func Share(t, n int, secret share.SPrivKey) (*VerifiableSS, []share.SPrivKey) {
 	var commitments []*share.SPubKey
 	for _, p := range poly {
 		x, y := share.S.ScalarBaseMult(p.D.Bytes())
-		commitments = append(commitments, &share.SPubKey{x, y})
+		commitments = append(commitments, &share.SPubKey{X: x, Y: y})
 	}
 
 	return &VerifiableSS{
@@ -43,12 +46,17 @@ func Share(t, n int, secret share.SPrivKey) (*VerifiableSS, []share.SPrivKey) {
 		Commitments: commitments,
 	}, secretShares
 }
+
+// SamplePolynomial :
 func SamplePolynomial(t int, coef0 share.SPrivKey) []share.SPrivKey {
 	var bs []share.SPrivKey
 	bs = append(bs, coef0)
 	for i := 0; i < t; i++ {
-		k, _ := crypto.GenerateKey()
-		bs = append(bs, share.SPrivKey{k.D})
+		k, err := crypto.GenerateKey()
+		if err != nil {
+			panic(err)
+		}
+		bs = append(bs, share.SPrivKey{D: k.D})
 	}
 	//bs = []*big.Int{
 	//	coef0,
@@ -59,6 +67,7 @@ func SamplePolynomial(t int, coef0 share.SPrivKey) []share.SPrivKey {
 	return bs
 }
 
+// EvaluatePolynomial :
 func EvaluatePolynomial(coefficients []share.SPrivKey, index []int) []share.SPrivKey {
 	var bs []share.SPrivKey
 	for i := 0; i < len(index); i++ {
@@ -76,10 +85,10 @@ func EvaluatePolynomial(coefficients []share.SPrivKey, index []int) []share.SPri
 	return bs
 }
 
-//验证我share出去的secret share,和index一一对应关系,index是下标加1 const
+//ValidateShare : 验证我share出去的secret share,和index一一对应关系,index是下标加1 const
 func (v *VerifiableSS) ValidateShare(secretShare share.SPrivKey, index int) bool {
 	x, y := share.S.ScalarBaseMult(secretShare.D.Bytes())
-	ssPoint := &share.SPubKey{x, y}
+	ssPoint := &share.SPubKey{X: x, Y: y}
 	indexFe := big.NewInt(int64(index))
 	indexFe = indexFe.Mod(indexFe, share.S.N)
 	l := len(v.Commitments)
@@ -94,7 +103,7 @@ func (v *VerifiableSS) ValidateShare(secretShare share.SPrivKey, index int) bool
 		//log.Trace(fmt.Sprintf("x1=%s,y1=%s", x.Text(16), y.Text(16)))
 		//x, y = S.Add(head.X, head.Y, x, y)
 		//log.Trace(fmt.Sprintf("after add %s", Xytostr(x, y)))
-		head = &share.SPubKey{x, y}
+		head = &share.SPubKey{X: x, Y: y}
 	}
 	log.Trace(fmt.Sprintf("sspoint=%s,commit_to_point=%s", utils.StringInterface(ssPoint, 3), utils.StringInterface(head, 3)))
 	return ssPoint.X.Cmp(head.X) == 0 && ssPoint.Y.Cmp(head.Y) == 0
@@ -145,7 +154,7 @@ func (v *VerifiableSS) MapShareToNewParams(index int, s []int) share.SPrivKey {
    // This is obviously less general than `newton_interpolation_general` as we
    // only get a single value, but it is much faster.
 */
-func lagrange_interpolation_at_zero(points []share.SPrivKey, values []share.SPrivKey) share.SPrivKey {
+func lagrangeInterpolationAtZero(points []share.SPrivKey, values []share.SPrivKey) share.SPrivKey {
 	var lagCoef []share.SPrivKey
 	for i := 0; i < len(values); i++ {
 		xi := points[i]
@@ -180,7 +189,7 @@ func (v *VerifiableSS) reconstructLimit() int {
 	return v.Parameters.Threshold + 1
 }
 
-//根据部分信息,还原私钥 const func
+// Reconstruct : 根据部分信息,还原私钥 const func
 func (v *VerifiableSS) Reconstruct(indices []int, shares []share.SPrivKey) share.SPrivKey {
 	if len(shares) != len(indices) {
 		panic("arg error")
@@ -193,5 +202,5 @@ func (v *VerifiableSS) Reconstruct(indices []int, shares []share.SPrivKey) share
 		b := big.NewInt(int64(i + 1))
 		points = append(points, share.BigInt2PrivateKey(b))
 	}
-	return lagrange_interpolation_at_zero(points, shares)
+	return lagrangeInterpolationAtZero(points, shares)
 }
