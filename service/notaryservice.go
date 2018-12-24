@@ -16,9 +16,15 @@ type NotaryService struct {
 }
 
 // OnChainEvent 链上事件逻辑处理
-func (ns *NotaryService) OnChainEvent(e chain.Event) error {
+func (ns *NotaryService) OnChainEvent(e chain.Event) (needRemove bool, err error) {
 	//TODO
-	return nil
+	return
+}
+
+// GetSCTokenAddress 获取侧链Token合约地址
+func (ns *NotaryService) GetSCTokenAddress() common.Address {
+	// TODO
+	return utils.EmptyAddress
 }
 
 // GetMCContractAddress 获取主链合约地址

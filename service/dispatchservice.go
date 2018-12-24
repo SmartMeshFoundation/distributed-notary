@@ -3,6 +3,8 @@ package service
 import (
 	"fmt"
 
+	"sync"
+
 	"github.com/SmartMeshFoundation/Photon/log"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum"
@@ -15,8 +17,12 @@ import (
 
 /*
 DispatchService :
-核心调度service,常驻,单例
-管理所有chains, notaryService及所有消息分发
+核心调度service,管理所有chains, notaryService及所有消息分发, 单例,常驻3个线程,分别为:
+	1. chainEventDispatcherLoop 事件调度线程,负责监听所有链的所有事件并分发至对应的notaryService
+	2. APIRequestDispatcherLoop 用户请求调度线程
+	3. NotaryMessageDispatcherLoop 节点消息调度线程
+
+调度器不参与错误处理,仅记录日志
 */
 type DispatchService struct {
 	/*
@@ -26,7 +32,8 @@ type DispatchService struct {
 	/*
 		当前正在进行的公证行为
 	*/
-	scToken2NotaryServiceMap map[common.Address]*NotaryService
+	scToken2NotaryServiceMap     map[common.Address]*NotaryService
+	scToken2NotaryServiceMapLock sync.Mutex
 
 	quitChan chan struct{}
 }
@@ -96,10 +103,17 @@ func (ds *DispatchService) chainEventDispatcherLoop(c chain.Chain) {
 func (ds *DispatchService) dispatchEvent2All(e chain.Event) {
 	logPrefix := fmt.Sprintf("Chain %s : ", e.GetChainName())
 	var err error
-	for _, s := range ds.scToken2NotaryServiceMap {
-		err = s.OnChainEvent(e)
+	var needRemove bool
+	for scTokenAddress, service := range ds.scToken2NotaryServiceMap {
+		needRemove, err = service.OnChainEvent(e)
 		if err != nil {
 			log.Error(fmt.Sprintf("%s notary service err when deal event: err=%s,event:\n%s\n", logPrefix, err.Error(), utils.ToJsonStringFormat(e)))
+		}
+		if needRemove {
+			ds.scToken2NotaryServiceMapLock.Lock()
+			delete(ds.scToken2NotaryServiceMap, scTokenAddress)
+			ds.scToken2NotaryServiceMapLock.Unlock()
+			log.Info(fmt.Sprintf("%s remove notary service of SCToken %s", logPrefix, scTokenAddress.String()))
 		}
 	}
 }
@@ -108,12 +122,18 @@ func (ds *DispatchService) dispatchEvent(e chain.Event) {
 	logPrefix := fmt.Sprintf("Chain %s : ", e.GetChainName())
 	if e.GetSCTokenAddress() == utils.EmptyAddress {
 		// 主链事件,根据主链合约地址FromAddress调度,遍历,后续可优化,维护一个主链合约地址-SCToken地址的map即可
-		for _, service := range ds.scToken2NotaryServiceMap {
+		for scTokenAddress, service := range ds.scToken2NotaryServiceMap {
 			if service.GetMCContractAddress() == e.GetFromAddress() {
 				// 事件业务逻辑处理
-				err := service.OnChainEvent(e)
+				needRemove, err := service.OnChainEvent(e)
 				if err != nil {
 					log.Error(fmt.Sprintf("%s notary service err when deal event: err=%s,event:\n%s\n", logPrefix, err.Error(), utils.ToJsonStringFormat(e)))
+				}
+				if needRemove {
+					ds.scToken2NotaryServiceMapLock.Lock()
+					delete(ds.scToken2NotaryServiceMap, scTokenAddress)
+					ds.scToken2NotaryServiceMapLock.Unlock()
+					log.Info(fmt.Sprintf("%s remove notary service of SCToken %s", logPrefix, scTokenAddress.String()))
 				}
 				// 每个事件应该只有一个对应service,所以这里处理完毕直接return ???
 				return
@@ -130,9 +150,15 @@ func (ds *DispatchService) dispatchEvent(e chain.Event) {
 			return
 		}
 		// 事件业务逻辑处理
-		err := service.OnChainEvent(e)
+		needRemove, err := service.OnChainEvent(e)
 		if err != nil {
 			log.Error(fmt.Sprintf("%s notary service err when deal event: err=%s,event:\n%s\n", logPrefix, err.Error(), utils.ToJsonStringFormat(e)))
+		}
+		if needRemove {
+			ds.scToken2NotaryServiceMapLock.Lock()
+			delete(ds.scToken2NotaryServiceMap, e.GetSCTokenAddress())
+			ds.scToken2NotaryServiceMapLock.Unlock()
+			log.Info(fmt.Sprintf("%s remove notary service of SCToken %s", logPrefix, e.GetSCTokenAddress().String()))
 		}
 	}
 }
