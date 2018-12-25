@@ -7,14 +7,14 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// LockinSecretEvent :
-type LockinSecretEvent struct {
+// LockoutSecretEvent :
+type LockoutSecretEvent struct {
 	*chain.BaseEvent
 	Secret common.Hash // 用户提交到合约的密码
 }
 
 // CreateLockoutSecretEvent :
-func CreateLockoutSecretEvent(log types.Log) (event LockinSecretEvent, err error) {
+func CreateLockoutSecretEvent(log types.Log) (event LockoutSecretEvent, err error) {
 	e := &contracts.LockedEthereumLockoutSecret{}
 	err = UnpackLog(&lockedEthereumABI, e, LockedEthereumLockoutSecretEventName, &log)
 	if err != nil {

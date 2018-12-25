@@ -10,8 +10,8 @@ import (
 )
 
 func TestCreateBaseEvent(t *testing.T) {
-	var e LockinSecretEvent
-	createBaseEventFromLog(&e.BaseEvent, LockedEthereumLockoutSecretEventName, types.Log{
+	var e LockoutSecretEvent
+	e.BaseEvent = createBaseEventFromEthereumLog(LockedEthereumLockoutSecretEventName, types.Log{
 		BlockNumber: 1,
 	})
 	fmt.Println(utils.ToJsonStringFormat(e))
