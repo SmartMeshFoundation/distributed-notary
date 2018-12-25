@@ -130,10 +130,8 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Request) {
 		3. Request 不带key且不带SCToken的请求,一定为管理用户的非交易请求,下发至SystemService
 		TODO
 	*/
-	// 跨链交易相关请求,下发至对应service
 	switch r := req.(type) {
 	case api.CrossChainRequest:
-		// 跨链交易相关请求,下发至对应service
 		service, ok := ds.scToken2CrossChainServiceMap[r.GetSCTokenAddress()]
 		if !ok {
 			log.Error(fmt.Sprintf("%s receive request with out notary service : \n%s\n", logPrefix, utils.ToJsonStringFormat(req)))
@@ -143,9 +141,9 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Request) {
 		go service.OnRequest(req)
 		return
 	case api.NotaryRequest:
-		// TODO
+		go ds.notaryService.OnRequest(req)
 	case api.Request:
-		// TODO
+		go ds.systemService.OnRequest(req)
 	}
 }
 
