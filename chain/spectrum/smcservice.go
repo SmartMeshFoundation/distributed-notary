@@ -292,10 +292,10 @@ func (ss *SMCService) loop() {
 		} else {
 			fromBlockNumber = currentBlock - 2*confirmBlockNumber
 		}
-		if currentBlock < confirmBlockNumber {
+		if lastedBlock < confirmBlockNumber {
 			toBlockNumber = 0
 		} else {
-			toBlockNumber = currentBlock - confirmBlockNumber
+			toBlockNumber = lastedBlock - confirmBlockNumber
 		}
 		// get all events between currentBlock and confirmBlock
 		es, err := ss.queryAllEvents(fromBlockNumber, toBlockNumber)
