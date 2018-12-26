@@ -63,14 +63,14 @@ func TestRequest(t *testing.T) {
 		for {
 			resp := <-d.GetResponseChan()
 			fmt.Printf("receive response :\n%s\n", utils.ToJsonStringFormat(resp))
-			if resp.ErrorCode == SUCCESS {
+			if resp.ErrorCode == ErrorCodeSuccess {
 				return
 			}
 		}
 	}()
-	d.WriteErrorResponse(EXCEPTION, "custom errorMsg")
+	d.WriteErrorResponse(ErrorCodeException, "custom errorMsg")
 	time.Sleep(time.Second)
-	d.WriteErrorResponse(EXCEPTION)
+	d.WriteErrorResponse(ErrorCodePermissionDenied)
 	time.Sleep(time.Second)
 	d.WriteResponse(NewFailResponse("dsa"))
 	time.Sleep(time.Second)
