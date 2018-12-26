@@ -127,12 +127,11 @@ func (ss *ETHService) StartEventListener() error {
 }
 
 // StopEventListener :
-func (ss *ETHService) StopEventListener() error {
+func (ss *ETHService) StopEventListener() {
 	if ss.listenerQuitChan != nil {
 		close(ss.listenerQuitChan)
 		ss.listenerQuitChan = nil
 	}
-	return nil
 }
 
 // GetEventChan :

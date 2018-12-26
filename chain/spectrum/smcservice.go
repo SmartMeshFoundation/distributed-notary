@@ -127,12 +127,11 @@ func (ss *SMCService) StartEventListener() error {
 }
 
 // StopEventListener :
-func (ss *SMCService) StopEventListener() error {
+func (ss *SMCService) StopEventListener() {
 	if ss.listenerQuitChan != nil {
 		close(ss.listenerQuitChan)
 		ss.listenerQuitChan = nil
 	}
-	return nil
 }
 
 // GetEventChan :

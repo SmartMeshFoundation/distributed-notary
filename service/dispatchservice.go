@@ -64,15 +64,27 @@ func NewDispatchService(userAPI *userapi.UserAPI, notaryAPI *notaryapi.NotaryAPI
 		scToken2CrossChainServiceMap: make(map[common.Address]*CrossChainService),
 	}
 	/*
-		初始化所有service TODO
+		初始化事件监听 TODO
 	*/
 	ds.chainMap[spectrumevents.ChainName], err = spectrum.NewSMCService("", 0)
 	ds.chainMap[ethereumevents.ChainName], err = ethereum.NewETHService("", 0)
+	/*
+		初始化所有service TODO
+	*/
 	return
 }
 
 // Start :
-func (ds *DispatchService) Start() {
+func (ds *DispatchService) Start() (err error) {
+	/*
+		启动所有链的事件监听
+	*/
+	for _, c := range ds.chainMap {
+		err = c.StartEventListener()
+		if err != nil {
+			return
+		}
+	}
 	/*
 		启动restful请求调度线程,包含用户及公证人节点的restful请求
 	*/
@@ -84,10 +96,17 @@ func (ds *DispatchService) Start() {
 		go ds.chainEventDispatcherLoop(v)
 	}
 	log.Info("DispatchService start complete ...")
+	return
 }
 
-// StopAll :
-func (ds *DispatchService) StopAll() {
+// Stop :
+func (ds *DispatchService) Stop() {
+	/*
+		关闭所有链的事件监听
+	*/
+	for _, c := range ds.chainMap {
+		c.StopEventListener()
+	}
 	close(ds.quitChan)
 }
 
