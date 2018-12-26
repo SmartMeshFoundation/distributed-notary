@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"time"
+
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 )
 
@@ -56,4 +58,30 @@ func TestRequest(t *testing.T) {
 	case NotaryRequest:
 		fmt.Println("deal NotaryRequest")
 	}
+	fmt.Println("----------------------")
+	go func() {
+		for {
+			resp := <-d.GetResponseChan()
+			fmt.Printf("receive response :\n%s\n", utils.ToJsonStringFormat(resp))
+			if resp.ErrorCode == SUCCESS {
+				return
+			}
+		}
+	}()
+	d.WriteErrorResponse(EXCEPTION, "custom errorMsg")
+	time.Sleep(time.Second)
+	d.WriteErrorResponse(EXCEPTION)
+	time.Sleep(time.Second)
+	d.WriteResponse(NewFailResponse("dsa"))
+	time.Sleep(time.Second)
+	d.WriteResponse(NewFailResponse("", "custom errorMsg-2"))
+	time.Sleep(time.Second)
+	d.WriteSuccessResponse(struct {
+		A string      `json:"a"`
+		B interface{} `json:"b"`
+	}{
+		A: "aaaaa",
+		B: 12567,
+	})
+	time.Sleep(time.Second)
 }
