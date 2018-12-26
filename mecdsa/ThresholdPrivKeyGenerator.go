@@ -20,7 +20,7 @@ ThresholdPrivKeyGenerator 一次协商私钥的过程,
 没有一个公证人知道完整的私钥. 但是后续这些公证人可以在不暴露自己私钥片的基础上进行签名.
 */
 type ThresholdPrivKeyGenerator struct {
-	srv          *NotaryService
+	selfNotaryID int
 	db           *models.DB
 	PrivateKeyID common.Hash //此次协商唯一的key
 }
@@ -30,9 +30,9 @@ NewThresholdPrivKeyGenerator 生成此次协商起始所需参数
 key: 此次协商唯一标志
 暗含的其他公证人都已知的信息,包括 ThresholdCount和ShareCount
 */
-func NewThresholdPrivKeyGenerator(srv *NotaryService, db *models.DB, privateKeyID common.Hash) *ThresholdPrivKeyGenerator {
+func NewThresholdPrivKeyGenerator(selfNotaryID int, db *models.DB, privateKeyID common.Hash) *ThresholdPrivKeyGenerator {
 	return &ThresholdPrivKeyGenerator{
-		srv:          srv,
+		selfNotaryID: selfNotaryID,
 		db:           db,
 		PrivateKeyID: privateKeyID,
 	}
@@ -143,7 +143,7 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase2PaillierKeyProof() (msg *model
 		BlindFactor:     blindFactor,
 	}
 	p.PaillierKeysProof2 = make(map[int]*models.KeyGenBroadcastMessage2)
-	p.PaillierKeysProof2[l.srv.NotaryShareArg.Index] = msg
+	p.PaillierKeysProof2[l.selfNotaryID] = msg
 	//保存自己的信息到数据库中,方便后续计算使用
 	err = l.db.KGUpdatePaillierKeysProof2(p)
 	return
@@ -206,18 +206,18 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase3SecretShare() (msgs map[int]*m
 	vss, secretShares := feldman.Share(params.ThresholdCount, params.ShareCount, p.UI)
 	msg := &models.KeyGenBroadcastMessage3{
 		Vss:         vss,
-		SecretShare: secretShares[l.srv.NotaryShareArg.Index],
-		Index:       l.srv.NotaryShareArg.Index,
+		SecretShare: secretShares[l.selfNotaryID],
+		Index:       l.selfNotaryID,
 	}
 	p.SecretShareMessage3 = make(map[int]*models.KeyGenBroadcastMessage3)
-	p.SecretShareMessage3[l.srv.NotaryShareArg.Index] = msg
+	p.SecretShareMessage3[l.selfNotaryID] = msg
 	err = l.db.KGUpdateSecretShareMessage3(p)
 	if err != nil {
 		return
 	}
 	msgs = make(map[int]*models.KeyGenBroadcastMessage3)
 	for i := 0; i < params.ShareCount; i++ {
-		if i == l.srv.NotaryShareArg.Index {
+		if i == l.selfNotaryID {
 			continue
 		}
 		msg := &models.KeyGenBroadcastMessage3{
@@ -247,7 +247,7 @@ func (l *ThresholdPrivKeyGenerator) ReceivePhase3SecretShare(msg *models.KeyGenB
 		return
 	}
 	//必须经过feldman vss验证,符合规则.如果某个公证人给的secret share发错了,比如s11发送给了2号公证人,这里会检测出错误.
-	if !msg.Vss.ValidateShare(msg.SecretShare, l.srv.NotaryShareArg.Index+1) {
+	if !msg.Vss.ValidateShare(msg.SecretShare, l.selfNotaryID+1) {
 		err = fmt.Errorf("secret share error for %d", index)
 		return
 	}
@@ -284,7 +284,7 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase4PubKeyProof() (msg *models.Key
 	proof := proofs.Prove(p.XI)
 	msg = &models.KeyGenBroadcastMessage4{Proof: proof}
 	p.LastPubkeyProof4 = make(map[int]*models.KeyGenBroadcastMessage4)
-	p.LastPubkeyProof4[l.srv.NotaryShareArg.Index] = msg
+	p.LastPubkeyProof4[l.selfNotaryID] = msg
 	err = l.db.KGUpdateLastPubKeyProof4(p)
 	return
 }

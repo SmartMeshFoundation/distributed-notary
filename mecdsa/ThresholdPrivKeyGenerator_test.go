@@ -16,50 +16,31 @@ func init() {
 	params.ShareCount = 5
 }
 
-func newFiveNotaryService() (ns0, ns1, ns2, ns3, ns4 *NotaryService) {
-	ns0 = &NotaryService{
-		NotaryShareArg: &params.NotaryShareArg{Index: 0},
-	}
-	ns1 = &NotaryService{
-		NotaryShareArg: &params.NotaryShareArg{Index: 1},
-	}
-	ns2 = &NotaryService{
-		NotaryShareArg: &params.NotaryShareArg{Index: 2},
-	}
-	ns3 = &NotaryService{
-		NotaryShareArg: &params.NotaryShareArg{Index: 3},
-	}
-	ns4 = &NotaryService{
-		NotaryShareArg: &params.NotaryShareArg{Index: 4},
-	}
-	return
-}
 func newFiveNotaryLockedIn() (l0, l1, l2, l3, l4 *ThresholdPrivKeyGenerator) {
-	ns0, ns1, ns2, ns3, ns4 := newFiveNotaryService()
 	key := utils.NewRandomHash()
 	l0 = &ThresholdPrivKeyGenerator{
 		db:           models.SetupTestDB2("l0"),
-		srv:          ns0,
+		selfNotaryID: 0,
 		PrivateKeyID: key,
 	}
 	l1 = &ThresholdPrivKeyGenerator{
 		db:           models.SetupTestDB2("l1"),
-		srv:          ns1,
+		selfNotaryID: 1,
 		PrivateKeyID: key,
 	}
 	l2 = &ThresholdPrivKeyGenerator{
 		db:           models.SetupTestDB2("l2"),
-		srv:          ns2,
+		selfNotaryID: 2,
 		PrivateKeyID: key,
 	}
 	l3 = &ThresholdPrivKeyGenerator{
 		db:           models.SetupTestDB2("l3"),
-		srv:          ns3,
+		selfNotaryID: 3,
 		PrivateKeyID: key,
 	}
 	l4 = &ThresholdPrivKeyGenerator{
 		db:           models.SetupTestDB2("l4"),
-		srv:          ns4,
+		selfNotaryID: 4,
 		PrivateKeyID: key,
 	}
 	return

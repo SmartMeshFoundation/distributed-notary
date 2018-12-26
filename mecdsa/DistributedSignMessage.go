@@ -25,7 +25,6 @@ DistributedSignMessage 由某个公证人主导发起,其他一组公证人参�
 */
 type DistributedSignMessage struct {
 	db                 *models.DB
-	srv                *NotaryService
 	Key                common.Hash               //此次签名的唯一key,由签名主导公证人指定
 	PrivateKey         common.Hash               //此次签名用到的分布式私钥, 在数据库中的key
 	Message            []byte                    //此次签名的消息
@@ -36,7 +35,7 @@ type DistributedSignMessage struct {
 	PublicKey          *share.SPubKey            //上次协商生成的总公钥
 	Vss                *feldman.VerifiableSS     //上次协商生成的feldman vss
 	L                  *models.SignMessage       //此次签名生成过程中需要保存到数据库的信息
-	index              int
+	selfNotaryID       int
 }
 
 /*
@@ -44,19 +43,18 @@ NewDistributedSignMessage 一开始就要确定哪些公证人参与此次签名
 人数t > ThresholdCount && t <= ShareCount
 指出要签名的交易,公证人应该对此交易做校验,是否是一个合法的交易
 */
-func NewDistributedSignMessage(db *models.DB, srv *NotaryService, message []byte, key common.Hash, privateKey common.Hash, s []int) (l *DistributedSignMessage, err error) {
+func NewDistributedSignMessage(db *models.DB, notaryID int, message []byte, key common.Hash, privateKey common.Hash, s []int) (l *DistributedSignMessage, err error) {
 	if len(s) <= params.ThresholdCount {
 		err = fmt.Errorf("candidates notary too less")
 		return
 	}
 	l = &DistributedSignMessage{
-		db:         db,
-		srv:        srv,
-		Key:        key,
-		Message:    message,
-		PrivateKey: privateKey,
-		S:          s,
-		index:      srv.NotaryShareArg.Index,
+		db:           db,
+		Key:          key,
+		Message:      message,
+		PrivateKey:   privateKey,
+		S:            s,
+		selfNotaryID: notaryID,
 	}
 	l2 := &models.SignMessage{
 		Key:            l.Key,
@@ -92,7 +90,7 @@ func (l *DistributedSignMessage) loadLockout() error {
 		l.PaillierPubKeys[k] = v.PaillierPubkey
 	}
 	l.PublicKey = &share.SPubKey{X: p.PublicKeyX, Y: p.PublicKeyY}
-	l.Vss = p.SecretShareMessage3[l.srv.NotaryShareArg.Index].Vss
+	l.Vss = p.SecretShareMessage3[l.selfNotaryID].Vss
 
 	l.L, err = l.db.LoadSignMessage(l.Key)
 	if err != nil {
@@ -106,11 +104,11 @@ func (l *DistributedSignMessage) loadLockout() error {
 //==>每个公证人的公私钥、公钥片、{{{t,n},t+1个系数点乘G的结果(c1...c2)},y1...yn}
 */
 func (l *DistributedSignMessage) createSignKeys() {
-	lambdaI := l.Vss.MapShareToNewParams(l.srv.NotaryShareArg.Index, l.S) //lamda_i 解释：通过lamda_i对原所有证明人的群来映射出签名者群
-	wi := share.ModMul(lambdaI, l.XI)                                     //wi： 我原来的编号在对应签名群编号的映射关系 ，原来我是xi(私钥片) 现在是wi（我在新的签名群中的私钥片）
-	gwiX, gwiY := share.S.ScalarBaseMult(wi.Bytes())                      //我在签名群中的公钥片
-	gammaI := share.RandomPrivateKey()                                    //临时私钥
-	gGammaIX, gGammaIY := share.S.ScalarBaseMult(gammaI.Bytes())          //临时公钥
+	lambdaI := l.Vss.MapShareToNewParams(l.selfNotaryID, l.S)    //lamda_i 解释：通过lamda_i对原所有证明人的群来映射出签名者群
+	wi := share.ModMul(lambdaI, l.XI)                            //wi： 我原来的编号在对应签名群编号的映射关系 ，原来我是xi(私钥片) 现在是wi（我在新的签名群中的私钥片）
+	gwiX, gwiY := share.S.ScalarBaseMult(wi.Bytes())             //我在签名群中的公钥片
+	gammaI := share.RandomPrivateKey()                           //临时私钥
+	gGammaIX, gGammaIY := share.S.ScalarBaseMult(gammaI.Bytes()) //临时公钥
 	l.L.SignedKey = &models.SignedKey{
 		WI:      wi,
 		Gwi:     &share.SPubKey{X: gwiX, Y: gwiY},
@@ -132,7 +130,7 @@ func (l *DistributedSignMessage) GeneratePhase1Broadcast() (msg *models.SignBroa
 		BlindFactor: blindFactor,
 	}
 	l.L.Phase1BroadCast = make(map[int]*models.SignBroadcastPhase1)
-	l.L.Phase1BroadCast[l.index] = msg
+	l.L.Phase1BroadCast[l.selfNotaryID] = msg
 	err = l.db.UpdateSignMessage(l.L)
 	return
 }
@@ -239,7 +237,7 @@ func (l *DistributedSignMessage) ReceivePhase2MessageA(msg *models.MessageA, ind
 		MessageBWi:    mbw,
 	}
 	//l.L.Phase2MessageB=make(map[int]*models.MessageBPhase2)
-	///l.L.Phase2MessageB[l.index]=
+	///l.L.Phase2MessageB[l.selfNotaryID]=
 	return
 }
 
@@ -299,7 +297,7 @@ func (l *DistributedSignMessage) phase2DeltaI() share.SPrivKey {
 	kiGammaI := k.KI.Clone()
 	share.ModMul(kiGammaI, k.GammaI)
 	for _, i := range l.S {
-		if i == l.index {
+		if i == l.selfNotaryID {
 			continue
 		}
 		share.ModAdd(kiGammaI, l.L.AlphaGamma[i])
@@ -315,7 +313,7 @@ func (l *DistributedSignMessage) phase2SigmaI() share.SPrivKey {
 	share.ModMul(kiwi, l.L.SignedKey.WI)
 	//todo vij=vji ?
 	for _, i := range l.S {
-		if i == l.index {
+		if i == l.selfNotaryID {
 			continue
 		}
 		share.ModAdd(kiwi, l.L.AlphaWI[i])
@@ -337,7 +335,7 @@ func (l *DistributedSignMessage) GeneratePhase3DeltaI() (msg *models.DeltaPhase3
 	sigmaI := l.phase2SigmaI()
 	l.L.Sigma = sigmaI
 	l.L.Delta = make(map[int]share.SPrivKey)
-	l.L.Delta[l.index] = deltaI
+	l.L.Delta[l.selfNotaryID] = deltaI
 	err = l.db.UpdateSignMessage(l.L)
 	if err != nil {
 		return
@@ -415,7 +413,7 @@ func (l *DistributedSignMessage) GeneratePhase4R() (R *share.SPubKey, err error)
 	if err != nil {
 		return
 	}
-	l.L.Phase2MessageB[l.index] = &models.MessageBPhase2{MessageBGamma: mgGamma, MessageBWi: nil}
+	l.L.Phase2MessageB[l.selfNotaryID] = &models.MessageBPhase2{MessageBGamma: mgGamma, MessageBWi: nil}
 	R, err = phase4(delta, l.L.Phase2MessageB, l.L.Phase1BroadCast)
 	if err != nil {
 		return
@@ -510,7 +508,7 @@ func (l *DistributedSignMessage) GeneratePhase5a5bZkProof() (msg *models.Phase5A
 	phase5Com, phase5ADecom, helgamalProof := phase5aBroadcast5bZkproof(localSignature)
 	msg = &models.Phase5A{Phase5Com1: phase5Com, Phase5ADecom1: phase5ADecom, Proof: helgamalProof}
 	l.L.Phase5A = make(map[int]*models.Phase5A)
-	l.L.Phase5A[l.index] = msg
+	l.L.Phase5A[l.selfNotaryID] = msg
 	l.L.LocalSignature = localSignature
 	err = l.db.UpdateSignMessage(l.L)
 	return
@@ -604,18 +602,18 @@ func (l *DistributedSignMessage) GeneratePhase5CProof() (msg *models.Phase5C, er
 	}
 	var decomVec []*models.Phase5ADecom1
 	for i, m := range l.L.Phase5A {
-		if i == l.index { //phase5c 不应该包括自己的decommitment
+		if i == l.selfNotaryID { //phase5c 不应该包括自己的decommitment
 			continue
 		}
 		decomVec = append(decomVec, m.Phase5ADecom1)
 	}
-	phase5com2, phase5decom2, err := phase5c(l.L.LocalSignature, decomVec, l.L.Phase5A[l.index].Phase5ADecom1.Vi)
+	phase5com2, phase5decom2, err := phase5c(l.L.LocalSignature, decomVec, l.L.Phase5A[l.selfNotaryID].Phase5ADecom1.Vi)
 	if err != nil {
 		return
 	}
 	msg = &models.Phase5C{Phase5Com2: phase5com2, Phase5DDecom2: phase5decom2}
 	l.L.Phase5C = make(map[int]*models.Phase5C)
-	l.L.Phase5C[l.index] = msg
+	l.L.Phase5C[l.selfNotaryID] = msg
 	err = l.db.UpdateSignMessage(l.L)
 	return
 }
@@ -668,7 +666,7 @@ func (l *DistributedSignMessage) Generate5dProof() (si share.SPrivKey, err error
 		return
 	}
 	l.L.Phase5D = make(map[int]share.SPrivKey)
-	l.L.Phase5D[l.index] = si
+	l.L.Phase5D[l.selfNotaryID] = si
 	err = l.db.UpdateSignMessage(l.L)
 	return
 }
@@ -732,7 +730,7 @@ func (l *DistributedSignMessage) RecevieSI(si share.SPrivKey, index int) (signat
 	s := l.L.LocalSignature.SI.Clone()
 	//所有人的的si，包括自己
 	for i, si := range l.L.Phase5D {
-		if i == l.index {
+		if i == l.selfNotaryID {
 			continue
 		}
 		share.ModAdd(s, si)
