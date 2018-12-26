@@ -17,11 +17,11 @@ type testR struct {
 }
 
 func TestRequest(t *testing.T) {
-	tr := testR{}
-	fmt.Println(utils.ToJsonStringFormat(tr), tr.GetRequestName())
-	tr.Name = "name"
-	tr.Key = utils.NewRandomHash()
-	fmt.Println(utils.ToJsonStringFormat(tr), tr.GetRequestName())
+	tr := testR{
+		BaseRequest: NewBaseRequest("APIName-testR"),
+	}
+	tr.SessionID = utils.NewRandomHash()
+	fmt.Println(utils.ToJsonStringFormat(tr))
 
 	c := make(chan Request, 1)
 	c <- &tr
@@ -39,7 +39,7 @@ func TestRequest(t *testing.T) {
 	}
 
 	if a, ok := d.(NotaryRequest); ok {
-		fmt.Println("NotaryRequest ", a.GetKey().String())
+		fmt.Println("NotaryRequest ", a.GetSessionID().String())
 	}
 	//if _, ok := d.(*BaseNotaryRequest); ok {
 	//	fmt.Println("BaseNotaryRequest")
@@ -72,10 +72,6 @@ func TestRequest(t *testing.T) {
 	time.Sleep(time.Second)
 	d.WriteErrorResponse(ErrorCodePermissionDenied)
 	time.Sleep(time.Second)
-	d.WriteResponse(NewFailResponse("dsa"))
-	time.Sleep(time.Second)
-	d.WriteResponse(NewFailResponse("", "custom errorMsg-2"))
-	time.Sleep(time.Second)
 	d.WriteSuccessResponse(struct {
 		A string      `json:"a"`
 		B interface{} `json:"b"`
@@ -84,4 +80,9 @@ func TestRequest(t *testing.T) {
 		B: 12567,
 	})
 	time.Sleep(time.Second)
+	fmt.Println("----------------------")
+	r1 := NewBaseRequest("r1")
+	r2 := NewBaseRequest("r2")
+	fmt.Println(utils.ToJsonStringFormat(r1))
+	fmt.Println(utils.ToJsonStringFormat(r2))
 }

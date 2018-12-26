@@ -1,6 +1,9 @@
 package api
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -10,15 +13,15 @@ type RequestName string
 // Request 普通请求,不带唯一key不带SCTokenAddress
 type Request interface {
 	GetRequestName() RequestName
+	GetRequestID() string
 	GetResponseChan() chan *BaseResponse
-	WriteResponse(resp *BaseResponse)
 	WriteSuccessResponse(data interface{})
 	WriteErrorResponse(errorCode ErrorCode, errorMsg ...string)
 }
 
-// NotaryRequest 公证人之前的请求,带唯一key
+// NotaryRequest 公证人之前的请求,带唯一SessionID
 type NotaryRequest interface {
-	GetKey() common.Hash
+	GetSessionID() common.Hash
 }
 
 // CrossChainRequest 跨链交易相关请求,带SCTokenAddress
@@ -28,13 +31,27 @@ type CrossChainRequest interface {
 
 // BaseRequest :
 type BaseRequest struct {
+	RequestID    string      `json:"request_id"` // 方便日志查询
 	Name         RequestName `json:"name"`
 	responseChan chan *BaseResponse
+}
+
+// NewBaseRequest :
+func NewBaseRequest(name RequestName) BaseRequest {
+	var req BaseRequest
+	req.Name = name
+	req.RequestID = fmt.Sprintf("%d", time.Now().Nanosecond())
+	return req
 }
 
 // GetRequestName :
 func (br *BaseRequest) GetRequestName() RequestName {
 	return br.Name
+}
+
+// GetRequestID :
+func (br *BaseRequest) GetRequestID() string {
+	return br.RequestID
 }
 
 // GetResponseChan :
@@ -45,25 +62,13 @@ func (br *BaseRequest) GetResponseChan() chan *BaseResponse {
 	return br.responseChan
 }
 
-// WriteResponse :
-func (br *BaseRequest) WriteResponse(resp *BaseResponse) {
-	if br.responseChan == nil {
-		br.responseChan = make(chan *BaseResponse, 1)
-	}
-	select {
-	case br.responseChan <- resp:
-	default:
-		// never block
-	}
-}
-
 // WriteSuccessResponse :
 func (br *BaseRequest) WriteSuccessResponse(data interface{}) {
 	if br.responseChan == nil {
 		br.responseChan = make(chan *BaseResponse, 1)
 	}
 	select {
-	case br.responseChan <- NewSuccessResponse(data):
+	case br.responseChan <- newSuccessResponse(br.RequestID, data):
 	default:
 		// never block
 	}
@@ -75,7 +80,7 @@ func (br *BaseRequest) WriteErrorResponse(errorCode ErrorCode, errorMsg ...strin
 		br.responseChan = make(chan *BaseResponse, 1)
 	}
 	select {
-	case br.responseChan <- NewFailResponse(errorCode, errorMsg...):
+	case br.responseChan <- newFailResponse(br.RequestID, errorCode, errorMsg...):
 	default:
 		// never block
 	}
@@ -83,12 +88,12 @@ func (br *BaseRequest) WriteErrorResponse(errorCode ErrorCode, errorMsg ...strin
 
 // BaseNotaryRequest :
 type BaseNotaryRequest struct {
-	Key common.Hash `json:"key"`
+	SessionID common.Hash `json:"session_id"`
 }
 
-// GetKey :
-func (bnr *BaseNotaryRequest) GetKey() common.Hash {
-	return bnr.Key
+// GetSessionID :
+func (bnr *BaseNotaryRequest) GetSessionID() common.Hash {
+	return bnr.SessionID
 }
 
 // BaseCrossChainRequest :

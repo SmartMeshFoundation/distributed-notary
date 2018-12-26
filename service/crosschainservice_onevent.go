@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/SmartMeshFoundation/Photon/log"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/nkbai/log"
 )
 
 // OnEvent 链上事件逻辑处理 TODO

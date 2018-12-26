@@ -13,13 +13,13 @@ import (
 
 	"os"
 
-	"github.com/SmartMeshFoundation/Photon/log"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/howeyc/gopass"
+	"github.com/nkbai/log"
 )
 
 var errNoSuchAddress = errors.New("can not found this address")

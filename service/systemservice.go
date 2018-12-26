@@ -1,13 +1,69 @@
 package service
 
-import "github.com/SmartMeshFoundation/distributed-notary/api"
+import (
+	"time"
+
+	"github.com/SmartMeshFoundation/distributed-notary/api"
+	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
+	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/nkbai/log"
+)
 
 // SystemService TODO
 type SystemService struct {
+	db            *models.DB
+	notaryService *NotaryService
+}
+
+// NewSystemService :
+func NewSystemService(db *models.DB, notaryService *NotaryService) (ns *SystemService, err error) {
+	ns = &SystemService{
+		db:            db,
+		notaryService: notaryService,
+	}
+	return
 }
 
 // OnRequest restful请求处理
-func (ns *SystemService) OnRequest(req api.Request) {
+func (ss *SystemService) OnRequest(req api.Request) {
 	//TODO
+	switch r := req.(type) {
+	case *userapi.CreatePrivateKeyRequest:
+		ss.onCreatePrivateKeyRequest(r)
+	}
 	return
+}
+
+/*
+发起一次公钥-私钥片协商过程,并等待协商结果
+*/
+func (ss *SystemService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKeyRequest) {
+	// 1. 调用自己的notaryService,生成KeyGenerator,并开始协商过程
+	privateKeyID, err := ss.notaryService.startNewPrivateKeyNegotiation()
+	if err != nil {
+		log.Error(err.Error())
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
+	}
+	// 2. 使用PrivateKeyID轮询数据库,直到该key协商并生成完成
+	times := 0
+	for {
+		time.Sleep(time.Second) // TODO 这里轮询周期设置为多少合适,是否需要设置超时
+		privateKey, err := ss.db.LoadPrivatedKeyInfo(privateKeyID)
+		if err != nil {
+			log.Error(err.Error())
+			req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+			return
+		}
+		if privateKey.Status != models.PrivateKeyNegotiateStatusFinished {
+			if times%10 == 0 {
+				log.Trace("[PrivateKeyID=%s] waiting for PrivateKeyNegotiate...", utils.HPex(privateKeyID))
+			}
+			times++
+			continue
+		}
+		req.WriteSuccessResponse(privateKey)
+		return
+	}
 }
