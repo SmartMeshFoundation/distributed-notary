@@ -20,9 +20,9 @@ ThresholdPrivKeyGenerator 一次协商私钥的过程,
 没有一个公证人知道完整的私钥. 但是后续这些公证人可以在不暴露自己私钥片的基础上进行签名.
 */
 type ThresholdPrivKeyGenerator struct {
-	srv *NotaryService
-	db  *models.DB
-	Key common.Hash //此次协商唯一的key
+	srv          *NotaryService
+	db           *models.DB
+	PrivateKeyID common.Hash //此次协商唯一的key
 }
 
 /*
@@ -30,11 +30,11 @@ NewThresholdPrivKeyGenerator 生成此次协商起始所需参数
 key: 此次协商唯一标志
 暗含的其他公证人都已知的信息,包括 ThresholdCount和ShareCount
 */
-func NewThresholdPrivKeyGenerator(srv *NotaryService, db *models.DB, key common.Hash) *ThresholdPrivKeyGenerator {
+func NewThresholdPrivKeyGenerator(srv *NotaryService, db *models.DB, privateKeyID common.Hash) *ThresholdPrivKeyGenerator {
 	return &ThresholdPrivKeyGenerator{
-		srv: srv,
-		db:  db,
-		Key: key,
+		srv:          srv,
+		db:           db,
+		PrivateKeyID: privateKeyID,
 	}
 }
 
@@ -57,7 +57,7 @@ GeneratePhase1PubKeyProof phase1.1 生成自己的随机数,这是后续feldman 
 func (l *ThresholdPrivKeyGenerator) GeneratePhase1PubKeyProof() (msg *models.KeyGenBroadcastMessage1, err error) {
 	ui, dk := createKeys()
 	p := &models.PrivateKeyInfo{
-		Key:             l.Key,
+		Key:             l.PrivateKeyID,
 		UI:              ui,
 		PaillierPrivkey: dk,
 		Status:          models.PrivateKeyNegotiateStatusInit,
@@ -78,7 +78,7 @@ ReceivePhase1PubKeyProof phase 1.2 接受其他公证人传递过来的公钥片
 但是到目前为止没有一个公证人知道最终公钥对应的私钥片
 */
 func (l *ThresholdPrivKeyGenerator) ReceivePhase1PubKeyProof(m *models.KeyGenBroadcastMessage1, index int) (finish bool, err error) {
-	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
+	p, err := l.db.LoadPrivatedKeyInfo(l.PrivateKeyID)
 	if err != nil {
 		return
 	}
@@ -127,7 +127,7 @@ func createCommitmentWithUserDefinedRandomNess(message *big.Int, blindingFactor 
 GeneratePhase2PaillierKeyProof phase 2.1 广播给其他所有公证人的同态加密公钥以及Proof
 */
 func (l *ThresholdPrivKeyGenerator) GeneratePhase2PaillierKeyProof() (msg *models.KeyGenBroadcastMessage2, err error) {
-	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
+	p, err := l.db.LoadPrivatedKeyInfo(l.PrivateKeyID)
 	if err != nil {
 		return
 	}
@@ -152,7 +152,7 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase2PaillierKeyProof() (msg *model
 //ReceivePhase2PaillierPubKeyProof phase 2.2 收到其他公证人的同态加密公钥信息
 func (l *ThresholdPrivKeyGenerator) ReceivePhase2PaillierPubKeyProof(m *models.KeyGenBroadcastMessage2,
 	index int) (finish bool, err error) {
-	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
+	p, err := l.db.LoadPrivatedKeyInfo(l.PrivateKeyID)
 	if err != nil {
 		return
 	}
@@ -198,7 +198,7 @@ GeneratePhase3SecretShare phase 3.1基于第一步的随机数生成SecretShares
 每个公证人务必保管好自己的xi,这是后续签名必须.
 */
 func (l *ThresholdPrivKeyGenerator) GeneratePhase3SecretShare() (msgs map[int]*models.KeyGenBroadcastMessage3, err error) {
-	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
+	p, err := l.db.LoadPrivatedKeyInfo(l.PrivateKeyID)
 	if err != nil {
 		return
 	}
@@ -232,7 +232,7 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase3SecretShare() (msgs map[int]*m
 
 //ReceivePhase3SecretShare 接收来自其他公证人定向分发给我的secret share.
 func (l *ThresholdPrivKeyGenerator) ReceivePhase3SecretShare(msg *models.KeyGenBroadcastMessage3, index int) (finish bool, err error) {
-	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
+	p, err := l.db.LoadPrivatedKeyInfo(l.PrivateKeyID)
 	if err != nil {
 		return
 	}
@@ -274,7 +274,7 @@ todo 目前问题就在于对方无法验证对方给我的XI是真实有效的,
 有可能对方在GeneratePhase3SecretShare 就广播一个错误的secret share,但是我也无法证明
 */
 func (l *ThresholdPrivKeyGenerator) GeneratePhase4PubKeyProof() (msg *models.KeyGenBroadcastMessage4, err error) {
-	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
+	p, err := l.db.LoadPrivatedKeyInfo(l.PrivateKeyID)
 	if err != nil {
 		return
 	}
@@ -293,7 +293,7 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase4PubKeyProof() (msg *models.Key
 ReceivePhase4VerifyTotalPubKey phase4.2 接收对方持有的Xi的证明,并验证其有效性. 但是我怎么知道他是有效的呢? 目前为止是没有办法的.
 */
 func (l *ThresholdPrivKeyGenerator) ReceivePhase4VerifyTotalPubKey(msg *models.KeyGenBroadcastMessage4, index int) (finish bool, err error) {
-	p, err := l.db.LoadPrivatedKeyInfo(l.Key)
+	p, err := l.db.LoadPrivatedKeyInfo(l.PrivateKeyID)
 	if err != nil {
 		return
 	}

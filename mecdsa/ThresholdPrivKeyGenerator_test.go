@@ -38,29 +38,29 @@ func newFiveNotaryLockedIn() (l0, l1, l2, l3, l4 *ThresholdPrivKeyGenerator) {
 	ns0, ns1, ns2, ns3, ns4 := newFiveNotaryService()
 	key := utils.NewRandomHash()
 	l0 = &ThresholdPrivKeyGenerator{
-		db:  models.SetupTestDB2("l0"),
-		srv: ns0,
-		Key: key,
+		db:           models.SetupTestDB2("l0"),
+		srv:          ns0,
+		PrivateKeyID: key,
 	}
 	l1 = &ThresholdPrivKeyGenerator{
-		db:  models.SetupTestDB2("l1"),
-		srv: ns1,
-		Key: key,
+		db:           models.SetupTestDB2("l1"),
+		srv:          ns1,
+		PrivateKeyID: key,
 	}
 	l2 = &ThresholdPrivKeyGenerator{
-		db:  models.SetupTestDB2("l2"),
-		srv: ns2,
-		Key: key,
+		db:           models.SetupTestDB2("l2"),
+		srv:          ns2,
+		PrivateKeyID: key,
 	}
 	l3 = &ThresholdPrivKeyGenerator{
-		db:  models.SetupTestDB2("l3"),
-		srv: ns3,
-		Key: key,
+		db:           models.SetupTestDB2("l3"),
+		srv:          ns3,
+		PrivateKeyID: key,
 	}
 	l4 = &ThresholdPrivKeyGenerator{
-		db:  models.SetupTestDB2("l4"),
-		srv: ns4,
-		Key: key,
+		db:           models.SetupTestDB2("l4"),
+		srv:          ns4,
+		PrivateKeyID: key,
 	}
 	return
 }
@@ -236,7 +236,7 @@ func TestLockedIn(t *testing.T) {
 	msg30, err := l0.GeneratePhase3SecretShare()
 	//如果生成私钥的过程中某个公证人不诚实呢? 如果他用的不是一开始声明的UI,将会造成广播出去的pk不一致,也会被拒绝.
 	//if true {
-	//	p, err := l1.db.LoadPrivatedKeyInfo(l1.Key)
+	//	p, err := l1.db.LoadPrivatedKeyInfo(l1.PrivateKeyID)
 	//	if err != nil {
 	//		return
 	//	}
@@ -402,11 +402,11 @@ func TestLockedIn(t *testing.T) {
 	assert.EqualValues(t, err, nil)
 	assert.EqualValues(t, finish, true)
 
-	p0, err := l0.db.LoadPrivatedKeyInfo(l0.Key)
-	p1, err := l1.db.LoadPrivatedKeyInfo(l0.Key)
-	p2, err := l2.db.LoadPrivatedKeyInfo(l0.Key)
-	p3, err := l3.db.LoadPrivatedKeyInfo(l0.Key)
-	p4, err := l4.db.LoadPrivatedKeyInfo(l0.Key)
+	p0, err := l0.db.LoadPrivatedKeyInfo(l0.PrivateKeyID)
+	p1, err := l1.db.LoadPrivatedKeyInfo(l0.PrivateKeyID)
+	p2, err := l2.db.LoadPrivatedKeyInfo(l0.PrivateKeyID)
+	p3, err := l3.db.LoadPrivatedKeyInfo(l0.PrivateKeyID)
+	p4, err := l4.db.LoadPrivatedKeyInfo(l0.PrivateKeyID)
 
 	//校验私钥是否正确分配
 	var xi []share.SPrivKey
@@ -760,11 +760,11 @@ func newTestLockin(t *testing.T) (l0, l1, l2, l3, l4 *ThresholdPrivKeyGenerator)
 	assert.EqualValues(t, err, nil)
 	assert.EqualValues(t, finish, true)
 
-	p0, err := l0.db.LoadPrivatedKeyInfo(l0.Key)
-	p1, err := l1.db.LoadPrivatedKeyInfo(l0.Key)
-	p2, err := l2.db.LoadPrivatedKeyInfo(l0.Key)
-	p3, err := l3.db.LoadPrivatedKeyInfo(l0.Key)
-	p4, err := l4.db.LoadPrivatedKeyInfo(l0.Key)
+	p0, err := l0.db.LoadPrivatedKeyInfo(l0.PrivateKeyID)
+	p1, err := l1.db.LoadPrivatedKeyInfo(l0.PrivateKeyID)
+	p2, err := l2.db.LoadPrivatedKeyInfo(l0.PrivateKeyID)
+	p3, err := l3.db.LoadPrivatedKeyInfo(l0.PrivateKeyID)
+	p4, err := l4.db.LoadPrivatedKeyInfo(l0.PrivateKeyID)
 
 	//校验私钥是否正确分配
 	var xi []share.SPrivKey
