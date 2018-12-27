@@ -14,7 +14,7 @@ import (
 	"github.com/nkbai/log"
 )
 
-// NotaryService TODO
+// NotaryService :
 type NotaryService struct {
 	privateKey *ecdsa.PrivateKey
 	self       models.NotaryInfo
@@ -33,12 +33,15 @@ func NewNotaryService(db *models.DB) (ns *NotaryService, err error) {
 
 // OnRequest restful请求处理
 func (ns *NotaryService) OnRequest(req api.Request) {
-	//TODO
 	switch r := req.(type) {
 	case *notaryapi.KeyGenerationPhase1MessageRequest:
 		ns.onKeyGenerationPhase1MessageRequest(r)
 	case *notaryapi.KeyGenerationPhase2MessageRequest:
 		ns.onKeyGenerationPhase2MessageRequest(r)
+	case *notaryapi.KeyGenerationPhase3MessageRequest:
+		ns.onKeyGenerationPhase3MessageRequest(r)
+	case *notaryapi.KeyGenerationPhase4MessageRequest:
+		ns.onKeyGenerationPhase4MessageRequest(r)
 	}
 	return
 }

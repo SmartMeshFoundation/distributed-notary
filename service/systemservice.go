@@ -9,7 +9,7 @@ import (
 	"github.com/nkbai/log"
 )
 
-// SystemService TODO
+// SystemService :
 type SystemService struct {
 	db            *models.DB
 	notaryService *NotaryService

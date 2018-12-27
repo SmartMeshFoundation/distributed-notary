@@ -9,9 +9,3 @@ type NotaryInfo struct {
 	Host      string //how to contact with this notary
 	PublicKey ecdsa.PublicKey
 }
-
-// GetNotaryInfoMap :
-func (db *DB) GetNotaryInfoMap() map[int]*NotaryInfo {
-	// TODO
-	return nil
-}

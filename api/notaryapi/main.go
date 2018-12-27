@@ -42,7 +42,6 @@ type NotaryAPI struct {
 func NewNotaryAPI(host string) *NotaryAPI {
 	var notaryAPI NotaryAPI
 	router, err := rest.MakeRouter(
-		// TODO
 		/*
 			api about private key generation
 		*/

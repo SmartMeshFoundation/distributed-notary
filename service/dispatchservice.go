@@ -154,7 +154,8 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Request) {
 		service, ok := ds.scToken2CrossChainServiceMap[r.GetSCTokenAddress()]
 		if !ok {
 			log.Error(fmt.Sprintf("%s receive request with out notary service : \n%s\n", logPrefix, utils.ToJsonStringFormat(req)))
-			// 返回api错误 TODO
+			// 返回api错误
+			req.WriteErrorResponse(api.ErrorCodeException)
 			return
 		}
 		go service.OnRequest(req)
