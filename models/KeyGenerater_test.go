@@ -41,7 +41,7 @@ func TestNewPrivateKeyInfo(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	p2, err := db.LoadPrivatedKeyInfo(p.Key)
+	p2, err := db.LoadPrivateKeyInfo(p.Key)
 	if err != nil {
 		t.Error(err)
 		return
@@ -79,7 +79,7 @@ func TestDB_UpdateKeyGenStatus(t *testing.T) {
 		t.Error(err)
 	}
 
-	p2, err := db.LoadPrivatedKeyInfo(p.Key)
+	p2, err := db.LoadPrivateKeyInfo(p.Key)
 	if err != nil {
 		t.Error(err)
 		return
@@ -97,7 +97,7 @@ func TestDB_UpdateKeyGenStatus(t *testing.T) {
 		return
 	}
 	p.Status = PrivateKeyNegotiateStatusPaillierPubKey
-	p2, err = db.LoadPrivatedKeyInfo(p.Key)
+	p2, err = db.LoadPrivateKeyInfo(p.Key)
 	assert.EqualValues(t, err, nil)
 	t.Logf("p=%s", utils.StringInterface(p, 7))
 	t.Logf("p2=%s", utils.StringInterface(p2, 7))
@@ -112,7 +112,7 @@ func TestDB_UpdateKeyGenStatus(t *testing.T) {
 	err = db.KGUpdateSecretShareMessage3(p)
 	assert.EqualValues(t, err, nil)
 	p.Status = PrivateKeyNegotiateStatusSecretShare
-	p2, err = db.LoadPrivatedKeyInfo(p.Key)
+	p2, err = db.LoadPrivateKeyInfo(p.Key)
 	assert.EqualValues(t, err, nil)
 	t.Logf("p=%s", utils.StringInterface(p, 7))
 	t.Logf("p2=%s", utils.StringInterface(p2, 7))

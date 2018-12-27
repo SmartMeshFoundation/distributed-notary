@@ -6,7 +6,11 @@ import (
 
 	"time"
 
+	"github.com/SmartMeshFoundation/Spectrum/common"
+	"github.com/SmartMeshFoundation/distributed-notary/testcode"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/assert"
 )
 
 type testR struct {
@@ -85,4 +89,34 @@ func TestRequest(t *testing.T) {
 	r2 := NewBaseRequest("r2")
 	fmt.Println(utils.ToJsonStringFormat(r1))
 	fmt.Println(utils.ToJsonStringFormat(r2))
+}
+
+func TestNotaryRequestSignature(t *testing.T) {
+	type TestMsg struct {
+		A common.Hash `json:"a"`
+		B int         `json:"b"`
+	}
+	type TestRequest struct {
+		BaseRequest
+		BaseNotaryRequest
+		Msg TestMsg
+	}
+
+	// 1. 构造request
+	sessionID := utils.NewRandomHash()
+	privateKey := testcode.GetTestPrivateKey1()
+	sender := crypto.PubkeyToAddress(privateKey.PublicKey)
+	req := &TestRequest{
+		BaseRequest:       NewBaseRequest("NotaryAPI-TestRequest"),
+		BaseNotaryRequest: NewBaseNotaryRequest(sessionID, sender),
+	}
+	fmt.Println("Before sign : \n", utils.ToJsonStringFormat(req))
+
+	// 2. Sign
+	sig := req.Sign(privateKey)
+	fmt.Println("After sign : \n", utils.ToJsonStringFormat(req))
+	assert.EqualValues(t, sig, req.Signature)
+
+	// 3. Verify Signature
+	assert.EqualValues(t, true, req.VerifySignature())
 }

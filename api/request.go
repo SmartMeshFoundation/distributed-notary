@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"time"
 
+	"crypto/ecdsa"
+
+	"encoding/json"
+
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -12,8 +17,8 @@ type RequestName string
 
 // Request 普通请求,不带唯一key不带SCTokenAddress
 type Request interface {
-	GetRequestName() RequestName
 	GetRequestID() string
+	GetRequestName() RequestName
 	GetResponseChan() chan *BaseResponse
 	WriteSuccessResponse(data interface{})
 	WriteErrorResponse(errorCode ErrorCode, errorMsg ...string)
@@ -22,6 +27,7 @@ type Request interface {
 // NotaryRequest 公证人之前的请求,带唯一SessionID
 type NotaryRequest interface {
 	GetSessionID() common.Hash
+	GetSender() common.Address
 }
 
 // CrossChainRequest 跨链交易相关请求,带SCTokenAddress
@@ -68,7 +74,7 @@ func (br *BaseRequest) WriteSuccessResponse(data interface{}) {
 		br.responseChan = make(chan *BaseResponse, 1)
 	}
 	select {
-	case br.responseChan <- newSuccessResponse(br.RequestID, data):
+	case br.responseChan <- NewSuccessResponse(br.RequestID, data):
 	default:
 		// never block
 	}
@@ -80,7 +86,7 @@ func (br *BaseRequest) WriteErrorResponse(errorCode ErrorCode, errorMsg ...strin
 		br.responseChan = make(chan *BaseResponse, 1)
 	}
 	select {
-	case br.responseChan <- newFailResponse(br.RequestID, errorCode, errorMsg...):
+	case br.responseChan <- NewFailResponse(br.RequestID, errorCode, errorMsg...):
 	default:
 		// never block
 	}
@@ -88,12 +94,59 @@ func (br *BaseRequest) WriteErrorResponse(errorCode ErrorCode, errorMsg ...strin
 
 // BaseNotaryRequest :
 type BaseNotaryRequest struct {
-	SessionID common.Hash `json:"session_id"`
+	SessionID common.Hash    `json:"session_id"`
+	Sender    common.Address `json:"sender"`
+	Signature []byte         `json:"signature,omitempty"` // 签名内容req全文json序列化后的字符串
+}
+
+// NewBaseNotaryRequest :
+func NewBaseNotaryRequest(sessionID common.Hash, sender common.Address) BaseNotaryRequest {
+	return BaseNotaryRequest{
+		SessionID: sessionID,
+		Sender:    sender,
+	}
+}
+
+// GetSender :
+func (bnr *BaseNotaryRequest) GetSender() common.Address {
+	return bnr.Sender
 }
 
 // GetSessionID :
 func (bnr *BaseNotaryRequest) GetSessionID() common.Hash {
 	return bnr.SessionID
+}
+
+// Sign :
+func (bnr *BaseNotaryRequest) Sign(privateKey *ecdsa.PrivateKey) []byte {
+	buf, err := json.Marshal(bnr)
+	if err != nil {
+		panic(err)
+	}
+	bnr.Signature, err = utils.SignData(privateKey, buf)
+	if err != nil {
+		panic(err)
+	}
+	return bnr.Signature
+}
+
+// VerifySignature :
+func (bnr *BaseNotaryRequest) VerifySignature() bool {
+	if bnr.Signature == nil || len(bnr.Signature) == 0 {
+		return false
+	}
+	sig := bnr.Signature
+	bnr.Signature = nil
+	dataWithoutSig, err := json.Marshal(bnr)
+	if err != nil {
+		panic(err)
+	}
+	dataHash := utils.Sha3(dataWithoutSig)
+	signer, err := utils.Ecrecover(dataHash, sig)
+	if err != nil {
+		panic(err)
+	}
+	return signer == bnr.Sender
 }
 
 // BaseCrossChainRequest :

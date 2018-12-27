@@ -8,3 +8,12 @@ func (ns *NotaryService) BroadcastMsg(apiName string, msg interface{}, isSync bo
 	// TODO
 	return
 }
+
+/*
+SendMsg :
+同步请求
+*/
+func (ns *NotaryService) SendMsg(apiName string, notaryID int, msg interface{}) (err error) {
+	// TODO
+	return
+}

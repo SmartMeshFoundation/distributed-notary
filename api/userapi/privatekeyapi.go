@@ -14,7 +14,7 @@ type CreatePrivateKeyRequest struct {
 CreatePrivateKey 该接口仅仅是发启一次过程,不参与实际协商过程,由SystemService处理
 发起一次私钥协商过程,生成一组私钥片
 */
-func (ua *UserAPI) CreatePrivateKey(w rest.ResponseWriter, r *rest.Request) {
+func (ua *UserAPI) createPrivateKey(w rest.ResponseWriter, r *rest.Request) {
 	req := &CreatePrivateKeyRequest{
 		BaseRequest: api.NewBaseRequest("UserAPI-CreatePrivateKey"),
 	}

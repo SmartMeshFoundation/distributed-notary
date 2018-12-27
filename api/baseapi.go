@@ -70,7 +70,7 @@ func (ba *BaseAPI) SendToServiceAndWaitResponse(req Request, timeout ...time.Dur
 		select {
 		case resp = <-req.GetResponseChan():
 		case <-time.After(requestTimeout):
-			resp = newFailResponse(req.GetRequestID(), ErrorCodeTimeout)
+			resp = NewFailResponse(req.GetRequestID(), ErrorCodeTimeout)
 		}
 	} else {
 		resp = <-req.GetResponseChan()

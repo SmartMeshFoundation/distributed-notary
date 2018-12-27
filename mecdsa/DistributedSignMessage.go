@@ -79,7 +79,7 @@ func (l *DistributedSignMessage) loadLockout() error {
 	//if l.L != nil {
 	//	return nil
 	//}
-	p, err := l.db.LoadPrivatedKeyInfo(l.PrivateKey)
+	p, err := l.db.LoadPrivateKeyInfo(l.PrivateKey)
 	if err != nil {
 		return err
 	}

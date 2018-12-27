@@ -9,6 +9,7 @@ const (
 	ErrorCodeDataNotFound     = "1000"
 	ErrorCodePermissionDenied = "2000"
 	ErrorCodeTimeout          = "3000"
+	ErrorCodeParamsWrong      = "4000"
 	ErrorCodeException        = "9999"
 )
 
@@ -21,6 +22,7 @@ func init() {
 	errorCode2MsgMap[ErrorCodeDataNotFound] = "data not found"
 	errorCode2MsgMap[ErrorCodePermissionDenied] = "permission denied"
 	errorCode2MsgMap[ErrorCodeTimeout] = "request time out"
+	errorCode2MsgMap[ErrorCodeParamsWrong] = "params wrong"
 	errorCode2MsgMap[ErrorCodeException] = "exception,best call admin"
 }
 
@@ -32,8 +34,8 @@ type BaseResponse struct {
 	Data      interface{} `json:"data,omitempty"`
 }
 
-// newSuccessResponse :
-func newSuccessResponse(requestID string, data interface{}) *BaseResponse {
+// NewSuccessResponse :
+func NewSuccessResponse(requestID string, data interface{}) *BaseResponse {
 	r := &BaseResponse{
 		ErrorCode: ErrorCodeSuccess,
 		ErrorMsg:  errorCode2MsgMap[ErrorCodeSuccess],
@@ -45,8 +47,8 @@ func newSuccessResponse(requestID string, data interface{}) *BaseResponse {
 	return r
 }
 
-// newFailResponse :
-func newFailResponse(requestID string, errorCode ErrorCode, errorMsg ...string) *BaseResponse {
+// NewFailResponse :
+func NewFailResponse(requestID string, errorCode ErrorCode, errorMsg ...string) *BaseResponse {
 	r := &BaseResponse{
 		ErrorCode: errorCode,
 		RequestID: requestID,

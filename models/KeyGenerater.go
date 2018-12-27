@@ -236,8 +236,8 @@ func (db *DB) NewPrivateKeyInfo(p *PrivateKeyInfo) error {
 	return db.Create(toPrivateKeyInfoModel(p)).Error
 }
 
-//LoadPrivatedKeyInfo 私钥协商过程都完整保存在数据库中
-func (db *DB) LoadPrivatedKeyInfo(key common.Hash) (*PrivateKeyInfo, error) {
+//LoadPrivateKeyInfo 私钥协商过程都完整保存在数据库中
+func (db *DB) LoadPrivateKeyInfo(key common.Hash) (*PrivateKeyInfo, error) {
 	var pi PrivateKeyInfoModel
 	err := db.Where(&PrivateKeyInfoModel{
 		Key: key[:],

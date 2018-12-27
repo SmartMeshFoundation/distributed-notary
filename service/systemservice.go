@@ -6,7 +6,6 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/nkbai/log"
 )
 
@@ -42,7 +41,6 @@ func (ss *SystemService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKey
 	// 1. 调用自己的notaryService,生成KeyGenerator,并开始协商过程
 	privateKeyID, err := ss.notaryService.startNewPrivateKeyNegotiation()
 	if err != nil {
-		log.Error(err.Error())
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 		return
 	}
@@ -50,7 +48,7 @@ func (ss *SystemService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKey
 	times := 0
 	for {
 		time.Sleep(time.Second) // TODO 这里轮询周期设置为多少合适,是否需要设置超时
-		privateKey, err := ss.db.LoadPrivatedKeyInfo(privateKeyID)
+		privateKey, err := ss.db.LoadPrivateKeyInfo(privateKeyID)
 		if err != nil {
 			log.Error(err.Error())
 			req.WriteErrorResponse(api.ErrorCodeException, err.Error())
@@ -58,7 +56,7 @@ func (ss *SystemService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKey
 		}
 		if privateKey.Status != models.PrivateKeyNegotiateStatusFinished {
 			if times%10 == 0 {
-				log.Trace("[PrivateKeyID=%s] waiting for PrivateKeyNegotiate...", utils.HPex(privateKeyID))
+				log.Trace(SessionLogMsg(privateKeyID, "waiting for PrivateKeyNegotiate..."))
 			}
 			times++
 			continue

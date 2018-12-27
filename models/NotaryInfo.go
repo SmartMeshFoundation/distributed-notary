@@ -7,7 +7,7 @@ type NotaryInfo struct {
 	ID        int // 公证人编号, 预先定死
 	Name      string
 	Host      string //how to contact with this notary
-	PublicKey *ecdsa.PublicKey
+	PublicKey ecdsa.PublicKey
 }
 
 // GetNotaryInfoMap :
