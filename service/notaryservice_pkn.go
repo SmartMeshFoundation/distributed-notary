@@ -22,7 +22,7 @@ func (ns *NotaryService) startPKNPhase1(privateKeyID common.Hash) (err error) {
 	if err != nil {
 		return
 	}
-	return ns.BroadcastMsg(notaryapi.APINamePhase1PubKeyProof, msg, true)
+	return ns.BroadcastMsg(privateKeyID, notaryapi.APINamePhase1PubKeyProof, msg, true)
 }
 
 func (ns *NotaryService) savePKNPhase1Msg(keyGenerator *mecdsa.ThresholdPrivKeyGenerator, msg *models.KeyGenBroadcastMessage1, senderID int) (finish bool, err error) {
@@ -40,7 +40,7 @@ func (ns *NotaryService) startPKNPhase2(keyGenerator *mecdsa.ThresholdPrivKeyGen
 	if err != nil {
 		return
 	}
-	return ns.BroadcastMsg(notaryapi.APINAMEPhase2PaillierKeyProof, msg, true)
+	return ns.BroadcastMsg(keyGenerator.PrivateKeyID, notaryapi.APINAMEPhase2PaillierKeyProof, msg, true)
 }
 
 func (ns *NotaryService) savePKNPhase2Msg(keyGenerator *mecdsa.ThresholdPrivKeyGenerator, msg *models.KeyGenBroadcastMessage2, senderID int) (finish bool, err error) {
@@ -62,7 +62,7 @@ func (ns *NotaryService) startPKNPhase3(keyGenerator *mecdsa.ThresholdPrivKeyGen
 	for notaryID, msg := range msgMap {
 		// 按ID分别发送phase3消息给其他人
 		// 这里虽然是定向发送,但是所有参与者都主动发起SecretShare,所以无需关心返回值,在phase3接口中处理即可 TODO
-		err2 := ns.SendMsg(notaryapi.APINAMEPhase3SecretShare, notaryID, msg)
+		err2 := ns.SendMsg(keyGenerator.PrivateKeyID, notaryapi.APINAMEPhase3SecretShare, notaryID, msg)
 		if err2 != nil {
 			err = err2
 			return
@@ -86,7 +86,7 @@ func (ns *NotaryService) startPKNPhase4(keyGenerator *mecdsa.ThresholdPrivKeyGen
 	if err != nil {
 		return
 	}
-	return ns.BroadcastMsg(notaryapi.APINamePhase4PubKeyProof, msg, true)
+	return ns.BroadcastMsg(keyGenerator.PrivateKeyID, notaryapi.APINamePhase4PubKeyProof, msg, true)
 }
 
 func (ns *NotaryService) savePKNPhase4Msg(keyGenerator *mecdsa.ThresholdPrivKeyGenerator, msg *models.KeyGenBroadcastMessage4, senderID int) (finish bool, err error) {

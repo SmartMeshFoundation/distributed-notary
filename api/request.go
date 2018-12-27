@@ -22,6 +22,7 @@ type Request interface {
 	GetResponseChan() chan *BaseResponse
 	WriteSuccessResponse(data interface{})
 	WriteErrorResponse(errorCode ErrorCode, errorMsg ...string)
+	ToJSONString() string
 }
 
 // NotaryRequest 公证人之前的请求,带唯一SessionID
@@ -66,6 +67,15 @@ func (br *BaseRequest) GetResponseChan() chan *BaseResponse {
 		br.responseChan = make(chan *BaseResponse, 1)
 	}
 	return br.responseChan
+}
+
+// ToJSONString :
+func (br *BaseRequest) ToJSONString() string {
+	buf, err := json.Marshal(br)
+	if err != nil {
+		panic(err)
+	}
+	return string(buf)
 }
 
 // WriteSuccessResponse :

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"crypto/ecdsa"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
@@ -14,9 +16,10 @@ import (
 
 // NotaryService TODO
 type NotaryService struct {
-	self     models.NotaryInfo
-	notaries []models.NotaryInfo //这里保存除我以外的notary信息
-	db       *models.DB
+	privateKey *ecdsa.PrivateKey
+	self       models.NotaryInfo
+	notaries   []models.NotaryInfo //这里保存除我以外的notary信息
+	db         *models.DB
 }
 
 // NewNotaryService :
@@ -24,7 +27,7 @@ func NewNotaryService(db *models.DB) (ns *NotaryService, err error) {
 	ns = &NotaryService{
 		db: db,
 	}
-	// TODO 初始化self, notaries
+	// TODO 初始化privateKey, self, notaries
 	return
 }
 
@@ -90,16 +93,15 @@ func (ns *NotaryService) onKeyGenerationPhase1MessageRequest(req *notaryapi.KeyG
 		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
 		return
 	}
+	// 保存完毕直接返回成功,防止调用方api阻塞
+	req.WriteSuccessResponse(nil)
 	// 5. 如果phase1完成,开始phase2
 	if finish {
 		err = ns.startPKNPhase2(keyGenerator)
 		if err != nil {
-			errMsg := SessionLogMsg(privateKeyID, "startPKNPhase2 err = %s", err.Error())
-			req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-			return
+			log.Error(SessionLogMsg(privateKeyID, "startPKNPhase2 err = %s", err.Error()))
 		}
 	}
-	req.WriteSuccessResponse(nil)
 }
 
 /*
@@ -129,16 +131,15 @@ func (ns *NotaryService) onKeyGenerationPhase2MessageRequest(req *notaryapi.KeyG
 		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
 		return
 	}
+	// 保存完毕直接返回成功,防止调用方api阻塞
+	req.WriteSuccessResponse(nil)
 	// 4. 如果结果,开始phase3
 	if finish {
 		err = ns.startPKNPhase3(keyGenerator)
 		if err != nil {
-			errMsg := SessionLogMsg(privateKeyID, "startPKNPhase3 err = %s", err.Error())
-			req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-			return
+			log.Error(SessionLogMsg(privateKeyID, "startPKNPhase3 err = %s", err.Error()))
 		}
 	}
-	req.WriteSuccessResponse(nil)
 }
 
 /*
@@ -168,16 +169,15 @@ func (ns *NotaryService) onKeyGenerationPhase3MessageRequest(req *notaryapi.KeyG
 		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
 		return
 	}
+	// 保存完毕直接返回成功,防止调用方api阻塞
+	req.WriteSuccessResponse(nil)
 	// 4. 如果结果,开始phase4
 	if finish {
 		err = ns.startPKNPhase4(keyGenerator)
 		if err != nil {
-			errMsg := SessionLogMsg(privateKeyID, "startPKNPhase4 err = %s", err.Error())
-			req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-			return
+			log.Error(SessionLogMsg(privateKeyID, "startPKNPhase4 err = %s", err.Error()))
 		}
 	}
-	req.WriteSuccessResponse(nil)
 }
 
 /*
