@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"crypto/ecdsa"
 	rand2 "crypto/rand"
@@ -91,11 +92,19 @@ func Ecrecover(hash common.Hash, signature []byte) (addr common.Address, err err
 	return
 }
 
-// ToJsonStringFormat :
-func ToJsonStringFormat(v interface{}) string {
+// ToJSONStringFormat :
+func ToJSONStringFormat(v interface{}) string {
 	buf, err := json.MarshalIndent(v, "", "\t")
 	if err != nil {
 		panic(err)
 	}
 	return string(buf)
+}
+
+// Exists returns true if directory||file exists
+func Exists(dir string) bool {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }

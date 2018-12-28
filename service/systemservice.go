@@ -5,6 +5,7 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
+	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/nkbai/log"
 )
@@ -22,6 +23,11 @@ func NewSystemService(db *models.DB, notaryService *NotaryService) (ns *SystemSe
 		notaryService: notaryService,
 	}
 	return
+}
+
+// OnEvent 链上事件逻辑处理
+func (ss *SystemService) OnEvent(e chain.Event) {
+	// TODO 处理新块事件,保存各链最新块号
 }
 
 // OnRequest restful请求处理

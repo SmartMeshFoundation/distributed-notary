@@ -5,6 +5,7 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
+	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
@@ -23,12 +24,26 @@ type NotaryService struct {
 }
 
 // NewNotaryService :
-func NewNotaryService(db *models.DB) (ns *NotaryService, err error) {
+func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries []models.NotaryInfo) (ns *NotaryService, err error) {
 	ns = &NotaryService{
-		db: db,
+		db:         db,
+		privateKey: privateKey,
 	}
-	// TODO 初始化privateKey, self, notaries
+	// 初始化self, notaries
+	selfAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
+	for _, n := range allNotaries {
+		if n.Address == selfAddress {
+			ns.self = n
+		} else {
+			ns.notaries = append(ns.notaries, n)
+		}
+	}
 	return
+}
+
+// OnEvent 链上事件逻辑处理 预留
+func (ns *NotaryService) OnEvent(e chain.Event) {
+
 }
 
 // OnRequest restful请求处理
@@ -219,7 +234,7 @@ func (ns *NotaryService) onKeyGenerationPhase4MessageRequest(req *notaryapi.KeyG
 
 func (ns *NotaryService) getNotaryInfoByAddress(addr common.Address) (notaryInfo *models.NotaryInfo, ok bool) {
 	for _, v := range ns.notaries {
-		if crypto.PubkeyToAddress(v.PublicKey) == addr {
+		if v.Address == addr {
 			notaryInfo = &v
 			ok = true
 			return

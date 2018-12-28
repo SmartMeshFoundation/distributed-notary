@@ -29,7 +29,7 @@ func (ns *CrossChainService) OnEvent(e chain.Event) {
 		err = errors.New("unknow event")
 	}
 	if err != nil {
-		log.Error(fmt.Sprintf("%s deal event err=%s,event:\n%s\n", logPrefix, err.Error(), utils.ToJsonStringFormat(e)))
+		log.Error(fmt.Sprintf("%s deal event err=%s,event:\n%s\n", logPrefix, err.Error(), utils.ToJSONStringFormat(e)))
 	}
 	return
 }

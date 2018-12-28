@@ -25,12 +25,12 @@ func TestRequest(t *testing.T) {
 		BaseRequest: NewBaseRequest("APIName-testR"),
 	}
 	tr.SessionID = utils.NewRandomHash()
-	fmt.Println(utils.ToJsonStringFormat(tr))
+	fmt.Println(utils.ToJSONStringFormat(tr))
 
 	c := make(chan Request, 1)
 	c <- &tr
 	d := <-c
-	fmt.Println(utils.ToJsonStringFormat(d))
+	fmt.Println(utils.ToJSONStringFormat(d))
 	if _, ok := d.(*testR); ok {
 		fmt.Println("testR")
 	}
@@ -66,7 +66,7 @@ func TestRequest(t *testing.T) {
 	go func() {
 		for {
 			resp := <-d.GetResponseChan()
-			fmt.Printf("receive response :\n%s\n", utils.ToJsonStringFormat(resp))
+			fmt.Printf("receive response :\n%s\n", utils.ToJSONStringFormat(resp))
 			if resp.ErrorCode == ErrorCodeSuccess {
 				return
 			}
@@ -87,8 +87,8 @@ func TestRequest(t *testing.T) {
 	fmt.Println("----------------------")
 	r1 := NewBaseRequest("r1")
 	r2 := NewBaseRequest("r2")
-	fmt.Println(utils.ToJsonStringFormat(r1))
-	fmt.Println(utils.ToJsonStringFormat(r2))
+	fmt.Println(utils.ToJSONStringFormat(r1))
+	fmt.Println(utils.ToJSONStringFormat(r2))
 }
 
 func TestNotaryRequestSignature(t *testing.T) {
@@ -110,11 +110,11 @@ func TestNotaryRequestSignature(t *testing.T) {
 		BaseRequest:       NewBaseRequest("NotaryAPI-TestRequest"),
 		BaseNotaryRequest: NewBaseNotaryRequest(sessionID, sender),
 	}
-	fmt.Println("Before sign : \n", utils.ToJsonStringFormat(req))
+	fmt.Println("Before sign : \n", utils.ToJSONStringFormat(req))
 
 	// 2. Sign
 	sig := req.Sign(privateKey)
-	fmt.Println("After sign : \n", utils.ToJsonStringFormat(req))
+	fmt.Println("After sign : \n", utils.ToJSONStringFormat(req))
 	assert.EqualValues(t, sig, req.Signature)
 
 	// 3. Verify Signature

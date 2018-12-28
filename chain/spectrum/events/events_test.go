@@ -16,5 +16,5 @@ func TestCreateLockinSecretEvent(t *testing.T) {
 		BlockNumber: 1,
 	},
 	)
-	fmt.Println(utils.ToJsonStringFormat(e))
+	fmt.Println(utils.ToJSONStringFormat(e))
 }

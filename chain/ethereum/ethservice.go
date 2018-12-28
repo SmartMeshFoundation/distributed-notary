@@ -412,7 +412,7 @@ func (ss *ETHService) parserLogsToEventsAndSort(logs []types.Log) (es []chain.Ev
 			}
 			es = append(es, e)
 		default:
-			log.Warn(fmt.Sprintf("ETHService.EventListener receive unkonwn type event from chain : \n%s\n", utils.ToJsonStringFormat(l)))
+			log.Warn(fmt.Sprintf("ETHService.EventListener receive unkonwn type event from chain : \n%s\n", utils.ToJSONStringFormat(l)))
 		}
 		// 记录处理流水
 		ss.eventsDone[l.TxHash] = l.BlockNumber

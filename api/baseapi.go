@@ -2,8 +2,9 @@ package api
 
 import (
 	"fmt"
-	"net/http"
 	"time"
+
+	"net/http"
 
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ant0ine/go-json-rest/rest"
@@ -37,14 +38,19 @@ func NewBaseAPI(host string, router rest.App, middleWares ...rest.Middleware) Ba
 }
 
 // Start 启动监听线程
-func (ba *BaseAPI) Start() {
+func (ba *BaseAPI) Start(sync bool) {
 	ba.api = rest.NewApi()
 	ba.api.Use(rest.DefaultDevStack...)
 	if len(ba.middleWares) > 0 {
 		ba.api.Use(ba.middleWares...)
 	}
 	ba.api.SetApp(ba.router)
-	log.Crit(fmt.Sprintf("http listen and serve :%s", http.ListenAndServe(ba.host, ba.api.MakeHandler())))
+	log.Info("http listen and serve at %s", ba.host)
+	if sync {
+		http.ListenAndServe(ba.host, ba.api.MakeHandler())
+	} else {
+		go http.ListenAndServe(ba.host, ba.api.MakeHandler())
+	}
 }
 
 // GetRequestChan :
@@ -59,7 +65,7 @@ func (ba *BaseAPI) SetTimeout(timeout time.Duration) {
 
 // SendToServiceAndWaitResponse :
 func (ba *BaseAPI) SendToServiceAndWaitResponse(req Request, timeout ...time.Duration) *BaseResponse {
-	log.Trace(fmt.Sprintf("API Request %s :\n%s", req.GetRequestID(), utils.ToJsonStringFormat(req)))
+	log.Trace(fmt.Sprintf("API Request %s :\n%s", req.GetRequestID(), utils.ToJSONStringFormat(req)))
 	var resp *BaseResponse
 	requestTimeout := ba.timeout
 	if len(timeout) > 0 && timeout[0] > 0 {
@@ -75,7 +81,7 @@ func (ba *BaseAPI) SendToServiceAndWaitResponse(req Request, timeout ...time.Dur
 	} else {
 		resp = <-req.GetResponseChan()
 	}
-	log.Trace(fmt.Sprintf("API Response %s :\n%s", req.GetRequestID(), utils.ToJsonStringFormat(resp)))
+	log.Trace(fmt.Sprintf("API Response %s :\n%s", req.GetRequestID(), utils.ToJSONStringFormat(resp)))
 	return resp
 }
 

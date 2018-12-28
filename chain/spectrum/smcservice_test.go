@@ -30,7 +30,7 @@ func TestChain(t *testing.T) {
 	go func() {
 		for {
 			e := <-smc.GetEventChan()
-			fmt.Println("收到事件:\n", utils.ToJsonStringFormat(e))
+			fmt.Println("收到事件:\n", utils.ToJSONStringFormat(e))
 		}
 	}()
 	proxy := smc.GetProxyByTokenAddress(spectrumContract1Address)

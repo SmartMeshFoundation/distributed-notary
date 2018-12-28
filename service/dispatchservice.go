@@ -5,6 +5,7 @@ import (
 
 	"sync"
 
+	"github.com/SmartMeshFoundation/distributed-notary/accounts"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
@@ -14,8 +15,10 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum"
 	spectrumevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/nkbai/log"
 )
 
@@ -52,49 +55,92 @@ type DispatchService struct {
 }
 
 // NewDispatchService :
-func NewDispatchService(userAPI *userapi.UserAPI, notaryAPI *notaryapi.NotaryAPI, db *models.DB) (ds *DispatchService, err error) {
-	// 校验
-
+func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
+	// 1. 加载私钥
+	am := accounts.NewAccountManager(cfg.KeystorePath)
+	privateKeyBin, err := am.GetPrivateKey(cfg.Address, cfg.Password)
+	if err != nil {
+		log.Error("load private key err : %s", err.Error())
+		return
+	}
+	privateKey, err := crypto.ToECDSA(privateKeyBin)
+	if err != nil {
+		log.Error("load private key err : %s", err.Error())
+		return
+	}
+	// 2. 打开db,如果是第一次启动,读取notary.conf并写入db
+	db := models.SetUpDB("sqlite3", cfg.DataBasePath)
+	notaries, err := db.GetNotaryInfo()
+	if err != nil {
+		log.Error("get notary info from db err : %s", err.Error())
+		return
+	}
+	if len(notaries) == 0 {
+		// first start
+		notaries, err = db.NewNotaryInfoFromConfFile(cfg.NotaryConfFilePath)
+		if err != nil {
+			log.Error("get notary info from file %s err : %s", cfg.NotaryConfFilePath, err.Error())
+			return
+		}
+	}
+	// 3. init dispatch service
 	ds = &DispatchService{
-		userAPI:                      userAPI,
-		notaryAPI:                    notaryAPI,
+		userAPI:                      userapi.NewUserAPI(cfg.UserAPIListen),
+		notaryAPI:                    notaryapi.NewNotaryAPI(cfg.NotaryAPIListen),
 		chainMap:                     make(map[string]chain.Chain),
 		db:                           db,
 		quitChan:                     make(chan struct{}),
 		scToken2CrossChainServiceMap: make(map[common.Address]*CrossChainService),
 	}
-	/*
-		初始化事件监听 TODO
-	*/
-	ds.chainMap[spectrumevents.ChainName], err = spectrum.NewSMCService("", 0)
-	ds.chainMap[ethereumevents.ChainName], err = ethereum.NewETHService("", 0)
-	/*
-		初始化所有service TODO
-	*/
+	// 4. 初始化侧链事件监听
+	chainName := spectrumevents.ChainName
+	ds.chainMap[chainName], err = spectrum.NewSMCService(cfg.SMCRPCEndPoint, db.GetLastBlockNumber(chainName))
+	if err != nil {
+		log.Error("new SMCService err : %s", err.Error())
+		return
+	}
+	// 5. 初始化主链事件监听
+	chainName = ethereumevents.ChainName
+	ds.chainMap[chainName], err = ethereum.NewETHService(cfg.EthRPCEndPoint, db.GetLastBlockNumber(chainName))
+	if err != nil {
+		log.Error("new ETHService err : %s", err.Error())
+		return
+	}
+	// 5. 初始化NotaryService
+	ds.notaryService, err = NewNotaryService(db, privateKey, notaries)
+	if err != nil {
+		log.Error("init NotaryService err : %s", err.Error())
+		return
+	}
+	// 6. 初始化SystemService
+	ds.systemService, err = NewSystemService(db, ds.notaryService)
+	if err != nil {
+		log.Error("init SystemService err : %s", err.Error())
+		return
+	}
+	// 7. 根据SCTokenMetaInfo初始化CrossChainService TODO
+	// 8. 将所有合约地址注册到对应链的监听器中 TODO
 	return
 }
 
 // Start :
 func (ds *DispatchService) Start() (err error) {
-	/*
-		启动所有链的事件监听
-	*/
+	// 1. 启动restful请求调度线程,包含用户及公证人节点的restful请求
+	go ds.restfulRequestDispatcherLoop()
+	// 2. 对每条链启动事件调度线程
+	for _, v := range ds.chainMap {
+		go ds.chainEventDispatcherLoop(v)
+	}
+	// 3. 启动所有链的事件监听
 	for _, c := range ds.chainMap {
 		err = c.StartEventListener()
 		if err != nil {
 			return
 		}
 	}
-	/*
-		启动restful请求调度线程,包含用户及公证人节点的restful请求
-	*/
-	go ds.restfulRequestDispatcherLoop()
-	/*
-		对每条链启动事件调度线程
-	*/
-	for _, v := range ds.chainMap {
-		go ds.chainEventDispatcherLoop(v)
-	}
+	// 4. 启动API
+	ds.notaryAPI.Start(false)
+	ds.userAPI.Start(true)
 	log.Info("DispatchService start complete ...")
 	return
 }
@@ -153,7 +199,7 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Request) {
 	case api.CrossChainRequest:
 		service, ok := ds.scToken2CrossChainServiceMap[r.GetSCTokenAddress()]
 		if !ok {
-			log.Error(fmt.Sprintf("%s receive request with out notary service : \n%s\n", logPrefix, utils.ToJsonStringFormat(req)))
+			log.Error(fmt.Sprintf("%s receive request with out notary service : \n%s\n", logPrefix, utils.ToJSONStringFormat(req)))
 			// 返回api错误
 			req.WriteErrorResponse(api.ErrorCodeException)
 			return
@@ -182,7 +228,7 @@ func (ds *DispatchService) chainEventDispatcherLoop(c chain.Chain) {
 				panic(err)
 			}
 			if e.GetEventName() == chain.NewBlockNumberEventName {
-				// 新块事件,dispatch至所有service
+				// 新块事件
 				ds.dispatchEvent2All(e)
 			} else {
 				// 合约事件,根据合约地址调度
@@ -196,6 +242,9 @@ func (ds *DispatchService) chainEventDispatcherLoop(c chain.Chain) {
 }
 
 func (ds *DispatchService) dispatchEvent2All(e chain.Event) {
+	// 通知所有Service
+	ds.systemService.OnEvent(e)
+	ds.notaryService.OnEvent(e)
 	for _, service := range ds.scToken2CrossChainServiceMap {
 		// 这里在处理区块高度的时候,会不会导致协程数量过大 TODO
 		go service.OnEvent(e)

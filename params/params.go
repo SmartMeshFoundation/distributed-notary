@@ -13,9 +13,11 @@ var ListenIP = "127.0.0.1"
 var ListenPort = "18000"
 
 /*
-要求2/3以上的人都同意才能生成有效签名.
+ThresholdCount 要求2/3以上的人都同意才能生成有效签名.
 */
 var ThresholdCount = 4
+
+// ShareCount :
 var ShareCount = 7
 
 //DefaultKeyStoreDir keystore path of ethereum

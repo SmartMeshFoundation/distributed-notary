@@ -139,7 +139,7 @@ func (p *PrivateKey) GetPQ() (*big.Int, *big.Int) {
 	return p.p, p.q
 }
 
-// PublicKey represents the public part of a Paillier key.
+// Address represents the public part of a Paillier key.
 type PublicKey struct {
 	N        *big.Int // modulus
 	G        *big.Int // n+1, since p and q are same length

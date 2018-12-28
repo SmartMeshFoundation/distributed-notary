@@ -14,5 +14,5 @@ func TestCreateBaseEvent(t *testing.T) {
 	e.BaseEvent = createBaseEventFromEthereumLog(LockedEthereumLockoutSecretEventName, types.Log{
 		BlockNumber: 1,
 	})
-	fmt.Println(utils.ToJsonStringFormat(e))
+	fmt.Println(utils.ToJSONStringFormat(e))
 }
