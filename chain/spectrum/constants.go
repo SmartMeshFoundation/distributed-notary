@@ -11,7 +11,7 @@ var pollPeriod = 7500 * time.Millisecond
 
 // NewBlockNumber日志间隔
 //var logPeriod = uint64(10)
-var logPeriod = uint64(1)
+var logPeriod = uint64(10)
 
 //defaultPollTimeout  request wait time
 const defaultPollTimeout = 180 * time.Second

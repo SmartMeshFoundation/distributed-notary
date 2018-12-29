@@ -3,6 +3,8 @@ package service
 import (
 	"crypto/ecdsa"
 
+	"fmt"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
@@ -96,7 +98,7 @@ func (ns *NotaryService) onKeyGenerationPhase1MessageRequest(req *notaryapi.KeyG
 		} else {
 			req.WriteSuccessResponse(nil)
 		}
-		return
+		// 这里继续处理,保存已经收到的phase1消息
 	}
 	if err != nil {
 		errMsg := SessionLogMsg(privateKeyID, "LoadPrivateKeyInfo err = %s", err.Error())
@@ -113,6 +115,7 @@ func (ns *NotaryService) onKeyGenerationPhase1MessageRequest(req *notaryapi.KeyG
 	}
 	// 保存完毕直接返回成功,防止调用方api阻塞
 	req.WriteSuccessResponse(nil)
+	fmt.Println("==========================", finish)
 	// 5. 如果phase1完成,开始phase2
 	if finish {
 		err = ns.startPKNPhase2(keyGenerator)

@@ -11,7 +11,7 @@ import (
 type KeyGenerationPhase1MessageRequest struct {
 	api.BaseRequest
 	api.BaseNotaryRequest
-	Msg *models.KeyGenBroadcastMessage1
+	Msg *models.KeyGenBroadcastMessage1 `json:"msg"`
 }
 
 // NewKeyGenerationPhase1MessageRequest :
@@ -41,13 +41,13 @@ func (na *NotaryAPI) keyGenerationPhase1Message(w rest.ResponseWriter, r *rest.R
 type KeyGenerationPhase2MessageRequest struct {
 	api.BaseRequest
 	api.BaseNotaryRequest
-	Msg *models.KeyGenBroadcastMessage2
+	Msg *models.KeyGenBroadcastMessage2 `json:"msg"`
 }
 
 // NewKeyGenerationPhase2MessageRequest :
 func NewKeyGenerationPhase2MessageRequest(sessionID common.Hash, senderAddress common.Address, msg *models.KeyGenBroadcastMessage2) *KeyGenerationPhase2MessageRequest {
 	return &KeyGenerationPhase2MessageRequest{
-		BaseRequest:       api.NewBaseRequest(APINamePhase1PubKeyProof),
+		BaseRequest:       api.NewBaseRequest(APINAMEPhase2PaillierKeyProof),
 		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
 		Msg:               msg,
 	}
@@ -71,13 +71,13 @@ func (na *NotaryAPI) keyGenerationPhase2Message(w rest.ResponseWriter, r *rest.R
 type KeyGenerationPhase3MessageRequest struct {
 	api.BaseRequest
 	api.BaseNotaryRequest
-	Msg *models.KeyGenBroadcastMessage3
+	Msg *models.KeyGenBroadcastMessage3 `json:"msg"`
 }
 
 // NewKeyGenerationPhase3MessageRequest :
 func NewKeyGenerationPhase3MessageRequest(sessionID common.Hash, senderAddress common.Address, msg *models.KeyGenBroadcastMessage3) *KeyGenerationPhase3MessageRequest {
 	return &KeyGenerationPhase3MessageRequest{
-		BaseRequest:       api.NewBaseRequest(APINamePhase1PubKeyProof),
+		BaseRequest:       api.NewBaseRequest(APINAMEPhase3SecretShare),
 		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
 		Msg:               msg,
 	}
@@ -101,13 +101,13 @@ func (na *NotaryAPI) keyGenerationPhase3Message(w rest.ResponseWriter, r *rest.R
 type KeyGenerationPhase4MessageRequest struct {
 	api.BaseRequest
 	api.BaseNotaryRequest
-	Msg *models.KeyGenBroadcastMessage4
+	Msg *models.KeyGenBroadcastMessage4 `json:"msg"`
 }
 
 // NewKeyGenerationPhase4MessageRequest :
 func NewKeyGenerationPhase4MessageRequest(sessionID common.Hash, senderAddress common.Address, msg *models.KeyGenBroadcastMessage4) *KeyGenerationPhase4MessageRequest {
 	return &KeyGenerationPhase4MessageRequest{
-		BaseRequest:       api.NewBaseRequest(APINamePhase1PubKeyProof),
+		BaseRequest:       api.NewBaseRequest(APINamePhase4PubKeyProof),
 		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
 		Msg:               msg,
 	}

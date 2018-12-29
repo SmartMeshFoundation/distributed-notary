@@ -48,7 +48,7 @@ type DispatchService struct {
 	/*
 		业务处理service
 	*/
-	systemService                    *SystemService
+	adminService                     *AdminService
 	notaryService                    *NotaryService
 	scToken2CrossChainServiceMap     map[common.Address]*CrossChainService
 	scToken2CrossChainServiceMapLock sync.Mutex
@@ -113,9 +113,9 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		return
 	}
 	// 6. 初始化SystemService
-	ds.systemService, err = NewSystemService(db, ds.notaryService)
+	ds.adminService, err = NewAdminService(db, ds.notaryService)
 	if err != nil {
-		log.Error("init SystemService err : %s", err.Error())
+		log.Error("init AdminService err : %s", err.Error())
 		return
 	}
 	// 7. 根据SCTokenMetaInfo初始化CrossChainService TODO
@@ -209,7 +209,7 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Request) {
 	case api.NotaryRequest:
 		go ds.notaryService.OnRequest(req)
 	case api.Request:
-		go ds.systemService.OnRequest(req)
+		go ds.adminService.OnRequest(req)
 	}
 }
 
@@ -243,7 +243,7 @@ func (ds *DispatchService) chainEventDispatcherLoop(c chain.Chain) {
 
 func (ds *DispatchService) dispatchEvent2All(e chain.Event) {
 	// 通知所有Service
-	ds.systemService.OnEvent(e)
+	ds.adminService.OnEvent(e)
 	ds.notaryService.OnEvent(e)
 	for _, service := range ds.scToken2CrossChainServiceMap {
 		// 这里在处理区块高度的时候,会不会导致协程数量过大 TODO

@@ -7,9 +7,15 @@ import (
 
 	"fmt"
 
+	"encoding/json"
+
+	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/kataras/iris/core/errors"
+	"github.com/nkbai/log"
 )
 
 /*
@@ -37,21 +43,21 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 	case *models.KeyGenBroadcastMessage1:
 		req := notaryapi.NewKeyGenerationPhase1MessageRequest(sessionID, ns.self.GetAddress(), m)
 		req.Sign(ns.privateKey)
-		payload = req.ToJSONString()
+		payload = utils.ToJSONString(req)
 	case *models.KeyGenBroadcastMessage2:
 		req := notaryapi.NewKeyGenerationPhase2MessageRequest(sessionID, ns.self.GetAddress(), m)
 		req.Sign(ns.privateKey)
-		payload = req.ToJSONString()
+		payload = utils.ToJSONString(req)
 	case *models.KeyGenBroadcastMessage3:
 		req := notaryapi.NewKeyGenerationPhase3MessageRequest(sessionID, ns.self.GetAddress(), m)
 		req.Sign(ns.privateKey)
-		payload = req.ToJSONString()
+		payload = utils.ToJSONString(req)
 	case *models.KeyGenBroadcastMessage4:
 		req := notaryapi.NewKeyGenerationPhase4MessageRequest(sessionID, ns.self.GetAddress(), m)
 		req.Sign(ns.privateKey)
-		payload = req.ToJSONString()
+		payload = utils.ToJSONString(req)
 	}
-	return doPost(url, payload)
+	return doPost(sessionID, url, payload)
 }
 
 func (ns *NotaryService) getNotaryHostByID(notaryID int) string {
@@ -63,7 +69,8 @@ func (ns *NotaryService) getNotaryHostByID(notaryID int) string {
 	return ""
 }
 
-func doPost(url string, payload string) (err error) {
+func doPost(sessionID common.Hash, url string, payload string) (err error) {
+	log.Trace(SessionLogMsg(sessionID, "post to %s, payload : %s", url, payload))
 	var reqBody io.Reader
 	if payload == "" {
 		reqBody = nil
@@ -90,6 +97,23 @@ func doPost(url string, payload string) (err error) {
 	}
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("http request err : status code = %d", resp.StatusCode)
+	}
+	var buf [4096 * 1024]byte
+	n := 0
+	n, err = resp.Body.Read(buf[:])
+	if err != nil && err.Error() == "EOF" {
+		err = nil
+	}
+	respBody := buf[:n]
+	var response api.BaseResponse
+	err = json.Unmarshal(respBody, &response)
+	if err != nil {
+		return
+	}
+	log.Trace(SessionLogMsg(sessionID, "get response %s", utils.ToJSONString(response)))
+	if response.ErrorCode != api.ErrorCodeSuccess {
+		log.Error(SessionLogMsg(sessionID, response.ErrorMsg))
+		err = errors.New(response.ErrorMsg)
 	}
 	return
 }

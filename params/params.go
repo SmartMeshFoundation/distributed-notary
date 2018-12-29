@@ -15,10 +15,10 @@ var ListenPort = "18000"
 /*
 ThresholdCount 要求2/3以上的人都同意才能生成有效签名.
 */
-var ThresholdCount = 4
+var ThresholdCount = 1
 
 // ShareCount :
-var ShareCount = 7
+var ShareCount = 2
 
 //DefaultKeyStoreDir keystore path of ethereum
 func DefaultKeyStoreDir() string {

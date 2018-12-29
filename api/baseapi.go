@@ -20,6 +20,7 @@ var defaultAPITimeout = 30 * time.Second
 BaseAPI : 提供一些公共方法
 */
 type BaseAPI struct {
+	serverName  string
 	host        string
 	router      rest.App
 	middleWares []rest.Middleware
@@ -29,8 +30,9 @@ type BaseAPI struct {
 }
 
 // NewBaseAPI :
-func NewBaseAPI(host string, router rest.App, middleWares ...rest.Middleware) BaseAPI {
+func NewBaseAPI(serverName string, host string, router rest.App, middleWares ...rest.Middleware) BaseAPI {
 	return BaseAPI{
+		serverName:  serverName,
 		host:        host,
 		router:      router,
 		timeout:     defaultAPITimeout,
@@ -47,7 +49,7 @@ func (ba *BaseAPI) Start(sync bool) {
 		ba.api.Use(ba.middleWares...)
 	}
 	ba.api.SetApp(ba.router)
-	log.Info("http listen and serve at %s", ba.host)
+	log.Info("%s listen at %s", ba.serverName, ba.host)
 	if sync {
 		err := http.ListenAndServe(ba.host, ba.api.MakeHandler())
 		if err != nil {

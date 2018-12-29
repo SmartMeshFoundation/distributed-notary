@@ -13,6 +13,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/curv/proofs"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jinzhu/gorm"
 )
 
 var errKeyLength = errors.New("key length error")
@@ -234,6 +235,22 @@ func toPrivateKeyInfoModel(p *PrivateKeyInfo) *PrivateKeyInfoModel {
 //NewPrivateKeyInfo 开启一次新的私钥协商过程
 func (db *DB) NewPrivateKeyInfo(p *PrivateKeyInfo) error {
 	return db.Create(toPrivateKeyInfoModel(p)).Error
+}
+
+//GetPrivateKeyList :
+func (db *DB) GetPrivateKeyList() (privateKeyList []*PrivateKeyInfo, err error) {
+	var list []PrivateKeyInfoModel
+	err = db.Find(&list).Error
+	if err == gorm.ErrRecordNotFound {
+		err = nil
+	}
+	if err != nil {
+		return
+	}
+	for _, v := range list {
+		privateKeyList = append(privateKeyList, fromPrivateKeyInfoModel(&v))
+	}
+	return
 }
 
 //LoadPrivateKeyInfo 私钥协商过程都完整保存在数据库中

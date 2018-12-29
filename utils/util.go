@@ -101,6 +101,15 @@ func ToJSONStringFormat(v interface{}) string {
 	return string(buf)
 }
 
+// ToJSONString :
+func ToJSONString(v interface{}) string {
+	buf, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	return string(buf)
+}
+
 // Exists returns true if directory||file exists
 func Exists(dir string) bool {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {

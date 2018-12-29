@@ -16,7 +16,7 @@ CreatePrivateKey 该接口仅仅是发启一次过程,不参与实际协商过�
 */
 func (ua *UserAPI) createPrivateKey(w rest.ResponseWriter, r *rest.Request) {
 	req := &CreatePrivateKeyRequest{
-		BaseRequest: api.NewBaseRequest("UserAPI-CreatePrivateKey"),
+		BaseRequest: api.NewBaseRequest(APINameCreatePrivateKey),
 	}
 	api.Return(w, ua.SendToServiceAndWaitResponse(req))
 }

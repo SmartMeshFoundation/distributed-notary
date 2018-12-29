@@ -53,6 +53,6 @@ func NewNotaryAPI(host string) *NotaryAPI {
 	if err != nil {
 		log.Crit(fmt.Sprintf("maker router :%s", err))
 	}
-	notaryAPI.BaseAPI = api.NewBaseAPI(host, router)
+	notaryAPI.BaseAPI = api.NewBaseAPI("NotaryAPI-Server", host, router)
 	return &notaryAPI
 }

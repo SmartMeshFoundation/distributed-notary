@@ -11,11 +11,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/huamou/config"
 	"github.com/jinzhu/gorm"
+	"github.com/nkbai/log"
 )
 
 //NotaryInfo 公证人的基本信息
 type NotaryInfo struct {
-	ID         int `gorm:"primary_key"` // 公证人编号, 预先定死
+	Key        string `gorm:"primary_key" json:"-"` // 这里key就是ID的字符串格式
+	ID         int    // 公证人编号, 预先定死
 	Name       string
 	Host       string //how to contact with this notary
 	AddressStr string
@@ -60,6 +62,7 @@ func (db *DB) NewNotaryInfoFromConfFile(confFilePath string) (notaries []NotaryI
 			return
 		}
 		notaryInfo := NotaryInfo{
+			Key:        s[0],
 			ID:         id,
 			Name:       "Notary-" + s[0],
 			Host:       s[2],
@@ -71,5 +74,6 @@ func (db *DB) NewNotaryInfoFromConfFile(confFilePath string) (notaries []NotaryI
 		}
 		notaries = append(notaries, notaryInfo)
 	}
+	log.Trace("read notary list from notary-conf-file %s :\n%s", confFilePath, utils.ToJSONStringFormat(notaries))
 	return
 }
