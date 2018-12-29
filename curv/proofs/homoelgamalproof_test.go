@@ -67,8 +67,8 @@ func TestCreateHomoELGamalProof(t *testing.T) {
 	}
 }*/
 /*
-T=Secp256k1Point { purpose: "combine", ge: Address(81baa5514553297c39fb59310ec0109dc421254e2b30a1fbecb5b40f7b5b4ff4aaba9fd8a469d3565b69112cc013e0132ffd5a749470579ac4c5973168b30088) }
-A3=Secp256k1Point { purpose: "base_fe", ge: Address(b595bf95b198816af105ef859399da5ed73eb206109b80f9b94ad163ae1d1ff344da876ce30322179e077868b6ccc025e7462289baa774f5edfa3bab7cb1b72d) }
+T=Secp256k1Point { purpose: "combine", ge: AddressStr(81baa5514553297c39fb59310ec0109dc421254e2b30a1fbecb5b40f7b5b4ff4aaba9fd8a469d3565b69112cc013e0132ffd5a749470579ac4c5973168b30088) }
+A3=Secp256k1Point { purpose: "base_fe", ge: AddressStr(b595bf95b198816af105ef859399da5ed73eb206109b80f9b94ad163ae1d1ff344da876ce30322179e077868b6ccc025e7462289baa774f5edfa3bab7cb1b72d) }
 e2=Secp256k1Scalar { purpose: "from_big_int", fe: SecretKey(96e9eba8e92484c4a7dc1c13887bed88375a5a2979eca144aec4b7a4ba17664b) }
 test cryptographic_primitives::proofs::sigma_correct_homomrphic_elgamal_enc::tests::test_correct_general_homo_elgamal ... ok
 

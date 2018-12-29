@@ -6,6 +6,8 @@ import (
 
 	"net/http"
 
+	"os"
+
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/nkbai/log"
@@ -47,9 +49,19 @@ func (ba *BaseAPI) Start(sync bool) {
 	ba.api.SetApp(ba.router)
 	log.Info("http listen and serve at %s", ba.host)
 	if sync {
-		http.ListenAndServe(ba.host, ba.api.MakeHandler())
+		err := http.ListenAndServe(ba.host, ba.api.MakeHandler())
+		if err != nil {
+			log.Error("http server start err : %s", err.Error())
+			os.Exit(-1)
+		}
 	} else {
-		go http.ListenAndServe(ba.host, ba.api.MakeHandler())
+		go func() {
+			err := http.ListenAndServe(ba.host, ba.api.MakeHandler())
+			if err != nil {
+				log.Error("http server start err : %s", err.Error())
+				os.Exit(-1)
+			}
+		}()
 	}
 }
 

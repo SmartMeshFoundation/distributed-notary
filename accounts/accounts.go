@@ -105,7 +105,7 @@ func PromptAccount(adviceAddress common.Address, keystorePath, passwordfile stri
 		//shouldPromt := true
 		//fmt.Println("The following accounts were found in your machine:")
 		//for i := 0; i < len(am.Accounts); i++ {
-		//	fmt.Printf("%3d -  %s\n", i, am.Accounts[i].Address.String())
+		//	fmt.Printf("%3d -  %s\n", i, am.Accounts[i].AddressStr.String())
 		//}
 		//fmt.Println("")
 		//for shouldPromt {
@@ -117,7 +117,7 @@ func PromptAccount(adviceAddress common.Address, keystorePath, passwordfile stri
 		//	}
 		//	if idx >= 0 && idx < len(am.Accounts) {
 		//		shouldPromt = false
-		//		addr = am.Accounts[idx].Address
+		//		addr = am.Accounts[idx].AddressStr
 		//	} else {
 		//		fmt.Printf("Error: Provided index %d is out of bounds", idx)
 		//	}

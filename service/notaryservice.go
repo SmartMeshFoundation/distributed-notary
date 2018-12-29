@@ -32,7 +32,7 @@ func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries [
 	// 初始化self, notaries
 	selfAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
 	for _, n := range allNotaries {
-		if n.Address == selfAddress {
+		if n.GetAddress() == selfAddress {
 			ns.self = n
 		} else {
 			ns.notaries = append(ns.notaries, n)
@@ -234,7 +234,7 @@ func (ns *NotaryService) onKeyGenerationPhase4MessageRequest(req *notaryapi.KeyG
 
 func (ns *NotaryService) getNotaryInfoByAddress(addr common.Address) (notaryInfo *models.NotaryInfo, ok bool) {
 	for _, v := range ns.notaries {
-		if v.Address == addr {
+		if v.GetAddress() == addr {
 			notaryInfo = &v
 			ok = true
 			return

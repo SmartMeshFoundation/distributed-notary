@@ -15,10 +15,15 @@ import (
 
 //NotaryInfo 公证人的基本信息
 type NotaryInfo struct {
-	ID      int `gorm:"primary_key"` // 公证人编号, 预先定死
-	Name    string
-	Host    string //how to contact with this notary
-	Address common.Address
+	ID         int `gorm:"primary_key"` // 公证人编号, 预先定死
+	Name       string
+	Host       string //how to contact with this notary
+	AddressStr string
+}
+
+// GetAddress :
+func (ns *NotaryInfo) GetAddress() common.Address {
+	return common.HexToAddress(ns.AddressStr)
 }
 
 // GetNotaryInfo :
@@ -55,10 +60,10 @@ func (db *DB) NewNotaryInfoFromConfFile(confFilePath string) (notaries []NotaryI
 			return
 		}
 		notaryInfo := NotaryInfo{
-			ID:      id,
-			Name:    "Notary-" + s[0],
-			Host:    s[2],
-			Address: common.HexToAddress(s[1]),
+			ID:         id,
+			Name:       "Notary-" + s[0],
+			Host:       s[2],
+			AddressStr: s[1],
 		}
 		err = db.Save(&notaryInfo).Error
 		if err != nil {

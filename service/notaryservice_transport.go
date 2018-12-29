@@ -35,19 +35,19 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 	var payload string
 	switch m := msg.(type) {
 	case *models.KeyGenBroadcastMessage1:
-		req := notaryapi.NewKeyGenerationPhase1MessageRequest(sessionID, ns.self.Address, m)
+		req := notaryapi.NewKeyGenerationPhase1MessageRequest(sessionID, ns.self.GetAddress(), m)
 		req.Sign(ns.privateKey)
 		payload = req.ToJSONString()
 	case *models.KeyGenBroadcastMessage2:
-		req := notaryapi.NewKeyGenerationPhase2MessageRequest(sessionID, ns.self.Address, m)
+		req := notaryapi.NewKeyGenerationPhase2MessageRequest(sessionID, ns.self.GetAddress(), m)
 		req.Sign(ns.privateKey)
 		payload = req.ToJSONString()
 	case *models.KeyGenBroadcastMessage3:
-		req := notaryapi.NewKeyGenerationPhase3MessageRequest(sessionID, ns.self.Address, m)
+		req := notaryapi.NewKeyGenerationPhase3MessageRequest(sessionID, ns.self.GetAddress(), m)
 		req.Sign(ns.privateKey)
 		payload = req.ToJSONString()
 	case *models.KeyGenBroadcastMessage4:
-		req := notaryapi.NewKeyGenerationPhase4MessageRequest(sessionID, ns.self.Address, m)
+		req := notaryapi.NewKeyGenerationPhase4MessageRequest(sessionID, ns.self.GetAddress(), m)
 		req.Sign(ns.privateKey)
 		payload = req.ToJSONString()
 	}

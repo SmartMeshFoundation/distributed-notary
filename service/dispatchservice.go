@@ -94,7 +94,7 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 	}
 	// 4. 初始化侧链事件监听
 	chainName := spectrumevents.ChainName
-	ds.chainMap[chainName], err = spectrum.NewSMCService(cfg.SMCRPCEndPoint, db.GetLastBlockNumber(chainName))
+	ds.chainMap[chainName], err = spectrum.NewSMCService(cfg.SmcRPCEndPoint, db.GetLastBlockNumber(chainName))
 	if err != nil {
 		log.Error("new SMCService err : %s", err.Error())
 		return

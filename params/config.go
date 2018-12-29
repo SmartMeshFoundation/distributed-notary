@@ -9,7 +9,7 @@ type Config struct {
 	KeystorePath       string
 	Password           string
 	NotaryConfFilePath string
-	SMCRPCEndPoint     string
+	SmcRPCEndPoint     string
 	EthRPCEndPoint     string
 	UserAPIListen      string
 	NotaryAPIListen    string

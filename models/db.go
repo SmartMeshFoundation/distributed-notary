@@ -34,6 +34,7 @@ func SetUpDB(dbtype, path string) (mdb *DB) {
 	db.AutoMigrate(&PrivateKeyInfoModel{})
 	db.AutoMigrate(&SignMessgeModel{})
 	db.AutoMigrate(&NotaryInfo{})
+	db.AutoMigrate(&LastBlockNumberInfo{})
 	//db.Model(&ChannelParticipantInfo{}).AddForeignKey("channel_id", "channels(channel_id)", "CASCADE", "CASCADE") // Foreign key need to define manually
 	//db.AutoMigrate(&SettledChannel{})
 	//db.AutoMigrate(&latestBlockNumber{})

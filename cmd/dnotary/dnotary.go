@@ -24,7 +24,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "datadir",
 			Usage: "Directory for storing distributed-notary data.",
-			Value: "./.distributed-notary-data",
+			Value: "./.dnotary-data",
 		},
 		cli.StringFlag{
 			Name:  "address",
@@ -48,7 +48,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "smc-rpc-point",
 			Usage: "host:port of spectrum rpc server",
-			Value: "http://127.0.0.1:8001",
+			Value: "http://192.168.124.13:28545",
 		},
 		cli.StringFlag{
 			Name:  "eth-rpc-point",
@@ -145,7 +145,7 @@ func config(ctx *cli.Context) (cfg *params.Config, err error) {
 	// 5. notary-config-file
 	cfg.NotaryConfFilePath = ctx.String("notary-config-file")
 	// 6. smc-rpc-point
-	cfg.SMCRPCEndPoint = ctx.String("smc-rpc-point")
+	cfg.SmcRPCEndPoint = ctx.String("smc-rpc-point")
 	// 7. smc-rpc-point
 	cfg.EthRPCEndPoint = ctx.String("eth-rpc-point")
 	// 8. user-listen
