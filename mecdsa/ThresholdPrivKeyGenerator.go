@@ -57,10 +57,14 @@ GeneratePhase1PubKeyProof phase1.1 生成自己的随机数,这是后续feldman 
 func (l *ThresholdPrivKeyGenerator) GeneratePhase1PubKeyProof() (msg *models.KeyGenBroadcastMessage1, err error) {
 	ui, dk := createKeys()
 	p := &models.PrivateKeyInfo{
-		Key:             l.PrivateKeyID,
-		UI:              ui,
-		PaillierPrivkey: dk,
-		Status:          models.PrivateKeyNegotiateStatusInit,
+		Key:                 l.PrivateKeyID,
+		UI:                  ui,
+		PaillierPrivkey:     dk,
+		Status:              models.PrivateKeyNegotiateStatusInit,
+		PubKeysProof1:       make(map[int]*models.KeyGenBroadcastMessage1),
+		PaillierKeysProof2:  make(map[int]*models.KeyGenBroadcastMessage2),
+		SecretShareMessage3: make(map[int]*models.KeyGenBroadcastMessage3),
+		LastPubkeyProof4:    make(map[int]*models.KeyGenBroadcastMessage4),
 	}
 	err = l.db.NewPrivateKeyInfo(p)
 	if err != nil {
@@ -92,9 +96,6 @@ func (l *ThresholdPrivKeyGenerator) ReceivePhase1PubKeyProof(m *models.KeyGenBro
 	if !proofs.Verify(m.Proof) {
 		err = fmt.Errorf("pubkey roof for %d verify not pass", index)
 		return
-	}
-	if p.PubKeysProof1 == nil {
-		p.PubKeysProof1 = make(map[int]*models.KeyGenBroadcastMessage1)
 	}
 	p.PubKeysProof1[index] = m
 	err = l.db.KGUpdatePubKeysProof1(p)
@@ -142,7 +143,6 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase2PaillierKeyProof() (msg *model
 		CorrectKeyProof: correctKeyProof,
 		BlindFactor:     blindFactor,
 	}
-	p.PaillierKeysProof2 = make(map[int]*models.KeyGenBroadcastMessage2)
 	p.PaillierKeysProof2[l.selfNotaryID] = msg
 	//保存自己的信息到数据库中,方便后续计算使用
 	err = l.db.KGUpdatePaillierKeysProof2(p)
@@ -209,7 +209,6 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase3SecretShare() (msgs map[int]*m
 		SecretShare: secretShares[l.selfNotaryID],
 		Index:       l.selfNotaryID,
 	}
-	p.SecretShareMessage3 = make(map[int]*models.KeyGenBroadcastMessage3)
 	p.SecretShareMessage3[l.selfNotaryID] = msg
 	err = l.db.KGUpdateSecretShareMessage3(p)
 	if err != nil {
@@ -283,7 +282,6 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase4PubKeyProof() (msg *models.Key
 	}
 	proof := proofs.Prove(p.XI)
 	msg = &models.KeyGenBroadcastMessage4{Proof: proof}
-	p.LastPubkeyProof4 = make(map[int]*models.KeyGenBroadcastMessage4)
 	p.LastPubkeyProof4[l.selfNotaryID] = msg
 	err = l.db.KGUpdateLastPubKeyProof4(p)
 	return

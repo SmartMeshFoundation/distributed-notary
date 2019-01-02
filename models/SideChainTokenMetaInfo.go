@@ -13,3 +13,8 @@ type SideChainTokenMetaInfo struct {
 	MCLockedContractAddress  common.Address // 对应主链锁定合约地址
 	MCLockedContractOwnerKey common.Hash    // 对应主链锁定合约owner的key
 }
+
+// GetSCTokenMetaInfoList :
+func (db *DB) GetSCTokenMetaInfoList() (list []*SideChainTokenMetaInfo, err error) {
+	return
+}

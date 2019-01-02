@@ -4,11 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"crypto/ecdsa"
-
-	"encoding/json"
-
-	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -28,6 +23,8 @@ type Request interface {
 type NotaryRequest interface {
 	GetSessionID() common.Hash
 	GetSender() common.Address
+	getSignature() []byte
+	setSignature(sig []byte)
 }
 
 // CrossChainRequest 跨链交易相关请求,带SCTokenAddress
@@ -94,8 +91,8 @@ func (br *BaseRequest) WriteErrorResponse(errorCode ErrorCode, errorMsg ...strin
 
 // BaseNotaryRequest :
 type BaseNotaryRequest struct {
-	SessionID common.Hash    `json:"session_id"`
-	Sender    common.Address `json:"sender"`
+	SessionID common.Hash    `json:"session_id,omitempty"`
+	Sender    common.Address `json:"sender,omitempty"`
 	Signature []byte         `json:"signature,omitempty"` // 签名内容req全文json序列化后的字符串
 }
 
@@ -116,42 +113,17 @@ func (bnr *BaseNotaryRequest) GetSender() common.Address {
 func (bnr *BaseNotaryRequest) GetSessionID() common.Hash {
 	return bnr.SessionID
 }
-
-// Sign :
-func (bnr *BaseNotaryRequest) Sign(privateKey *ecdsa.PrivateKey) []byte {
-	buf, err := json.Marshal(bnr)
-	if err != nil {
-		panic(err)
-	}
-	bnr.Signature, err = utils.SignData(privateKey, buf)
-	if err != nil {
-		panic(err)
-	}
+func (bnr *BaseNotaryRequest) getSignature() []byte {
 	return bnr.Signature
 }
 
-// VerifySignature :
-func (bnr *BaseNotaryRequest) VerifySignature() bool {
-	if bnr.Signature == nil || len(bnr.Signature) == 0 {
-		return false
-	}
-	sig := bnr.Signature
-	bnr.Signature = nil
-	dataWithoutSig, err := json.Marshal(bnr)
-	if err != nil {
-		panic(err)
-	}
-	dataHash := utils.Sha3(dataWithoutSig)
-	signer, err := utils.Ecrecover(dataHash, sig)
-	if err != nil {
-		panic(err)
-	}
-	return signer == bnr.Sender
+func (bnr *BaseNotaryRequest) setSignature(sig []byte) {
+	bnr.Signature = sig
 }
 
 // BaseCrossChainRequest :
 type BaseCrossChainRequest struct {
-	SCTokenAddress common.Address `json:"sc_token_address"`
+	SCTokenAddress common.Address `json:"sc_token_address,omitempty"`
 }
 
 // GetSCTokenAddress :

@@ -113,10 +113,10 @@ func TestNotaryRequestSignature(t *testing.T) {
 	fmt.Println("Before sign : \n", utils.ToJSONStringFormat(req))
 
 	// 2. Sign
-	sig := req.Sign(privateKey)
+	sig := NotarySign(req, privateKey)
 	fmt.Println("After sign : \n", utils.ToJSONStringFormat(req))
 	assert.EqualValues(t, sig, req.Signature)
 
 	// 3. Verify Signature
-	assert.EqualValues(t, true, req.VerifySignature())
+	assert.EqualValues(t, true, VerifyNotarySignature(req))
 }

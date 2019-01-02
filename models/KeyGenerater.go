@@ -9,10 +9,14 @@ import (
 	"encoding/gob"
 	"fmt"
 
+	"crypto/ecdsa"
+
 	"github.com/SmartMeshFoundation/distributed-notary/curv/feldman"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/proofs"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/jinzhu/gorm"
 )
 
@@ -66,6 +70,18 @@ const (
 	PrivateKeyNegotiateStatusFinished
 )
 
+// PrivateKeyInfoStatusMsgMap 状态描述信息
+var PrivateKeyInfoStatusMsgMap map[int]string
+
+func init() {
+	PrivateKeyInfoStatusMsgMap = make(map[int]string)
+	PrivateKeyInfoStatusMsgMap[PrivateKeyNegotiateStatusInit] = "init"
+	PrivateKeyInfoStatusMsgMap[PrivateKeyNegotiateStatusPubKey] = "step-1 done"
+	PrivateKeyInfoStatusMsgMap[PrivateKeyNegotiateStatusPaillierPubKey] = "step-2 done"
+	PrivateKeyInfoStatusMsgMap[PrivateKeyNegotiateStatusSecretShare] = "step-3 done"
+	PrivateKeyInfoStatusMsgMap[PrivateKeyNegotiateStatusFinished] = "usable"
+}
+
 /*
 PrivateKeyInfo lockedin 过程中互相之间协商的结果
 */
@@ -81,6 +97,20 @@ type PrivateKeyInfo struct {
 	SecretShareMessage3 map[int]*KeyGenBroadcastMessage3 //第三步,定向广播secretshare信息
 	LastPubkeyProof4    map[int]*KeyGenBroadcastMessage4 //第四步,校验所有人收到的xi对应的pubkey,加总和一开始的总公钥是相同的.
 	Status              int                              //Status
+}
+
+// ToPublicKey :
+func (pi *PrivateKeyInfo) ToPublicKey() *ecdsa.PublicKey {
+	return &ecdsa.PublicKey{
+		X:     pi.PublicKeyX,
+		Y:     pi.PublicKeyY,
+		Curve: btcec.S256(),
+	}
+}
+
+// ToAddress :
+func (pi *PrivateKeyInfo) ToAddress() common.Address {
+	return crypto.PubkeyToAddress(*pi.ToPublicKey())
 }
 
 // PrivateKeyInfoModel :
@@ -227,6 +257,7 @@ func toPrivateKeyInfoModel(p *PrivateKeyInfo) *PrivateKeyInfoModel {
 		PubKeysProof1:       interface2Byte(p.PubKeysProof1, p.PubKeysProof1 == nil),
 		PaillierKeysProof2:  interface2Byte(p.PaillierKeysProof2, p.PaillierKeysProof2 == nil),
 		SecretShareMessage3: interface2Byte(p.SecretShareMessage3, p.SecretShareMessage3 == nil),
+		LastPubkeyProof4:    interface2Byte(p.LastPubkeyProof4, p.LastPubkeyProof4 == nil),
 		Status:              p.Status,
 	}
 	return p2

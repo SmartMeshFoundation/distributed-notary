@@ -3,12 +3,8 @@ package feldman
 import (
 	"math/big"
 
-	"fmt"
-
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/nkbai/goutils"
-	"github.com/nkbai/log"
 )
 
 // ShamirSecretSharing :
@@ -31,7 +27,7 @@ func Share(t, n int, secret share.SPrivKey) (*VerifiableSS, []share.SPrivKey) {
 		index = append(index, i)
 	}
 	secretShares := EvaluatePolynomial(poly, index)
-	log.Trace(fmt.Sprintf("secretShares=%s", secretShares))
+	//log.Trace(fmt.Sprintf("secretShares=%s", secretShares))
 	var commitments []*share.SPubKey
 	for _, p := range poly {
 		x, y := share.S.ScalarBaseMult(p.D.Bytes())
@@ -72,11 +68,11 @@ func EvaluatePolynomial(coefficients []share.SPrivKey, index []int) []share.SPri
 	var bs []share.SPrivKey
 	for i := 0; i < len(index); i++ {
 		point := share.BigInt2PrivateKey(big.NewInt(int64(index[i])))
-		log.Trace(fmt.Sprintf("point=%s", point))
-		log.Trace(fmt.Sprintf("coefficients=%s", utils.StringInterface(coefficients, 3)))
+		//log.Trace(fmt.Sprintf("point=%s", point))
+		//log.Trace(fmt.Sprintf("coefficients=%s", utils.StringInterface(coefficients, 3)))
 		sum := coefficients[len(coefficients)-1].Clone()
 		for j := len(coefficients) - 2; j >= 0; j-- {
-			log.Trace(fmt.Sprintf("sum=%s,coef=%s", sum, coefficients[j]))
+			//log.Trace(fmt.Sprintf("sum=%s,coef=%s", sum, coefficients[j]))
 			share.ModMul(sum, point)
 			share.ModAdd(sum, coefficients[j])
 		}
@@ -92,20 +88,20 @@ func (v *VerifiableSS) ValidateShare(secretShare share.SPrivKey, index int) bool
 	indexFe := big.NewInt(int64(index))
 	indexFe = indexFe.Mod(indexFe, share.S.N)
 	l := len(v.Commitments)
-	log.Trace(fmt.Sprintf("indexfe=%s", indexFe))
+	//log.Trace(fmt.Sprintf("indexfe=%s", indexFe))
 	head := v.Commitments[l-1].Clone()
 	for j := l - 2; j >= 0; j-- {
 		c := v.Commitments[j]
 		//log.Trace(fmt.Sprintf("acc=%s,x=%s", Xytostr(head.X, head.Y), Xytostr(c.X, c.Y)))
 		x, y = share.S.ScalarMult(head.X, head.Y, indexFe.Bytes())
-		log.Trace(fmt.Sprintf("t=%s", share.Xytostr(x, y)))
+		//log.Trace(fmt.Sprintf("t=%s", share.Xytostr(x, y)))
 		x, y = share.PointAdd(x, y, c.X, c.Y)
 		//log.Trace(fmt.Sprintf("x1=%s,y1=%s", x.Text(16), y.Text(16)))
 		//x, y = S.Add(head.X, head.Y, x, y)
 		//log.Trace(fmt.Sprintf("after add %s", Xytostr(x, y)))
 		head = &share.SPubKey{X: x, Y: y}
 	}
-	log.Trace(fmt.Sprintf("sspoint=%s,commit_to_point=%s", utils.StringInterface(ssPoint, 3), utils.StringInterface(head, 3)))
+	//log.Trace(fmt.Sprintf("sspoint=%s,commit_to_point=%s", utils.StringInterface(ssPoint, 3), utils.StringInterface(head, 3)))
 	return ssPoint.X.Cmp(head.X) == 0 && ssPoint.Y.Cmp(head.Y) == 0
 }
 
@@ -137,7 +133,7 @@ func (v *VerifiableSS) MapShareToNewParams(index int, s []int) share.SPrivKey {
 			share.ModMul(denum, xj)
 		}
 	}
-	log.Trace(fmt.Sprintf("num=%s,denum=%s", num, denum))
+	//log.Trace(fmt.Sprintf("num=%s,denum=%s", num, denum))
 	denum = share.InvertN(denum)
 	share.ModMul(num, denum)
 	return num

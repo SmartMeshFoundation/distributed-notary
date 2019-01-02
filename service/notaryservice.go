@@ -3,7 +3,7 @@ package service
 import (
 	"crypto/ecdsa"
 
-	"fmt"
+	"sync"
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
@@ -23,6 +23,7 @@ type NotaryService struct {
 	self       models.NotaryInfo
 	notaries   []models.NotaryInfo //这里保存除我以外的notary信息
 	db         *models.DB
+	pknLockMap map[common.Hash]*sync.Mutex
 }
 
 // NewNotaryService :
@@ -30,6 +31,7 @@ func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries [
 	ns = &NotaryService{
 		db:         db,
 		privateKey: privateKey,
+		pknLockMap: make(map[common.Hash]*sync.Mutex),
 	}
 	// 初始化self, notaries
 	selfAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
@@ -70,7 +72,7 @@ func (ns *NotaryService) startNewPrivateKeyNegotiation() (privateKeyID common.Ha
 	sessionID := utils.NewRandomHash() // 初始化一个会话ID
 	privateKeyID = sessionID           // 将会话ID作为私钥Key
 	log.Info(SessionLogMsg(privateKeyID, "Private key negotiation BEGIN"))
-	err = ns.startPKNPhase1(privateKeyID)
+	_, err = ns.startPKNPhase1(privateKeyID, nil, 0)
 	return
 }
 
@@ -91,14 +93,23 @@ func (ns *NotaryService) onKeyGenerationPhase1MessageRequest(req *notaryapi.KeyG
 	if err == gorm.ErrRecordNotFound {
 		// 3. 如果不存在,开始一次私钥协商
 		log.Info(SessionLogMsg(privateKeyID, "Private key negotiation BEGIN"))
-		err = ns.startPKNPhase1(privateKeyID)
+		var finish bool
+		finish, err = ns.startPKNPhase1(privateKeyID, req.Msg, senderNotaryInfo.ID)
 		if err != nil {
 			errMsg := SessionLogMsg(privateKeyID, "startPKNPhase1 err = %s", err.Error())
 			req.WriteErrorResponse(api.ErrorCodeException, errMsg)
 		} else {
 			req.WriteSuccessResponse(nil)
 		}
-		// 这里继续处理,保存已经收到的phase1消息
+		if finish {
+			// 3.5 这种情况理论上只会在只有两个公证人的时候出现
+			keyGenerator := mecdsa.NewThresholdPrivKeyGenerator(ns.self.ID, ns.db, privateKeyID)
+			err = ns.startPKNPhase2(keyGenerator)
+			if err != nil {
+				log.Error(SessionLogMsg(privateKeyID, "startPKNPhase2 err = %s", err.Error()))
+			}
+		}
+		return
 	}
 	if err != nil {
 		errMsg := SessionLogMsg(privateKeyID, "LoadPrivateKeyInfo err = %s", err.Error())
@@ -115,7 +126,6 @@ func (ns *NotaryService) onKeyGenerationPhase1MessageRequest(req *notaryapi.KeyG
 	}
 	// 保存完毕直接返回成功,防止调用方api阻塞
 	req.WriteSuccessResponse(nil)
-	fmt.Println("==========================", finish)
 	// 5. 如果phase1完成,开始phase2
 	if finish {
 		err = ns.startPKNPhase2(keyGenerator)
@@ -245,4 +255,17 @@ func (ns *NotaryService) getNotaryInfoByAddress(addr common.Address) (notaryInfo
 	}
 	ok = false
 	return
+}
+
+func (ns *NotaryService) lockPKN(sessionID common.Hash) {
+	if _, ok := ns.pknLockMap[sessionID]; !ok {
+		ns.pknLockMap[sessionID] = &sync.Mutex{}
+	}
+	ns.pknLockMap[sessionID].Lock()
+}
+func (ns *NotaryService) unlockPKN(sessionID common.Hash) {
+	ns.pknLockMap[sessionID].Unlock()
+}
+func (ns *NotaryService) removePKNLock(sessionID common.Hash) {
+	delete(ns.pknLockMap, sessionID)
 }

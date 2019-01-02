@@ -1,8 +1,8 @@
 package service
 
 import (
+	"errors"
 	"fmt"
-
 	"sync"
 
 	"github.com/SmartMeshFoundation/distributed-notary/accounts"
@@ -82,7 +82,19 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 			log.Error("get notary info from file %s err : %s", cfg.NotaryConfFilePath, err.Error())
 			return
 		}
+		if len(notaries) < 2 {
+			err = errors.New("notary num should not < 2")
+			log.Error("notary num should not < 2")
+			return
+		}
 	}
+	// 2.5 根据notaries数量初始化 ShareCount及ThresholdCount
+	params.ShareCount = len(notaries)
+	params.ThresholdCount = params.ShareCount / 3 * 2
+	if params.ShareCount%3 > 1 {
+		params.ThresholdCount++
+	}
+	log.Info("ShareCount=%d ThresholdCount=%d", params.ShareCount, params.ThresholdCount)
 	// 3. init dispatch service
 	ds = &DispatchService{
 		userAPI:                      userapi.NewUserAPI(cfg.UserAPIListen),
@@ -118,8 +130,29 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		log.Error("init AdminService err : %s", err.Error())
 		return
 	}
-	// 7. 根据SCTokenMetaInfo初始化CrossChainService TODO
-	// 8. 将所有合约地址注册到对应链的监听器中 TODO
+	// 7. 根据SCTokenMetaInfo初始化CrossChainService,并将所有合约地址注册到对应链的监听器中
+	scTokenMetaInfoList, err := ds.db.GetSCTokenMetaInfoList()
+	if err != nil {
+		log.Error("GetSCTokenMetaInfoList err : %s", err.Error())
+		return
+	}
+	ds.scToken2CrossChainServiceMapLock.Lock()
+	for _, scTokenMetaInfo := range scTokenMetaInfoList {
+		ds.scToken2CrossChainServiceMap[scTokenMetaInfo.SCToken] = NewCrossChainService(scTokenMetaInfo)
+		// 注册侧链合约:
+		err = ds.chainMap[spectrumevents.ChainName].RegisterEventListenContract(scTokenMetaInfo.SCToken)
+		if err != nil {
+			log.Error("RegisterEventListenContract on side chain err : %s", err.Error())
+			return
+		}
+		// 注册主链合约:
+		err = ds.chainMap[scTokenMetaInfo.MCName].RegisterEventListenContract(scTokenMetaInfo.MCLockedContractAddress)
+		if err != nil {
+			log.Error("RegisterEventListenContract on main chain %s err : %s", scTokenMetaInfo.MCName, err.Error())
+			return
+		}
+	}
+	ds.scToken2CrossChainServiceMapLock.Unlock()
 	return
 }
 

@@ -44,7 +44,7 @@ func NewBaseAPI(serverName string, host string, router rest.App, middleWares ...
 // Start 启动监听线程
 func (ba *BaseAPI) Start(sync bool) {
 	ba.api = rest.NewApi()
-	ba.api.Use(rest.DefaultDevStack...)
+	ba.api.Use(rest.DefaultCommonStack...)
 	if len(ba.middleWares) > 0 {
 		ba.api.Use(ba.middleWares...)
 	}
@@ -79,7 +79,12 @@ func (ba *BaseAPI) SetTimeout(timeout time.Duration) {
 
 // SendToServiceAndWaitResponse :
 func (ba *BaseAPI) SendToServiceAndWaitResponse(req Request, timeout ...time.Duration) *BaseResponse {
-	log.Trace(fmt.Sprintf("API Request %s :\n%s", req.GetRequestID(), utils.ToJSONStringFormat(req)))
+	apiRequestLog(req)
+	if r, ok := req.(NotaryRequest); ok {
+		if !VerifyNotarySignature(r) {
+			return NewFailResponse(req.GetRequestID(), ErrorCodePermissionDenied)
+		}
+	}
 	var resp *BaseResponse
 	requestTimeout := ba.timeout
 	if len(timeout) > 0 && timeout[0] > 0 {
@@ -95,7 +100,7 @@ func (ba *BaseAPI) SendToServiceAndWaitResponse(req Request, timeout ...time.Dur
 	} else {
 		resp = <-req.GetResponseChan()
 	}
-	log.Trace(fmt.Sprintf("API Response %s :\n%s", req.GetRequestID(), utils.ToJSONStringFormat(resp)))
+	apiResponseLog(req, resp)
 	return resp
 }
 
@@ -112,4 +117,36 @@ func Return(w rest.ResponseWriter, response *BaseResponse) {
 	if err != nil {
 		log.Warn(fmt.Sprintf("writejson err %s", err))
 	}
+}
+
+func apiRequestLog(req Request) {
+	prefix := ""
+	body := ""
+	if nr, ok := req.(NotaryRequest); ok {
+		// NotaryRequest 只打印基本信息,否则太多了
+		type requestToLog struct {
+			BaseRequest
+			BaseNotaryRequest
+			BaseCrossChainRequest
+		}
+		var l requestToLog
+		l.BaseRequest.RequestID = req.GetRequestID()
+		l.BaseRequest.Name = req.GetRequestName()
+		l.BaseNotaryRequest.SessionID = nr.GetSessionID()
+		l.BaseNotaryRequest.Sender = nr.GetSender()
+		l.BaseNotaryRequest.Signature = nr.getSignature()
+		body = utils.ToJSONStringFormat(l)
+		prefix = fmt.Sprintf("[SessionID=%s] ", utils.HPex(nr.GetSessionID()))
+	} else {
+		body = utils.ToJSONStringFormat(req)
+	}
+	log.Trace("%s===> API Request %s :\n%s", prefix, req.GetRequestID(), body)
+}
+
+func apiResponseLog(req Request, resp *BaseResponse) {
+	prefix := ""
+	if nr, ok := req.(NotaryRequest); ok {
+		prefix = fmt.Sprintf("[SessionID=%s] ", utils.HPex(nr.GetSessionID()))
+	}
+	log.Trace(fmt.Sprintf("%s===> API Response %s :\n%s", prefix, req.GetRequestID(), utils.ToJSONStringFormat(resp)))
 }

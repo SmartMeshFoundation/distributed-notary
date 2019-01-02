@@ -14,6 +14,13 @@ type CrossChainService struct {
 	meta *models.SideChainTokenMetaInfo
 }
 
+// NewCrossChainService :
+func NewCrossChainService(scTokenMetaInfo *models.SideChainTokenMetaInfo) *CrossChainService {
+	return &CrossChainService{
+		meta: scTokenMetaInfo,
+	}
+}
+
 // GetSCTokenAddress 获取侧链Token合约地址
 func (ns *CrossChainService) GetSCTokenAddress() common.Address {
 	// TODO

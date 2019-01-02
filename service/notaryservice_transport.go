@@ -42,19 +42,19 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 	switch m := msg.(type) {
 	case *models.KeyGenBroadcastMessage1:
 		req := notaryapi.NewKeyGenerationPhase1MessageRequest(sessionID, ns.self.GetAddress(), m)
-		req.Sign(ns.privateKey)
+		api.NotarySign(req, ns.privateKey)
 		payload = utils.ToJSONString(req)
 	case *models.KeyGenBroadcastMessage2:
 		req := notaryapi.NewKeyGenerationPhase2MessageRequest(sessionID, ns.self.GetAddress(), m)
-		req.Sign(ns.privateKey)
+		api.NotarySign(req, ns.privateKey)
 		payload = utils.ToJSONString(req)
 	case *models.KeyGenBroadcastMessage3:
 		req := notaryapi.NewKeyGenerationPhase3MessageRequest(sessionID, ns.self.GetAddress(), m)
-		req.Sign(ns.privateKey)
+		api.NotarySign(req, ns.privateKey)
 		payload = utils.ToJSONString(req)
 	case *models.KeyGenBroadcastMessage4:
 		req := notaryapi.NewKeyGenerationPhase4MessageRequest(sessionID, ns.self.GetAddress(), m)
-		req.Sign(ns.privateKey)
+		api.NotarySign(req, ns.privateKey)
 		payload = utils.ToJSONString(req)
 	}
 	return doPost(sessionID, url, payload)
@@ -70,7 +70,8 @@ func (ns *NotaryService) getNotaryHostByID(notaryID int) string {
 }
 
 func doPost(sessionID common.Hash, url string, payload string) (err error) {
-	log.Trace(SessionLogMsg(sessionID, "post to %s, payload : %s", url, payload))
+	//log.Trace(SessionLogMsg(sessionID, "post to %s, payload : %s", url, payload))
+	log.Trace(SessionLogMsg(sessionID, "post to %s", url))
 	var reqBody io.Reader
 	if payload == "" {
 		reqBody = nil

@@ -53,13 +53,31 @@ func (as *AdminService) onGetNotaryListRequest(req *userapi.GetNotaryListRequest
 	req.WriteSuccessResponse(notaries)
 }
 
+type privateKeyInfoToResponse struct {
+	ID      string
+	Address string
+	Status  string
+}
+
+func newPrivateKeyInfoToResponse(p *models.PrivateKeyInfo) *privateKeyInfoToResponse {
+	return &privateKeyInfoToResponse{
+		ID:      p.Key.String(),
+		Address: p.ToAddress().String(),
+		Status:  models.PrivateKeyInfoStatusMsgMap[p.Status],
+	}
+}
+
 // 私钥列表查询
 func (as *AdminService) onGetPrivateKeyListRequest(req *userapi.GetPrivateKeyListRequest) {
 	privateKeyInfoList, err := as.db.GetPrivateKeyList()
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 	}
-	req.WriteSuccessResponse(privateKeyInfoList)
+	var respList []*privateKeyInfoToResponse
+	for _, privateKeyInfo := range privateKeyInfoList {
+		respList = append(respList, newPrivateKeyInfoToResponse(privateKeyInfo))
+	}
+	req.WriteSuccessResponse(respList)
 }
 
 /*
@@ -89,7 +107,7 @@ func (as *AdminService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKeyR
 			times++
 			continue
 		}
-		req.WriteSuccessResponse(privateKey)
+		req.WriteSuccessResponse(newPrivateKeyInfoToResponse(privateKey))
 		return
 	}
 }
