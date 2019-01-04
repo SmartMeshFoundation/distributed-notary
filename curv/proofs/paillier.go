@@ -86,7 +86,7 @@ func crtRecombine(x1, x2, m1, m2, m1inv *big.Int) *big.Int {
 	return x
 }
 
-// PrivateKey represents a Paillier key.
+// privateKey represents a Paillier key.
 type PrivateKey struct {
 	PublicKey
 	p         *big.Int

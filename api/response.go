@@ -1,5 +1,7 @@
 package api
 
+import "encoding/json"
+
 // ErrorCode :
 type ErrorCode string
 
@@ -63,4 +65,14 @@ func NewFailResponse(requestID string, errorCode ErrorCode, errorMsg ...string) 
 		}
 	}
 	return r
+}
+
+// ParseData :
+func (br *BaseResponse) ParseData(to interface{}) (err error) {
+	var buf []byte
+	buf, err = json.Marshal(br.Data)
+	if err != nil {
+		return
+	}
+	return json.Unmarshal(buf, to)
 }

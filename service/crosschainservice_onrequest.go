@@ -7,3 +7,7 @@ func (ns *CrossChainService) OnRequest(req api.Request) {
 	//TODO
 	return
 }
+
+func (ns *CrossChainService) onLockin() {
+
+}

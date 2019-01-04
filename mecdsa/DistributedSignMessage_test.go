@@ -5,14 +5,29 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )
+
+type testMessage struct {
+	data []byte
+}
+
+func (tm *testMessage) GetHash() common.Hash {
+	return utils.Sha3(tm.data)
+}
+
+func (tm *testMessage) GetBytes() []byte {
+	return tm.data
+}
 
 func TestLockout(t *testing.T) {
 	var finish bool
 	var err error
 	li0, _, _, li3, li4 := newTestLockin(t)
-	message := []byte{1, 2, 3}
+	message := &testMessage{
+		data: []byte{1, 2, 3},
+	}
 	key := utils.NewRandomHash()
 	s := []int{0, 3, 4}
 	l0, err := NewDistributedSignMessage(li0.db, li0.selfNotaryID, message, key, li0.PrivateKeyID, s)

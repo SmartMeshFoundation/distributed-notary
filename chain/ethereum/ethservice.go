@@ -13,11 +13,13 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/commons"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -201,6 +203,16 @@ func (ss *ETHService) RecoverDisconnect() {
 // GetChainName : impl chain.Chain
 func (ss *ETHService) GetChainName() string {
 	return ss.chainName
+}
+
+// DeployContract : impl chain.Chain, LockedEthereum
+func (ss *ETHService) DeployContract(opts *bind.TransactOpts) (contractAddress common.Address, err error) {
+	contractAddress, tx, _, err := contracts.DeployLockedEthereum(opts, ss.c)
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	return bind.WaitDeployed(ctx, ss.c, tx)
 }
 
 func (ss *ETHService) changeStatus(newStatus commons.ConnectStatus) {

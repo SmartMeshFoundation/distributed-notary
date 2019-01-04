@@ -22,9 +22,24 @@ import (
 BroadcastMsg :
 群发消息到各个notary的指定api TODO 目前全是同步
 */
-func (ns *NotaryService) BroadcastMsg(sessionID common.Hash, apiName string, msg interface{}, isSync bool) (err error) {
+func (ns *NotaryService) BroadcastMsg(sessionID common.Hash, apiName string, msg interface{}, isSync bool, notaryIDs ...int) (err error) {
+	if len(notaryIDs) > 0 {
+		for _, notaryID := range notaryIDs {
+			if notaryID == ns.self.ID {
+				continue
+			}
+			_, err = ns.SendMsg(sessionID, apiName, notaryID, msg)
+			if err != nil {
+				return
+			}
+		}
+		return
+	}
 	for _, notary := range ns.notaries {
-		err = ns.SendMsg(sessionID, apiName, notary.ID, msg)
+		if notary.ID == ns.self.ID {
+			continue
+		}
+		_, err = ns.SendMsg(sessionID, apiName, notary.ID, msg)
 		if err != nil {
 			return
 		}
@@ -36,10 +51,13 @@ func (ns *NotaryService) BroadcastMsg(sessionID common.Hash, apiName string, msg
 SendMsg :
 同步请求
 */
-func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID int, msg interface{}) (err error) {
+func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID int, msg interface{}) (response api.BaseResponse, err error) {
 	url := ns.getNotaryHostByID(notaryID) + notaryapi.APIName2URLMap[apiName]
 	var payload string
 	switch m := msg.(type) {
+	/*
+		pkn
+	*/
 	case *models.KeyGenBroadcastMessage1:
 		req := notaryapi.NewKeyGenerationPhase1MessageRequest(sessionID, ns.self.GetAddress(), m)
 		api.NotarySign(req, ns.privateKey)
@@ -56,6 +74,36 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 		req := notaryapi.NewKeyGenerationPhase4MessageRequest(sessionID, ns.self.GetAddress(), m)
 		api.NotarySign(req, ns.privateKey)
 		payload = utils.ToJSONString(req)
+	/*
+		dsm
+	*/
+	case *notaryapi.DSMAskRequest:
+		api.NotarySign(m, ns.privateKey)
+		payload = utils.ToJSONString(m)
+	case *notaryapi.DSMNotifySelectionRequest:
+		api.NotarySign(m, ns.privateKey)
+		payload = utils.ToJSONString(m)
+	case *notaryapi.DSMPhase1BroadcastRequest:
+		api.NotarySign(m, ns.privateKey)
+		payload = utils.ToJSONString(m)
+	case *notaryapi.DSMPhase2MessageARequest:
+		api.NotarySign(m, ns.privateKey)
+		payload = utils.ToJSONString(m)
+	case *notaryapi.DSMPhase3DeltaIRequest:
+		api.NotarySign(m, ns.privateKey)
+		payload = utils.ToJSONString(m)
+	case *notaryapi.DSMPhase5A5BProofRequest:
+		api.NotarySign(m, ns.privateKey)
+		payload = utils.ToJSONString(m)
+	case *notaryapi.DSMPhase5CProofRequest:
+		api.NotarySign(m, ns.privateKey)
+		payload = utils.ToJSONString(m)
+	case *notaryapi.DSMPhase6ReceiveSIRequest:
+		api.NotarySign(m, ns.privateKey)
+		payload = utils.ToJSONString(m)
+	default:
+		err = errors.New("api call not expect")
+		return
 	}
 	return doPost(sessionID, url, payload)
 }
@@ -69,7 +117,7 @@ func (ns *NotaryService) getNotaryHostByID(notaryID int) string {
 	return ""
 }
 
-func doPost(sessionID common.Hash, url string, payload string) (err error) {
+func doPost(sessionID common.Hash, url string, payload string) (response api.BaseResponse, err error) {
 	//log.Trace(SessionLogMsg(sessionID, "post to %s, payload : %s", url, payload))
 	log.Trace(SessionLogMsg(sessionID, "post to %s", url))
 	var reqBody io.Reader
@@ -106,7 +154,6 @@ func doPost(sessionID common.Hash, url string, payload string) (err error) {
 		err = nil
 	}
 	respBody := buf[:n]
-	var response api.BaseResponse
 	err = json.Unmarshal(respBody, &response)
 	if err != nil {
 		return
