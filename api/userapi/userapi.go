@@ -19,3 +19,18 @@ func (ua *UserAPI) getNotaryList(w rest.ResponseWriter, r *rest.Request) {
 	}
 	api.Return(w, ua.SendToServiceAndWaitResponse(req))
 }
+
+// GetSCTokenListRequest :
+type GetSCTokenListRequest struct {
+	api.BaseRequest
+}
+
+/*
+getSCTokenList 当前支持的侧链Token列表查询
+*/
+func (ua *UserAPI) getSCTokenList(w rest.ResponseWriter, r *rest.Request) {
+	req := &GetNotaryListRequest{
+		BaseRequest: api.NewBaseRequest(APIUserNameGetSCTokenList),
+	}
+	api.Return(w, ua.SendToServiceAndWaitResponse(req))
+}

@@ -20,17 +20,17 @@ import (
 
 // AdminService :
 type AdminService struct {
-	db            *models.DB
-	notaryService *NotaryService
-	chainMap      map[string]chain.Chain
+	db              *models.DB
+	notaryService   *NotaryService
+	dispatchService dispatchServiceBackend
 }
 
 // NewAdminService :
-func NewAdminService(db *models.DB, notaryService *NotaryService, chainMap map[string]chain.Chain) (ns *AdminService, err error) {
+func NewAdminService(db *models.DB, notaryService *NotaryService, dispatchService dispatchServiceBackend) (ns *AdminService, err error) {
 	ns = &AdminService{
-		db:            db,
-		notaryService: notaryService,
-		chainMap:      chainMap,
+		db:              db,
+		notaryService:   notaryService,
+		dispatchService: dispatchService,
 	}
 	return
 }
@@ -49,6 +49,8 @@ func (as *AdminService) OnRequest(req api.Request) {
 	*/
 	case *userapi.GetNotaryListRequest:
 		as.onGetNotaryListRequest(r)
+	case *userapi.GetSCTokenListRequest:
+		as.onGetSCTokenListRequest(r)
 	/*
 		admin api
 	*/
@@ -69,6 +71,15 @@ func (as *AdminService) onGetNotaryListRequest(req *userapi.GetNotaryListRequest
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 	}
 	req.WriteSuccessResponse(notaries)
+}
+
+// SCToken列表查询
+func (as *AdminService) onGetSCTokenListRequest(req *userapi.GetSCTokenListRequest) {
+	tokens, err := as.db.GetSCTokenMetaInfoList()
+	if err != nil {
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+	}
+	req.WriteSuccessResponse(tokens)
 }
 
 type privateKeyInfoToResponse struct {
@@ -174,6 +185,13 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 		return
 	}
+	// 5. 向DispatchService注册新SCToken
+	err = as.dispatchService.registerNewSCToken(&scTokenMetaInfo)
+	if err != nil {
+		log.Error("err when registerNewSCToken on %s: %s", scTokenMetaInfo.MCName, err.Error())
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
+	}
 	// 6. 构造CrossChainService开始提供服务
 	// TODO
 	// 7. 返回
@@ -181,18 +199,22 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 }
 
 func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, err error) {
-	var c chain.Chain
-	c, ok := as.chainMap[chainName]
-	if !ok && chainName != smcevents.ChainName {
+	if chainName != smcevents.ChainName {
 		err = errors.New("only support ethereum as main chain now")
 		return
 	}
+	var c chain.Chain
+	c, err = as.dispatchService.getChainByName(chainName)
 	// 暂时主链只有ethereum,复用spcetrum的signer
 	return as.distributedDeployOnSpectrum(c, privateKeyInfo)
 }
 
 func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, err error) {
-	c := as.chainMap[smcevents.ChainName]
+	var c chain.Chain
+	c, err = as.dispatchService.getChainByName(smcevents.ChainName)
+	if err != nil {
+		return
+	}
 	return as.distributedDeployOnSpectrum(c, privateKeyInfo)
 }
 

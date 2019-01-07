@@ -18,5 +18,4 @@ func (ua *UserAPI) getPrivateKeyList(w rest.ResponseWriter, r *rest.Request) {
 		BaseRequest: api.NewBaseRequest(APIAdminNameGetPrivateKeyList),
 	}
 	api.Return(w, ua.SendToServiceAndWaitResponse(req))
-
 }

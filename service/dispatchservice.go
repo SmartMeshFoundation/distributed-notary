@@ -125,34 +125,24 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		return
 	}
 	// 6. 初始化AdminService
-	ds.adminService, err = NewAdminService(db, ds.notaryService, ds.chainMap)
+	ds.adminService, err = NewAdminService(db, ds.notaryService, ds)
 	if err != nil {
 		log.Error("init AdminService err : %s", err.Error())
 		return
 	}
-	// 7. 根据SCTokenMetaInfo初始化CrossChainService,并将所有合约地址注册到对应链的监听器中
+	// 7. 读取db中的SCToken数据,o初始化CrossChainService,并将所有合约地址注册到对应链的监听器中
 	scTokenMetaInfoList, err := ds.db.GetSCTokenMetaInfoList()
 	if err != nil {
 		log.Error("GetSCTokenMetaInfoList err : %s", err.Error())
 		return
 	}
-	ds.scToken2CrossChainServiceMapLock.Lock()
 	for _, scTokenMetaInfo := range scTokenMetaInfoList {
-		ds.scToken2CrossChainServiceMap[scTokenMetaInfo.SCToken] = NewCrossChainService(scTokenMetaInfo)
-		// 注册侧链合约:
-		err = ds.chainMap[spectrumevents.ChainName].RegisterEventListenContract(scTokenMetaInfo.SCToken)
+		err = ds.registerNewSCToken(scTokenMetaInfo)
 		if err != nil {
-			log.Error("RegisterEventListenContract on side chain err : %s", err.Error())
-			return
-		}
-		// 注册主链合约:
-		err = ds.chainMap[scTokenMetaInfo.MCName].RegisterEventListenContract(scTokenMetaInfo.MCLockedContractAddress)
-		if err != nil {
-			log.Error("RegisterEventListenContract on main chain %s err : %s", scTokenMetaInfo.MCName, err.Error())
+			log.Error("registerNewSCToken err : %s", err.Error())
 			return
 		}
 	}
-	ds.scToken2CrossChainServiceMapLock.Unlock()
 	return
 }
 

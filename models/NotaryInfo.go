@@ -17,10 +17,10 @@ import (
 //NotaryInfo 公证人的基本信息
 type NotaryInfo struct {
 	Key        string `gorm:"primary_key" json:"-"` // 这里key就是ID的字符串格式
-	ID         int    // 公证人编号, 预先定死
-	Name       string
-	Host       string //how to contact with this notary
-	AddressStr string
+	ID         int    `json:"id"`                   // 公证人编号, 预先定死
+	Name       string `json:"name"`
+	Host       string `json:"host"` //how to contact with this notary
+	AddressStr string `json:"address"`
 }
 
 // GetAddress :

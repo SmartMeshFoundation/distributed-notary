@@ -16,7 +16,9 @@ const (
 	APIAdminNameCreatePrivateKey   = "Admin-CreatePrivateKey"   // 发起一次私钥协商
 	APIAdminNameGetPrivateKeyList  = "Admin-GetPrivateKeyList"  // 私钥片列表查询
 	APIAdminNameRegisterNewSCToken = "Admin-RegisterNewSCToken" // 注册一个新的侧链token
-	APIUserNameGetNotaryList       = "User-GetNotaryList"       // 公证人列表查询
+	APIUserNamePrefix              = "User-"
+	APIUserNameGetNotaryList       = APIUserNamePrefix + "GetNotaryList"  // 公证人列表查询
+	APIUserNameGetSCTokenList      = APIUserNamePrefix + "GetSCTokenList" // 当前支持的SCToken列表查询
 )
 
 // APIName2URLMap :
@@ -28,6 +30,7 @@ func init() {
 	APIName2URLMap[APIAdminNameGetPrivateKeyList] = "/api/1/admin/private-keys"
 	APIName2URLMap[APIAdminNameRegisterNewSCToken] = "/api/1/admin/sctoken"
 	APIName2URLMap[APIUserNameGetNotaryList] = "/api/1/user/notaries"
+	APIName2URLMap[APIUserNameGetSCTokenList] = "/api/1/user/sctokens"
 }
 
 /*
@@ -51,6 +54,7 @@ func NewUserAPI(host string) *UserAPI {
 			user api
 		*/
 		rest.Get(APIName2URLMap[APIUserNameGetNotaryList], userAPI.getNotaryList),
+		rest.Get(APIName2URLMap[APIUserNameGetSCTokenList], userAPI.getSCTokenList),
 		/*
 			admin api
 		*/
