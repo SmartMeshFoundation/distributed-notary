@@ -277,7 +277,9 @@ func TestLockout2(t *testing.T) {
 	var finish bool
 	var err error
 	li0, li1, _, li3, li4 := newTestLockin(t)
-	message := []byte{1, 2, 3}
+	message := &testMessage{
+		data: []byte{1, 2, 3},
+	}
 	key := utils.NewRandomHash()
 	s := []int{0, 1, 3, 4}
 	l0, err := NewDistributedSignMessage(li0.db, li0.selfNotaryID, message, key, li0.PrivateKeyID, s)
