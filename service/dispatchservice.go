@@ -124,8 +124,8 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		log.Error("init NotaryService err : %s", err.Error())
 		return
 	}
-	// 6. 初始化SystemService
-	ds.adminService, err = NewAdminService(db, ds.notaryService)
+	// 6. 初始化AdminService
+	ds.adminService, err = NewAdminService(db, ds.notaryService, ds.chainMap)
 	if err != nil {
 		log.Error("init AdminService err : %s", err.Error())
 		return

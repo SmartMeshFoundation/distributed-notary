@@ -13,11 +13,13 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/client"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/commons"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -201,6 +203,16 @@ func (ss *SMCService) RecoverDisconnect() {
 // GetChainName : impl chain.Chain
 func (ss *SMCService) GetChainName() string {
 	return ss.chainName
+}
+
+// DeployContract : impl chain.Chain 这里暂时只有EthereumToken一个合约,后续优化该接口为支持多主链
+func (ss *SMCService) DeployContract(opts *bind.TransactOpts) (contractAddress common.Address, err error) {
+	contractAddress, tx, _, err := contracts.DeployEthereumToken(opts, ss.c)
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	return bind.WaitDeployed(ctx, ss.c, tx)
 }
 
 func (ss *SMCService) changeStatus(newStatus commons.ConnectStatus) {

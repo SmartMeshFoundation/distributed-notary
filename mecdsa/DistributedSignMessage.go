@@ -20,6 +20,12 @@ import (
 	"github.com/nkbai/log"
 )
 
+// MessageToSign 待签名的消息体
+type MessageToSign interface {
+	GetHash() common.Hash
+	GetBytes() []byte
+}
+
 /*
 DistributedSignMessage 由某个公证人主导发起,其他一组公证人参与的,相互协调最终生成有效签名的过程.
 */
@@ -27,7 +33,7 @@ type DistributedSignMessage struct {
 	db                 *models.DB
 	Key                common.Hash               //此次签名的唯一key,由签名主导公证人指定
 	PrivateKey         common.Hash               //此次签名用到的分布式私钥, 在数据库中的key
-	Message            []byte                    //此次签名的消息
+	MessageToSign      MessageToSign             //此次签名的消息
 	S                  []int                     //由签名主导公证人指定的此次签名参与的公证人.
 	XI                 share.SPrivKey            //协商好的私钥片
 	PaillierPubKeys    map[int]*proofs.PublicKey //其他公证人的同态加密公钥
@@ -43,23 +49,23 @@ NewDistributedSignMessage 一开始就要确定哪些公证人参与此次签名
 人数t > ThresholdCount && t <= ShareCount
 指出要签名的交易,公证人应该对此交易做校验,是否是一个合法的交易
 */
-func NewDistributedSignMessage(db *models.DB, notaryID int, message []byte, key common.Hash, privateKey common.Hash, s []int) (l *DistributedSignMessage, err error) {
+func NewDistributedSignMessage(db *models.DB, notaryID int, message MessageToSign, key common.Hash, privateKey common.Hash, s []int) (l *DistributedSignMessage, err error) {
 	if len(s) <= params.ThresholdCount {
 		err = fmt.Errorf("candidates notary too less")
 		return
 	}
 	l = &DistributedSignMessage{
-		db:           db,
-		Key:          key,
-		Message:      message,
-		PrivateKey:   privateKey,
-		S:            s,
-		selfNotaryID: notaryID,
+		db:            db,
+		Key:           key,
+		MessageToSign: message,
+		PrivateKey:    privateKey,
+		S:             s,
+		selfNotaryID:  notaryID,
 	}
 	l2 := &models.SignMessage{
 		Key:            l.Key,
 		UsedPrivateKey: l.PrivateKey,
-		Message:        l.Message,
+		Message:        l.MessageToSign.GetBytes(),
 		S:              s,
 	}
 	err = l.db.NewSignMessage(l2)
@@ -71,6 +77,17 @@ func NewDistributedSignMessage(db *models.DB, notaryID int, message []byte, key 
 		return nil, err
 	}
 	l.createSignKeys()
+	return
+}
+
+// NewDistributedSignMessageFromDB :
+func NewDistributedSignMessageFromDB(db *models.DB, key common.Hash, privateKeyID common.Hash) (d *DistributedSignMessage, err error) {
+	d = &DistributedSignMessage{
+		db:         db,
+		Key:        key,
+		PrivateKey: privateKeyID,
+	}
+	err = d.loadLockout()
 	return
 }
 
@@ -502,7 +519,7 @@ func (l *DistributedSignMessage) GeneratePhase5a5bZkProof() (msg *models.Phase5A
 	if err != nil {
 		return
 	}
-	messageHash := utils.Sha256(l.Message)
+	messageHash := l.MessageToSign.GetHash()
 	messageBN := new(big.Int).SetBytes(messageHash[:])
 	localSignature := phase5LocalSignature(l.L.SignedKey.KI, messageBN, l.L.R, l.L.Sigma, l.PublicKey)
 	phase5Com, phase5ADecom, helgamalProof := phase5aBroadcast5bZkproof(localSignature)
@@ -723,6 +740,11 @@ func (l *DistributedSignMessage) RecevieSI(si share.SPrivKey, index int) (signat
 	if err != nil {
 		return
 	}
+	return l.GetFinalSignature()
+}
+
+// GetFinalSignature : 获取最终签名
+func (l *DistributedSignMessage) GetFinalSignature() (signature []byte, finish bool, err error) {
 	finish = len(l.L.Phase5D) == len(l.L.S)
 	if !finish {
 		return

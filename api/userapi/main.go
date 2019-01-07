@@ -13,9 +13,10 @@ type APIName string
 
 /* #no gosec */
 const (
-	APINameCreatePrivateKey  = "CreatePrivateKey"  // 发起一次私钥协商
-	APINameGetNotaryList     = "GetNotaryList"     // 公证人列表查询
-	APINameGetPrivateKeyList = "GetPrivateKeyList" // 私钥片列表查询
+	APIAdminNameCreatePrivateKey   = "Admin-CreatePrivateKey"   // 发起一次私钥协商
+	APIAdminNameGetPrivateKeyList  = "Admin-GetPrivateKeyList"  // 私钥片列表查询
+	APIAdminNameRegisterNewSCToken = "Admin-RegisterNewSCToken" // 注册一个新的侧链token
+	APIUserNameGetNotaryList       = "User-GetNotaryList"       // 公证人列表查询
 )
 
 // APIName2URLMap :
@@ -23,9 +24,10 @@ var APIName2URLMap map[string]string
 
 func init() {
 	APIName2URLMap = make(map[string]string)
-	APIName2URLMap[APINameCreatePrivateKey] = "/api/1/private-key"
-	APIName2URLMap[APINameGetNotaryList] = "/api/1/admin/notaries"
-	APIName2URLMap[APINameGetPrivateKeyList] = "/api/1/admin/private-keys"
+	APIName2URLMap[APIAdminNameCreatePrivateKey] = "/api/1/admin/private-key"
+	APIName2URLMap[APIAdminNameGetPrivateKeyList] = "/api/1/admin/private-keys"
+	APIName2URLMap[APIAdminNameRegisterNewSCToken] = "/api/1/admin/sctoken"
+	APIName2URLMap[APIUserNameGetNotaryList] = "/api/1/user/notaries"
 }
 
 /*
@@ -44,12 +46,16 @@ func NewUserAPI(host string) *UserAPI {
 		/*
 			api about private key
 		*/
-		rest.Put(APIName2URLMap[APINameCreatePrivateKey], userAPI.createPrivateKey),
+		rest.Put(APIName2URLMap[APIAdminNameCreatePrivateKey], userAPI.createPrivateKey),
+		/*
+			user api
+		*/
+		rest.Get(APIName2URLMap[APIUserNameGetNotaryList], userAPI.getNotaryList),
 		/*
 			admin api
 		*/
-		rest.Get(APIName2URLMap[APINameGetNotaryList], userAPI.getNotaryList),
-		rest.Get(APIName2URLMap[APINameGetPrivateKeyList], userAPI.getPrivateKeyList),
+		rest.Get(APIName2URLMap[APIAdminNameGetPrivateKeyList], userAPI.getPrivateKeyList),
+		rest.Put(APIName2URLMap[APIAdminNameRegisterNewSCToken], userAPI.registerNewSCToken),
 	)
 	if err != nil {
 		log.Crit(fmt.Sprintf("maker router :%s", err))

@@ -2,6 +2,7 @@ package service
 
 import (
 	"crypto/ecdsa"
+	"time"
 
 	"sync"
 
@@ -19,19 +20,19 @@ import (
 
 // NotaryService :
 type NotaryService struct {
-	privateKey *ecdsa.PrivateKey
-	self       models.NotaryInfo
-	notaries   []models.NotaryInfo //这里保存除我以外的notary信息
-	db         *models.DB
-	pknLockMap map[common.Hash]*sync.Mutex
+	privateKey     *ecdsa.PrivateKey
+	self           models.NotaryInfo
+	notaries       []models.NotaryInfo //这里保存除我以外的notary信息
+	db             *models.DB
+	sessionLockMap map[common.Hash]*sync.Mutex
 }
 
 // NewNotaryService :
 func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries []models.NotaryInfo) (ns *NotaryService, err error) {
 	ns = &NotaryService{
-		db:         db,
-		privateKey: privateKey,
-		pknLockMap: make(map[common.Hash]*sync.Mutex),
+		db:             db,
+		privateKey:     privateKey,
+		sessionLockMap: make(map[common.Hash]*sync.Mutex),
 	}
 	// 初始化self, notaries
 	selfAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
@@ -61,6 +62,22 @@ func (ns *NotaryService) OnRequest(req api.Request) {
 		ns.onKeyGenerationPhase3MessageRequest(r)
 	case *notaryapi.KeyGenerationPhase4MessageRequest:
 		ns.onKeyGenerationPhase4MessageRequest(r)
+	case *notaryapi.DSMAskRequest:
+		ns.onDSMAskRequest(r)
+	case *notaryapi.DSMNotifySelectionRequest:
+		ns.onDSMNotifySelectionRequest(r)
+	case *notaryapi.DSMPhase1BroadcastRequest:
+		ns.onDSMPhase1BroadcastRequest(r)
+	case *notaryapi.DSMPhase2MessageARequest:
+		ns.onDSMPhase2MessageARequest(r)
+	case *notaryapi.DSMPhase3DeltaIRequest:
+		ns.onDSMPhase3DeltaIRequest(r)
+	case *notaryapi.DSMPhase5A5BProofRequest:
+		ns.onDSMPhase5A5BProofRequest(r)
+	case *notaryapi.DSMPhase5CProofRequest:
+		ns.onDSMPhase5CProofRequest(r)
+	case *notaryapi.DSMPhase6ReceiveSIRequest:
+		ns.onDSMPhase6ReceiveSIRequest(r)
 	}
 	return
 }
@@ -245,6 +262,277 @@ func (ns *NotaryService) onKeyGenerationPhase4MessageRequest(req *notaryapi.KeyG
 	req.WriteSuccessResponse(nil)
 }
 
+/*
+主动开始一次签名,并等待最终的签名结果
+*/
+func (ns *NotaryService) startDistributedSignAndWait(msgToSign mecdsa.MessageToSign, privateKeyInfo *models.PrivateKeyInfo) (signature []byte, err error) {
+	// 1. DSMAsk
+	var sessionID common.Hash
+	var notaryIDs []int
+	sessionID, notaryIDs, err = ns.startDSMAsk()
+	if err != nil {
+		log.Error("startDSMAsk err = %s", err.Error())
+		return
+	}
+	// 2.DSMNotifySelection
+	err = ns.startDSMNotifySelection(sessionID, notaryIDs, privateKeyInfo.Key, msgToSign)
+	if err != nil {
+		log.Error("startDSMNotifySelection err = %s", err.Error())
+		return
+	}
+	// 3. 通知完毕之后,直接开始签名过程
+	err = ns.startDSMPhase1(sessionID, privateKeyInfo.Key)
+	if err != nil {
+		log.Error("startDSMPhase1 err = %s", err.Error())
+		return
+	}
+	// 4. 轮询数据库,等待签名完成
+	times := 0
+	for {
+		time.Sleep(time.Second) // TODO 这里轮询周期设置为多少合适,是否需要设置超时
+		dsm2, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyInfo.Key)
+		if err2 != nil {
+			log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+			return
+		}
+		var finish bool
+		signature, finish, err2 = dsm2.GetFinalSignature()
+		if err2 != nil {
+			log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+			return
+		}
+		if finish {
+			return
+		}
+		if times%10 == 0 {
+			log.Trace(SessionLogMsg(sessionID, "waiting for istributedSignMessage..."))
+		}
+		times++
+	}
+}
+
+/*
+收到 DSMAskRequest
+*/
+func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
+	// 1. 校验sender
+	_, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	if !ok {
+		log.Warn(SessionLogMsg(req.GetSessionID(), "unknown notary %s, maybe attack", req.GetSender().String()))
+		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
+		return
+	}
+	// 2. TODO 暂时所有公证人都默认愿意参与所有签名工作
+	log.Trace(SessionLogMsg(req.GetSessionID(), "accept DSMAsk from %s", utils.APex(req.GetSender())))
+	req.WriteSuccessResponse(nil)
+	return
+}
+
+/*
+收到 DSMNotifySelectionRequest
+*/
+func (ns *NotaryService) onDSMNotifySelectionRequest(req *notaryapi.DSMNotifySelectionRequest) {
+	sessionID := req.GetSessionID()
+	// 1. 校验sender
+	_, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	if !ok {
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
+		return
+	}
+	// 2. 构造dsm
+	err := ns.saveDSMNotifySelection(req)
+	if err != nil {
+		errMsg := SessionLogMsg(sessionID, "saveDSMNotifySelection err = %s", err.Error())
+		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
+		return
+	}
+	// 3. 这里先行返回,以免阻塞发起人
+	req.WriteSuccessResponse(nil)
+	// 4.开始phase1
+	err = ns.startDSMPhase1(req.GetSessionID(), req.PrivateKeyID)
+	if err != nil {
+		log.Error(SessionLogMsg(sessionID, "startDSMPhase1 err = %s", err.Error()))
+	}
+}
+
+/*
+收到 DSMPhase1BroadcastRequest
+*/
+func (ns *NotaryService) onDSMPhase1BroadcastRequest(req *notaryapi.DSMPhase1BroadcastRequest) {
+	sessionID := req.GetSessionID()
+	// 1. 校验sender
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	if !ok {
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
+		return
+	}
+	// 2. save
+	finish, err := ns.saveDSMPhase1(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
+	if err != nil {
+		errMsg := SessionLogMsg(sessionID, "saveDSMPhase1 err = %s", err.Error())
+		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
+		return
+	}
+	// 3.先行返回,避免阻塞调用方
+	req.WriteSuccessResponse(nil)
+	// 4.开始下一步
+	if finish {
+		finish, err = ns.startDSMPhase2(sessionID, req.PrivateKeyID)
+		if err != nil {
+			log.Error(SessionLogMsg(sessionID, "startDSMPhase2 err = %s", err.Error()))
+			return
+		}
+		// 5.phase2是同步的,如果完成,直接开始pahse3
+		if finish {
+			err = ns.startDSMPhase3(sessionID, req.PrivateKeyID)
+			if err != nil {
+				log.Error(SessionLogMsg(sessionID, "startDSMPhase3 err = %s", err.Error()))
+			}
+		}
+	}
+}
+
+/*
+收到 DSMPhase2MessageARequest
+*/
+func (ns *NotaryService) onDSMPhase2MessageARequest(req *notaryapi.DSMPhase2MessageARequest) {
+	sessionID := req.GetSessionID()
+	// 1. 校验sender
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	if !ok {
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
+		return
+	}
+	// 2.
+	msgResp, err := ns.saveDSMPhase2(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
+	if err != nil {
+		errMsg := SessionLogMsg(sessionID, "saveDSMPhase2 err = %s", err.Error())
+		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
+		return
+	}
+	req.WriteSuccessResponse(msgResp)
+	return
+}
+
+/*
+收到 DSMPhase3DeltaIRequest
+*/
+func (ns *NotaryService) onDSMPhase3DeltaIRequest(req *notaryapi.DSMPhase3DeltaIRequest) {
+	sessionID := req.GetSessionID()
+	// 1. 校验sender
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	if !ok {
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
+		return
+	}
+	// 2. save
+	finish, err := ns.saveDSMPhase3(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
+	if err != nil {
+		errMsg := SessionLogMsg(sessionID, "saveDSMPhase3 err = %s", err.Error())
+		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
+		return
+	}
+	// 3.先行返回,避免阻塞调用方
+	req.WriteSuccessResponse(nil)
+	// 4.开始下一步
+	if finish {
+		err = ns.startDSMPhase5A5B(sessionID, req.PrivateKeyID)
+		if err != nil {
+			log.Error(SessionLogMsg(sessionID, "startDSMPhase5A5B err = %s", err.Error()))
+		}
+	}
+}
+
+/*
+收到 DSMPhase5A5BProofRequest
+*/
+func (ns *NotaryService) onDSMPhase5A5BProofRequest(req *notaryapi.DSMPhase5A5BProofRequest) {
+	sessionID := req.GetSessionID()
+	// 1. 校验sender
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	if !ok {
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
+		return
+	}
+	// 2. save
+	finish, err := ns.saveDSMPhase5A5B(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
+	if err != nil {
+		errMsg := SessionLogMsg(sessionID, "saveDSMPhase5A5B err = %s", err.Error())
+		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
+		return
+	}
+	// 3.先行返回,避免阻塞调用方
+	req.WriteSuccessResponse(nil)
+	// 4.开始下一步
+	if finish {
+		err = ns.startDSMPhase5C(sessionID, req.PrivateKeyID)
+		if err != nil {
+			log.Error(SessionLogMsg(sessionID, "startDSMPhase5C err = %s", err.Error()))
+		}
+	}
+}
+
+/*
+收到 DSMPhase5CProofRequest
+*/
+func (ns *NotaryService) onDSMPhase5CProofRequest(req *notaryapi.DSMPhase5CProofRequest) {
+	sessionID := req.GetSessionID()
+	// 1. 校验sender
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	if !ok {
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
+		return
+	}
+	// 2. save
+	finish, err := ns.saveDSMPhase5C(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
+	if err != nil {
+		errMsg := SessionLogMsg(sessionID, "saveDSMPhase5C err = %s", err.Error())
+		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
+		return
+	}
+	// 3.先行返回,避免阻塞调用方
+	req.WriteSuccessResponse(nil)
+	// 4.开始下一步
+	if finish {
+		err = ns.startDSMPhase6(sessionID, req.PrivateKeyID)
+		if err != nil {
+			log.Error(SessionLogMsg(sessionID, "startDSMPhase6 err = %s", err.Error()))
+		}
+	}
+}
+
+/*
+收到 DSMPhase6ReceiveSIRequest
+*/
+func (ns *NotaryService) onDSMPhase6ReceiveSIRequest(req *notaryapi.DSMPhase6ReceiveSIRequest) {
+	sessionID := req.GetSessionID()
+	// 1. 校验sender
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	if !ok {
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
+		return
+	}
+	// 2. save
+	signature, finish, err := ns.saveDSMPhase6(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
+	if err != nil {
+		errMsg := SessionLogMsg(sessionID, "saveDSMPhase6 err = %s", err.Error())
+		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
+		return
+	}
+	// 4. 如果结束,签名生成成功,打印日志
+	if finish {
+		log.Info(SessionLogMsg(sessionID, "Distributed sign message END, signature=%s", common.BytesToHash(signature).String()))
+	}
+	req.WriteSuccessResponse(nil)
+}
+
 func (ns *NotaryService) getNotaryInfoByAddress(addr common.Address) (notaryInfo *models.NotaryInfo, ok bool) {
 	for _, v := range ns.notaries {
 		if v.GetAddress() == addr {
@@ -257,15 +545,15 @@ func (ns *NotaryService) getNotaryInfoByAddress(addr common.Address) (notaryInfo
 	return
 }
 
-func (ns *NotaryService) lockPKN(sessionID common.Hash) {
-	if _, ok := ns.pknLockMap[sessionID]; !ok {
-		ns.pknLockMap[sessionID] = &sync.Mutex{}
+func (ns *NotaryService) lockSession(sessionID common.Hash) {
+	if _, ok := ns.sessionLockMap[sessionID]; !ok {
+		ns.sessionLockMap[sessionID] = &sync.Mutex{}
 	}
-	ns.pknLockMap[sessionID].Lock()
+	ns.sessionLockMap[sessionID].Lock()
 }
-func (ns *NotaryService) unlockPKN(sessionID common.Hash) {
-	ns.pknLockMap[sessionID].Unlock()
+func (ns *NotaryService) unlockSession(sessionID common.Hash) {
+	ns.sessionLockMap[sessionID].Unlock()
 }
-func (ns *NotaryService) removePKNLock(sessionID common.Hash) {
-	delete(ns.pknLockMap, sessionID)
+func (ns *NotaryService) removeSessionLock(sessionID common.Hash) {
+	delete(ns.sessionLockMap, sessionID)
 }

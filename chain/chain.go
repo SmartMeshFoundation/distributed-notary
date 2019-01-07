@@ -1,6 +1,9 @@
 package chain
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+)
 
 /*
 Chain :
@@ -13,4 +16,5 @@ type Chain interface {
 	StopEventListener()
 	RegisterEventListenContract(contractAddresses ...common.Address) error
 	UnRegisterEventListenContract(contractAddresses ...common.Address)
+	DeployContract(opts *bind.TransactOpts) (contractAddress common.Address, err error)
 }
