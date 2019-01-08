@@ -16,6 +16,8 @@ type SideChainTokenMetaInfo struct {
 	MCLockedContractAddress  common.Address `json:"mc_locked_contract_address"`             // 对应主链锁定合约地址
 	MCName                   string         `json:"mc_name"`                                // 对应主链名
 	MCLockedContractOwnerKey common.Hash    `json:"mc_locked_contract_owner_key,omitempty"` // 对应主链锁定合约owner的key
+	CreateTime               int64          `json:"create_time"`                            // 创建时间
+	OrganiserID              int            `json:"organiser_id"`                           // 发起人ID
 }
 
 type sideChainTokenMetaInfoModel struct {
@@ -25,6 +27,8 @@ type sideChainTokenMetaInfoModel struct {
 	MCLockedContractAddress  []byte // 对应主链锁定合约地址
 	MCName                   string // 对应主链名
 	MCLockedContractOwnerKey []byte // 对应主链锁定合约owner的key
+	CreateTime               int64  // 创建时间
+	OrganiserID              int    // 发起人ID
 }
 
 func (m *sideChainTokenMetaInfoModel) toSideChainTokenMetaInfo() *SideChainTokenMetaInfo {
@@ -35,6 +39,8 @@ func (m *sideChainTokenMetaInfoModel) toSideChainTokenMetaInfo() *SideChainToken
 		MCLockedContractAddress:  common.BytesToAddress(m.MCLockedContractAddress),
 		MCName:                   m.MCName,
 		MCLockedContractOwnerKey: common.BytesToHash(m.MCLockedContractOwnerKey),
+		CreateTime:               m.CreateTime,
+		OrganiserID:              m.OrganiserID,
 	}
 }
 
@@ -45,6 +51,8 @@ func (m *sideChainTokenMetaInfoModel) fromSideChainTokenMetaInfo(sc *SideChainTo
 	m.MCLockedContractAddress = sc.MCLockedContractAddress[:]
 	m.MCName = sc.MCName
 	m.MCLockedContractOwnerKey = sc.MCLockedContractOwnerKey[:]
+	m.CreateTime = sc.CreateTime
+	m.OrganiserID = sc.OrganiserID
 	return m
 }
 

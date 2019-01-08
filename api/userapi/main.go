@@ -13,12 +13,22 @@ type APIName string
 
 /* #nosec */
 const (
-	APIAdminNameCreatePrivateKey   = "Admin-CreatePrivateKey"   // 发起一次私钥协商
-	APIAdminNameGetPrivateKeyList  = "Admin-GetPrivateKeyList"  // 私钥片列表查询
-	APIAdminNameRegisterNewSCToken = "Admin-RegisterNewSCToken" // 注册一个新的侧链token
-	APIUserNamePrefix              = "User-"
-	APIUserNameGetNotaryList       = APIUserNamePrefix + "GetNotaryList"  // 公证人列表查询
-	APIUserNameGetSCTokenList      = APIUserNamePrefix + "GetSCTokenList" // 当前支持的SCToken列表查询
+	APIAdminNamePrefix             = "Admin-"
+	APIAdminNameCreatePrivateKey   = APIAdminNamePrefix + "CreatePrivateKey"   // 发起一次私钥协商
+	APIAdminNameGetPrivateKeyList  = APIAdminNamePrefix + "GetPrivateKeyList"  // 私钥片列表查询
+	APIAdminNameRegisterNewSCToken = APIAdminNamePrefix + "RegisterNewSCToken" // 注册一个新的侧链token
+
+	APIUserNamePrefix           = "User-"
+	APIUserNameGetNotaryList    = APIUserNamePrefix + "GetNotaryList"  // 公证人列表查询
+	APIUserNameGetSCTokenList   = APIUserNamePrefix + "GetSCTokenList" // 当前支持的SCToken列表查询
+	APIUserNameGetLockinStatus  = APIUserNamePrefix + "GetLockinStatus"
+	APIUserNameLockin           = APIUserNamePrefix + "Lockin"
+	APIUserNameGetLockoutStatus = APIUserNamePrefix + "GetLockoutStatus"
+	APIUserNameLockout          = APIUserNamePrefix + "Lockout"
+
+	APIDebugNamePrefix            = "Debug-"
+	APIDebugNameTransferToAccount = APIDebugNamePrefix + "transferToAccount" // 给某个账户在所有链上转10eth,为了测试
+	APIDebugNameClearSCTokenList  = APIDebugNamePrefix + "ClearSCTokenList"  // 清空所有的SCToken
 )
 
 // APIName2URLMap :
@@ -26,11 +36,21 @@ var APIName2URLMap map[string]string
 
 func init() {
 	APIName2URLMap = make(map[string]string)
+	/*
+		admin
+	*/
 	APIName2URLMap[APIAdminNameCreatePrivateKey] = "/api/1/admin/private-key"
 	APIName2URLMap[APIAdminNameGetPrivateKeyList] = "/api/1/admin/private-keys"
 	APIName2URLMap[APIAdminNameRegisterNewSCToken] = "/api/1/admin/sctoken"
+	/*
+		user
+	*/
 	APIName2URLMap[APIUserNameGetNotaryList] = "/api/1/user/notaries"
 	APIName2URLMap[APIUserNameGetSCTokenList] = "/api/1/user/sctokens"
+	/*
+		debug
+	*/
+	APIName2URLMap[APIDebugNameTransferToAccount] = "/api/1/debug/transfer-to-account/:account"
 }
 
 /*
@@ -60,6 +80,10 @@ func NewUserAPI(host string) *UserAPI {
 		*/
 		rest.Get(APIName2URLMap[APIAdminNameGetPrivateKeyList], userAPI.getPrivateKeyList),
 		rest.Put(APIName2URLMap[APIAdminNameRegisterNewSCToken], userAPI.registerNewSCToken),
+		/*
+			debug api
+		*/
+		rest.Get(APIName2URLMap[APIDebugNameTransferToAccount], userAPI.transferToAccount),
 	)
 	if err != nil {
 		log.Crit(fmt.Sprintf("maker router :%s", err))

@@ -3,13 +3,8 @@ package proofs
 import (
 	"math/big"
 
-	"fmt"
-
-	"encoding/hex"
-
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/nkbai/goutils"
-	"github.com/nkbai/log"
 )
 
 // HomoELGamalProof This is a proof of knowledge that a pair of group elements {D, E}
@@ -102,12 +97,12 @@ func CreateHashFromGE(ge []*share.SPubKey) share.SPrivKey {
 	var bs [][]byte
 	for _, g := range ge {
 		bs = append(bs, []byte{4})
-		s := share.Xytostr(g.X, g.Y)
-		log.Trace(fmt.Sprintf("s=%s", s))
-		log.Trace(fmt.Sprintf("x=%s,y=%s", g.X.Text(16), g.Y.Text(16)))
-		log.Trace(fmt.Sprintf("x=%s", hex.EncodeToString(g.X.Bytes())))
-		log.Trace(fmt.Sprintf("write=%s", hex.EncodeToString(g.X.Bytes())))
-		log.Trace(fmt.Sprintf("writey=%s", hex.EncodeToString(g.Y.Bytes())))
+		//s := share.Xytostr(g.X, g.Y)
+		//log.Trace(fmt.Sprintf("s=%s", s))
+		//log.Trace(fmt.Sprintf("x=%s,y=%s", g.X.Text(16), g.Y.Text(16)))
+		//log.Trace(fmt.Sprintf("x=%s", hex.EncodeToString(g.X.Bytes())))
+		//log.Trace(fmt.Sprintf("write=%s", hex.EncodeToString(g.X.Bytes())))
+		//log.Trace(fmt.Sprintf("writey=%s", hex.EncodeToString(g.Y.Bytes())))
 		bs = append(bs, g.X.Bytes())
 		bs = append(bs, g.Y.Bytes())
 		//bs = append(bs, b)

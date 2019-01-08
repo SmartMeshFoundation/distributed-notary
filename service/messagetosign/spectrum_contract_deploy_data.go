@@ -1,4 +1,4 @@
-package service
+package messagetosign
 
 import (
 	"errors"
@@ -11,16 +11,16 @@ import (
 
 var errShouldBe = errors.New("should error")
 
-// SpectrumTXDataName 用做消息传输时识别
-const SpectrumTXDataName = "SpectrumTXData"
+// SpectrumContractDeployTXDataNameName 用做消息传输时识别
+const SpectrumContractDeployTXDataNameName = "SpectrumContractDeployTXData"
 
-// SpectrumTXData :
-type SpectrumTXData struct {
+// SpectrumContractDeployTXData :
+type SpectrumContractDeployTXData struct {
 	tx []byte
 }
 
 // NewSpectrumContractDeployTX :
-func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address) (tx *SpectrumTXData) {
+func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address) (tx *SpectrumContractDeployTXData) {
 	var txBytes []byte
 	transactor := &bind.TransactOpts{
 		From: callerAddress,
@@ -37,25 +37,25 @@ func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address) (t
 		// 这里不可能发生
 		panic(err)
 	}
-	return &SpectrumTXData{
+	return &SpectrumContractDeployTXData{
 		tx: txBytes,
 	}
 }
 
 // GetBytes : impl MessageToSign
-func (s *SpectrumTXData) GetBytes() []byte {
+func (s *SpectrumContractDeployTXData) GetBytes() []byte {
 	return s.tx
 }
 
 // GetName : impl MessageToSign
-func (s *SpectrumTXData) GetName() string {
-	return SpectrumTXDataName
+func (s *SpectrumContractDeployTXData) GetName() string {
+	return SpectrumContractDeployTXDataNameName
 }
 
 // Parse : impl MessageToSign
-func (s *SpectrumTXData) Parse(buf []byte) error {
+func (s *SpectrumContractDeployTXData) Parse(buf []byte) error {
 	if buf == nil || len(buf) == 0 {
-		return errors.New("can not parse empty data to SpectrumTXData")
+		return errors.New("can not parse empty data to SpectrumContractDeployTXData")
 	}
 	s.tx = buf
 	return nil

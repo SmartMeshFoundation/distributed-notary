@@ -28,6 +28,7 @@ func init() {
 	errorCode2MsgMap[ErrorCodeException] = "exception,best call admin"
 }
 
+// Response :
 type Response interface {
 	GetErrorCode() ErrorCode
 	GetErrorMsg() string

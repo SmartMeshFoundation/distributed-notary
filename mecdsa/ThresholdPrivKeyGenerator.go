@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"time"
+
 	"github.com/SmartMeshFoundation/distributed-notary/curv/feldman"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/proofs"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
@@ -65,6 +67,7 @@ func (l *ThresholdPrivKeyGenerator) GeneratePhase1PubKeyProof() (msg *models.Key
 		PaillierKeysProof2:  make(map[int]*models.KeyGenBroadcastMessage2),
 		SecretShareMessage3: make(map[int]*models.KeyGenBroadcastMessage3),
 		LastPubkeyProof4:    make(map[int]*models.KeyGenBroadcastMessage4),
+		CreateTime:          time.Now().Unix(),
 	}
 	err = l.db.NewPrivateKeyInfo(p)
 	if err != nil {

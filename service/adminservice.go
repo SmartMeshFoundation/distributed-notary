@@ -17,6 +17,7 @@ import (
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -66,6 +67,11 @@ func (as *AdminService) OnRequest(req api.Request) {
 		as.onCreatePrivateKeyRequest(r)
 	case *userapi.RegisterSCTokenRequest:
 		as.onRegisterSCTokenRequest(r)
+	/*
+		debug api
+	*/
+	case *userapi.DebugTransferToAccountRequest:
+		as.onDebugTransferToAccountRequest(r)
 	}
 	return
 }
@@ -89,17 +95,19 @@ func (as *AdminService) onGetSCTokenListRequest(req *userapi.GetSCTokenListReque
 }
 
 type privateKeyInfoToResponse struct {
-	ID        string `json:"id"`
-	Address   string `json:"address,omitempty"`
-	Status    int    `json:"status"`
-	StatusMsg string `json:"status_msg"`
+	ID         string `json:"id"`
+	Address    string `json:"address,omitempty"`
+	Status     int    `json:"status"`
+	StatusMsg  string `json:"status_msg"`
+	CreateTime string `json:"create_time"`
 }
 
 func newPrivateKeyInfoToResponse(p *models.PrivateKeyInfo) (r *privateKeyInfoToResponse) {
 	r = &privateKeyInfoToResponse{
-		ID:        p.Key.String(),
-		Status:    p.Status,
-		StatusMsg: models.PrivateKeyInfoStatusMsgMap[p.Status],
+		ID:         p.Key.String(),
+		Status:     p.Status,
+		StatusMsg:  models.PrivateKeyInfoStatusMsgMap[p.Status],
+		CreateTime: time.Unix(p.CreateTime, 0).String(),
 	}
 	if p.Status == models.PrivateKeyNegotiateStatusFinished {
 		r.Address = p.ToAddress().String()
@@ -187,6 +195,8 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	scTokenMetaInfo.SCTokenOwnerKey = privateKeyInfo.Key
 	scTokenMetaInfo.MCLockedContractAddress = mcContractAddress
 	scTokenMetaInfo.MCLockedContractOwnerKey = privateKeyInfo.Key
+	scTokenMetaInfo.CreateTime = time.Now().Unix()
+	scTokenMetaInfo.OrganiserID = as.notaryService.self.ID
 	err = as.db.NewSCTokenMetaInfo(&scTokenMetaInfo)
 	if err != nil {
 		log.Error("err when NewSCTokenMetaInfo : %s", err.Error())
@@ -205,8 +215,6 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 }
 
 func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, err error) {
-	fmt.Println(chainName)
-	fmt.Println(ethevents.ChainName)
 	if chainName != ethevents.ChainName {
 		err = errors.New("only support ethereum as main chain now")
 		return
@@ -229,7 +237,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, err error) {
 	// 1. 获取待签名的数据
 	var msgToSign mecdsa.MessageToSign
-	msgToSign = NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress())
+	msgToSign = messagetosign.NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress())
 	// 2. 签名
 	var signature []byte
 	signature, err = as.notaryService.startDistributedSignAndWait(msgToSign, privateKeyInfo)
@@ -265,12 +273,10 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 			}
 			msgToSign2 := signer.Hash(tx).Bytes()
 			txSign, err := tx.WithSignature(signer, signature)
-			fmt.Println("============================== txSign")
-			fmt.Println(utils.ToJSONStringFormat(txSign))
 			eip155Signer := types.NewEIP155Signer(chainID)
 			addr, err = eip155Signer.Sender(txSign)
 			fmt.Println("============================== eip155Signer")
-			fmt.Println(chainID, addr.String(), err)
+			fmt.Println(addr, err)
 			err = nil
 			if bytes.Compare(msgToSign.GetBytes(), msgToSign2) != 0 {
 				err = fmt.Errorf("txbytes when deploy contract step1 and step2 does't match")
