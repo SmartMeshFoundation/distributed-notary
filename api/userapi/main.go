@@ -19,6 +19,9 @@ const (
 	APIUserNamePrefix              = "User-"
 	APIUserNameGetNotaryList       = APIUserNamePrefix + "GetNotaryList"  // 公证人列表查询
 	APIUserNameGetSCTokenList      = APIUserNamePrefix + "GetSCTokenList" // 当前支持的SCToken列表查询
+
+	APIDebugNamePrefix           = "Debug-"
+	APIDebugNameClearSCTokenList = APIDebugNamePrefix + "ClearSCTokenList" // 清空所有的SCToken
 )
 
 // APIName2URLMap :

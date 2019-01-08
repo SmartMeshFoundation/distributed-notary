@@ -89,17 +89,19 @@ func (as *AdminService) onGetSCTokenListRequest(req *userapi.GetSCTokenListReque
 }
 
 type privateKeyInfoToResponse struct {
-	ID        string `json:"id"`
-	Address   string `json:"address,omitempty"`
-	Status    int    `json:"status"`
-	StatusMsg string `json:"status_msg"`
+	ID         string `json:"id"`
+	Address    string `json:"address,omitempty"`
+	Status     int    `json:"status"`
+	StatusMsg  string `json:"status_msg"`
+	CreateTime string `json:"create_time"`
 }
 
 func newPrivateKeyInfoToResponse(p *models.PrivateKeyInfo) (r *privateKeyInfoToResponse) {
 	r = &privateKeyInfoToResponse{
-		ID:        p.Key.String(),
-		Status:    p.Status,
-		StatusMsg: models.PrivateKeyInfoStatusMsgMap[p.Status],
+		ID:         p.Key.String(),
+		Status:     p.Status,
+		StatusMsg:  models.PrivateKeyInfoStatusMsgMap[p.Status],
+		CreateTime: time.Unix(p.CreateTime, 0).String(),
 	}
 	if p.Status == models.PrivateKeyNegotiateStatusFinished {
 		r.Address = p.ToAddress().String()
@@ -187,6 +189,8 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	scTokenMetaInfo.SCTokenOwnerKey = privateKeyInfo.Key
 	scTokenMetaInfo.MCLockedContractAddress = mcContractAddress
 	scTokenMetaInfo.MCLockedContractOwnerKey = privateKeyInfo.Key
+	scTokenMetaInfo.CreateTime = time.Now().Unix()
+	scTokenMetaInfo.OrganiserID = as.notaryService.self.ID
 	err = as.db.NewSCTokenMetaInfo(&scTokenMetaInfo)
 	if err != nil {
 		log.Error("err when NewSCTokenMetaInfo : %s", err.Error())

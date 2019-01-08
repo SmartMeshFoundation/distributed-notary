@@ -1,6 +1,10 @@
 package service
 
 import (
+	"time"
+
+	"errors"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
@@ -124,4 +128,24 @@ func (ns *NotaryService) savePKNPhase4Msg(keyGenerator *mecdsa.ThresholdPrivKeyG
 	}
 	ns.unlockSession(keyGenerator.PrivateKeyID)
 	return
+}
+
+func (ns *NotaryService) pknWaitForPrivateKeyStatus(privateKeyID common.Hash, status int, timeout time.Duration) error {
+	start := time.Now()
+	if timeout == 0 {
+		timeout = 60 * time.Second // TODO 默认60秒是否合理
+	}
+	for {
+		if time.Since(start) >= timeout {
+			return errors.New("timeout")
+		}
+		privateKeyInfo, err := ns.db.LoadPrivateKeyInfo(privateKeyID)
+		if err != nil {
+			return err
+		}
+		if privateKeyInfo.Status == status {
+			return nil
+		}
+		time.Sleep(time.Second)
+	}
 }

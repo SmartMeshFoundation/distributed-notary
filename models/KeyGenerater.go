@@ -97,6 +97,7 @@ type PrivateKeyInfo struct {
 	SecretShareMessage3 map[int]*KeyGenBroadcastMessage3 //第三步,定向广播secretshare信息
 	LastPubkeyProof4    map[int]*KeyGenBroadcastMessage4 //第四步,校验所有人收到的xi对应的pubkey,加总和一开始的总公钥是相同的.
 	Status              int                              //Status
+	CreateTime          int64
 }
 
 // ToPublicKey :
@@ -126,6 +127,7 @@ type PrivateKeyInfoModel struct {
 	SecretShareMessage3 []byte `gorm:"type:varchar(4096);"` //第三步,定向广播secretshare信息
 	LastPubkeyProof4    []byte `gorm:"type:varchar(4096);"` //第四步,校验所有人收到的xi对应的pubkey,加总和一开始的总公钥是相同的.
 	Status              int
+	CreateTime          int64
 }
 
 func byte2Interface(data []byte, i interface{}) {
@@ -242,6 +244,7 @@ func fromPrivateKeyInfoModel(p *PrivateKeyInfoModel) *PrivateKeyInfo {
 		SecretShareMessage3: byte2KeyGenBroadcastMessage3(p.SecretShareMessage3),
 		LastPubkeyProof4:    byte2KeyGenBroadcastMessage4(p.LastPubkeyProof4),
 		Status:              p.Status,
+		CreateTime:          p.CreateTime,
 	}
 	p2.Key.SetBytes(p.Key)
 	return p2
@@ -259,6 +262,7 @@ func toPrivateKeyInfoModel(p *PrivateKeyInfo) *PrivateKeyInfoModel {
 		SecretShareMessage3: interface2Byte(p.SecretShareMessage3, p.SecretShareMessage3 == nil),
 		LastPubkeyProof4:    interface2Byte(p.LastPubkeyProof4, p.LastPubkeyProof4 == nil),
 		Status:              p.Status,
+		CreateTime:          p.CreateTime,
 	}
 	return p2
 }
