@@ -121,7 +121,11 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 		err = errors.New("api call not expect")
 		return
 	}
-	return doPost(sessionID, url, payload, response)
+	var requestID string
+	if r, ok := msg.(api.Request); ok {
+		requestID = r.GetRequestID()
+	}
+	return doPost(requestID, sessionID, url, payload, response)
 }
 
 func (ns *NotaryService) getNotaryHostByID(notaryID int) string {
@@ -133,9 +137,9 @@ func (ns *NotaryService) getNotaryHostByID(notaryID int) string {
 	return ""
 }
 
-func doPost(sessionID common.Hash, url string, payload string, responseTo api.Response) (err error) {
+func doPost(requestID string, sessionID common.Hash, url string, payload string, responseTo api.Response) (err error) {
 	//log.Trace(SessionLogMsg(sessionID, "post to %s, payload : %s", url, payload))
-	log.Trace(SessionLogMsg(sessionID, "post to %s", url))
+	log.Trace(SessionLogMsg(sessionID, "post to %s, requestID=%s", url, requestID))
 	var reqBody io.Reader
 	if payload == "" {
 		reqBody = nil
@@ -179,9 +183,11 @@ func doPost(sessionID common.Hash, url string, payload string, responseTo api.Re
 	if err != nil {
 		return
 	}
-	log.Trace(SessionLogMsg(sessionID, "get response %s", utils.ToJSONString(responseTo)))
 	if responseTo.GetErrorCode() != api.ErrorCodeSuccess {
+		log.Trace(SessionLogMsg(sessionID, "get fail response %s", utils.ToJSONString(responseTo)))
 		err = errors.New(responseTo.GetErrorMsg())
+	} else {
+		log.Trace(SessionLogMsg(sessionID, "get success response for requestID=%s", requestID))
 	}
 	return
 }

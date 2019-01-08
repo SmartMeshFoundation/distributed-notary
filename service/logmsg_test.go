@@ -22,11 +22,11 @@ func TestSign(t *testing.T) {
 	count := 0
 	for i := 0; i < 10000; i++ {
 		msgToSign := utils.NewRandomHash()
-		sig, _ := crypto.Sign(msgToSign[:], privateKey)
+		sig, err := crypto.Sign(msgToSign[:], privateKey)
+		fmt.Println(len(sig), err)
 		s := sig[32:64]
 		t := new(big.Int)
 		t.SetBytes(s)
-		fmt.Println(common.Bytes2Hex(sig), t, common.Bytes2Hex(s))
 		if t.Cmp(secp256k1halfN) > 0 {
 			fmt.Println(t, common.Bytes2Hex(s))
 			count++

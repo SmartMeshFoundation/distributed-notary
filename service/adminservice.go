@@ -209,8 +209,6 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 }
 
 func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, err error) {
-	fmt.Println(chainName)
-	fmt.Println(ethevents.ChainName)
 	if chainName != ethevents.ChainName {
 		err = errors.New("only support ethereum as main chain now")
 		return
@@ -269,12 +267,10 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 			}
 			msgToSign2 := signer.Hash(tx).Bytes()
 			txSign, err := tx.WithSignature(signer, signature)
-			fmt.Println("============================== txSign")
-			fmt.Println(utils.ToJSONStringFormat(txSign))
 			eip155Signer := types.NewEIP155Signer(chainID)
 			addr, err = eip155Signer.Sender(txSign)
 			fmt.Println("============================== eip155Signer")
-			fmt.Println(chainID, addr.String(), err)
+			fmt.Println(addr, err)
 			err = nil
 			if bytes.Compare(msgToSign.GetBytes(), msgToSign2) != 0 {
 				err = fmt.Errorf("txbytes when deploy contract step1 and step2 does't match")

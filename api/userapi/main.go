@@ -13,12 +13,18 @@ type APIName string
 
 /* #nosec */
 const (
-	APIAdminNameCreatePrivateKey   = "Admin-CreatePrivateKey"   // 发起一次私钥协商
-	APIAdminNameGetPrivateKeyList  = "Admin-GetPrivateKeyList"  // 私钥片列表查询
-	APIAdminNameRegisterNewSCToken = "Admin-RegisterNewSCToken" // 注册一个新的侧链token
-	APIUserNamePrefix              = "User-"
-	APIUserNameGetNotaryList       = APIUserNamePrefix + "GetNotaryList"  // 公证人列表查询
-	APIUserNameGetSCTokenList      = APIUserNamePrefix + "GetSCTokenList" // 当前支持的SCToken列表查询
+	APIAdminNamePrefix             = "Admin-"
+	APIAdminNameCreatePrivateKey   = APIAdminNamePrefix + "CreatePrivateKey"   // 发起一次私钥协商
+	APIAdminNameGetPrivateKeyList  = APIAdminNamePrefix + "GetPrivateKeyList"  // 私钥片列表查询
+	APIAdminNameRegisterNewSCToken = APIAdminNamePrefix + "RegisterNewSCToken" // 注册一个新的侧链token
+
+	APIUserNamePrefix           = "User-"
+	APIUserNameGetNotaryList    = APIUserNamePrefix + "GetNotaryList"  // 公证人列表查询
+	APIUserNameGetSCTokenList   = APIUserNamePrefix + "GetSCTokenList" // 当前支持的SCToken列表查询
+	APIUserNameGetLockinStatus  = APIUserNamePrefix + "GetLockinStatus"
+	APIUserNameLockin           = APIUserNamePrefix + "Lockin"
+	APIUserNameGetLockoutStatus = APIUserNamePrefix + "GetLockoutStatus"
+	APIUserNameLockout          = APIUserNamePrefix + "Lockout"
 
 	APIDebugNamePrefix           = "Debug-"
 	APIDebugNameClearSCTokenList = APIDebugNamePrefix + "ClearSCTokenList" // 清空所有的SCToken

@@ -377,6 +377,8 @@ func SignCompact(curve *KoblitzCurve, key *PrivateKey,
 					make([]byte, curvelen-bytelen)...)
 			}
 			result = append(result, sig.S.Bytes()...)
+
+			return result, nil
 		}
 	}
 
