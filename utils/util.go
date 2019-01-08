@@ -81,14 +81,22 @@ func Ecrecover(hash common.Hash, signature []byte) (addr common.Address, err err
 		err = fmt.Errorf("signature errr, len=%d,signature=%s", len(signature), hex.EncodeToString(signature))
 		return
 	}
-	signature[len(signature)-1] -= 27 //why?
+	var needAdd bool
+	if signature[len(signature)-1] >= 27 {
+		needAdd = true
+		signature[len(signature)-1] -= 27 //why?
+	}
 	pubkey, err := crypto.Ecrecover(hash[:], signature)
 	if err != nil {
-		signature[len(signature)-1] += 27
+		if needAdd {
+			signature[len(signature)-1] += 27
+		}
 		return
 	}
 	addr = PublicKeyToAddress(pubkey)
-	signature[len(signature)-1] += 27
+	if needAdd {
+		signature[len(signature)-1] += 27
+	}
 	return
 }
 

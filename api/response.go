@@ -28,6 +28,11 @@ func init() {
 	errorCode2MsgMap[ErrorCodeException] = "exception,best call admin"
 }
 
+type Response interface {
+	GetErrorCode() ErrorCode
+	GetErrorMsg() string
+}
+
 // BaseResponse :
 type BaseResponse struct {
 	ErrorCode ErrorCode   `json:"error_code"`
@@ -75,4 +80,14 @@ func (br *BaseResponse) ParseData(to interface{}) (err error) {
 		return
 	}
 	return json.Unmarshal(buf, to)
+}
+
+// GetErrorCode : impl Response
+func (br *BaseResponse) GetErrorCode() ErrorCode {
+	return br.ErrorCode
+}
+
+// GetErrorMsg : impl Response
+func (br *BaseResponse) GetErrorMsg() string {
+	return br.ErrorMsg
 }

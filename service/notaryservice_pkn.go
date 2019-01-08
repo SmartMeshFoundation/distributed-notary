@@ -84,7 +84,7 @@ func (ns *NotaryService) startPKNPhase3(keyGenerator *mecdsa.ThresholdPrivKeyGen
 	for notaryID, msg := range msgMap {
 		// 按ID分别发送phase3消息给其他人
 		// 这里虽然是定向发送,但是所有参与者都主动发起SecretShare,所以无需关心返回值,在phase3接口中处理即可 TODO
-		_, err2 := ns.SendMsg(keyGenerator.PrivateKeyID, notaryapi.APINamePKNPhase3SecretShare, notaryID, msg)
+		err2 := ns.SendMsg(keyGenerator.PrivateKeyID, notaryapi.APINamePKNPhase3SecretShare, notaryID, msg, nil)
 		if err2 != nil {
 			err = err2
 			return

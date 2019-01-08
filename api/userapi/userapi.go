@@ -29,7 +29,7 @@ type GetSCTokenListRequest struct {
 getSCTokenList 当前支持的侧链Token列表查询
 */
 func (ua *UserAPI) getSCTokenList(w rest.ResponseWriter, r *rest.Request) {
-	req := &GetNotaryListRequest{
+	req := &GetSCTokenListRequest{
 		BaseRequest: api.NewBaseRequest(APIUserNameGetSCTokenList),
 	}
 	api.Return(w, ua.SendToServiceAndWaitResponse(req))

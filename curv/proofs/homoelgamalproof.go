@@ -20,8 +20,8 @@ import (
 type HomoELGamalProof struct {
 	T  *share.SPubKey
 	A3 *share.SPubKey
-	z1 share.SPrivKey
-	z2 share.SPrivKey
+	Z1 share.SPrivKey
+	Z2 share.SPrivKey
 }
 
 // HomoElGamalWitness :
@@ -66,8 +66,8 @@ func CreateHomoELGamalProof(w *HomoElGamalWitness, delta *HomoElGamalStatement) 
 	return &HomoELGamalProof{
 		T:  &share.SPubKey{X: tx, Y: ty},
 		A3: &share.SPubKey{X: A3x, Y: A3y},
-		z1: z1,
-		z2: z2,
+		Z1: z1,
+		Z2: z2,
 	}
 
 }
@@ -75,16 +75,16 @@ func CreateHomoELGamalProof(w *HomoElGamalWitness, delta *HomoElGamalStatement) 
 //Verify : const 不会修改proof
 func (proof *HomoELGamalProof) Verify(delta *HomoElGamalStatement) bool {
 	e := CreateHashFromGE([]*share.SPubKey{proof.T, proof.A3, delta.G, delta.H, delta.Y, delta.D, delta.E})
-	//z12=z1*H+z2*Y
-	z12x, z12y := S.ScalarMult(delta.H.X, delta.H.Y, proof.z1.Bytes())
-	x, y := S.ScalarMult(delta.Y.X, delta.Y.Y, proof.z2.Bytes())
+	//z12=Z1*H+Z2*Y
+	z12x, z12y := S.ScalarMult(delta.H.X, delta.H.Y, proof.Z1.Bytes())
+	x, y := S.ScalarMult(delta.Y.X, delta.Y.Y, proof.Z2.Bytes())
 	z12x, z12y = share.PointAdd(z12x, z12y, x, y)
 
 	//T+e*D
 	x, y = S.ScalarMult(delta.D.X, delta.D.Y, e.Bytes())
 	tedx, tedy := share.PointAdd(x, y, proof.T.X, proof.T.Y)
-	//z2g=G*z2
-	z2gx, z2gy := S.ScalarMult(delta.G.X, delta.G.Y, proof.z2.Bytes())
+	//z2g=G*Z2
+	z2gx, z2gy := S.ScalarMult(delta.G.X, delta.G.Y, proof.Z2.Bytes())
 
 	//A3+e*E
 	x, y = S.ScalarMult(delta.E.X, delta.E.Y, e.Bytes())

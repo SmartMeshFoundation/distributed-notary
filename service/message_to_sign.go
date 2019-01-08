@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -12,13 +11,16 @@ import (
 
 var errShouldBe = errors.New("should error")
 
-// SpectrumContractDeployTX :
-type SpectrumContractDeployTX struct {
+// SpectrumTXDataName 用做消息传输时识别
+const SpectrumTXDataName = "SpectrumTXData"
+
+// SpectrumTXData :
+type SpectrumTXData struct {
 	tx []byte
 }
 
 // NewSpectrumContractDeployTX :
-func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address) (tx *SpectrumContractDeployTX) {
+func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address) (tx *SpectrumTXData) {
 	var txBytes []byte
 	transactor := &bind.TransactOpts{
 		From: callerAddress,
@@ -35,17 +37,26 @@ func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address) (t
 		// 这里不可能发生
 		panic(err)
 	}
-	return &SpectrumContractDeployTX{
+	return &SpectrumTXData{
 		tx: txBytes,
 	}
 }
 
-// GetHash : impl MessageToSign
-func (s *SpectrumContractDeployTX) GetHash() common.Hash {
-	return utils.Sha3(s.tx)
+// GetBytes : impl MessageToSign
+func (s *SpectrumTXData) GetBytes() []byte {
+	return s.tx
 }
 
-// GetBytes : impl MessageToSign
-func (s *SpectrumContractDeployTX) GetBytes() []byte {
-	return s.tx
+// GetName : impl MessageToSign
+func (s *SpectrumTXData) GetName() string {
+	return SpectrumTXDataName
+}
+
+// Parse : impl MessageToSign
+func (s *SpectrumTXData) Parse(buf []byte) error {
+	if buf == nil || len(buf) == 0 {
+		return errors.New("can not parse empty data to SpectrumTXData")
+	}
+	s.tx = buf
+	return nil
 }

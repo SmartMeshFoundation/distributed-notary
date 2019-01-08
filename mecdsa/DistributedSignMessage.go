@@ -22,8 +22,9 @@ import (
 
 // MessageToSign 待签名的消息体
 type MessageToSign interface {
-	GetHash() common.Hash
+	GetName() string
 	GetBytes() []byte
+	Parse(buf []byte) error
 }
 
 /*
@@ -33,8 +34,6 @@ type DistributedSignMessage struct {
 	db                 *models.DB
 	Key                common.Hash               //此次签名的唯一key,由签名主导公证人指定
 	PrivateKey         common.Hash               //此次签名用到的分布式私钥, 在数据库中的key
-	MessageToSign      MessageToSign             //此次签名的消息
-	S                  []int                     //由签名主导公证人指定的此次签名参与的公证人.
 	XI                 share.SPrivKey            //协商好的私钥片
 	PaillierPubKeys    map[int]*proofs.PublicKey //其他公证人的同态加密公钥
 	PaillierPrivateKey *proofs.PrivateKey        //我的同态加密私钥
@@ -55,17 +54,15 @@ func NewDistributedSignMessage(db *models.DB, notaryID int, message MessageToSig
 		return
 	}
 	l = &DistributedSignMessage{
-		db:            db,
-		Key:           key,
-		MessageToSign: message,
-		PrivateKey:    privateKey,
-		S:             s,
-		selfNotaryID:  notaryID,
+		db:           db,
+		Key:          key,
+		PrivateKey:   privateKey,
+		selfNotaryID: notaryID,
 	}
 	l2 := &models.SignMessage{
 		Key:            l.Key,
 		UsedPrivateKey: l.PrivateKey,
-		Message:        l.MessageToSign.GetBytes(),
+		Message:        message.GetBytes(),
 		S:              s,
 	}
 	err = l.db.NewSignMessage(l2)
@@ -76,16 +73,17 @@ func NewDistributedSignMessage(db *models.DB, notaryID int, message MessageToSig
 	if err != nil {
 		return nil, err
 	}
-	l.createSignKeys()
+	err = l.createSignKeys()
 	return
 }
 
 // NewDistributedSignMessageFromDB :
-func NewDistributedSignMessageFromDB(db *models.DB, key common.Hash, privateKeyID common.Hash) (d *DistributedSignMessage, err error) {
+func NewDistributedSignMessageFromDB(db *models.DB, selfNotaryID int, key common.Hash, privateKeyID common.Hash) (d *DistributedSignMessage, err error) {
 	d = &DistributedSignMessage{
-		db:         db,
-		Key:        key,
-		PrivateKey: privateKeyID,
+		db:           db,
+		selfNotaryID: selfNotaryID,
+		Key:          key,
+		PrivateKey:   privateKeyID,
 	}
 	err = d.loadLockout()
 	return
@@ -120,8 +118,8 @@ func (l *DistributedSignMessage) loadLockout() error {
 		//参数：自己的私钥片、系数点乘集合和我的多项式y集合、签名人的原始编号、所有签名人的编号
 //==>每个公证人的公私钥、公钥片、{{{t,n},t+1个系数点乘G的结果(c1...c2)},y1...yn}
 */
-func (l *DistributedSignMessage) createSignKeys() {
-	lambdaI := l.Vss.MapShareToNewParams(l.selfNotaryID, l.S)    //lamda_i 解释：通过lamda_i对原所有证明人的群来映射出签名者群
+func (l *DistributedSignMessage) createSignKeys() (err error) {
+	lambdaI := l.Vss.MapShareToNewParams(l.selfNotaryID, l.L.S)  //lamda_i 解释：通过lamda_i对原所有证明人的群来映射出签名者群
 	wi := share.ModMul(lambdaI, l.XI)                            //wi： 我原来的编号在对应签名群编号的映射关系 ，原来我是xi(私钥片) 现在是wi（我在新的签名群中的私钥片）
 	gwiX, gwiY := share.S.ScalarBaseMult(wi.Bytes())             //我在签名群中的公钥片
 	gammaI := share.RandomPrivateKey()                           //临时私钥
@@ -133,6 +131,8 @@ func (l *DistributedSignMessage) createSignKeys() {
 		GammaI:  gammaI,
 		GGammaI: &share.SPubKey{X: gGammaIX, Y: gGammaIY},
 	}
+	err = l.db.UpdateSignMessage(l.L)
+	return
 }
 
 /*
@@ -165,7 +165,7 @@ func (l *DistributedSignMessage) ReceivePhase1Broadcast(msg *models.SignBroadcas
 	}
 	l.L.Phase1BroadCast[index] = msg
 	err = l.db.UpdateSignMessage(l.L)
-	finish = len(l.L.Phase1BroadCast) == len(l.S)
+	finish = len(l.L.Phase1BroadCast) == len(l.L.S)
 	return
 }
 
@@ -300,20 +300,20 @@ func (l *DistributedSignMessage) ReceivePhase2MessageB(msg *models.MessageBPhase
 	if err != nil {
 		return
 	}
-	finish = len(l.L.Phase2MessageB) == len(l.S)-1
+	finish = len(l.L.Phase2MessageB) == len(l.L.S)-1
 	return
 }
 
 func (l *DistributedSignMessage) phase2DeltaI() share.SPrivKey {
 	var k *models.SignedKey
 	k = l.L.SignedKey
-	if len(l.L.AlphaGamma) != len(l.S)-1 {
+	if len(l.L.AlphaGamma) != len(l.L.S)-1 {
 		panic("arg error")
 	}
 	//kiGammaI=ki * gammI+Sum(alpha_vec) +Sum(beta_vec)
 	kiGammaI := k.KI.Clone()
 	share.ModMul(kiGammaI, k.GammaI)
-	for _, i := range l.S {
+	for _, i := range l.L.S {
 		if i == l.selfNotaryID {
 			continue
 		}
@@ -323,13 +323,13 @@ func (l *DistributedSignMessage) phase2DeltaI() share.SPrivKey {
 	return kiGammaI
 }
 func (l *DistributedSignMessage) phase2SigmaI() share.SPrivKey {
-	if len(l.L.AlphaWI) != len(l.S)-1 {
+	if len(l.L.AlphaWI) != len(l.L.S)-1 {
 		panic("length error")
 	}
 	kiwi := l.L.SignedKey.KI.Clone()
 	share.ModMul(kiwi, l.L.SignedKey.WI)
 	//todo vij=vji ?
-	for _, i := range l.S {
+	for _, i := range l.L.S {
 		if i == l.selfNotaryID {
 			continue
 		}
@@ -374,7 +374,7 @@ func (l *DistributedSignMessage) ReceivePhase3DeltaI(msg *models.DeltaPhase3, in
 	}
 	l.L.Delta[index] = msg.Delta
 	err = l.db.UpdateSignMessage(l.L)
-	finish = len(l.L.Delta) == len(l.S)
+	finish = len(l.L.Delta) == len(l.L.S)
 	return
 }
 
@@ -519,8 +519,8 @@ func (l *DistributedSignMessage) GeneratePhase5a5bZkProof() (msg *models.Phase5A
 	if err != nil {
 		return
 	}
-	messageHash := l.MessageToSign.GetHash()
-	messageBN := new(big.Int).SetBytes(messageHash[:])
+	//messageHash := utils.Sha256(l.L.Message)
+	messageBN := new(big.Int).SetBytes(l.L.Message[:])
 	localSignature := phase5LocalSignature(l.L.SignedKey.KI, messageBN, l.L.R, l.L.Sigma, l.PublicKey)
 	phase5Com, phase5ADecom, helgamalProof := phase5aBroadcast5bZkproof(localSignature)
 	msg = &models.Phase5A{Phase5Com1: phase5Com, Phase5ADecom1: phase5ADecom, Proof: helgamalProof}
@@ -563,7 +563,7 @@ func (l *DistributedSignMessage) ReceivePhase5A5BProof(msg *models.Phase5A, inde
 		return
 	}
 	l.L.Phase5A[index] = msg
-	finish = len(l.L.Phase5A) == len(l.S)
+	finish = len(l.L.Phase5A) == len(l.L.S)
 	err = l.db.UpdateSignMessage(l.L)
 	return
 }
@@ -614,7 +614,7 @@ func (l *DistributedSignMessage) GeneratePhase5CProof() (msg *models.Phase5C, er
 	if err != nil {
 		return
 	}
-	if len(l.L.Phase5A) != len(l.S) {
+	if len(l.L.Phase5A) != len(l.L.S) {
 		panic("cannot genrate5c until all 5b proof received")
 	}
 	var decomVec []*models.Phase5ADecom1
@@ -656,7 +656,7 @@ func (l *DistributedSignMessage) ReceivePhase5cProof(msg *models.Phase5C, index 
 	}
 	l.L.Phase5C[index] = msg
 	err = l.db.UpdateSignMessage(l.L)
-	finish = len(l.L.Phase5C) == len(l.S)
+	finish = len(l.L.Phase5C) == len(l.L.S)
 	return
 }
 

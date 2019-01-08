@@ -28,7 +28,7 @@ func (ns *NotaryService) BroadcastMsg(sessionID common.Hash, apiName string, msg
 			if notaryID == ns.self.ID {
 				continue
 			}
-			_, err = ns.SendMsg(sessionID, apiName, notaryID, msg)
+			err = ns.SendMsg(sessionID, apiName, notaryID, msg, nil)
 			if err != nil {
 				return
 			}
@@ -39,7 +39,7 @@ func (ns *NotaryService) BroadcastMsg(sessionID common.Hash, apiName string, msg
 		if notary.ID == ns.self.ID {
 			continue
 		}
-		_, err = ns.SendMsg(sessionID, apiName, notary.ID, msg)
+		err = ns.SendMsg(sessionID, apiName, notary.ID, msg, nil)
 		if err != nil {
 			return
 		}
@@ -51,7 +51,7 @@ func (ns *NotaryService) BroadcastMsg(sessionID common.Hash, apiName string, msg
 SendMsg :
 同步请求
 */
-func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID int, msg interface{}) (response api.BaseResponse, err error) {
+func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID int, msg interface{}, response api.Response) (err error) {
 	url := ns.getNotaryHostByID(notaryID) + notaryapi.APIName2URLMap[apiName]
 	var payload string
 	switch m := msg.(type) {
@@ -105,7 +105,7 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 		err = errors.New("api call not expect")
 		return
 	}
-	return doPost(sessionID, url, payload)
+	return doPost(sessionID, url, payload, response)
 }
 
 func (ns *NotaryService) getNotaryHostByID(notaryID int) string {
@@ -117,7 +117,7 @@ func (ns *NotaryService) getNotaryHostByID(notaryID int) string {
 	return ""
 }
 
-func doPost(sessionID common.Hash, url string, payload string) (response api.BaseResponse, err error) {
+func doPost(sessionID common.Hash, url string, payload string, responseTo api.Response) (err error) {
 	//log.Trace(SessionLogMsg(sessionID, "post to %s, payload : %s", url, payload))
 	log.Trace(SessionLogMsg(sessionID, "post to %s", url))
 	var reqBody io.Reader
@@ -135,10 +135,12 @@ func doPost(sessionID common.Hash, url string, payload string) (response api.Bas
 	resp, err := client.Do(req)
 	defer func() {
 		if req.Body != nil {
-			err = req.Body.Close()
+			/* #nosec */
+			req.Body.Close()
 		}
 		if resp != nil && resp.Body != nil {
-			err = resp.Body.Close()
+			/* #nosec */
+			resp.Body.Close()
 		}
 	}()
 	if err != nil {
@@ -154,14 +156,16 @@ func doPost(sessionID common.Hash, url string, payload string) (response api.Bas
 		err = nil
 	}
 	respBody := buf[:n]
-	err = json.Unmarshal(respBody, &response)
+	if responseTo == nil {
+		responseTo = new(api.BaseResponse)
+	}
+	err = json.Unmarshal(respBody, responseTo)
 	if err != nil {
 		return
 	}
-	log.Trace(SessionLogMsg(sessionID, "get response %s", utils.ToJSONString(response)))
-	if response.ErrorCode != api.ErrorCodeSuccess {
-		log.Error(SessionLogMsg(sessionID, response.ErrorMsg))
-		err = errors.New(response.ErrorMsg)
+	log.Trace(SessionLogMsg(sessionID, "get response %s", utils.ToJSONString(responseTo)))
+	if responseTo.GetErrorCode() != api.ErrorCodeSuccess {
+		err = errors.New(responseTo.GetErrorMsg())
 	}
 	return
 }

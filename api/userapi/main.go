@@ -11,7 +11,7 @@ import (
 // APIName :
 type APIName string
 
-/* #no gosec */
+/* #nosec */
 const (
 	APIAdminNameCreatePrivateKey   = "Admin-CreatePrivateKey"   // 发起一次私钥协商
 	APIAdminNameGetPrivateKeyList  = "Admin-GetPrivateKeyList"  // 私钥片列表查询

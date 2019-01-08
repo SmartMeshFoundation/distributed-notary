@@ -124,6 +124,7 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		log.Error("init NotaryService err : %s", err.Error())
 		return
 	}
+	log.Info("self notary info :\n%s", utils.ToJSONStringFormat(ds.notaryService.self))
 	// 6. 初始化AdminService
 	ds.adminService, err = NewAdminService(db, ds.notaryService, ds)
 	if err != nil {

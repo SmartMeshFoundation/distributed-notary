@@ -290,7 +290,7 @@ func (ns *NotaryService) startDistributedSignAndWait(msgToSign mecdsa.MessageToS
 	times := 0
 	for {
 		time.Sleep(time.Second) // TODO 这里轮询周期设置为多少合适,是否需要设置超时
-		dsm2, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyInfo.Key)
+		dsm2, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyInfo.Key)
 		if err2 != nil {
 			log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 			return
@@ -305,7 +305,7 @@ func (ns *NotaryService) startDistributedSignAndWait(msgToSign mecdsa.MessageToS
 			return
 		}
 		if times%10 == 0 {
-			log.Trace(SessionLogMsg(sessionID, "waiting for istributedSignMessage..."))
+			log.Trace(SessionLogMsg(sessionID, "waiting for distributedSignMessage..."))
 		}
 		times++
 	}

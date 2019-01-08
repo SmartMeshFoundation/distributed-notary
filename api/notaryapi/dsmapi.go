@@ -26,9 +26,10 @@ func NewDSMAskRequest(sessionID common.Hash, senderAddress common.Address) *DSMA
 type DSMNotifySelectionRequest struct {
 	api.BaseRequest
 	api.BaseNotaryRequest
-	NotaryIDs    []int                `json:"notary_i_ds"`
-	PrivateKeyID common.Hash          `json:"private_key_id"`
-	MsgToSign    mecdsa.MessageToSign `json:"msg_to_sign"`
+	NotaryIDs      []int       `json:"notary_ids"`
+	PrivateKeyID   common.Hash `json:"private_key_id"`
+	MsgName        string      `json:"msg_name"`
+	MsgBytesToSign []byte      `json:"msg_bytes_to_sign"`
 }
 
 // NewDSMNotifySelectionRequest :
@@ -38,7 +39,8 @@ func NewDSMNotifySelectionRequest(sessionID common.Hash, senderAddress common.Ad
 		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
 		NotaryIDs:         notaryIDs,
 		PrivateKeyID:      privateKeyID,
-		MsgToSign:         msgToSign,
+		MsgBytesToSign:    msgToSign.GetBytes(),
+		MsgName:           msgToSign.GetName(),
 	}
 }
 

@@ -154,7 +154,7 @@ func (na *NotaryAPI) postRequestWithBody(w rest.ResponseWriter, r *rest.Request)
 		err = json.Unmarshal(content, &req2)
 	}
 	if err != nil {
-		api.Return(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
+		api.Return(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, err.Error()))
 		return
 	}
 	api.Return(w, na.SendToServiceAndWaitResponse(req2))

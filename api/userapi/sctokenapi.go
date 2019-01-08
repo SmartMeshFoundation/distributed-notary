@@ -19,11 +19,19 @@ registerNewSCToken :
 */
 func (ua *UserAPI) registerNewSCToken(w rest.ResponseWriter, r *rest.Request) {
 	req := &RegisterSCTokenRequest{
-		BaseRequest: api.NewBaseRequest(""),
+		BaseRequest: api.NewBaseRequest(APIAdminNameRegisterNewSCToken),
 	}
 	err := r.DecodeJsonPayload(req)
 	if err != nil {
 		api.Return(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
+		return
+	}
+	if req.MainChainName == "" {
+		api.Return(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "main_chain_name can not be null"))
+		return
+	}
+	if req.PrivateKeyID == "" {
+		api.Return(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "private_key_id can not be null"))
 		return
 	}
 	api.Return(w, ua.SendToServiceAndWaitResponse(req))

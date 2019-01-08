@@ -4,43 +4,33 @@ import (
 	"fmt"
 	"testing"
 
-	"encoding/json"
+	"math/big"
 
-	"reflect"
-
-	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func TestSessionLogMsg(t *testing.T) {
 	fmt.Println(SessionLogMsg(utils.NewRandomHash(), "123... %s %s", "aaa", "bbbb"))
 }
 
-func TestUnmarsha(t *testing.T) {
-	type testStruct struct {
-		A string
-		B int
+func TestSign(t *testing.T) {
+	secp256k1N, _ := new(big.Int).SetString("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16)
+	secp256k1halfN := new(big.Int).Div(secp256k1N, big.NewInt(2))
+	privateKey, _ := crypto.GenerateKey()
+	count := 0
+	for i := 0; i < 10000; i++ {
+		msgToSign := utils.NewRandomHash()
+		sig, _ := crypto.Sign(msgToSign[:], privateKey)
+		s := sig[32:64]
+		t := new(big.Int)
+		t.SetBytes(s)
+		fmt.Println(common.Bytes2Hex(sig), t, common.Bytes2Hex(s))
+		if t.Cmp(secp256k1halfN) > 0 {
+			fmt.Println(t, common.Bytes2Hex(s))
+			count++
+		}
 	}
-	var r api.BaseResponse
-	r.ErrorCode = api.ErrorCodeSuccess
-	r.Data = &testStruct{
-		A: "123",
-		B: 5,
-	}
-	jsonStr := utils.ToJSONString(r)
-	fmt.Println(jsonStr)
-	var r2 api.BaseResponse
-	json.Unmarshal([]byte(jsonStr), &r2)
-	fmt.Println(utils.ToJSONString(r2))
-	fmt.Println(r2.Data)
-	fmt.Println(reflect.TypeOf(r2.Data))
-
-	var tt testStruct
-	buf, _ := json.Marshal(r2.Data)
-	json.Unmarshal(buf, &tt)
-	fmt.Println(utils.ToJSONString(tt))
-
-	if _, ok := r2.Data.(*testStruct); ok {
-		fmt.Println("======================", ok)
-	}
+	fmt.Println(count)
 }

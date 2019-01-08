@@ -3,6 +3,8 @@ package service
 import (
 	"errors"
 
+	"fmt"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
@@ -20,7 +22,7 @@ func (ns *NotaryService) startDSMAsk() (sessionID common.Hash, notaryIDs []int, 
 	notaryIDs = append(notaryIDs, ns.self.ID)
 	for _, notary := range ns.notaries {
 		// 这里怎么ask会公平一点
-		_, err = ns.SendMsg(sessionID, notaryapi.APINameDSMAsk, notary.ID, notaryapi.NewDSMAskRequest(sessionID, ns.self.GetAddress()))
+		err = ns.SendMsg(sessionID, notaryapi.APINameDSMAsk, notary.ID, notaryapi.NewDSMAskRequest(sessionID, ns.self.GetAddress()), nil)
 		if err == nil {
 			notaryIDs = append(notaryIDs, notary.ID)
 		}
@@ -67,7 +69,13 @@ func (ns *NotaryService) saveDSMNotifySelection(req *notaryapi.DSMNotifySelectio
 	ns.lockSession(sessionID)
 	log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection start..."))
 	// 1. 构造dsm
-	_, err = mecdsa.NewDistributedSignMessage(ns.db, ns.self.ID, req.MsgToSign, sessionID, req.PrivateKeyID, req.NotaryIDs)
+	var msgToSign mecdsa.MessageToSign
+	msgToSign, err = parseMessageToSign(req.MsgName, req.MsgBytesToSign)
+	if err != nil {
+		ns.unlockSession(sessionID)
+		return
+	}
+	_, err = mecdsa.NewDistributedSignMessage(ns.db, ns.self.ID, msgToSign, sessionID, req.PrivateKeyID, req.NotaryIDs)
 	if err != nil {
 		ns.unlockSession(sessionID)
 		return
@@ -81,7 +89,7 @@ func (ns *NotaryService) startDSMPhase1(sessionID, privateKeyID common.Hash) (er
 	ns.lockSession(sessionID)
 	log.Trace(SessionLogMsg(sessionID, "DSMPhase1 start..."))
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -96,14 +104,14 @@ func (ns *NotaryService) startDSMPhase1(sessionID, privateKeyID common.Hash) (er
 	ns.unlockSession(sessionID)
 	// 3. 广播
 	req := notaryapi.NewDSMPhase1BroadcastRequest(sessionID, ns.self.GetAddress(), privateKeyID, msg)
-	err = ns.BroadcastMsg(dsm.Key, notaryapi.APINameDSMPhase1Broadcast, req, true, dsm.S...)
+	err = ns.BroadcastMsg(dsm.Key, notaryapi.APINameDSMPhase1Broadcast, req, true, dsm.L.S...)
 	return
 }
 
 func (ns *NotaryService) saveDSMPhase1(sessionID, privateKeyID common.Hash, msg *models.SignBroadcastPhase1, senderID int) (finish bool, err error) {
 	ns.lockSession(sessionID)
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -117,6 +125,24 @@ func (ns *NotaryService) saveDSMPhase1(sessionID, privateKeyID common.Hash, msg 
 	return
 }
 
+// dsmPhase2Response 这里需要解析response,所以定义专用结构体,否则使用BaseResponse的话,会损失结构信息导致解析失败
+type dsmPhase2Response struct {
+	ErrorCode api.ErrorCode          `json:"error_code"`
+	ErrorMsg  string                 `json:"error_msg"`
+	RequestID string                 `json:"request_id"`
+	Data      *models.MessageBPhase2 `json:"data,omitempty"`
+}
+
+// GetErrorCode :
+func (r *dsmPhase2Response) GetErrorCode() api.ErrorCode {
+	return r.ErrorCode
+}
+
+// GetErrorMsg :
+func (r *dsmPhase2Response) GetErrorMsg() string {
+	return r.ErrorMsg
+}
+
 /*
 步骤2应该是同步的,start后阻塞至finish再返回
 */
@@ -124,7 +150,7 @@ func (ns *NotaryService) startDSMPhase2(sessionID, privateKeyID common.Hash) (fi
 	ns.lockSession(sessionID)
 	log.Trace(SessionLogMsg(sessionID, "DSMPhase2 start..."))
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -136,25 +162,19 @@ func (ns *NotaryService) startDSMPhase2(sessionID, privateKeyID common.Hash) (fi
 		ns.unlockSession(sessionID)
 		return
 	}
-	for _, notaryID := range dsm.S {
+	for _, notaryID := range dsm.L.S {
 		// 按ID分发,并接收返回, 暂时同步???
 		if notaryID == ns.self.ID {
 			continue
 		}
-		var resp api.BaseResponse
+		var resp dsmPhase2Response
 		req := notaryapi.NewDSMPhase2MessageARequest(sessionID, ns.self.GetAddress(), privateKeyID, msg)
-		resp, err = ns.SendMsg(dsm.Key, notaryapi.APINameDSMPhase2MessageA, notaryID, req)
+		err = ns.SendMsg(dsm.Key, notaryapi.APINameDSMPhase2MessageA, notaryID, req, &resp)
 		if err != nil {
 			ns.unlockSession(sessionID)
 			return
 		}
-		var msgResp models.MessageBPhase2
-		err = resp.ParseData(&msgResp)
-		if err != nil {
-			ns.unlockSession(sessionID)
-			return
-		}
-		finish, err = dsm.ReceivePhase2MessageB(&msgResp, notaryID)
+		finish, err = dsm.ReceivePhase2MessageB(resp.Data, notaryID)
 		if err != nil {
 			ns.unlockSession(sessionID)
 			return
@@ -168,11 +188,12 @@ func (ns *NotaryService) startDSMPhase2(sessionID, privateKeyID common.Hash) (fi
 	return
 }
 
+/*
+仅生成应答消息,不改变本身数据,无需lock
+*/
 func (ns *NotaryService) saveDSMPhase2(sessionID, privateKeyID common.Hash, msg *models.MessageA, senderID int) (msgResp *models.MessageBPhase2, err error) {
-	ns.lockSession(sessionID)
-	log.Trace(SessionLogMsg(sessionID, "DSMPhase2 receive..."))
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -186,7 +207,7 @@ func (ns *NotaryService) startDSMPhase3(sessionID, privateKeyID common.Hash) (er
 	ns.lockSession(sessionID)
 	log.Trace(SessionLogMsg(sessionID, "DSMPhase2 start..."))
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -201,13 +222,13 @@ func (ns *NotaryService) startDSMPhase3(sessionID, privateKeyID common.Hash) (er
 	ns.unlockSession(sessionID)
 	// 3. 广播
 	req := notaryapi.NewDSMPhase3DeltaIRequest(sessionID, ns.self.GetAddress(), privateKeyID, msg)
-	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase3DeltaI, req, true, dsm.S...)
+	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase3DeltaI, req, true, dsm.L.S...)
 }
 
 func (ns *NotaryService) saveDSMPhase3(sessionID, privateKeyID common.Hash, msg *models.DeltaPhase3, senderID int) (finish bool, err error) {
 	ns.lockSession(sessionID)
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -225,7 +246,7 @@ func (ns *NotaryService) startDSMPhase5A5B(sessionID, privateKeyID common.Hash) 
 	ns.lockSession(sessionID)
 	log.Trace(SessionLogMsg(sessionID, "DSMPhase5A5B start..."))
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -245,13 +266,13 @@ func (ns *NotaryService) startDSMPhase5A5B(sessionID, privateKeyID common.Hash) 
 	ns.unlockSession(sessionID)
 	// 3. 广播
 	req := notaryapi.NewDSMPhase5A5BProofRequest(sessionID, ns.self.GetAddress(), privateKeyID, msg)
-	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase5A5BProof, req, true, dsm.S...)
+	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase5A5BProof, req, true, dsm.L.S...)
 }
 
 func (ns *NotaryService) saveDSMPhase5A5B(sessionID, privateKeyID common.Hash, msg *models.Phase5A, senderID int) (finish bool, err error) {
 	ns.lockSession(sessionID)
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -269,7 +290,7 @@ func (ns *NotaryService) startDSMPhase5C(sessionID, privateKeyID common.Hash) (e
 	ns.lockSession(sessionID)
 	log.Trace(SessionLogMsg(sessionID, "DSMPhase5C start..."))
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -284,13 +305,13 @@ func (ns *NotaryService) startDSMPhase5C(sessionID, privateKeyID common.Hash) (e
 	ns.unlockSession(sessionID)
 	// 3. 广播
 	req := notaryapi.NewDSMPhase5CProofRequest(sessionID, ns.self.GetAddress(), privateKeyID, msg)
-	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase5CProof, req, true, dsm.S...)
+	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase5CProof, req, true, dsm.L.S...)
 }
 
 func (ns *NotaryService) saveDSMPhase5C(sessionID, privateKeyID common.Hash, msg *models.Phase5C, senderID int) (finish bool, err error) {
 	ns.lockSession(sessionID)
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -308,7 +329,7 @@ func (ns *NotaryService) startDSMPhase6(sessionID, privateKeyID common.Hash) (er
 	ns.lockSession(sessionID)
 	log.Trace(SessionLogMsg(sessionID, "DSMPhase6 start..."))
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -323,13 +344,13 @@ func (ns *NotaryService) startDSMPhase6(sessionID, privateKeyID common.Hash) (er
 	ns.unlockSession(sessionID)
 	// 3. 广播
 	req := notaryapi.NewDSMPhase6ReceiveSIRequest(sessionID, ns.self.GetAddress(), privateKeyID, msg)
-	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase6ReceiveSI, req, true, dsm.S...)
+	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase6ReceiveSI, req, true, dsm.L.S...)
 }
 
 func (ns *NotaryService) saveDSMPhase6(sessionID, privateKeyID common.Hash, msg share.SPrivKey, senderID int) (signature []byte, finish bool, err error) {
 	ns.lockSession(sessionID)
 	// 1. 获取dsm
-	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, sessionID, privateKeyID)
+	dsm, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err2 != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
@@ -340,5 +361,19 @@ func (ns *NotaryService) saveDSMPhase6(sessionID, privateKeyID common.Hash, msg 
 		log.Trace(SessionLogMsg(sessionID, "DSMPhase6 done..."))
 	}
 	ns.unlockSession(sessionID)
+	return
+}
+
+/*
+解析其他公证人传来的待签名消息
+*/
+func parseMessageToSign(msgName string, buf []byte) (msg mecdsa.MessageToSign, err error) {
+	switch msgName {
+	case SpectrumTXDataName:
+		msg = new(SpectrumTXData)
+		err = msg.Parse(buf)
+	default:
+		err = fmt.Errorf("got msg to sign which does't support, maybe attack")
+	}
 	return
 }

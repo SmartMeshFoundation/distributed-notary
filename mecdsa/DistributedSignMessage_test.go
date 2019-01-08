@@ -13,12 +13,17 @@ type testMessage struct {
 	data []byte
 }
 
-func (tm *testMessage) GetHash() common.Hash {
-	return utils.Sha3(tm.data)
-}
-
 func (tm *testMessage) GetBytes() []byte {
 	return tm.data
+}
+
+func (tm *testMessage) GetName() string {
+	return "testMessage"
+}
+
+func (tm *testMessage) Parse(buf []byte) error {
+	tm.data = buf
+	return nil
 }
 
 func TestLockout(t *testing.T) {
@@ -35,6 +40,7 @@ func TestLockout(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	l0, err = NewDistributedSignMessageFromDB(li0.db, li0.selfNotaryID, key, li0.PrivateKeyID)
 	l3, err := NewDistributedSignMessage(li3.db, li3.selfNotaryID, message, key, li3.PrivateKeyID, s)
 	assert.EqualValues(t, err, nil)
 	l4, err := NewDistributedSignMessage(li4.db, li4.selfNotaryID, message, key, li4.PrivateKeyID, s)
@@ -267,7 +273,17 @@ func TestLockout(t *testing.T) {
 	_, finish, err = l4.RecevieSI(si3, 3)
 	assert.EqualValues(t, err, nil)
 	assert.EqualValues(t, finish, false)
-	_, finish, err = l4.RecevieSI(si0, 0)
+	var sig []byte
+	//var addr common.Address
+	sig, finish, err = l4.RecevieSI(si0, 0)
 	assert.EqualValues(t, err, nil)
 	assert.EqualValues(t, finish, true)
+
+	var h common.Hash
+	h.SetBytes(message.GetBytes())
+	_, err = utils.Ecrecover(h, sig)
+	if err != nil {
+		panic(err)
+	}
+	//assert.Errorf(t, addr, li0.PrivateKeyID)
 }
