@@ -11,6 +11,8 @@ import (
 
 	"errors"
 
+	"crypto/ecdsa"
+
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/client"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
@@ -22,6 +24,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nkbai/log"
 )
@@ -232,6 +235,40 @@ func (ss *SMCService) changeStatus(newStatus commons.ConnectStatus) {
 	}
 	ss.connectStatusChangeChanMapLock.Unlock()
 	log.Info(fmt.Sprintf("SmcService connect status change from %d to %d", sc.OldStatus, sc.NewStatus))
+}
+
+// Transfer10ToAccount : impl chain.Chain
+func (ss *SMCService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int) (err error) {
+	if amount == nil || amount.Cmp(big.NewInt(0)) == 0 {
+		return
+	}
+	conn := ss.c.Client
+	ctx := context.Background()
+	auth := bind.NewKeyedTransactor(key)
+	fromAddr := crypto.PubkeyToAddress(key.PublicKey)
+	nonce, err := conn.NonceAt(ctx, fromAddr, nil)
+	if err != nil {
+		return err
+	}
+	msg := ethereum.CallMsg{From: fromAddr, To: &accountTo, Value: amount, Data: nil}
+	gasLimit, err := conn.EstimateGas(ctx, msg)
+	if err != nil {
+		return fmt.Errorf("failed to estimate gas needed: %v", err)
+	}
+	gasPrice, err := conn.SuggestGasPrice(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to suggest gas price: %v", err)
+	}
+	rawTx := types.NewTransaction(nonce, accountTo, amount, gasLimit, gasPrice, nil)
+	signedTx, err := auth.Signer(types.NewEIP155Signer(big.NewInt(3)), auth.From, rawTx)
+	if err != nil {
+		return err
+	}
+	if err = conn.SendTransaction(ctx, signedTx); err != nil {
+		return err
+	}
+	_, err = bind.WaitMined(ctx, conn, signedTx)
+	return
 }
 
 func (ss *SMCService) checkConnectStatus() (err error) {

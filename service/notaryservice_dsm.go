@@ -11,6 +11,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
+	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/nkbai/log"
@@ -369,8 +370,8 @@ func (ns *NotaryService) saveDSMPhase6(sessionID, privateKeyID common.Hash, msg 
 */
 func parseMessageToSign(msgName string, buf []byte) (msg mecdsa.MessageToSign, err error) {
 	switch msgName {
-	case SpectrumContractDeployTXDataNameName:
-		msg = new(SpectrumContractDeployTXData)
+	case messagetosign.SpectrumContractDeployTXDataNameName:
+		msg = new(messagetosign.SpectrumContractDeployTXData)
 		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")

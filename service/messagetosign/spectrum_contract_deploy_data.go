@@ -1,4 +1,4 @@
-package service
+package messagetosign
 
 import (
 	"errors"

@@ -17,6 +17,7 @@ import (
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -66,6 +67,11 @@ func (as *AdminService) OnRequest(req api.Request) {
 		as.onCreatePrivateKeyRequest(r)
 	case *userapi.RegisterSCTokenRequest:
 		as.onRegisterSCTokenRequest(r)
+	/*
+		debug api
+	*/
+	case *userapi.DebugTransferToAccountRequest:
+		as.onDebugTransferToAccountRequest(r)
 	}
 	return
 }
@@ -231,7 +237,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, err error) {
 	// 1. 获取待签名的数据
 	var msgToSign mecdsa.MessageToSign
-	msgToSign = NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress())
+	msgToSign = messagetosign.NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress())
 	// 2. 签名
 	var signature []byte
 	signature, err = as.notaryService.startDistributedSignAndWait(msgToSign, privateKeyInfo)
