@@ -2,12 +2,11 @@ package mecdsa
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"io"
 
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 
@@ -787,36 +786,73 @@ func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bo
 	} else {
 		return nil, false
 	}
+	sig := make([]byte, 64)
+	copy(sig[:32], bigIntTo32Bytes(r.D))
+	copy(sig[32:], bigIntTo32Bytes(s.D))
+	//leave sig[64]=0
+
 	//按照以太坊EIP155的规范来处理签名
-	spubkey := &ecdsa.PublicKey{
-		Curve: btcec.S256(),
-		X:     y.X,
-		Y:     y.Y,
-	}
 	h := common.Hash{}
+	var err error
 	h.SetBytes(message.Bytes())
-	sig, err := btcec.SignatureNormalize(btcec.S256(), spubkey, h[:], r.D, s.D)
-	if err != nil {
-		log.Error(fmt.Sprintf("SignatureNormalize err %s", err))
-		return nil, false
+	if s.D.Cmp(halfN) >= 0 {
+		sig, err = secp256k1.SignatureNormalize(sig)
+		if err != nil {
+			log.Error(fmt.Sprintf("SignatureNormalize err %s\n,r=%s,s=%s", err, r.D, s.D))
+			return nil, false
+		}
 	}
-	pubkeybin, err := crypto.Ecrecover(h[:], sig)
-	if err != nil {
-		return nil, false
-	}
-	pubkey2 := crypto.ToECDSAPub(pubkeybin)
-	addr2 := crypto.PubkeyToAddress(*pubkey2)
+	sig2 := make([]byte, 65)
+	copy(sig2, sig)
+
 	key, err := crypto.GenerateKey()
 	pubkey := key.PublicKey
 	pubkey.X = y.X
 	pubkey.Y = y.Y
 	addr := crypto.PubkeyToAddress(pubkey)
 
+	//try v=0
+	pubkeybin, err := crypto.Ecrecover(h[:], sig2)
+	if err == nil {
+		pubkey2 := crypto.ToECDSAPub(pubkeybin)
+		addr2 := crypto.PubkeyToAddress(*pubkey2)
+
+		if addr2 == addr {
+			restoreAndCheckRS(sig2)
+			return sig2, true
+		}
+
+	} else {
+		log.Error(fmt.Sprintf("Ecrecover err %s", err))
+	}
+
+	//try v=1
+	sig2[64] = 1
+	pubkeybin, err = crypto.Ecrecover(h[:], sig2)
+	if err != nil {
+		log.Error(fmt.Sprintf("Ecrecover err %s", err))
+		return nil, false
+	}
+	pubkey2 := crypto.ToECDSAPub(pubkeybin)
+	addr2 := crypto.PubkeyToAddress(*pubkey2)
 	if addr2 == addr {
-		restoreAndCheckRS(sig)
-		return sig, true
+		restoreAndCheckRS(sig2)
+		return sig2, true
 	}
 	return nil, false
+}
+
+//bigIntTo32Bytes convert a big int to bytes
+func bigIntTo32Bytes(i *big.Int) []byte {
+	data := i.Bytes()
+	buf := make([]byte, 32)
+	for i := 0; i < 32-len(data); i++ {
+		buf[i] = 0
+	}
+	for i := 32 - len(data); i < 32; i++ {
+		buf[i] = data[i-32+len(data)]
+	}
+	return buf
 }
 
 //readBigInt read big.Int from buffer
@@ -842,8 +878,15 @@ func restoreAndCheckRS(sig []byte) {
 	if v != 0 && v != 1 {
 		panic("wrong v")
 	}
-	haflN, _ := new(big.Int).SetString("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16)
-	if s.Cmp(haflN) >= 0 {
+
+	if s.Cmp(halfN) >= 0 {
 		panic("wrong s")
 	}
+}
+
+var halfN *big.Int
+
+func init() {
+	halfN, _ = new(big.Int).SetString("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16)
+	halfN.Div(halfN, big.NewInt(2))
 }
