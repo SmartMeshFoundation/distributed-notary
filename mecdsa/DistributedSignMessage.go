@@ -1,14 +1,17 @@
 package mecdsa
 
 import (
+	"bytes"
+	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"io"
+
+	"github.com/btcsuite/btcd/btcec"
 
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 
 	"math/big"
-
-	"bytes"
 
 	"github.com/SmartMeshFoundation/distributed-notary/curv/feldman"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/proofs"
@@ -16,7 +19,6 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/nkbai/goutils"
 	"github.com/nkbai/log"
 )
 
@@ -766,8 +768,7 @@ func (l *DistributedSignMessage) GetFinalSignature() (signature []byte, finish b
 }
 
 /*
-由于目前的信息只有r,s,没有v,应该有办法直接得到v是0还是1,
-但是目前只能通过尝试.
+使用SignatureNormalize来对签名进行处理,符合EIP155签名要求.
 */
 func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bool) {
 	b := share.InvertN(s)
@@ -786,38 +787,63 @@ func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bo
 	} else {
 		return nil, false
 	}
-	//缺少信息v(0或者1),所以尝试这两种情况,只要有一个可以被矿工验证,那就认为得到了有效签名.
-	key, err := crypto.GenerateKey()
-	pubkey := key.PublicKey
-	pubkey.X = y.X
-	pubkey.Y = y.Y
-	addr := crypto.PubkeyToAddress(pubkey)
-	buf := new(bytes.Buffer)
-	_, err = buf.Write(utils.BigIntTo32Bytes(r.D))
-	_, err = buf.Write(utils.BigIntTo32Bytes(s.D))
-	_, err = buf.Write([]byte{0})
-	bs := buf.Bytes()
+	//按照以太坊EIP155的规范来处理签名
+	spubkey := &ecdsa.PublicKey{
+		Curve: btcec.S256(),
+		X:     y.X,
+		Y:     y.Y,
+	}
 	h := common.Hash{}
 	h.SetBytes(message.Bytes())
-	pubkeybin, err := crypto.Ecrecover(h[:], bs)
+	sig, err := btcec.SignatureNormalize(btcec.S256(), spubkey, h[:], r.D, s.D)
+	if err != nil {
+		log.Error(fmt.Sprintf("SignatureNormalize err %s", err))
+		return nil, false
+	}
+	pubkeybin, err := crypto.Ecrecover(h[:], sig)
 	if err != nil {
 		return nil, false
 	}
 	pubkey2 := crypto.ToECDSAPub(pubkeybin)
 	addr2 := crypto.PubkeyToAddress(*pubkey2)
+	key, err := crypto.GenerateKey()
+	pubkey := key.PublicKey
+	pubkey.X = y.X
+	pubkey.Y = y.Y
+	addr := crypto.PubkeyToAddress(pubkey)
+
 	if addr2 == addr {
-		return bs, true
-	}
-	bs[64] = 1
-	pubkeybin, err = crypto.Ecrecover(h[:], bs)
-	if err != nil {
-		return nil, false
-	}
-	pubkey2 = crypto.ToECDSAPub(pubkeybin)
-	addr2 = crypto.PubkeyToAddress(*pubkey2)
-	if addr2 == addr {
-		return bs, true
+		restoreAndCheckRS(sig)
+		return sig, true
 	}
 	return nil, false
+}
 
+//readBigInt read big.Int from buffer
+func readBigInt(reader io.Reader) *big.Int {
+	bi := new(big.Int)
+	tmpbuf := make([]byte, 32)
+	_, err := reader.Read(tmpbuf)
+	if err != nil {
+		log.Error(fmt.Sprintf("read BigInt error %s", err))
+	}
+	bi.SetBytes(tmpbuf)
+	return bi
+}
+
+func restoreAndCheckRS(sig []byte) {
+	buf := bytes.NewBuffer(sig)
+	readBigInt(buf)
+	s := readBigInt(buf)
+	v, err := buf.ReadByte()
+	if err != nil {
+		panic(err)
+	}
+	if v != 0 && v != 1 {
+		panic("wrong v")
+	}
+	haflN, _ := new(big.Int).SetString("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16)
+	if s.Cmp(haflN) >= 0 {
+		panic("wrong s")
+	}
 }
