@@ -60,10 +60,19 @@ func NewDistributedSignMessage(db *models.DB, notaryID int, message MessageToSig
 		selfNotaryID: notaryID,
 	}
 	l2 := &models.SignMessage{
-		Key:            l.Key,
-		UsedPrivateKey: l.PrivateKey,
-		Message:        message.GetBytes(),
-		S:              s,
+		Key:             l.Key,
+		UsedPrivateKey:  l.PrivateKey,
+		Message:         message.GetBytes(),
+		S:               s,
+		Phase1BroadCast: make(map[int]*models.SignBroadcastPhase1),
+		Phase2MessageB:  make(map[int]*models.MessageBPhase2),
+		Phase3Delta:     make(map[int]*models.DeltaPhase3),
+		Phase5A:         make(map[int]*models.Phase5A),
+		Phase5C:         make(map[int]*models.Phase5C),
+		Phase5D:         make(map[int]share.SPrivKey),
+		AlphaGamma:      make(map[int]share.SPrivKey),
+		AlphaWI:         make(map[int]share.SPrivKey),
+		Delta:           make(map[int]share.SPrivKey),
 	}
 	err = l.db.NewSignMessage(l2)
 	if err != nil {
@@ -146,7 +155,6 @@ func (l *DistributedSignMessage) GeneratePhase1Broadcast() (msg *models.SignBroa
 		Com:         com,
 		BlindFactor: blindFactor,
 	}
-	l.L.Phase1BroadCast = make(map[int]*models.SignBroadcastPhase1)
 	l.L.Phase1BroadCast[l.selfNotaryID] = msg
 	err = l.db.UpdateSignMessage(l.L)
 	return
@@ -192,9 +200,6 @@ func (l *DistributedSignMessage) GeneratePhase2MessageA() (msg *models.MessageA,
 		return
 	}
 	l.L.MessageA = ma
-	l.L.Phase2MessageB = make(map[int]*models.MessageBPhase2)
-	l.L.AlphaGamma = make(map[int]share.SPrivKey)
-	l.L.AlphaWI = make(map[int]share.SPrivKey)
 	err = l.db.UpdateSignMessage(l.L)
 	return ma, err
 }
@@ -351,7 +356,6 @@ func (l *DistributedSignMessage) GeneratePhase3DeltaI() (msg *models.DeltaPhase3
 	deltaI := l.phase2DeltaI()
 	sigmaI := l.phase2SigmaI()
 	l.L.Sigma = sigmaI
-	l.L.Delta = make(map[int]share.SPrivKey)
 	l.L.Delta[l.selfNotaryID] = deltaI
 	err = l.db.UpdateSignMessage(l.L)
 	if err != nil {
@@ -524,7 +528,6 @@ func (l *DistributedSignMessage) GeneratePhase5a5bZkProof() (msg *models.Phase5A
 	localSignature := phase5LocalSignature(l.L.SignedKey.KI, messageBN, l.L.R, l.L.Sigma, l.PublicKey)
 	phase5Com, phase5ADecom, helgamalProof := phase5aBroadcast5bZkproof(localSignature)
 	msg = &models.Phase5A{Phase5Com1: phase5Com, Phase5ADecom1: phase5ADecom, Proof: helgamalProof}
-	l.L.Phase5A = make(map[int]*models.Phase5A)
 	l.L.Phase5A[l.selfNotaryID] = msg
 	l.L.LocalSignature = localSignature
 	err = l.db.UpdateSignMessage(l.L)
@@ -629,7 +632,6 @@ func (l *DistributedSignMessage) GeneratePhase5CProof() (msg *models.Phase5C, er
 		return
 	}
 	msg = &models.Phase5C{Phase5Com2: phase5com2, Phase5DDecom2: phase5decom2}
-	l.L.Phase5C = make(map[int]*models.Phase5C)
 	l.L.Phase5C[l.selfNotaryID] = msg
 	err = l.db.UpdateSignMessage(l.L)
 	return
@@ -682,7 +684,6 @@ func (l *DistributedSignMessage) Generate5dProof() (si share.SPrivKey, err error
 	if err != nil {
 		return
 	}
-	l.L.Phase5D = make(map[int]share.SPrivKey)
 	l.L.Phase5D[l.selfNotaryID] = si
 	err = l.db.UpdateSignMessage(l.L)
 	return

@@ -148,5 +148,9 @@ func apiResponseLog(req Request, resp *BaseResponse) {
 	if nr, ok := req.(NotaryRequest); ok {
 		prefix = fmt.Sprintf("[SessionID=%s] ", utils.HPex(nr.GetSessionID()))
 	}
-	log.Trace(fmt.Sprintf("%s===> API Response %s :\n%s", prefix, req.GetRequestID(), utils.ToJSONStringFormat(resp)))
+	if resp.GetErrorCode() == ErrorCodeSuccess {
+		log.Trace(fmt.Sprintf("%s===> API Response %s : SUCCESS", prefix, req.GetRequestID()))
+	} else {
+		log.Trace(fmt.Sprintf("%s===> API Response %s :\n%s", prefix, req.GetRequestID(), utils.ToJSONStringFormat(resp)))
+	}
 }

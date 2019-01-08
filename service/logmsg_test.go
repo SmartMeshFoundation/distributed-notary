@@ -34,3 +34,8 @@ func TestSign(t *testing.T) {
 	}
 	fmt.Println(count)
 }
+
+func TestTemp(t *testing.T) {
+	var tt []byte
+	fmt.Println(tt == nil)
+}

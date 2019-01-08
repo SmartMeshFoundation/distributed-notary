@@ -78,28 +78,44 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 		dsm
 	*/
 	case *notaryapi.DSMAskRequest:
-		api.NotarySign(m, ns.privateKey)
+		if m.Signature == nil {
+			api.NotarySign(m, ns.privateKey)
+		}
 		payload = utils.ToJSONString(m)
 	case *notaryapi.DSMNotifySelectionRequest:
-		api.NotarySign(m, ns.privateKey)
+		if m.Signature == nil {
+			api.NotarySign(m, ns.privateKey)
+		}
 		payload = utils.ToJSONString(m)
 	case *notaryapi.DSMPhase1BroadcastRequest:
-		api.NotarySign(m, ns.privateKey)
+		if m.Signature == nil {
+			api.NotarySign(m, ns.privateKey)
+		}
 		payload = utils.ToJSONString(m)
 	case *notaryapi.DSMPhase2MessageARequest:
-		api.NotarySign(m, ns.privateKey)
+		if m.Signature == nil {
+			api.NotarySign(m, ns.privateKey)
+		}
 		payload = utils.ToJSONString(m)
 	case *notaryapi.DSMPhase3DeltaIRequest:
-		api.NotarySign(m, ns.privateKey)
+		if m.Signature == nil {
+			api.NotarySign(m, ns.privateKey)
+		}
 		payload = utils.ToJSONString(m)
 	case *notaryapi.DSMPhase5A5BProofRequest:
-		api.NotarySign(m, ns.privateKey)
+		if m.Signature == nil {
+			api.NotarySign(m, ns.privateKey)
+		}
 		payload = utils.ToJSONString(m)
 	case *notaryapi.DSMPhase5CProofRequest:
-		api.NotarySign(m, ns.privateKey)
+		if m.Signature == nil {
+			api.NotarySign(m, ns.privateKey)
+		}
 		payload = utils.ToJSONString(m)
 	case *notaryapi.DSMPhase6ReceiveSIRequest:
-		api.NotarySign(m, ns.privateKey)
+		if m.Signature == nil {
+			api.NotarySign(m, ns.privateKey)
+		}
 		payload = utils.ToJSONString(m)
 	default:
 		err = errors.New("api call not expect")
