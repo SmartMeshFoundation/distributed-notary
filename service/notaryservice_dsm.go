@@ -369,8 +369,8 @@ func (ns *NotaryService) saveDSMPhase6(sessionID, privateKeyID common.Hash, msg 
 */
 func parseMessageToSign(msgName string, buf []byte) (msg mecdsa.MessageToSign, err error) {
 	switch msgName {
-	case SpectrumTXDataName:
-		msg = new(SpectrumTXData)
+	case SpectrumContractDeployTXDataNameName:
+		msg = new(SpectrumContractDeployTXData)
 		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")
