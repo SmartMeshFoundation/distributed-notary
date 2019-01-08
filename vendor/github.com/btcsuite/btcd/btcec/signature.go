@@ -377,7 +377,49 @@ func SignCompact(curve *KoblitzCurve, key *PrivateKey,
 					make([]byte, curvelen-bytelen)...)
 			}
 			result = append(result, sig.S.Bytes()...)
+		}
+	}
 
+	return nil, errors.New("no valid solution for pubkey found")
+}
+
+//SignatureNormalize normalize a distributed signature to compatible with EIP155
+//add by bai 2019-01-08
+func SignatureNormalize(curve *KoblitzCurve, pubKey *ecdsa.PublicKey,
+	hash []byte, R, S *big.Int) ([]byte, error) {
+	sig := &Signature{
+		R: R,
+		S: S,
+	}
+	// bitcoind checks the bit length of R and S here. The ecdsa signature
+	// algorithm returns R and S mod N therefore they will be the bitsize of
+	// the curve, and thus correctly sized.
+	for i := 0; i < (curve.H+1)*2; i++ {
+		pk, err := recoverKeyFromSignature(curve, sig, hash, i, true)
+		if err == nil && pk.X.Cmp(pubKey.X) == 0 && pk.Y.Cmp(pubKey.Y) == 0 {
+			result := make([]byte, 1, 2*curve.byteSize+1)
+			result[0] = 27 + byte(i)
+			// Not sure this needs rounding but safer to do so.
+			curvelen := (curve.BitSize + 7) / 8
+
+			// Pad R and S to curvelen if needed.
+			bytelen := (sig.R.BitLen() + 7) / 8
+			if bytelen < curvelen {
+				result = append(result,
+					make([]byte, curvelen-bytelen)...)
+			}
+			result = append(result, sig.R.Bytes()...)
+
+			bytelen = (sig.S.BitLen() + 7) / 8
+			if bytelen < curvelen {
+				result = append(result,
+					make([]byte, curvelen-bytelen)...)
+			}
+			result = append(result, sig.S.Bytes()...)
+			//by todo bai 添加
+			v := result[0] - 27
+			copy(result, result[1:])
+			result[64] = v
 			return result, nil
 		}
 	}

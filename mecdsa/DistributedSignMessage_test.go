@@ -25,7 +25,11 @@ func (tm *testMessage) Parse(buf []byte) error {
 	tm.data = buf
 	return nil
 }
-
+func TestLoopLockout(t *testing.T) {
+	for i := 0; i < 20; i++ {
+		TestLockout(t)
+	}
+}
 func TestLockout(t *testing.T) {
 	var finish bool
 	var err error
@@ -285,7 +289,6 @@ func TestLockout(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	//assert.Errorf(t, addr, li0.PrivateKeyID)
 }
 
 //测试容易公证人签名,如果参与签名的人不是t+1,而是t+2,那么一旦选定,所有这些人必须自始至终参与,不能挑一些签名片组成有效签名.
