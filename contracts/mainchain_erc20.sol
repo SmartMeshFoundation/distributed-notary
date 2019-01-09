@@ -84,6 +84,7 @@ contract LockedEthereum is Owned {
     //如果交易发起人没有在规定时间内在侧连上进行相应的lockin,公证人(任何人)可以在过期以后在主链cance lockout
     function prepareLockin( bytes32 secret_hash,uint256 expiration,bytes32 data )  payable public{
         require(lockin_htlc[msg.sender].value==0);
+        require(msg.value > 0);
         LockinInfo storage li=lockin_htlc[msg.sender];
         li.SecretHash=secret_hash;
         li.Expiration=expiration;
