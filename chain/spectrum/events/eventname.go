@@ -12,28 +12,34 @@ import (
 // ChainName 公链名
 var ChainName = "spectrum"
 
-// ethereumTokenABI :
-var ethereumTokenABI abi.ABI
+// atmosphereTokenABI :
+var atmosphereTokenABI abi.ABI
 
 // TopicToEventName :
 var TopicToEventName map[common.Hash]string
 
 func init() {
 	var err error
-	ethereumTokenABI, err = abi.JSON(strings.NewReader(contracts.EthereumTokenABI))
+	atmosphereTokenABI, err = abi.JSON(strings.NewReader(contracts.AtmosphereTokenABI))
 	if err != nil {
 		panic(fmt.Sprintf("secretRegistryAbi parse err %s", err))
 	}
 	TopicToEventName = make(map[common.Hash]string)
-	TopicToEventName[ethereumTokenABI.Events[EthereumTokenPrepareLockinEventName].Id()] = EthereumTokenPrepareLockinEventName
-	TopicToEventName[ethereumTokenABI.Events[EthereumTokenLockinSecretEventName].Id()] = EthereumTokenLockinSecretEventName
-	TopicToEventName[ethereumTokenABI.Events[EthereumTokenPrePareLockedOutEventName].Id()] = EthereumTokenPrePareLockedOutEventName
+	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenPrepareLockinEventName].Id()] = AtmosphereTokenPrepareLockinEventName
+	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenLockinSecretEventName].Id()] = AtmosphereTokenLockinSecretEventName
+	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenPrepareLockoutEventName].Id()] = AtmosphereTokenPrepareLockoutEventName
+	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenLockoutEventName].Id()] = AtmosphereTokenLockoutEventName
+	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenCancelLockinEventName].Id()] = AtmosphereTokenCancelLockinEventName
+	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenCancelLockoutEventName].Id()] = AtmosphereTokenCancelLockoutEventName
 
 }
 
 /* #nosec */
 const (
-	EthereumTokenPrepareLockinEventName    = "EthereumTokenPrepareLockin"
-	EthereumTokenLockinSecretEventName     = "EthereumTokenLockinSecret"
-	EthereumTokenPrePareLockedOutEventName = "EthereumTokenPrePareLockedOut"
+	AtmosphereTokenPrepareLockinEventName  = "AtmosphereTokenPrepareLockin"
+	AtmosphereTokenLockinSecretEventName   = "AtmosphereTokenLockinSecret"
+	AtmosphereTokenPrepareLockoutEventName = "AtmosphereTokenPrepareLockout"
+	AtmosphereTokenLockoutEventName        = "AtmosphereTokenLockout"
+	AtmosphereTokenCancelLockinEventName   = "AtmosphereTokenCancelLockin"
+	AtmosphereTokenCancelLockoutEventName  = "AtmosphereTokenCancelLockout"
 )

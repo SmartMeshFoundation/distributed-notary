@@ -27,13 +27,19 @@ func init() {
 	TopicToEventName = make(map[common.Hash]string)
 	TopicToEventName[lockedEthereumABI.Events[LockedEthereumPrepareLockinEventName].Id()] = LockedEthereumPrepareLockinEventName
 	TopicToEventName[lockedEthereumABI.Events[LockedEthereumLockoutSecretEventName].Id()] = LockedEthereumLockoutSecretEventName
-	TopicToEventName[lockedEthereumABI.Events[LockedEthereumPrePareLockedOutEventName].Id()] = LockedEthereumPrePareLockedOutEventName
+	TopicToEventName[lockedEthereumABI.Events[LockedEthereumPrepareLockoutEventName].Id()] = LockedEthereumPrepareLockoutEventName
+	TopicToEventName[lockedEthereumABI.Events[LockedEthereumLockinEventName].Id()] = LockedEthereumLockinEventName
+	TopicToEventName[lockedEthereumABI.Events[LockedEthereumCancelLockinEventName].Id()] = LockedEthereumCancelLockinEventName
+	TopicToEventName[lockedEthereumABI.Events[LockedEthereumCancelLockoutEventName].Id()] = LockedEthereumCancelLockoutEventName
 
 }
 
 /* #nosec */
 const (
-	LockedEthereumPrepareLockinEventName    = "LockedEthereumPrepareLockin"
-	LockedEthereumLockoutSecretEventName    = "LockedEthereumLockoutSecret"
-	LockedEthereumPrePareLockedOutEventName = "LockedEthereumPrePareLockedOut"
+	LockedEthereumPrepareLockinEventName  = "LockedEthereumPrepareLockin"
+	LockedEthereumLockoutSecretEventName  = "LockedEthereumLockoutSecret"
+	LockedEthereumPrepareLockoutEventName = "LockedEthereumPrepareLockout"
+	LockedEthereumLockinEventName         = "LockedEthereumLockin"
+	LockedEthereumCancelLockinEventName   = "LockedEthereumCancelLockin"
+	LockedEthereumCancelLockoutEventName  = "LockedEthereumCancelLockout"
 )

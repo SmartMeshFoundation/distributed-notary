@@ -16,10 +16,10 @@ import (
 )
 
 // LockedEthereumABI is the input ABI used to generate the binding from.
-const LockedEthereumABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"count\",\"type\":\"address\"}],\"name\":\"cancleLockOut\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"lockin_htlc\",\"outputs\":[{\"name\":\"SecretHash\",\"type\":\"bytes32\"},{\"name\":\"Expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"},{\"name\":\"Data\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"secret_hash\",\"type\":\"bytes32\"},{\"name\":\"expiration\",\"type\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes32\"}],\"name\":\"prepareLockin\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"},{\"name\":\"secret_hash\",\"type\":\"bytes32\"},{\"name\":\"expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"prePareLockedOutHTLC\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"queryLockin\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"cancelLockin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"},{\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"lockin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"},{\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"lockedOut\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"queryLockout\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"changeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"lockout_htlc\",\"outputs\":[{\"name\":\"SecretHash\",\"type\":\"bytes32\"},{\"name\":\"Expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"PrepareLockin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"LockoutSecret\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"PrePareLockedOut\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_prevOwner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"OwnerUpdate\",\"type\":\"event\"}]"
+const LockedEthereumABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"},{\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"lockout\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"count\",\"type\":\"address\"}],\"name\":\"cancleLockOut\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"},{\"name\":\"secret_hash\",\"type\":\"bytes32\"},{\"name\":\"expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"prepareLockoutHTLC\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"lockin_htlc\",\"outputs\":[{\"name\":\"SecretHash\",\"type\":\"bytes32\"},{\"name\":\"Expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"},{\"name\":\"Data\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"secret_hash\",\"type\":\"bytes32\"},{\"name\":\"expiration\",\"type\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes32\"}],\"name\":\"prepareLockin\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"queryLockin\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"cancelLockin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"},{\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"lockin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"queryLockout\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"changeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"lockout_htlc\",\"outputs\":[{\"name\":\"SecretHash\",\"type\":\"bytes32\"},{\"name\":\"Expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"PrepareLockin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"LockoutSecret\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"PrepareLockout\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Lockin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"account\",\"type\":\"address\"}],\"name\":\"CancelLockin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"account\",\"type\":\"address\"}],\"name\":\"CancelLockout\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_prevOwner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"OwnerUpdate\",\"type\":\"event\"}]"
 
 // LockedEthereumBin is the compiled bytecode used for deploying new contracts.
-const LockedEthereumBin = `0x60018054600160a060020a031916905560c0604052601d60808190527f4c6f636b6564457468657265756d20666f722061746d6f73706865726500000060a090815261004e91600291906100fb565b5060408051808201909152600e8082527f4c6f636b6564457468657265756d0000000000000000000000000000000000006020909201918252610093916003916100fb565b506040805180820190915260048082527f76302e310000000000000000000000000000000000000000000000000000000060209092019182526100d691816100fb565b503480156100e357600080fd5b5060008054600160a060020a03191633179055610196565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f1061013c57805160ff1916838001178555610169565b82800160010185558215610169579182015b8281111561016957825182559160200191906001019061014e565b50610175929150610179565b5090565b61019391905b80821115610175576000815560010161017f565b90565b610ad8806101a56000396000f3006080604052600436106100e55763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166306fdde0381146100f757806310a276eb146101815780631e0ef9a4146101a4578063229ce1cd146101eb57806346096679146101fc57806354fd4d501461022657806357e1ee591461023b57806376188aa51461025c57806379ba50971461027d5780637fd408d21461029257806384540a28146102b65780638caa80f7146102da5780638da5cb5b1461031957806395d89b411461034a578063a6f9dae11461035f578063b852876114610380575b3480156100f157600080fd5b50600080fd5b34801561010357600080fd5b5061010c6103a1565b6040805160208082528351818301528351919283929083019185019080838360005b8381101561014657818101518382015260200161012e565b50505050905090810190601f1680156101735780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b34801561018d57600080fd5b506101a2600160a060020a036004351661042c565b005b3480156101b057600080fd5b506101c5600160a060020a036004351661047c565b604080519485526020850193909352838301919091526060830152519081900360800190f35b6101a26004356024356044356104a3565b34801561020857600080fd5b506101a2600160a060020a0360043516602435604435606435610526565b34801561023257600080fd5b5061010c6105d7565b34801561024757600080fd5b506101c5600160a060020a0360043516610632565b34801561026857600080fd5b506101a2600160a060020a0360043516610663565b34801561028957600080fd5b506101a26106f1565b34801561029e57600080fd5b506101a2600160a060020a0360043516602435610788565b3480156102c257600080fd5b506101a2600160a060020a036004351660243561085a565b3480156102e657600080fd5b506102fb600160a060020a0360043516610998565b60408051938452602084019290925282820152519081900360600190f35b34801561032557600080fd5b5061032e6109c0565b60408051600160a060020a039092168252519081900360200190f35b34801561035657600080fd5b5061010c6109cf565b34801561036b57600080fd5b506101a2600160a060020a0360043516610a2a565b34801561038c57600080fd5b506102fb600160a060020a0360043516610a8b565b6002805460408051602060018416156101000260001901909316849004601f810184900484028201840190925281815292918301828280156104245780601f106103f957610100808354040283529160200191610424565b820191906000526020600020905b81548152906001019060200180831161040757829003601f168201915b505050505081565b600160a060020a038116600090815260076020526040812060028101549091811161045657600080fd5b6001820154431161046657600080fd5b5060006002820181905580825560019091015550565b60066020526000908152604090208054600182015460028301546003909301549192909184565b33600090815260066020526040812060020154156104c057600080fd5b503360008181526006602090815260409182902086815560018101869055346002820181905560038201869055835190815292519093927f1cc3ff93fb861f5fb2869fc15945f233d14ea7a4afa5721ad3c9804be90f3c6a92908290030190a250505050565b60008054600160a060020a0316331461053e57600080fd5b50600160a060020a038416600090815260076020526040812090821161056357600080fd5b60028101541561057257600080fd5b61c350831161058057600080fd5b6002810182905583815560018101839055604080518381529051600160a060020a038716917fecaa134d03b9436d19a5de74adbad850315cb95f6a84b2a343cf97588c5fe19d919081900360200190a25050505050565b6004805460408051602060026001851615610100026000190190941693909304601f810184900484028201840190925281815292918301828280156104245780601f106103f957610100808354040283529160200191610424565b600160a060020a03166000908152600660205260409020805460018201546002830154600390930154919390929190565b600160a060020a038116600090815260066020526040812060028101549091811161068d57600080fd5b6001820154431161069d57600080fd5b6000600283018190558083556001830181905560038301819055604051600160a060020a0385169183156108fc02918491818181858888f193505050501580156106eb573d6000803e3d6000fd5b50505050565b600154600160a060020a0316331461070857600080fd5b60005460015460408051600160a060020a03938416815292909116602083015280517f343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a9281900390910190a1600180546000805473ffffffffffffffffffffffffffffffffffffffff19908116600160a060020a03841617909155169055565b600160a060020a038216600090815260066020526040812060028101549091106107b157600080fd5b60408051602080820185905282518083038201815291830192839052815191929182918401908083835b602083106107fa5780518252601f1990920191602091820191016107db565b5181516020939093036101000a60001901801990911692169190911790526040519201829003909120845414925061083491505057600080fd5b6001810154431061084457600080fd5b6000600282018190558082556001909101555050565b600160a060020a038216600090815260076020526040812060028101549091811161088457600080fd5b6001820154431061089457600080fd5b60408051602080820186905282518083038201815291830192839052815191929182918401908083835b602083106108dd5780518252601f1990920191602091820191016108be565b5181516020939093036101000a60001901801990911692169190911790526040519201829003909120855414925061091791505057600080fd5b60006002830181905580835560018301819055604051600160a060020a0386169183156108fc02918491818181858888f1935050505015801561095e573d6000803e3d6000fd5b506040805184815290517fdcc7d78331cfab70d5a79c241accad9f57464843a0ebb3baa0131b4f555ca3a49181900360200190a150505050565b600160a060020a03166000908152600760205260409020805460018201546002909201549092565b600054600160a060020a031681565b6003805460408051602060026001851615610100026000190190941693909304601f810184900484028201840190925281815292918301828280156104245780601f106103f957610100808354040283529160200191610424565b600054600160a060020a03163314610a4157600080fd5b600054600160a060020a0382811691161415610a5c57600080fd5b6001805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0392909216919091179055565b600760205260009081526040902080546001820154600290920154909190835600a165627a7a7230582086981de5b681ed1eede4583bf5908eb0b4c0c85796d23d45dc7a3829b565a1160029`
+const LockedEthereumBin = `0x60018054600160a060020a031916905560c0604052601d60808190527f4c6f636b6564457468657265756d20666f722061746d6f73706865726500000060a090815261004e91600291906100b8565b506040805180820190915260048082527f76302e31000000000000000000000000000000000000000000000000000000006020909201918252610093916003916100b8565b503480156100a057600080fd5b5060008054600160a060020a03191633179055610153565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106100f957805160ff1916838001178555610126565b82800160010185558215610126579182015b8281111561012657825182559160200191906001019061010b565b50610132929150610136565b5090565b61015091905b80821115610132576000815560010161013c565b90565b610b29806101626000396000f3006080604052600436106100da5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663043d918081146100ec57806306fdde031461011257806310a276eb1461019c5780631a10a238146101bd5780631e0ef9a4146101e7578063229ce1cd1461022e57806354fd4d501461023f57806357e1ee591461025457806376188aa51461027557806379ba5097146102965780637fd408d2146102ab5780638caa80f7146102cf5780638da5cb5b1461030e578063a6f9dae11461033f578063b852876114610360575b3480156100e657600080fd5b50600080fd5b3480156100f857600080fd5b50610110600160a060020a0360043516602435610381565b005b34801561011e57600080fd5b506101276104bf565b6040805160208082528351818301528351919283929083019185019080838360005b83811015610161578181015183820152602001610149565b50505050905090810190601f16801561018e5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b3480156101a857600080fd5b50610110600160a060020a036004351661054a565b3480156101c957600080fd5b50610110600160a060020a03600435166024356044356064356105d6565b3480156101f357600080fd5b50610208600160a060020a036004351661068c565b604080519485526020850193909352838301919091526060830152519081900360800190f35b6101106004356024356044356106b3565b34801561024b57600080fd5b50610127610749565b34801561026057600080fd5b50610208600160a060020a03600435166107a4565b34801561028157600080fd5b50610110600160a060020a03600435166107d5565b3480156102a257600080fd5b5061011061089f565b3480156102b757600080fd5b50610110600160a060020a0360043516602435610936565b3480156102db57600080fd5b506102f0600160a060020a0360043516610a44565b60408051938452602084019290925282820152519081900360600190f35b34801561031a57600080fd5b50610323610a6c565b60408051600160a060020a039092168252519081900360200190f35b34801561034b57600080fd5b50610110600160a060020a0360043516610a7b565b34801561036c57600080fd5b506102f0600160a060020a0360043516610adc565b600160a060020a03821660009081526005602052604081206002810154909181116103ab57600080fd5b600182015443106103bb57600080fd5b60408051602080820186905282518083038201815291830192839052815191929182918401908083835b602083106104045780518252601f1990920191602091820191016103e5565b5181516020939093036101000a60001901801990911692169190911790526040519201829003909120855414925061043e91505057600080fd5b60006002830181905580835560018301819055604051600160a060020a0386169183156108fc02918491818181858888f19350505050158015610485573d6000803e3d6000fd5b506040805184815290517fdcc7d78331cfab70d5a79c241accad9f57464843a0ebb3baa0131b4f555ca3a49181900360200190a150505050565b6002805460408051602060018416156101000260001901909316849004601f810184900484028201840190925281815292918301828280156105425780601f1061051757610100808354040283529160200191610542565b820191906000526020600020905b81548152906001019060200180831161052557829003601f168201915b505050505081565b600160a060020a038116600090815260056020526040812060028101549091811161057457600080fd5b6001820154431161058457600080fd5b600060028301819055808355600183015560408051600160a060020a038516815290517f4a985ac51f12559bf2627d79a647c493393d8d4e59e14137cfef6b61559053d09181900360200190a1505050565b60008054600160a060020a031633146105ee57600080fd5b50600160a060020a038416600090815260056020526040812090821161061357600080fd5b60028101541561062257600080fd5b61c350831161063057600080fd5b600281018290558381556001810183905560408051600160a060020a03871681526020810184905281517fbbae3304c67c8fbb052efa093374fc235534c3d862512a40007e7e35062a0475929181900390910190a15050505050565b60046020526000908152604090208054600182015460028301546003909301549192909184565b33600090815260046020526040812060020154156106d057600080fd5b600034116106dd57600080fd5b503360008181526004602090815260409182902086815560018101869055346002820181905560038201869055835194855291840191909152815190927f1cc3ff93fb861f5fb2869fc15945f233d14ea7a4afa5721ad3c9804be90f3c6a92908290030190a150505050565b6003805460408051602060026001851615610100026000190190941693909304601f810184900484028201840190925281815292918301828280156105425780601f1061051757610100808354040283529160200191610542565b600160a060020a03166000908152600460205260409020805460018201546002830154600390930154919390929190565b600160a060020a03811660009081526004602052604081206002810154909181116107ff57600080fd5b6001820154431161080f57600080fd5b6000600283018190558083556001830181905560038301819055604051600160a060020a0385169183156108fc02918491818181858888f1935050505015801561085d573d6000803e3d6000fd5b5060408051600160a060020a038516815290517f1049e4593ee9996b154e5cdebecd383a1252c7b08e01f83df030fec3680adef39181900360200190a1505050565b600154600160a060020a031633146108b657600080fd5b60005460015460408051600160a060020a03938416815292909116602083015280517f343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a9281900390910190a1600180546000805473ffffffffffffffffffffffffffffffffffffffff19908116600160a060020a03841617909155169055565b600160a060020a0382166000908152600460205260408120600281015490911061095f57600080fd5b60408051602080820185905282518083038201815291830192839052815191929182918401908083835b602083106109a85780518252601f199092019160209182019101610989565b5181516020939093036101000a6000190180199091169216919091179052604051920182900390912084541492506109e291505057600080fd5b600181015443106109f257600080fd5b600060028201819055808255600182015560408051600160a060020a038516815290517f820c935d67c681ee072f02c87a8f7a2f809866f9a126a551e6417a9262283aaa9181900360200190a1505050565b600160a060020a03166000908152600560205260409020805460018201546002909201549092565b600054600160a060020a031681565b600054600160a060020a03163314610a9257600080fd5b600054600160a060020a0382811691161415610aad57600080fd5b6001805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0392909216919091179055565b600560205260009081526040902080546001820154600290920154909190835600a165627a7a7230582086270b9f5d6c39dc4b891fb5088a6e95053885e7bcf6e43cc176eab87c47c9b00029`
 
 // DeployLockedEthereum deploys a new Ethereum contract, binding an instance of LockedEthereum to it.
 func DeployLockedEthereum(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *LockedEthereum, error) {
@@ -378,32 +378,6 @@ func (_LockedEthereum *LockedEthereumCallerSession) QueryLockout(account common.
 	return _LockedEthereum.Contract.QueryLockout(&_LockedEthereum.CallOpts, account)
 }
 
-// Symbol is a free data retrieval call binding the contract method 0x95d89b41.
-//
-// Solidity: function symbol() constant returns(string)
-func (_LockedEthereum *LockedEthereumCaller) Symbol(opts *bind.CallOpts) (string, error) {
-	var (
-		ret0 = new(string)
-	)
-	out := ret0
-	err := _LockedEthereum.contract.Call(opts, out, "symbol")
-	return *ret0, err
-}
-
-// Symbol is a free data retrieval call binding the contract method 0x95d89b41.
-//
-// Solidity: function symbol() constant returns(string)
-func (_LockedEthereum *LockedEthereumSession) Symbol() (string, error) {
-	return _LockedEthereum.Contract.Symbol(&_LockedEthereum.CallOpts)
-}
-
-// Symbol is a free data retrieval call binding the contract method 0x95d89b41.
-//
-// Solidity: function symbol() constant returns(string)
-func (_LockedEthereum *LockedEthereumCallerSession) Symbol() (string, error) {
-	return _LockedEthereum.Contract.Symbol(&_LockedEthereum.CallOpts)
-}
-
 // Version is a free data retrieval call binding the contract method 0x54fd4d50.
 //
 // Solidity: function version() constant returns(string)
@@ -514,27 +488,6 @@ func (_LockedEthereum *LockedEthereumTransactorSession) ChangeOwner(_newOwner co
 	return _LockedEthereum.Contract.ChangeOwner(&_LockedEthereum.TransactOpts, _newOwner)
 }
 
-// LockedOut is a paid mutator transaction binding the contract method 0x84540a28.
-//
-// Solidity: function lockedOut(account address, secret bytes32) returns()
-func (_LockedEthereum *LockedEthereumTransactor) LockedOut(opts *bind.TransactOpts, account common.Address, secret [32]byte) (*types.Transaction, error) {
-	return _LockedEthereum.contract.Transact(opts, "lockedOut", account, secret)
-}
-
-// LockedOut is a paid mutator transaction binding the contract method 0x84540a28.
-//
-// Solidity: function lockedOut(account address, secret bytes32) returns()
-func (_LockedEthereum *LockedEthereumSession) LockedOut(account common.Address, secret [32]byte) (*types.Transaction, error) {
-	return _LockedEthereum.Contract.LockedOut(&_LockedEthereum.TransactOpts, account, secret)
-}
-
-// LockedOut is a paid mutator transaction binding the contract method 0x84540a28.
-//
-// Solidity: function lockedOut(account address, secret bytes32) returns()
-func (_LockedEthereum *LockedEthereumTransactorSession) LockedOut(account common.Address, secret [32]byte) (*types.Transaction, error) {
-	return _LockedEthereum.Contract.LockedOut(&_LockedEthereum.TransactOpts, account, secret)
-}
-
 // Lockin is a paid mutator transaction binding the contract method 0x7fd408d2.
 //
 // Solidity: function lockin(account address, secret bytes32) returns()
@@ -556,25 +509,25 @@ func (_LockedEthereum *LockedEthereumTransactorSession) Lockin(account common.Ad
 	return _LockedEthereum.Contract.Lockin(&_LockedEthereum.TransactOpts, account, secret)
 }
 
-// PrePareLockedOutHTLC is a paid mutator transaction binding the contract method 0x46096679.
+// Lockout is a paid mutator transaction binding the contract method 0x043d9180.
 //
-// Solidity: function prePareLockedOutHTLC(account address, secret_hash bytes32, expiration uint256, value uint256) returns()
-func (_LockedEthereum *LockedEthereumTransactor) PrePareLockedOutHTLC(opts *bind.TransactOpts, account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
-	return _LockedEthereum.contract.Transact(opts, "prePareLockedOutHTLC", account, secret_hash, expiration, value)
+// Solidity: function lockout(account address, secret bytes32) returns()
+func (_LockedEthereum *LockedEthereumTransactor) Lockout(opts *bind.TransactOpts, account common.Address, secret [32]byte) (*types.Transaction, error) {
+	return _LockedEthereum.contract.Transact(opts, "lockout", account, secret)
 }
 
-// PrePareLockedOutHTLC is a paid mutator transaction binding the contract method 0x46096679.
+// Lockout is a paid mutator transaction binding the contract method 0x043d9180.
 //
-// Solidity: function prePareLockedOutHTLC(account address, secret_hash bytes32, expiration uint256, value uint256) returns()
-func (_LockedEthereum *LockedEthereumSession) PrePareLockedOutHTLC(account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
-	return _LockedEthereum.Contract.PrePareLockedOutHTLC(&_LockedEthereum.TransactOpts, account, secret_hash, expiration, value)
+// Solidity: function lockout(account address, secret bytes32) returns()
+func (_LockedEthereum *LockedEthereumSession) Lockout(account common.Address, secret [32]byte) (*types.Transaction, error) {
+	return _LockedEthereum.Contract.Lockout(&_LockedEthereum.TransactOpts, account, secret)
 }
 
-// PrePareLockedOutHTLC is a paid mutator transaction binding the contract method 0x46096679.
+// Lockout is a paid mutator transaction binding the contract method 0x043d9180.
 //
-// Solidity: function prePareLockedOutHTLC(account address, secret_hash bytes32, expiration uint256, value uint256) returns()
-func (_LockedEthereum *LockedEthereumTransactorSession) PrePareLockedOutHTLC(account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
-	return _LockedEthereum.Contract.PrePareLockedOutHTLC(&_LockedEthereum.TransactOpts, account, secret_hash, expiration, value)
+// Solidity: function lockout(account address, secret bytes32) returns()
+func (_LockedEthereum *LockedEthereumTransactorSession) Lockout(account common.Address, secret [32]byte) (*types.Transaction, error) {
+	return _LockedEthereum.Contract.Lockout(&_LockedEthereum.TransactOpts, account, secret)
 }
 
 // PrepareLockin is a paid mutator transaction binding the contract method 0x229ce1cd.
@@ -596,6 +549,393 @@ func (_LockedEthereum *LockedEthereumSession) PrepareLockin(secret_hash [32]byte
 // Solidity: function prepareLockin(secret_hash bytes32, expiration uint256, data bytes32) returns()
 func (_LockedEthereum *LockedEthereumTransactorSession) PrepareLockin(secret_hash [32]byte, expiration *big.Int, data [32]byte) (*types.Transaction, error) {
 	return _LockedEthereum.Contract.PrepareLockin(&_LockedEthereum.TransactOpts, secret_hash, expiration, data)
+}
+
+// PrepareLockoutHTLC is a paid mutator transaction binding the contract method 0x1a10a238.
+//
+// Solidity: function prepareLockoutHTLC(account address, secret_hash bytes32, expiration uint256, value uint256) returns()
+func (_LockedEthereum *LockedEthereumTransactor) PrepareLockoutHTLC(opts *bind.TransactOpts, account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
+	return _LockedEthereum.contract.Transact(opts, "prepareLockoutHTLC", account, secret_hash, expiration, value)
+}
+
+// PrepareLockoutHTLC is a paid mutator transaction binding the contract method 0x1a10a238.
+//
+// Solidity: function prepareLockoutHTLC(account address, secret_hash bytes32, expiration uint256, value uint256) returns()
+func (_LockedEthereum *LockedEthereumSession) PrepareLockoutHTLC(account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
+	return _LockedEthereum.Contract.PrepareLockoutHTLC(&_LockedEthereum.TransactOpts, account, secret_hash, expiration, value)
+}
+
+// PrepareLockoutHTLC is a paid mutator transaction binding the contract method 0x1a10a238.
+//
+// Solidity: function prepareLockoutHTLC(account address, secret_hash bytes32, expiration uint256, value uint256) returns()
+func (_LockedEthereum *LockedEthereumTransactorSession) PrepareLockoutHTLC(account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
+	return _LockedEthereum.Contract.PrepareLockoutHTLC(&_LockedEthereum.TransactOpts, account, secret_hash, expiration, value)
+}
+
+// LockedEthereumCancelLockinIterator is returned from FilterCancelLockin and is used to iterate over the raw logs and unpacked data for CancelLockin events raised by the LockedEthereum contract.
+type LockedEthereumCancelLockinIterator struct {
+	Event *LockedEthereumCancelLockin // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *LockedEthereumCancelLockinIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(LockedEthereumCancelLockin)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(LockedEthereumCancelLockin)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *LockedEthereumCancelLockinIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *LockedEthereumCancelLockinIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// LockedEthereumCancelLockin represents a CancelLockin event raised by the LockedEthereum contract.
+type LockedEthereumCancelLockin struct {
+	Account common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterCancelLockin is a free log retrieval operation binding the contract event 0x1049e4593ee9996b154e5cdebecd383a1252c7b08e01f83df030fec3680adef3.
+//
+// Solidity: e CancelLockin(account address)
+func (_LockedEthereum *LockedEthereumFilterer) FilterCancelLockin(opts *bind.FilterOpts) (*LockedEthereumCancelLockinIterator, error) {
+
+	logs, sub, err := _LockedEthereum.contract.FilterLogs(opts, "CancelLockin")
+	if err != nil {
+		return nil, err
+	}
+	return &LockedEthereumCancelLockinIterator{contract: _LockedEthereum.contract, event: "CancelLockin", logs: logs, sub: sub}, nil
+}
+
+// WatchCancelLockin is a free log subscription operation binding the contract event 0x1049e4593ee9996b154e5cdebecd383a1252c7b08e01f83df030fec3680adef3.
+//
+// Solidity: e CancelLockin(account address)
+func (_LockedEthereum *LockedEthereumFilterer) WatchCancelLockin(opts *bind.WatchOpts, sink chan<- *LockedEthereumCancelLockin) (event.Subscription, error) {
+
+	logs, sub, err := _LockedEthereum.contract.WatchLogs(opts, "CancelLockin")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(LockedEthereumCancelLockin)
+				if err := _LockedEthereum.contract.UnpackLog(event, "CancelLockin", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// LockedEthereumCancelLockoutIterator is returned from FilterCancelLockout and is used to iterate over the raw logs and unpacked data for CancelLockout events raised by the LockedEthereum contract.
+type LockedEthereumCancelLockoutIterator struct {
+	Event *LockedEthereumCancelLockout // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *LockedEthereumCancelLockoutIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(LockedEthereumCancelLockout)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(LockedEthereumCancelLockout)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *LockedEthereumCancelLockoutIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *LockedEthereumCancelLockoutIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// LockedEthereumCancelLockout represents a CancelLockout event raised by the LockedEthereum contract.
+type LockedEthereumCancelLockout struct {
+	Account common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterCancelLockout is a free log retrieval operation binding the contract event 0x4a985ac51f12559bf2627d79a647c493393d8d4e59e14137cfef6b61559053d0.
+//
+// Solidity: e CancelLockout(account address)
+func (_LockedEthereum *LockedEthereumFilterer) FilterCancelLockout(opts *bind.FilterOpts) (*LockedEthereumCancelLockoutIterator, error) {
+
+	logs, sub, err := _LockedEthereum.contract.FilterLogs(opts, "CancelLockout")
+	if err != nil {
+		return nil, err
+	}
+	return &LockedEthereumCancelLockoutIterator{contract: _LockedEthereum.contract, event: "CancelLockout", logs: logs, sub: sub}, nil
+}
+
+// WatchCancelLockout is a free log subscription operation binding the contract event 0x4a985ac51f12559bf2627d79a647c493393d8d4e59e14137cfef6b61559053d0.
+//
+// Solidity: e CancelLockout(account address)
+func (_LockedEthereum *LockedEthereumFilterer) WatchCancelLockout(opts *bind.WatchOpts, sink chan<- *LockedEthereumCancelLockout) (event.Subscription, error) {
+
+	logs, sub, err := _LockedEthereum.contract.WatchLogs(opts, "CancelLockout")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(LockedEthereumCancelLockout)
+				if err := _LockedEthereum.contract.UnpackLog(event, "CancelLockout", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// LockedEthereumLockinIterator is returned from FilterLockin and is used to iterate over the raw logs and unpacked data for Lockin events raised by the LockedEthereum contract.
+type LockedEthereumLockinIterator struct {
+	Event *LockedEthereumLockin // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *LockedEthereumLockinIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(LockedEthereumLockin)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(LockedEthereumLockin)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *LockedEthereumLockinIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *LockedEthereumLockinIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// LockedEthereumLockin represents a Lockin event raised by the LockedEthereum contract.
+type LockedEthereumLockin struct {
+	Account common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterLockin is a free log retrieval operation binding the contract event 0x820c935d67c681ee072f02c87a8f7a2f809866f9a126a551e6417a9262283aaa.
+//
+// Solidity: e Lockin(account address)
+func (_LockedEthereum *LockedEthereumFilterer) FilterLockin(opts *bind.FilterOpts) (*LockedEthereumLockinIterator, error) {
+
+	logs, sub, err := _LockedEthereum.contract.FilterLogs(opts, "Lockin")
+	if err != nil {
+		return nil, err
+	}
+	return &LockedEthereumLockinIterator{contract: _LockedEthereum.contract, event: "Lockin", logs: logs, sub: sub}, nil
+}
+
+// WatchLockin is a free log subscription operation binding the contract event 0x820c935d67c681ee072f02c87a8f7a2f809866f9a126a551e6417a9262283aaa.
+//
+// Solidity: e Lockin(account address)
+func (_LockedEthereum *LockedEthereumFilterer) WatchLockin(opts *bind.WatchOpts, sink chan<- *LockedEthereumLockin) (event.Subscription, error) {
+
+	logs, sub, err := _LockedEthereum.contract.WatchLogs(opts, "Lockin")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(LockedEthereumLockin)
+				if err := _LockedEthereum.contract.UnpackLog(event, "Lockin", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
 }
 
 // LockedEthereumLockoutSecretIterator is returned from FilterLockoutSecret and is used to iterate over the raw logs and unpacked data for LockoutSecret events raised by the LockedEthereum contract.
@@ -843,139 +1183,6 @@ func (_LockedEthereum *LockedEthereumFilterer) WatchOwnerUpdate(opts *bind.Watch
 	}), nil
 }
 
-// LockedEthereumPrePareLockedOutIterator is returned from FilterPrePareLockedOut and is used to iterate over the raw logs and unpacked data for PrePareLockedOut events raised by the LockedEthereum contract.
-type LockedEthereumPrePareLockedOutIterator struct {
-	Event *LockedEthereumPrePareLockedOut // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *LockedEthereumPrePareLockedOutIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(LockedEthereumPrePareLockedOut)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(LockedEthereumPrePareLockedOut)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *LockedEthereumPrePareLockedOutIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *LockedEthereumPrePareLockedOutIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// LockedEthereumPrePareLockedOut represents a PrePareLockedOut event raised by the LockedEthereum contract.
-type LockedEthereumPrePareLockedOut struct {
-	Account common.Address
-	Value   *big.Int
-	Raw     types.Log // Blockchain specific contextual infos
-}
-
-// FilterPrePareLockedOut is a free log retrieval operation binding the contract event 0xecaa134d03b9436d19a5de74adbad850315cb95f6a84b2a343cf97588c5fe19d.
-//
-// Solidity: e PrePareLockedOut(account indexed address, _value uint256)
-func (_LockedEthereum *LockedEthereumFilterer) FilterPrePareLockedOut(opts *bind.FilterOpts, account []common.Address) (*LockedEthereumPrePareLockedOutIterator, error) {
-
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LockedEthereum.contract.FilterLogs(opts, "PrePareLockedOut", accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return &LockedEthereumPrePareLockedOutIterator{contract: _LockedEthereum.contract, event: "PrePareLockedOut", logs: logs, sub: sub}, nil
-}
-
-// WatchPrePareLockedOut is a free log subscription operation binding the contract event 0xecaa134d03b9436d19a5de74adbad850315cb95f6a84b2a343cf97588c5fe19d.
-//
-// Solidity: e PrePareLockedOut(account indexed address, _value uint256)
-func (_LockedEthereum *LockedEthereumFilterer) WatchPrePareLockedOut(opts *bind.WatchOpts, sink chan<- *LockedEthereumPrePareLockedOut, account []common.Address) (event.Subscription, error) {
-
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LockedEthereum.contract.WatchLogs(opts, "PrePareLockedOut", accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(LockedEthereumPrePareLockedOut)
-				if err := _LockedEthereum.contract.UnpackLog(event, "PrePareLockedOut", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
 // LockedEthereumPrepareLockinIterator is returned from FilterPrepareLockin and is used to iterate over the raw logs and unpacked data for PrepareLockin events raised by the LockedEthereum contract.
 type LockedEthereumPrepareLockinIterator struct {
 	Event *LockedEthereumPrepareLockin // Event containing the contract specifics and raw log
@@ -1052,15 +1259,10 @@ type LockedEthereumPrepareLockin struct {
 
 // FilterPrepareLockin is a free log retrieval operation binding the contract event 0x1cc3ff93fb861f5fb2869fc15945f233d14ea7a4afa5721ad3c9804be90f3c6a.
 //
-// Solidity: e PrepareLockin(account indexed address, value uint256)
-func (_LockedEthereum *LockedEthereumFilterer) FilterPrepareLockin(opts *bind.FilterOpts, account []common.Address) (*LockedEthereumPrepareLockinIterator, error) {
+// Solidity: e PrepareLockin(account address, value uint256)
+func (_LockedEthereum *LockedEthereumFilterer) FilterPrepareLockin(opts *bind.FilterOpts) (*LockedEthereumPrepareLockinIterator, error) {
 
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LockedEthereum.contract.FilterLogs(opts, "PrepareLockin", accountRule)
+	logs, sub, err := _LockedEthereum.contract.FilterLogs(opts, "PrepareLockin")
 	if err != nil {
 		return nil, err
 	}
@@ -1069,15 +1271,10 @@ func (_LockedEthereum *LockedEthereumFilterer) FilterPrepareLockin(opts *bind.Fi
 
 // WatchPrepareLockin is a free log subscription operation binding the contract event 0x1cc3ff93fb861f5fb2869fc15945f233d14ea7a4afa5721ad3c9804be90f3c6a.
 //
-// Solidity: e PrepareLockin(account indexed address, value uint256)
-func (_LockedEthereum *LockedEthereumFilterer) WatchPrepareLockin(opts *bind.WatchOpts, sink chan<- *LockedEthereumPrepareLockin, account []common.Address) (event.Subscription, error) {
+// Solidity: e PrepareLockin(account address, value uint256)
+func (_LockedEthereum *LockedEthereumFilterer) WatchPrepareLockin(opts *bind.WatchOpts, sink chan<- *LockedEthereumPrepareLockin) (event.Subscription, error) {
 
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _LockedEthereum.contract.WatchLogs(opts, "PrepareLockin", accountRule)
+	logs, sub, err := _LockedEthereum.contract.WatchLogs(opts, "PrepareLockin")
 	if err != nil {
 		return nil, err
 	}
@@ -1109,11 +1306,134 @@ func (_LockedEthereum *LockedEthereumFilterer) WatchPrepareLockin(opts *bind.Wat
 	}), nil
 }
 
+// LockedEthereumPrepareLockoutIterator is returned from FilterPrepareLockout and is used to iterate over the raw logs and unpacked data for PrepareLockout events raised by the LockedEthereum contract.
+type LockedEthereumPrepareLockoutIterator struct {
+	Event *LockedEthereumPrepareLockout // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *LockedEthereumPrepareLockoutIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(LockedEthereumPrepareLockout)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(LockedEthereumPrepareLockout)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *LockedEthereumPrepareLockoutIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *LockedEthereumPrepareLockoutIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// LockedEthereumPrepareLockout represents a PrepareLockout event raised by the LockedEthereum contract.
+type LockedEthereumPrepareLockout struct {
+	Account common.Address
+	Value   *big.Int
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterPrepareLockout is a free log retrieval operation binding the contract event 0xbbae3304c67c8fbb052efa093374fc235534c3d862512a40007e7e35062a0475.
+//
+// Solidity: e PrepareLockout(account address, _value uint256)
+func (_LockedEthereum *LockedEthereumFilterer) FilterPrepareLockout(opts *bind.FilterOpts) (*LockedEthereumPrepareLockoutIterator, error) {
+
+	logs, sub, err := _LockedEthereum.contract.FilterLogs(opts, "PrepareLockout")
+	if err != nil {
+		return nil, err
+	}
+	return &LockedEthereumPrepareLockoutIterator{contract: _LockedEthereum.contract, event: "PrepareLockout", logs: logs, sub: sub}, nil
+}
+
+// WatchPrepareLockout is a free log subscription operation binding the contract event 0xbbae3304c67c8fbb052efa093374fc235534c3d862512a40007e7e35062a0475.
+//
+// Solidity: e PrepareLockout(account address, _value uint256)
+func (_LockedEthereum *LockedEthereumFilterer) WatchPrepareLockout(opts *bind.WatchOpts, sink chan<- *LockedEthereumPrepareLockout) (event.Subscription, error) {
+
+	logs, sub, err := _LockedEthereum.contract.WatchLogs(opts, "PrepareLockout")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(LockedEthereumPrepareLockout)
+				if err := _LockedEthereum.contract.UnpackLog(event, "PrepareLockout", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
 // OwnedABI is the input ABI used to generate the binding from.
 const OwnedABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"changeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_prevOwner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"OwnerUpdate\",\"type\":\"event\"}]"
 
 // OwnedBin is the compiled bytecode used for deploying new contracts.
-const OwnedBin = `0x608060405260018054600160a060020a031916905534801561002057600080fd5b5060008054600160a060020a031916331790556101f7806100426000396000f3006080604052600436106100565763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166379ba5097811461005b5780638da5cb5b14610072578063a6f9dae1146100a3575b600080fd5b34801561006757600080fd5b506100706100c4565b005b34801561007e57600080fd5b5061008761015b565b60408051600160a060020a039092168252519081900360200190f35b3480156100af57600080fd5b50610070600160a060020a036004351661016a565b600154600160a060020a031633146100db57600080fd5b60005460015460408051600160a060020a03938416815292909116602083015280517f343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a9281900390910190a1600180546000805473ffffffffffffffffffffffffffffffffffffffff19908116600160a060020a03841617909155169055565b600054600160a060020a031681565b600054600160a060020a0316331461018157600080fd5b600054600160a060020a038281169116141561019c57600080fd5b6001805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a03929092169190911790555600a165627a7a7230582010729137f25a9207cc4e6db46f1312898349dc8a0257400b142d8e8872a36ca00029`
+const OwnedBin = `0x608060405260018054600160a060020a031916905534801561002057600080fd5b5060008054600160a060020a031916331790556101f7806100426000396000f3006080604052600436106100565763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166379ba5097811461005b5780638da5cb5b14610072578063a6f9dae1146100a3575b600080fd5b34801561006757600080fd5b506100706100c4565b005b34801561007e57600080fd5b5061008761015b565b60408051600160a060020a039092168252519081900360200190f35b3480156100af57600080fd5b50610070600160a060020a036004351661016a565b600154600160a060020a031633146100db57600080fd5b60005460015460408051600160a060020a03938416815292909116602083015280517f343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a9281900390910190a1600180546000805473ffffffffffffffffffffffffffffffffffffffff19908116600160a060020a03841617909155169055565b600054600160a060020a031681565b600054600160a060020a0316331461018157600080fd5b600054600160a060020a038281169116141561019c57600080fd5b6001805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a03929092169190911790555600a165627a7a72305820309b22ae2df6b0e988fb09d60d504c6a2e77da9093807ff54b32c5805d3b8cdd0029`
 
 // DeployOwned deploys a new Ethereum contract, binding an instance of Owned to it.
 func DeployOwned(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Owned, error) {

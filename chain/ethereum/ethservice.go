@@ -209,7 +209,7 @@ func (ss *ETHService) GetChainName() string {
 }
 
 // DeployContract : impl chain.Chain, LockedEthereum
-func (ss *ETHService) DeployContract(opts *bind.TransactOpts) (contractAddress common.Address, err error) {
+func (ss *ETHService) DeployContract(opts *bind.TransactOpts, params ...string) (contractAddress common.Address, err error) {
 	contractAddress, tx, _, err := contracts.DeployLockedEthereum(opts, ss.c)
 	if err != nil {
 		return
@@ -454,8 +454,26 @@ func (ss *ETHService) parserLogsToEventsAndSort(logs []types.Log) (es []chain.Ev
 				return
 			}
 			es = append(es, e)
-		case events.LockedEthereumPrePareLockedOutEventName:
+		case events.LockedEthereumPrepareLockoutEventName:
 			e, err2 := events.CreatePrepareLockoutEvent(l)
+			if err = err2; err != nil {
+				return
+			}
+			es = append(es, e)
+		case events.LockedEthereumLockinEventName:
+			e, err2 := events.CreateLockinEvent(l)
+			if err = err2; err != nil {
+				return
+			}
+			es = append(es, e)
+		case events.LockedEthereumCancelLockinEventName:
+			e, err2 := events.CreateCancelLockinEvent(l)
+			if err = err2; err != nil {
+				return
+			}
+			es = append(es, e)
+		case events.LockedEthereumCancelLockoutEventName:
+			e, err2 := events.CreateCancelLockoutEvent(l)
 			if err = err2; err != nil {
 				return
 			}

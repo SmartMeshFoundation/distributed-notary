@@ -16,7 +16,7 @@ type LockoutSecretEvent struct {
 // CreateLockoutSecretEvent :
 func CreateLockoutSecretEvent(log types.Log) (event LockoutSecretEvent, err error) {
 	e := &contracts.LockedEthereumLockoutSecret{}
-	err = UnpackLog(&lockedEthereumABI, e, LockedEthereumLockoutSecretEventName, &log)
+	err = unpackLog(&lockedEthereumABI, e, LockedEthereumLockoutSecretEventName, &log)
 	if err != nil {
 		return
 	}

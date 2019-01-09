@@ -155,8 +155,8 @@ func parseTopics(out interface{}, fields abi.Arguments, topics []common.Hash) er
 	return nil
 }
 
-// UnpackLog unpacks a retrieved log into the provided output structure.
-func UnpackLog(parser *abi.ABI, out interface{}, event string, log *types.Log) error {
+// unpackLog unpacks a retrieved log into the provided output structure.
+func unpackLog(parser *abi.ABI, out interface{}, event string, log *types.Log) error {
 	if len(log.Data) > 0 {
 		if err := parser.Unpack(out, event, log.Data); err != nil {
 			return err

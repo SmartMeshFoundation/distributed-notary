@@ -46,11 +46,8 @@ contract LockedEthereum is Owned {
     }
 
     string public name = "LockedEthereum for atmosphere";                   //fancy name
-    string public symbol = "LockedEthereum";                 //An identifier
     string public version = 'v0.1';       //SMT 0.1 standard. Just an arbitrary versioning scheme.
 
-    // The nonce for avoid transfer replay attacks
-    mapping(address => uint256) nonces;
     struct LockinInfo  {
      bytes32 SecretHash; //这是lockin发起人提供的hash
         uint256 Expiration; //锁过期时间
@@ -58,9 +55,12 @@ contract LockedEthereum is Owned {
         bytes32 Data; //转入附加信息
     }
     mapping(address=>LockinInfo) public lockin_htlc; //lockin过程中的htlc
-    event PrepareLockin(address indexed account,uint256 value);
+    event PrepareLockin(address account,uint256 value);
     event LockoutSecret(bytes32 secret);
-    event PrePareLockedOut(address indexed account, uint256 _value);
+    event PrepareLockout(address account, uint256 _value);
+    event Lockin(address account);
+    event CancelLockin(address account);
+    event CancelLockout(address account);
     struct LockoutInfo {
         bytes32 SecretHash; //转出时指定的密码hash
         uint256 Expiration; //超期以后可以撤销
@@ -104,6 +104,7 @@ contract LockedEthereum is Owned {
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
+        emit Lockin(account);
     }
     //lockin过程出错,expiration过期以后,任何人都可以撤销此次交易,实际上最可能的就是用户自己
     function cancelLockin(address account)   public {
@@ -121,13 +122,14 @@ contract LockedEthereum is Owned {
 
         //清空后在进行,防止递归调用.
         account.transfer(value);
+        emit CancelLockin(account);
     }
 
     //退出的过程和lockin过程类似,
-    //第一步是退出人(用户)在侧链PrePareLockedOut,公证人在收到相应的事件以后,会在主链上发起PrePareLockedOut 要求ce>c+ze
-    //第二步 用户观察到主链上发生了PrePareLockedOut,会在过期时间之内,用密码解锁交易,
+    //第一步是退出人(用户)在侧链PrepareLockout,公证人在收到相应的事件以后,会在主链上发起PrepareLockout 要求ce>c+ze
+    //第二步 用户观察到主链上发生了PrepareLockout,会在过期时间之内,用密码解锁交易,
     //第三部,公证人则根据主链上观察到的密码,销毁相应的token
-    function prePareLockedOutHTLC(address account,bytes32 secret_hash,uint256 expiration,uint256 value ) onlyOwner public{
+    function prepareLockoutHTLC(address account,bytes32 secret_hash,uint256 expiration,uint256 value ) onlyOwner public{
         LockoutInfo storage li=lockout_htlc[account];
         require(value>0);
         require(li.value==0);
@@ -135,10 +137,10 @@ contract LockedEthereum is Owned {
         li.value=value;
         li.SecretHash=secret_hash;
         li.Expiration=expiration;
-        emit PrePareLockedOut(account,value);
+        emit PrepareLockout(account,value);
     }
     //用户提交secret,转移资产,  知道密码的任何人都可以做,允许代理
-    function lockedOut(address account,bytes32 secret)   public {
+    function lockout(address account,bytes32 secret)   public {
         LockoutInfo storage li=lockout_htlc[account];
         uint256 value=li.value;
         require(value>0);
@@ -161,6 +163,7 @@ contract LockedEthereum is Owned {
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
+        emit CancelLockout(count);
     }
     function queryLockin(address account)   view external returns(bytes32,uint256,uint256,bytes32) {
         LockinInfo storage li=lockin_htlc[account];

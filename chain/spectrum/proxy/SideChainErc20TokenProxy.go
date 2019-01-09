@@ -12,7 +12,7 @@ import (
 
 // SideChainErc20TokenProxy :
 type SideChainErc20TokenProxy struct {
-	Contract *contracts.EthereumToken
+	Contract *contracts.AtmosphereToken
 }
 
 // NewSideChainErc20TokenProxy :
@@ -20,7 +20,7 @@ func NewSideChainErc20TokenProxy(conn *client.SafeEthClient, tokenAddress common
 
 	code, err := conn.CodeAt(context.Background(), tokenAddress, nil)
 	if err == nil && len(code) > 0 {
-		c, err2 := contracts.NewEthereumToken(tokenAddress, conn)
+		c, err2 := contracts.NewAtmosphereToken(tokenAddress, conn)
 		if err = err2; err != nil {
 			return
 		}

@@ -209,8 +209,12 @@ func (ss *SMCService) GetChainName() string {
 }
 
 // DeployContract : impl chain.Chain 这里暂时只有EthereumToken一个合约,后续优化该接口为支持多主链
-func (ss *SMCService) DeployContract(opts *bind.TransactOpts) (contractAddress common.Address, err error) {
-	contractAddress, tx, _, err := contracts.DeployEthereumToken(opts, ss.c)
+func (ss *SMCService) DeployContract(opts *bind.TransactOpts, params ...string) (contractAddress common.Address, err error) {
+	if params == nil || len(params) < 1 {
+		err = errors.New("need name when deploy token")
+		return
+	}
+	contractAddress, tx, _, err := contracts.DeployAtmosphereToken(opts, ss.c, params[0])
 	if err != nil {
 		return
 	}
@@ -442,20 +446,38 @@ func (ss *SMCService) parserLogsToEventsAndSort(logs []types.Log) (es []chain.Ev
 			log.Warn(fmt.Sprintf("SmcService.EventListener event tx=%s happened at %d, but now happend at %d ", l.TxHash.String(), doneBlockNumber, l.BlockNumber))
 		}
 		switch eventName {
-		case events.EthereumTokenPrepareLockinEventName:
+		case events.AtmosphereTokenPrepareLockinEventName:
 			e, err2 := events.CreatePrepareLockinEvent(l)
 			if err = err2; err != nil {
 				return
 			}
 			es = append(es, e)
-		case events.EthereumTokenLockinSecretEventName:
+		case events.AtmosphereTokenLockinSecretEventName:
 			e, err2 := events.CreateLockinSecretEvent(l)
 			if err = err2; err != nil {
 				return
 			}
 			es = append(es, e)
-		case events.EthereumTokenPrePareLockedOutEventName:
+		case events.AtmosphereTokenPrepareLockoutEventName:
 			e, err2 := events.CreatePrepareLockoutEvent(l)
+			if err = err2; err != nil {
+				return
+			}
+			es = append(es, e)
+		case events.AtmosphereTokenLockoutEventName:
+			e, err2 := events.CreateLockoutEvent(l)
+			if err = err2; err != nil {
+				return
+			}
+			es = append(es, e)
+		case events.AtmosphereTokenCancelLockinEventName:
+			e, err2 := events.CreateCancelLockinEvent(l)
+			if err = err2; err != nil {
+				return
+			}
+			es = append(es, e)
+		case events.AtmosphereTokenCancelLockoutEventName:
+			e, err2 := events.CreateCancelLockoutEvent(l)
 			if err = err2; err != nil {
 				return
 			}

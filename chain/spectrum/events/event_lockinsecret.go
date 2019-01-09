@@ -15,12 +15,12 @@ type LockinSecretEvent struct {
 
 // CreateLockinSecretEvent :
 func CreateLockinSecretEvent(log types.Log) (event LockinSecretEvent, err error) {
-	e := &contracts.EthereumTokenLockinSecret{}
-	err = unpackLog(&ethereumTokenABI, e, EthereumTokenLockinSecretEventName, &log)
+	e := &contracts.AtmosphereTokenLockinSecret{}
+	err = unpackLog(&atmosphereTokenABI, e, AtmosphereTokenLockinSecretEventName, &log)
 	if err != nil {
 		return
 	}
-	event.BaseEvent = createBaseEventFromSpectrumLog(EthereumTokenLockinSecretEventName, log)
+	event.BaseEvent = createBaseEventFromSpectrumLog(AtmosphereTokenLockinSecretEventName, log)
 	// params
 	event.Secret = e.Secret
 	return

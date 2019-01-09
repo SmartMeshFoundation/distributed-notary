@@ -78,6 +78,9 @@ func (ns *NotaryService) OnRequest(req api.Request) {
 		ns.onDSMPhase5CProofRequest(r)
 	case *notaryapi.DSMPhase6ReceiveSIRequest:
 		ns.onDSMPhase6ReceiveSIRequest(r)
+	default:
+		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
+		return
 	}
 	return
 }

@@ -47,7 +47,6 @@ func (as *AdminService) OnEvent(e chain.Event) {
 
 // OnRequest restful请求处理
 func (as *AdminService) OnRequest(req api.Request) {
-	//TODO
 	switch r := req.(type) {
 	/*
 		user api
@@ -70,12 +69,19 @@ func (as *AdminService) OnRequest(req api.Request) {
 	*/
 	case *userapi.DebugTransferToAccountRequest:
 		as.onDebugTransferToAccountRequest(r)
+	default:
+		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
+		return
 	}
 	return
 }
 
 // 公证人列表查询
 func (as *AdminService) onGetNotaryListRequest(req *userapi.GetNotaryListRequest) {
+	if req.GetRequestName() != userapi.APIUserNameGetNotaryList {
+		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
+		return
+	}
 	notaries, err := as.db.GetNotaryInfo()
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
@@ -83,13 +89,46 @@ func (as *AdminService) onGetNotaryListRequest(req *userapi.GetNotaryListRequest
 	req.WriteSuccessResponse(notaries)
 }
 
+type scTokenInfoToResponse struct {
+	SCToken                  common.Address `json:"sc_token"`                               // 侧链token地址
+	SCTokenName              string         `json:"sc_token_name"`                          // 侧链Token名
+	SCTokenOwnerKey          common.Hash    `json:"sc_token_owner_key"`                     // 侧链token合约owner的key
+	MCLockedContractAddress  common.Address `json:"mc_locked_contract_address"`             // 对应主链锁定合约地址
+	MCName                   string         `json:"mc_name"`                                // 对应主链名
+	MCLockedContractOwnerKey common.Hash    `json:"mc_locked_contract_owner_key,omitempty"` // 对应主链锁定合约owner的key
+	CreateTime               string         `json:"create_time"`                            // 创建时间
+	OrganiserID              int            `json:"organiser_id"`                           // 发起人ID
+}
+
+func newSCTokenInfoToResponse(s *models.SideChainTokenMetaInfo) (r *scTokenInfoToResponse) {
+	r = &scTokenInfoToResponse{
+		SCToken:                  s.SCToken,
+		SCTokenName:              s.SCTokenName,
+		SCTokenOwnerKey:          s.SCTokenOwnerKey,
+		MCLockedContractAddress:  s.MCLockedContractAddress,
+		MCName:                   s.MCName,
+		MCLockedContractOwnerKey: s.MCLockedContractOwnerKey,
+		OrganiserID:              s.OrganiserID,
+		CreateTime:               time.Unix(s.CreateTime, 0).String(),
+	}
+	return r
+}
+
 // SCToken列表查询
 func (as *AdminService) onGetSCTokenListRequest(req *userapi.GetSCTokenListRequest) {
+	if req.GetRequestName() != userapi.APIUserNameGetSCTokenList {
+		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
+		return
+	}
 	tokens, err := as.db.GetSCTokenMetaInfoList()
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 	}
-	req.WriteSuccessResponse(tokens)
+	var resp []*scTokenInfoToResponse
+	for _, token := range tokens {
+		resp = append(resp, newSCTokenInfoToResponse(token))
+	}
+	req.WriteSuccessResponse(resp)
 }
 
 type privateKeyInfoToResponse struct {
@@ -115,6 +154,10 @@ func newPrivateKeyInfoToResponse(p *models.PrivateKeyInfo) (r *privateKeyInfoToR
 
 // 私钥列表查询
 func (as *AdminService) onGetPrivateKeyListRequest(req *userapi.GetPrivateKeyListRequest) {
+	if req.GetRequestName() != userapi.APIAdminNameGetPrivateKeyList {
+		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
+		return
+	}
 	privateKeyInfoList, err := as.db.GetPrivateKeyList()
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
@@ -130,6 +173,10 @@ func (as *AdminService) onGetPrivateKeyListRequest(req *userapi.GetPrivateKeyLis
 发起一次公钥-私钥片协商过程,并等待协商结果
 */
 func (as *AdminService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKeyRequest) {
+	if req.GetRequestName() != userapi.APIAdminNameCreatePrivateKey {
+		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
+		return
+	}
 	// 1. 调用自己的notaryService,生成KeyGenerator,并开始协商过程
 	privateKeyID, err := as.notaryService.startNewPrivateKeyNegotiation()
 	if err != nil {
@@ -162,6 +209,10 @@ func (as *AdminService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKeyR
 使用某个私钥片创建一组新的合约
 */
 func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenRequest) {
+	if req.GetRequestName() != userapi.APIAdminNameRegisterNewSCToken {
+		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
+		return
+	}
 	// 1. 校验私钥ID可用性
 	privateKeyInfo, err := as.db.LoadPrivateKeyInfo(common.HexToHash(req.PrivateKeyID))
 	if err != nil {

@@ -19,7 +19,7 @@ type Chain interface {
 	StopEventListener()
 	RegisterEventListenContract(contractAddresses ...common.Address) error
 	UnRegisterEventListenContract(contractAddresses ...common.Address)
-	DeployContract(opts *bind.TransactOpts) (contractAddress common.Address, err error)
+	DeployContract(opts *bind.TransactOpts, params ...string) (contractAddress common.Address, err error)
 
 	Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int) (err error) // for debug
 }

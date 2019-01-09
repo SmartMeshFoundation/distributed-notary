@@ -11,7 +11,7 @@ import (
 
 func TestCreateLockinSecretEvent(t *testing.T) {
 	var e LockinSecretEvent
-	e.BaseEvent = createBaseEventFromSpectrumLog(EthereumTokenLockinSecretEventName, types.Log{
+	e.BaseEvent = createBaseEventFromSpectrumLog(AtmosphereTokenLockinSecretEventName, types.Log{
 		Address:     utils.NewRandomAddress(),
 		BlockNumber: 1,
 	},

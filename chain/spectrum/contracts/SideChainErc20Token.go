@@ -15,123 +15,123 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
-// EthereumTokenABI is the input ABI used to generate the binding from.
-const EthereumTokenABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"secret_hash\",\"type\":\"bytes32\"},{\"name\":\"expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes32\"}],\"name\":\"prePareLockedOut\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_spender\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"lockin_htlc\",\"outputs\":[{\"name\":\"SecretHash\",\"type\":\"bytes32\"},{\"name\":\"Expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_from\",\"type\":\"address\"},{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"cancleLockOut\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"queryLockin\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"cancelLockin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"},{\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"lockin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"from\",\"type\":\"address\"},{\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"lockedOut\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"queryLockout\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"},{\"name\":\"secret_hash\",\"type\":\"bytes32\"},{\"name\":\"expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"prepareLockin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"changeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"lockout_htlc\",\"outputs\":[{\"name\":\"SecretHash\",\"type\":\"bytes32\"},{\"name\":\"Expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"},{\"name\":\"Data\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\"},{\"name\":\"_spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"remaining\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"PrepareLockin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"LockinSecret\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"PrePareLockedOut\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_prevOwner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"OwnerUpdate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"}]"
+// AtmosphereTokenABI is the input ABI used to generate the binding from.
+const AtmosphereTokenABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"from\",\"type\":\"address\"},{\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"lockout\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_spender\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"lockin_htlc\",\"outputs\":[{\"name\":\"SecretHash\",\"type\":\"bytes32\"},{\"name\":\"Expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_from\",\"type\":\"address\"},{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"queryLockin\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"cancelLockin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"},{\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"lockin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"queryLockout\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"secret_hash\",\"type\":\"bytes32\"},{\"name\":\"expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes32\"}],\"name\":\"prepareLockout\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}],\"name\":\"cancelLockOut\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"account\",\"type\":\"address\"},{\"name\":\"secret_hash\",\"type\":\"bytes32\"},{\"name\":\"expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"prepareLockin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"changeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"lockout_htlc\",\"outputs\":[{\"name\":\"SecretHash\",\"type\":\"bytes32\"},{\"name\":\"Expiration\",\"type\":\"uint256\"},{\"name\":\"value\",\"type\":\"uint256\"},{\"name\":\"Data\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\"},{\"name\":\"_spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"remaining\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"tokenName\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"PrepareLockin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"secret\",\"type\":\"bytes32\"}],\"name\":\"LockinSecret\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"account\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"PrepareLockout\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Lockout\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"account\",\"type\":\"address\"}],\"name\":\"CancelLockin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"account\",\"type\":\"address\"}],\"name\":\"CancelLockout\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_prevOwner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"OwnerUpdate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"}]"
 
-// EthereumTokenBin is the compiled bytecode used for deploying new contracts.
-const EthereumTokenBin = `0x60028054600160a060020a031916905560c0604052601d60808190527f457468657265756d20546f6b656e20666f722061746d6f73706865726500000060a090815262000050916005919062000115565b506006805460ff1916601217905560408051808201909152600d8082527f457468657265756d546f6b656e000000000000000000000000000000000000006020909201918252620000a49160079162000115565b506040805180820190915260048082527f76302e31000000000000000000000000000000000000000000000000000000006020909201918252620000eb9160089162000115565b50348015620000f957600080fd5b5060018054600160a060020a03191633178155600055620001ba565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106200015857805160ff191683800117855562000188565b8280016001018555821562000188579182015b82811115620001885782518255916020019190600101906200016b565b50620001969291506200019a565b5090565b620001b791905b80821115620001965760008155600101620001a1565b90565b610f0380620001ca6000396000f3006080604052600436106101325763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663065edecb811461014457806306fdde0314610167578063095ea7b3146101f157806318160ddd146102295780631e0ef9a41461025057806323b872dd1461028f578063313ce567146102b957806343ba603e146102e457806354fd4d50146102f957806357e1ee591461030e57806370a082311461032f57806376188aa51461035057806379ba5097146103715780637fd408d21461038657806384540a28146103aa5780638caa80f7146103ce5780638da5cb5b1461041557806395d89b41146104465780639a7165491461045b578063a6f9dae114610485578063a9059cbb146104a6578063b8528761146104ca578063dd62ed3e146104eb575b34801561013e57600080fd5b50600080fd5b34801561015057600080fd5b50610165600435602435604435606435610512565b005b34801561017357600080fd5b5061017c6105c2565b6040805160208082528351818301528351919283929083019185019080838360005b838110156101b657818101518382015260200161019e565b50505050905090810190601f1680156101e35780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b3480156101fd57600080fd5b50610215600160a060020a0360043516602435610650565b604080519115158252519081900360200190f35b34801561023557600080fd5b5061023e6106b7565b60408051918252519081900360200190f35b34801561025c57600080fd5b50610271600160a060020a03600435166106bd565b60408051938452602084019290925282820152519081900360600190f35b34801561029b57600080fd5b50610215600160a060020a03600435811690602435166044356106de565b3480156102c557600080fd5b506102ce6107e4565b6040805160ff9092168252519081900360200190f35b3480156102f057600080fd5b506101656107ed565b34801561030557600080fd5b5061017c610850565b34801561031a57600080fd5b50610271600160a060020a03600435166108ab565b34801561033b57600080fd5b5061023e600160a060020a03600435166108d3565b34801561035c57600080fd5b50610165600160a060020a03600435166108ee565b34801561037d57600080fd5b5061016561093c565b34801561039257600080fd5b50610165600160a060020a03600435166024356109d3565b3480156103b657600080fd5b50610165600160a060020a0360043516602435610b3d565b3480156103da57600080fd5b506103ef600160a060020a0360043516610c2f565b604080519485526020850193909352838301919091526060830152519081900360800190f35b34801561042157600080fd5b5061042a610c60565b60408051600160a060020a039092168252519081900360200190f35b34801561045257600080fd5b5061017c610c6f565b34801561046757600080fd5b50610165600160a060020a0360043516602435604435606435610cca565b34801561049157600080fd5b50610165600160a060020a0360043516610d72565b3480156104b257600080fd5b50610215600160a060020a0360043516602435610dd3565b3480156104d657600080fd5b506103ef600160a060020a0360043516610e85565b3480156104f757600080fd5b5061023e600160a060020a0360043581169060243516610eac565b336000908152600b6020526040812090831161052d57600080fd5b60028101541561053c57600080fd5b3360009081526003602052604090205483111561055857600080fd5b600281018390558481556001810184905560038082018390553360008181526020928352604090819020805487900390558051868152905191927fecaa134d03b9436d19a5de74adbad850315cb95f6a84b2a343cf97588c5fe19d92918290030190a25050505050565b6005805460408051602060026001851615610100026000190190941693909304601f810184900484028201840190925281815292918301828280156106485780601f1061061d57610100808354040283529160200191610648565b820191906000526020600020905b81548152906001019060200180831161062b57829003601f168201915b505050505081565b336000818152600460209081526040808320600160a060020a038716808552908352818420869055815186815291519394909390927f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925928290030190a35060015b92915050565b60005481565b600a6020526000908152604090208054600182015460029092015490919083565b600160a060020a03831660009081526003602052604081205482118015906107295750600160a060020a03841660009081526004602090815260408083203384529091529020548211155b801561074e5750600160a060020a038316600090815260036020526040902054828101115b156107d957600160a060020a03808416600081815260036020908152604080832080548801905593881680835284832080548890039055600482528483203384528252918490208054879003905583518681529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a35060016107dd565b5060005b9392505050565b60065460ff1681565b336000908152600b6020526040812060028101549091811161080e57600080fd5b6001820154431161081e57600080fd5b600060028301819055808355600183018190556003928301819055338152602092909252604090912080549091019055565b6008805460408051602060026001851615610100026000190190941693909304601f810184900484028201840190925281815292918301828280156106485780601f1061061d57610100808354040283529160200191610648565b600160a060020a03166000908152600a60205260409020805460018201546002909201549092565b600160a060020a031660009081526003602052604090205490565b600160a060020a0381166000908152600a60205260408120600281015490911061091757600080fd5b6001810154431161092757600080fd5b60006002820181905580825560019091015550565b600254600160a060020a0316331461095357600080fd5b60015460025460408051600160a060020a03938416815292909116602083015280517f343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a9281900390910190a1600280546001805473ffffffffffffffffffffffffffffffffffffffff19908116600160a060020a03841617909155169055565b600160a060020a0382166000908152600a60205260408120600281015490919081908110610a0057600080fd5b60408051602080820187905282518083038201815291830192839052815191929182918401908083835b60208310610a495780518252601f199092019160209182019101610a2a565b5181516020939093036101000a600019018019909116921691909117905260405192018290039091208654149250610a8391505057600080fd5b60018301544310610a9357600080fd5b50506002810154600160a060020a038416600090815260036020526040902054808201821115610ac257600080fd5b600160a060020a0385166000908152600360205260408120828401905580548301908190558210610af257600080fd5b60006002840181905580845560018401556040805185815290517f284a65d036cbbc9dd3c8f871862236ea013cdbf2d086ae0031b86fb27a97c12c9181900360200190a15050505050565b600160a060020a0382166000908152600b60205260408120600281015490918111610b6757600080fd5b60018201544310610b7757600080fd5b60408051602080820186905282518083038201815291830192839052815191929182918401908083835b60208310610bc05780518252601f199092019160209182019101610ba1565b5181516020939093036101000a600019018019909116921691909117905260405192018290039091208554149250610bfa91505057600080fd5b6000600283018190558083556001808401829055600384018290558154839003918290551115610c2957600080fd5b50505050565b600160a060020a03166000908152600b60205260409020805460018201546002830154600390930154919390929190565b600154600160a060020a031681565b6007805460408051602060026001851615610100026000190190941693909304601f810184900484028201840190925281815292918301828280156106485780601f1061061d57610100808354040283529160200191610648565b600154600090600160a060020a03163314610ce457600080fd5b600160a060020a0385166000908152600a602052604090206002015415610d0a57600080fd5b50600160a060020a0384166000818152600a60209081526040918290208681556001810186905560028101859055825185815292519093927f1cc3ff93fb861f5fb2869fc15945f233d14ea7a4afa5721ad3c9804be90f3c6a92908290030190a25050505050565b600154600160a060020a03163314610d8957600080fd5b600154600160a060020a0382811691161415610da457600080fd5b6002805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0392909216919091179055565b336000908152600360205260408120548211801590610e0b5750600160a060020a038316600090815260036020526040902054828101115b15610e7d5733600081815260036020908152604080832080548790039055600160a060020a03871680845292819020805487019055805186815290519293927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef929181900390910190a35060016106b1565b5060006106b1565b600b6020526000908152604090208054600182015460028301546003909301549192909184565b600160a060020a039182166000908152600460209081526040808320939094168252919091522054905600a165627a7a723058200f7cf15ed5bb460ed1796d5450ef07418d4ff40d8cf049902b3ba7d8978e89c30029`
+// AtmosphereTokenBin is the compiled bytecode used for deploying new contracts.
+const AtmosphereTokenBin = `0x60028054600160a060020a03191690556006805460ff1916601217905560c0604052600460808190527f76302e310000000000000000000000000000000000000000000000000000000060a09081526200005d9160079190620000b6565b503480156200006b57600080fd5b50604051620010c8380380620010c883398101604052805160018054600160a060020a03191633178155600055018051620000ae906005906020840190620000b6565b50506200015b565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f10620000f957805160ff191683800117855562000129565b8280016001018555821562000129579182015b82811115620001295782518255916020019190600101906200010c565b50620001379291506200013b565b5090565b6200015891905b8082111562000137576000815560010162000142565b90565b610f5d806200016b6000396000f3006080604052600436106101275763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663043d9180811461013957806306fdde031461015f578063095ea7b3146101e957806318160ddd146102215780631e0ef9a41461024857806323b872dd14610287578063313ce567146102b157806354fd4d50146102dc57806357e1ee59146102f157806370a082311461031257806376188aa51461033357806379ba5097146103545780637fd408d2146103695780638caa80f71461038d5780638da5cb5b146103d457806390d45d4d1461040557806393bd8121146104265780639a71654914610447578063a6f9dae114610471578063a9059cbb14610492578063b8528761146104b6578063dd62ed3e146104d7575b34801561013357600080fd5b50600080fd5b34801561014557600080fd5b5061015d600160a060020a03600435166024356104fe565b005b34801561016b57600080fd5b5061017461062c565b6040805160208082528351818301528351919283929083019185019080838360005b838110156101ae578181015183820152602001610196565b50505050905090810190601f1680156101db5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b3480156101f557600080fd5b5061020d600160a060020a03600435166024356106ba565b604080519115158252519081900360200190f35b34801561022d57600080fd5b50610236610721565b60408051918252519081900360200190f35b34801561025457600080fd5b50610269600160a060020a0360043516610727565b60408051938452602084019290925282820152519081900360600190f35b34801561029357600080fd5b5061020d600160a060020a0360043581169060243516604435610748565b3480156102bd57600080fd5b506102c661084e565b6040805160ff9092168252519081900360200190f35b3480156102e857600080fd5b50610174610857565b3480156102fd57600080fd5b50610269600160a060020a03600435166108b2565b34801561031e57600080fd5b50610236600160a060020a03600435166108da565b34801561033f57600080fd5b5061015d600160a060020a03600435166108f5565b34801561036057600080fd5b5061015d61097f565b34801561037557600080fd5b5061015d600160a060020a0360043516602435610a16565b34801561039957600080fd5b506103ae600160a060020a0360043516610b80565b604080519485526020850193909352838301919091526060830152519081900360800190f35b3480156103e057600080fd5b506103e9610bb1565b60408051600160a060020a039092168252519081900360200190f35b34801561041157600080fd5b5061015d600435602435604435606435610bc0565b34801561043257600080fd5b5061015d600160a060020a0360043516610c76565b34801561045357600080fd5b5061015d600160a060020a0360043516602435604435606435610d1f565b34801561047d57600080fd5b5061015d600160a060020a0360043516610dcc565b34801561049e57600080fd5b5061020d600160a060020a0360043516602435610e2d565b3480156104c257600080fd5b506103ae600160a060020a0360043516610edf565b3480156104e357600080fd5b50610236600160a060020a0360043581169060243516610f06565b600160a060020a038216600090815260096020526040812060028101549091811161052857600080fd5b6001820154431061053857600080fd5b60408051602080820186905282518083038201815291830192839052815191929182918401908083835b602083106105815780518252601f199092019160209182019101610562565b5181516020939093036101000a6000190180199091169216919091179052604051920182900390912085541492506105bb91505057600080fd5b60006002830181905580835560018084018290556003840182905581548390039182905511156105ea57600080fd5b60408051600160a060020a038616815290517f898300cae06386d3e505e7e9a5b482dd3bfd677d3e14af1448e4f9304d82e8f39181900360200190a150505050565b6005805460408051602060026001851615610100026000190190941693909304601f810184900484028201840190925281815292918301828280156106b25780601f10610687576101008083540402835291602001916106b2565b820191906000526020600020905b81548152906001019060200180831161069557829003601f168201915b505050505081565b336000818152600460209081526040808320600160a060020a038716808552908352818420869055815186815291519394909390927f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925928290030190a35060015b92915050565b60005481565b60086020526000908152604090208054600182015460029092015490919083565b600160a060020a03831660009081526003602052604081205482118015906107935750600160a060020a03841660009081526004602090815260408083203384529091529020548211155b80156107b85750600160a060020a038316600090815260036020526040902054828101115b1561084357600160a060020a03808416600081815260036020908152604080832080548801905593881680835284832080548890039055600482528483203384528252918490208054879003905583518681529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a3506001610847565b5060005b9392505050565b60065460ff1681565b6007805460408051602060026001851615610100026000190190941693909304601f810184900484028201840190925281815292918301828280156106b25780601f10610687576101008083540402835291602001916106b2565b600160a060020a03166000908152600860205260409020805460018201546002909201549092565b600160a060020a031660009081526003602052604090205490565b600160a060020a0381166000908152600860205260408120600281015490911061091e57600080fd5b6001810154431161092e57600080fd5b600060028201819055808255600182015560408051600160a060020a038416815290517f1049e4593ee9996b154e5cdebecd383a1252c7b08e01f83df030fec3680adef39181900360200190a15050565b600254600160a060020a0316331461099657600080fd5b60015460025460408051600160a060020a03938416815292909116602083015280517f343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a9281900390910190a1600280546001805473ffffffffffffffffffffffffffffffffffffffff19908116600160a060020a03841617909155169055565b600160a060020a0382166000908152600860205260408120600281015490919081908110610a4357600080fd5b60408051602080820187905282518083038201815291830192839052815191929182918401908083835b60208310610a8c5780518252601f199092019160209182019101610a6d565b5181516020939093036101000a600019018019909116921691909117905260405192018290039091208654149250610ac691505057600080fd5b60018301544310610ad657600080fd5b50506002810154600160a060020a038416600090815260036020526040902054808201821115610b0557600080fd5b600160a060020a0385166000908152600360205260408120828401905580548301908190558210610b3557600080fd5b60006002840181905580845560018401556040805185815290517f284a65d036cbbc9dd3c8f871862236ea013cdbf2d086ae0031b86fb27a97c12c9181900360200190a15050505050565b600160a060020a03166000908152600960205260409020805460018201546002830154600390930154919390929190565b600154600160a060020a031681565b336000908152600960205260408120908311610bdb57600080fd5b600281015415610bea57600080fd5b33600090815260036020526040902054831115610c0657600080fd5b60028101839055848155600181018490556003808201839055336000818152602092835260409081902080548790039055805191825291810185905281517fbbae3304c67c8fbb052efa093374fc235534c3d862512a40007e7e35062a0475929181900390910190a15050505050565b600160a060020a0381166000908152600960205260408120600281015490918111610ca057600080fd5b60018201544311610cb057600080fd5b600060028301819055808355600183018190556003808401829055600160a060020a0385168083526020918252604092839020805485019055825190815291517f4a985ac51f12559bf2627d79a647c493393d8d4e59e14137cfef6b61559053d09281900390910190a1505050565b600154600090600160a060020a03163314610d3957600080fd5b600160a060020a03851660009081526008602052604090206002015415610d5f57600080fd5b50600160a060020a03841660008181526008602090815260409182902086815560018101869055600281018590558251938452908301849052815190927f1cc3ff93fb861f5fb2869fc15945f233d14ea7a4afa5721ad3c9804be90f3c6a92908290030190a15050505050565b600154600160a060020a03163314610de357600080fd5b600154600160a060020a0382811691161415610dfe57600080fd5b6002805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0392909216919091179055565b336000908152600360205260408120548211801590610e655750600160a060020a038316600090815260036020526040902054828101115b15610ed75733600081815260036020908152604080832080548790039055600160a060020a03871680845292819020805487019055805186815290519293927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef929181900390910190a350600161071b565b50600061071b565b60096020526000908152604090208054600182015460028301546003909301549192909184565b600160a060020a039182166000908152600460209081526040808320939094168252919091522054905600a165627a7a7230582040ac00c508875d725a54646e3fb5361579fa436037b0188370bd373142b2dced0029`
 
-// DeployEthereumToken deploys a new Ethereum contract, binding an instance of EthereumToken to it.
-func DeployEthereumToken(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *EthereumToken, error) {
-	parsed, err := abi.JSON(strings.NewReader(EthereumTokenABI))
+// DeployAtmosphereToken deploys a new Ethereum contract, binding an instance of AtmosphereToken to it.
+func DeployAtmosphereToken(auth *bind.TransactOpts, backend bind.ContractBackend, tokenName string) (common.Address, *types.Transaction, *AtmosphereToken, error) {
+	parsed, err := abi.JSON(strings.NewReader(AtmosphereTokenABI))
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
-	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(EthereumTokenBin), backend)
+	address, tx, contract, err := bind.DeployContract(auth, parsed, common.FromHex(AtmosphereTokenBin), backend, tokenName)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
-	return address, tx, &EthereumToken{EthereumTokenCaller: EthereumTokenCaller{contract: contract}, EthereumTokenTransactor: EthereumTokenTransactor{contract: contract}, EthereumTokenFilterer: EthereumTokenFilterer{contract: contract}}, nil
+	return address, tx, &AtmosphereToken{AtmosphereTokenCaller: AtmosphereTokenCaller{contract: contract}, AtmosphereTokenTransactor: AtmosphereTokenTransactor{contract: contract}, AtmosphereTokenFilterer: AtmosphereTokenFilterer{contract: contract}}, nil
 }
 
-// EthereumToken is an auto generated Go binding around an Ethereum contract.
-type EthereumToken struct {
-	EthereumTokenCaller     // Read-only binding to the contract
-	EthereumTokenTransactor // Write-only binding to the contract
-	EthereumTokenFilterer   // Log filterer for contract events
+// AtmosphereToken is an auto generated Go binding around an Ethereum contract.
+type AtmosphereToken struct {
+	AtmosphereTokenCaller     // Read-only binding to the contract
+	AtmosphereTokenTransactor // Write-only binding to the contract
+	AtmosphereTokenFilterer   // Log filterer for contract events
 }
 
-// EthereumTokenCaller is an auto generated read-only Go binding around an Ethereum contract.
-type EthereumTokenCaller struct {
+// AtmosphereTokenCaller is an auto generated read-only Go binding around an Ethereum contract.
+type AtmosphereTokenCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// EthereumTokenTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type EthereumTokenTransactor struct {
+// AtmosphereTokenTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type AtmosphereTokenTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// EthereumTokenFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type EthereumTokenFilterer struct {
+// AtmosphereTokenFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type AtmosphereTokenFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// EthereumTokenSession is an auto generated Go binding around an Ethereum contract,
+// AtmosphereTokenSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
-type EthereumTokenSession struct {
-	Contract     *EthereumToken    // Generic contract binding to set the session for
+type AtmosphereTokenSession struct {
+	Contract     *AtmosphereToken  // Generic contract binding to set the session for
 	CallOpts     bind.CallOpts     // Call options to use throughout this session
 	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
-// EthereumTokenCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// AtmosphereTokenCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
-type EthereumTokenCallerSession struct {
-	Contract *EthereumTokenCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts        // Call options to use throughout this session
+type AtmosphereTokenCallerSession struct {
+	Contract *AtmosphereTokenCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts          // Call options to use throughout this session
 }
 
-// EthereumTokenTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// AtmosphereTokenTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
-type EthereumTokenTransactorSession struct {
-	Contract     *EthereumTokenTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
+type AtmosphereTokenTransactorSession struct {
+	Contract     *AtmosphereTokenTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts          // Transaction auth options to use throughout this session
 }
 
-// EthereumTokenRaw is an auto generated low-level Go binding around an Ethereum contract.
-type EthereumTokenRaw struct {
-	Contract *EthereumToken // Generic contract binding to access the raw methods on
+// AtmosphereTokenRaw is an auto generated low-level Go binding around an Ethereum contract.
+type AtmosphereTokenRaw struct {
+	Contract *AtmosphereToken // Generic contract binding to access the raw methods on
 }
 
-// EthereumTokenCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type EthereumTokenCallerRaw struct {
-	Contract *EthereumTokenCaller // Generic read-only contract binding to access the raw methods on
+// AtmosphereTokenCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type AtmosphereTokenCallerRaw struct {
+	Contract *AtmosphereTokenCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// EthereumTokenTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type EthereumTokenTransactorRaw struct {
-	Contract *EthereumTokenTransactor // Generic write-only contract binding to access the raw methods on
+// AtmosphereTokenTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type AtmosphereTokenTransactorRaw struct {
+	Contract *AtmosphereTokenTransactor // Generic write-only contract binding to access the raw methods on
 }
 
-// NewEthereumToken creates a new instance of EthereumToken, bound to a specific deployed contract.
-func NewEthereumToken(address common.Address, backend bind.ContractBackend) (*EthereumToken, error) {
-	contract, err := bindEthereumToken(address, backend, backend, backend)
+// NewAtmosphereToken creates a new instance of AtmosphereToken, bound to a specific deployed contract.
+func NewAtmosphereToken(address common.Address, backend bind.ContractBackend) (*AtmosphereToken, error) {
+	contract, err := bindAtmosphereToken(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &EthereumToken{EthereumTokenCaller: EthereumTokenCaller{contract: contract}, EthereumTokenTransactor: EthereumTokenTransactor{contract: contract}, EthereumTokenFilterer: EthereumTokenFilterer{contract: contract}}, nil
+	return &AtmosphereToken{AtmosphereTokenCaller: AtmosphereTokenCaller{contract: contract}, AtmosphereTokenTransactor: AtmosphereTokenTransactor{contract: contract}, AtmosphereTokenFilterer: AtmosphereTokenFilterer{contract: contract}}, nil
 }
 
-// NewEthereumTokenCaller creates a new read-only instance of EthereumToken, bound to a specific deployed contract.
-func NewEthereumTokenCaller(address common.Address, caller bind.ContractCaller) (*EthereumTokenCaller, error) {
-	contract, err := bindEthereumToken(address, caller, nil, nil)
+// NewAtmosphereTokenCaller creates a new read-only instance of AtmosphereToken, bound to a specific deployed contract.
+func NewAtmosphereTokenCaller(address common.Address, caller bind.ContractCaller) (*AtmosphereTokenCaller, error) {
+	contract, err := bindAtmosphereToken(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &EthereumTokenCaller{contract: contract}, nil
+	return &AtmosphereTokenCaller{contract: contract}, nil
 }
 
-// NewEthereumTokenTransactor creates a new write-only instance of EthereumToken, bound to a specific deployed contract.
-func NewEthereumTokenTransactor(address common.Address, transactor bind.ContractTransactor) (*EthereumTokenTransactor, error) {
-	contract, err := bindEthereumToken(address, nil, transactor, nil)
+// NewAtmosphereTokenTransactor creates a new write-only instance of AtmosphereToken, bound to a specific deployed contract.
+func NewAtmosphereTokenTransactor(address common.Address, transactor bind.ContractTransactor) (*AtmosphereTokenTransactor, error) {
+	contract, err := bindAtmosphereToken(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &EthereumTokenTransactor{contract: contract}, nil
+	return &AtmosphereTokenTransactor{contract: contract}, nil
 }
 
-// NewEthereumTokenFilterer creates a new log filterer instance of EthereumToken, bound to a specific deployed contract.
-func NewEthereumTokenFilterer(address common.Address, filterer bind.ContractFilterer) (*EthereumTokenFilterer, error) {
-	contract, err := bindEthereumToken(address, nil, nil, filterer)
+// NewAtmosphereTokenFilterer creates a new log filterer instance of AtmosphereToken, bound to a specific deployed contract.
+func NewAtmosphereTokenFilterer(address common.Address, filterer bind.ContractFilterer) (*AtmosphereTokenFilterer, error) {
+	contract, err := bindAtmosphereToken(address, nil, nil, filterer)
 	if err != nil {
 		return nil, err
 	}
-	return &EthereumTokenFilterer{contract: contract}, nil
+	return &AtmosphereTokenFilterer{contract: contract}, nil
 }
 
-// bindEthereumToken binds a generic wrapper to an already deployed contract.
-func bindEthereumToken(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(EthereumTokenABI))
+// bindAtmosphereToken binds a generic wrapper to an already deployed contract.
+func bindAtmosphereToken(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(AtmosphereTokenABI))
 	if err != nil {
 		return nil, err
 	}
@@ -142,122 +142,122 @@ func bindEthereumToken(address common.Address, caller bind.ContractCaller, trans
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_EthereumToken *EthereumTokenRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
-	return _EthereumToken.Contract.EthereumTokenCaller.contract.Call(opts, result, method, params...)
+func (_AtmosphereToken *AtmosphereTokenRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _AtmosphereToken.Contract.AtmosphereTokenCaller.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_EthereumToken *EthereumTokenRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _EthereumToken.Contract.EthereumTokenTransactor.contract.Transfer(opts)
+func (_AtmosphereToken *AtmosphereTokenRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.AtmosphereTokenTransactor.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_EthereumToken *EthereumTokenRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _EthereumToken.Contract.EthereumTokenTransactor.contract.Transact(opts, method, params...)
+func (_AtmosphereToken *AtmosphereTokenRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.AtmosphereTokenTransactor.contract.Transact(opts, method, params...)
 }
 
 // Call invokes the (constant) contract method with params as input values and
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_EthereumToken *EthereumTokenCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
-	return _EthereumToken.Contract.contract.Call(opts, result, method, params...)
+func (_AtmosphereToken *AtmosphereTokenCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+	return _AtmosphereToken.Contract.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_EthereumToken *EthereumTokenTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _EthereumToken.Contract.contract.Transfer(opts)
+func (_AtmosphereToken *AtmosphereTokenTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_EthereumToken *EthereumTokenTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _EthereumToken.Contract.contract.Transact(opts, method, params...)
+func (_AtmosphereToken *AtmosphereTokenTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.contract.Transact(opts, method, params...)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
 // Solidity: function allowance(_owner address, _spender address) constant returns(remaining uint256)
-func (_EthereumToken *EthereumTokenCaller) Allowance(opts *bind.CallOpts, _owner common.Address, _spender common.Address) (*big.Int, error) {
+func (_AtmosphereToken *AtmosphereTokenCaller) Allowance(opts *bind.CallOpts, _owner common.Address, _spender common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
 	)
 	out := ret0
-	err := _EthereumToken.contract.Call(opts, out, "allowance", _owner, _spender)
+	err := _AtmosphereToken.contract.Call(opts, out, "allowance", _owner, _spender)
 	return *ret0, err
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
 // Solidity: function allowance(_owner address, _spender address) constant returns(remaining uint256)
-func (_EthereumToken *EthereumTokenSession) Allowance(_owner common.Address, _spender common.Address) (*big.Int, error) {
-	return _EthereumToken.Contract.Allowance(&_EthereumToken.CallOpts, _owner, _spender)
+func (_AtmosphereToken *AtmosphereTokenSession) Allowance(_owner common.Address, _spender common.Address) (*big.Int, error) {
+	return _AtmosphereToken.Contract.Allowance(&_AtmosphereToken.CallOpts, _owner, _spender)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
 // Solidity: function allowance(_owner address, _spender address) constant returns(remaining uint256)
-func (_EthereumToken *EthereumTokenCallerSession) Allowance(_owner common.Address, _spender common.Address) (*big.Int, error) {
-	return _EthereumToken.Contract.Allowance(&_EthereumToken.CallOpts, _owner, _spender)
+func (_AtmosphereToken *AtmosphereTokenCallerSession) Allowance(_owner common.Address, _spender common.Address) (*big.Int, error) {
+	return _AtmosphereToken.Contract.Allowance(&_AtmosphereToken.CallOpts, _owner, _spender)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
 // Solidity: function balanceOf(_owner address) constant returns(balance uint256)
-func (_EthereumToken *EthereumTokenCaller) BalanceOf(opts *bind.CallOpts, _owner common.Address) (*big.Int, error) {
+func (_AtmosphereToken *AtmosphereTokenCaller) BalanceOf(opts *bind.CallOpts, _owner common.Address) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
 	)
 	out := ret0
-	err := _EthereumToken.contract.Call(opts, out, "balanceOf", _owner)
+	err := _AtmosphereToken.contract.Call(opts, out, "balanceOf", _owner)
 	return *ret0, err
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
 // Solidity: function balanceOf(_owner address) constant returns(balance uint256)
-func (_EthereumToken *EthereumTokenSession) BalanceOf(_owner common.Address) (*big.Int, error) {
-	return _EthereumToken.Contract.BalanceOf(&_EthereumToken.CallOpts, _owner)
+func (_AtmosphereToken *AtmosphereTokenSession) BalanceOf(_owner common.Address) (*big.Int, error) {
+	return _AtmosphereToken.Contract.BalanceOf(&_AtmosphereToken.CallOpts, _owner)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
 // Solidity: function balanceOf(_owner address) constant returns(balance uint256)
-func (_EthereumToken *EthereumTokenCallerSession) BalanceOf(_owner common.Address) (*big.Int, error) {
-	return _EthereumToken.Contract.BalanceOf(&_EthereumToken.CallOpts, _owner)
+func (_AtmosphereToken *AtmosphereTokenCallerSession) BalanceOf(_owner common.Address) (*big.Int, error) {
+	return _AtmosphereToken.Contract.BalanceOf(&_AtmosphereToken.CallOpts, _owner)
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
 // Solidity: function decimals() constant returns(uint8)
-func (_EthereumToken *EthereumTokenCaller) Decimals(opts *bind.CallOpts) (uint8, error) {
+func (_AtmosphereToken *AtmosphereTokenCaller) Decimals(opts *bind.CallOpts) (uint8, error) {
 	var (
 		ret0 = new(uint8)
 	)
 	out := ret0
-	err := _EthereumToken.contract.Call(opts, out, "decimals")
+	err := _AtmosphereToken.contract.Call(opts, out, "decimals")
 	return *ret0, err
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
 // Solidity: function decimals() constant returns(uint8)
-func (_EthereumToken *EthereumTokenSession) Decimals() (uint8, error) {
-	return _EthereumToken.Contract.Decimals(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenSession) Decimals() (uint8, error) {
+	return _AtmosphereToken.Contract.Decimals(&_AtmosphereToken.CallOpts)
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
 // Solidity: function decimals() constant returns(uint8)
-func (_EthereumToken *EthereumTokenCallerSession) Decimals() (uint8, error) {
-	return _EthereumToken.Contract.Decimals(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenCallerSession) Decimals() (uint8, error) {
+	return _AtmosphereToken.Contract.Decimals(&_AtmosphereToken.CallOpts)
 }
 
 // LockinHtlc is a free data retrieval call binding the contract method 0x1e0ef9a4.
 //
 // Solidity: function lockin_htlc( address) constant returns(SecretHash bytes32, Expiration uint256, value uint256)
-func (_EthereumToken *EthereumTokenCaller) LockinHtlc(opts *bind.CallOpts, arg0 common.Address) (struct {
+func (_AtmosphereToken *AtmosphereTokenCaller) LockinHtlc(opts *bind.CallOpts, arg0 common.Address) (struct {
 	SecretHash [32]byte
 	Expiration *big.Int
 	Value      *big.Int
@@ -268,36 +268,36 @@ func (_EthereumToken *EthereumTokenCaller) LockinHtlc(opts *bind.CallOpts, arg0 
 		Value      *big.Int
 	})
 	out := ret
-	err := _EthereumToken.contract.Call(opts, out, "lockin_htlc", arg0)
+	err := _AtmosphereToken.contract.Call(opts, out, "lockin_htlc", arg0)
 	return *ret, err
 }
 
 // LockinHtlc is a free data retrieval call binding the contract method 0x1e0ef9a4.
 //
 // Solidity: function lockin_htlc( address) constant returns(SecretHash bytes32, Expiration uint256, value uint256)
-func (_EthereumToken *EthereumTokenSession) LockinHtlc(arg0 common.Address) (struct {
+func (_AtmosphereToken *AtmosphereTokenSession) LockinHtlc(arg0 common.Address) (struct {
 	SecretHash [32]byte
 	Expiration *big.Int
 	Value      *big.Int
 }, error) {
-	return _EthereumToken.Contract.LockinHtlc(&_EthereumToken.CallOpts, arg0)
+	return _AtmosphereToken.Contract.LockinHtlc(&_AtmosphereToken.CallOpts, arg0)
 }
 
 // LockinHtlc is a free data retrieval call binding the contract method 0x1e0ef9a4.
 //
 // Solidity: function lockin_htlc( address) constant returns(SecretHash bytes32, Expiration uint256, value uint256)
-func (_EthereumToken *EthereumTokenCallerSession) LockinHtlc(arg0 common.Address) (struct {
+func (_AtmosphereToken *AtmosphereTokenCallerSession) LockinHtlc(arg0 common.Address) (struct {
 	SecretHash [32]byte
 	Expiration *big.Int
 	Value      *big.Int
 }, error) {
-	return _EthereumToken.Contract.LockinHtlc(&_EthereumToken.CallOpts, arg0)
+	return _AtmosphereToken.Contract.LockinHtlc(&_AtmosphereToken.CallOpts, arg0)
 }
 
 // LockoutHtlc is a free data retrieval call binding the contract method 0xb8528761.
 //
 // Solidity: function lockout_htlc( address) constant returns(SecretHash bytes32, Expiration uint256, value uint256, Data bytes32)
-func (_EthereumToken *EthereumTokenCaller) LockoutHtlc(opts *bind.CallOpts, arg0 common.Address) (struct {
+func (_AtmosphereToken *AtmosphereTokenCaller) LockoutHtlc(opts *bind.CallOpts, arg0 common.Address) (struct {
 	SecretHash [32]byte
 	Expiration *big.Int
 	Value      *big.Int
@@ -310,90 +310,90 @@ func (_EthereumToken *EthereumTokenCaller) LockoutHtlc(opts *bind.CallOpts, arg0
 		Data       [32]byte
 	})
 	out := ret
-	err := _EthereumToken.contract.Call(opts, out, "lockout_htlc", arg0)
+	err := _AtmosphereToken.contract.Call(opts, out, "lockout_htlc", arg0)
 	return *ret, err
 }
 
 // LockoutHtlc is a free data retrieval call binding the contract method 0xb8528761.
 //
 // Solidity: function lockout_htlc( address) constant returns(SecretHash bytes32, Expiration uint256, value uint256, Data bytes32)
-func (_EthereumToken *EthereumTokenSession) LockoutHtlc(arg0 common.Address) (struct {
+func (_AtmosphereToken *AtmosphereTokenSession) LockoutHtlc(arg0 common.Address) (struct {
 	SecretHash [32]byte
 	Expiration *big.Int
 	Value      *big.Int
 	Data       [32]byte
 }, error) {
-	return _EthereumToken.Contract.LockoutHtlc(&_EthereumToken.CallOpts, arg0)
+	return _AtmosphereToken.Contract.LockoutHtlc(&_AtmosphereToken.CallOpts, arg0)
 }
 
 // LockoutHtlc is a free data retrieval call binding the contract method 0xb8528761.
 //
 // Solidity: function lockout_htlc( address) constant returns(SecretHash bytes32, Expiration uint256, value uint256, Data bytes32)
-func (_EthereumToken *EthereumTokenCallerSession) LockoutHtlc(arg0 common.Address) (struct {
+func (_AtmosphereToken *AtmosphereTokenCallerSession) LockoutHtlc(arg0 common.Address) (struct {
 	SecretHash [32]byte
 	Expiration *big.Int
 	Value      *big.Int
 	Data       [32]byte
 }, error) {
-	return _EthereumToken.Contract.LockoutHtlc(&_EthereumToken.CallOpts, arg0)
+	return _AtmosphereToken.Contract.LockoutHtlc(&_AtmosphereToken.CallOpts, arg0)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() constant returns(string)
-func (_EthereumToken *EthereumTokenCaller) Name(opts *bind.CallOpts) (string, error) {
+func (_AtmosphereToken *AtmosphereTokenCaller) Name(opts *bind.CallOpts) (string, error) {
 	var (
 		ret0 = new(string)
 	)
 	out := ret0
-	err := _EthereumToken.contract.Call(opts, out, "name")
+	err := _AtmosphereToken.contract.Call(opts, out, "name")
 	return *ret0, err
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() constant returns(string)
-func (_EthereumToken *EthereumTokenSession) Name() (string, error) {
-	return _EthereumToken.Contract.Name(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenSession) Name() (string, error) {
+	return _AtmosphereToken.Contract.Name(&_AtmosphereToken.CallOpts)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
 // Solidity: function name() constant returns(string)
-func (_EthereumToken *EthereumTokenCallerSession) Name() (string, error) {
-	return _EthereumToken.Contract.Name(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenCallerSession) Name() (string, error) {
+	return _AtmosphereToken.Contract.Name(&_AtmosphereToken.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
 // Solidity: function owner() constant returns(address)
-func (_EthereumToken *EthereumTokenCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
+func (_AtmosphereToken *AtmosphereTokenCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
 	)
 	out := ret0
-	err := _EthereumToken.contract.Call(opts, out, "owner")
+	err := _AtmosphereToken.contract.Call(opts, out, "owner")
 	return *ret0, err
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
 // Solidity: function owner() constant returns(address)
-func (_EthereumToken *EthereumTokenSession) Owner() (common.Address, error) {
-	return _EthereumToken.Contract.Owner(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenSession) Owner() (common.Address, error) {
+	return _AtmosphereToken.Contract.Owner(&_AtmosphereToken.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
 // Solidity: function owner() constant returns(address)
-func (_EthereumToken *EthereumTokenCallerSession) Owner() (common.Address, error) {
-	return _EthereumToken.Contract.Owner(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenCallerSession) Owner() (common.Address, error) {
+	return _AtmosphereToken.Contract.Owner(&_AtmosphereToken.CallOpts)
 }
 
 // QueryLockin is a free data retrieval call binding the contract method 0x57e1ee59.
 //
 // Solidity: function queryLockin(account address) constant returns(bytes32, uint256, uint256)
-func (_EthereumToken *EthereumTokenCaller) QueryLockin(opts *bind.CallOpts, account common.Address) ([32]byte, *big.Int, *big.Int, error) {
+func (_AtmosphereToken *AtmosphereTokenCaller) QueryLockin(opts *bind.CallOpts, account common.Address) ([32]byte, *big.Int, *big.Int, error) {
 	var (
 		ret0 = new([32]byte)
 		ret1 = new(*big.Int)
@@ -404,28 +404,28 @@ func (_EthereumToken *EthereumTokenCaller) QueryLockin(opts *bind.CallOpts, acco
 		ret1,
 		ret2,
 	}
-	err := _EthereumToken.contract.Call(opts, out, "queryLockin", account)
+	err := _AtmosphereToken.contract.Call(opts, out, "queryLockin", account)
 	return *ret0, *ret1, *ret2, err
 }
 
 // QueryLockin is a free data retrieval call binding the contract method 0x57e1ee59.
 //
 // Solidity: function queryLockin(account address) constant returns(bytes32, uint256, uint256)
-func (_EthereumToken *EthereumTokenSession) QueryLockin(account common.Address) ([32]byte, *big.Int, *big.Int, error) {
-	return _EthereumToken.Contract.QueryLockin(&_EthereumToken.CallOpts, account)
+func (_AtmosphereToken *AtmosphereTokenSession) QueryLockin(account common.Address) ([32]byte, *big.Int, *big.Int, error) {
+	return _AtmosphereToken.Contract.QueryLockin(&_AtmosphereToken.CallOpts, account)
 }
 
 // QueryLockin is a free data retrieval call binding the contract method 0x57e1ee59.
 //
 // Solidity: function queryLockin(account address) constant returns(bytes32, uint256, uint256)
-func (_EthereumToken *EthereumTokenCallerSession) QueryLockin(account common.Address) ([32]byte, *big.Int, *big.Int, error) {
-	return _EthereumToken.Contract.QueryLockin(&_EthereumToken.CallOpts, account)
+func (_AtmosphereToken *AtmosphereTokenCallerSession) QueryLockin(account common.Address) ([32]byte, *big.Int, *big.Int, error) {
+	return _AtmosphereToken.Contract.QueryLockin(&_AtmosphereToken.CallOpts, account)
 }
 
 // QueryLockout is a free data retrieval call binding the contract method 0x8caa80f7.
 //
 // Solidity: function queryLockout(account address) constant returns(bytes32, uint256, uint256, bytes32)
-func (_EthereumToken *EthereumTokenCaller) QueryLockout(opts *bind.CallOpts, account common.Address) ([32]byte, *big.Int, *big.Int, [32]byte, error) {
+func (_AtmosphereToken *AtmosphereTokenCaller) QueryLockout(opts *bind.CallOpts, account common.Address) ([32]byte, *big.Int, *big.Int, [32]byte, error) {
 	var (
 		ret0 = new([32]byte)
 		ret1 = new(*big.Int)
@@ -438,336 +438,310 @@ func (_EthereumToken *EthereumTokenCaller) QueryLockout(opts *bind.CallOpts, acc
 		ret2,
 		ret3,
 	}
-	err := _EthereumToken.contract.Call(opts, out, "queryLockout", account)
+	err := _AtmosphereToken.contract.Call(opts, out, "queryLockout", account)
 	return *ret0, *ret1, *ret2, *ret3, err
 }
 
 // QueryLockout is a free data retrieval call binding the contract method 0x8caa80f7.
 //
 // Solidity: function queryLockout(account address) constant returns(bytes32, uint256, uint256, bytes32)
-func (_EthereumToken *EthereumTokenSession) QueryLockout(account common.Address) ([32]byte, *big.Int, *big.Int, [32]byte, error) {
-	return _EthereumToken.Contract.QueryLockout(&_EthereumToken.CallOpts, account)
+func (_AtmosphereToken *AtmosphereTokenSession) QueryLockout(account common.Address) ([32]byte, *big.Int, *big.Int, [32]byte, error) {
+	return _AtmosphereToken.Contract.QueryLockout(&_AtmosphereToken.CallOpts, account)
 }
 
 // QueryLockout is a free data retrieval call binding the contract method 0x8caa80f7.
 //
 // Solidity: function queryLockout(account address) constant returns(bytes32, uint256, uint256, bytes32)
-func (_EthereumToken *EthereumTokenCallerSession) QueryLockout(account common.Address) ([32]byte, *big.Int, *big.Int, [32]byte, error) {
-	return _EthereumToken.Contract.QueryLockout(&_EthereumToken.CallOpts, account)
-}
-
-// Symbol is a free data retrieval call binding the contract method 0x95d89b41.
-//
-// Solidity: function symbol() constant returns(string)
-func (_EthereumToken *EthereumTokenCaller) Symbol(opts *bind.CallOpts) (string, error) {
-	var (
-		ret0 = new(string)
-	)
-	out := ret0
-	err := _EthereumToken.contract.Call(opts, out, "symbol")
-	return *ret0, err
-}
-
-// Symbol is a free data retrieval call binding the contract method 0x95d89b41.
-//
-// Solidity: function symbol() constant returns(string)
-func (_EthereumToken *EthereumTokenSession) Symbol() (string, error) {
-	return _EthereumToken.Contract.Symbol(&_EthereumToken.CallOpts)
-}
-
-// Symbol is a free data retrieval call binding the contract method 0x95d89b41.
-//
-// Solidity: function symbol() constant returns(string)
-func (_EthereumToken *EthereumTokenCallerSession) Symbol() (string, error) {
-	return _EthereumToken.Contract.Symbol(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenCallerSession) QueryLockout(account common.Address) ([32]byte, *big.Int, *big.Int, [32]byte, error) {
+	return _AtmosphereToken.Contract.QueryLockout(&_AtmosphereToken.CallOpts, account)
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
 // Solidity: function totalSupply() constant returns(uint256)
-func (_EthereumToken *EthereumTokenCaller) TotalSupply(opts *bind.CallOpts) (*big.Int, error) {
+func (_AtmosphereToken *AtmosphereTokenCaller) TotalSupply(opts *bind.CallOpts) (*big.Int, error) {
 	var (
 		ret0 = new(*big.Int)
 	)
 	out := ret0
-	err := _EthereumToken.contract.Call(opts, out, "totalSupply")
+	err := _AtmosphereToken.contract.Call(opts, out, "totalSupply")
 	return *ret0, err
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
 // Solidity: function totalSupply() constant returns(uint256)
-func (_EthereumToken *EthereumTokenSession) TotalSupply() (*big.Int, error) {
-	return _EthereumToken.Contract.TotalSupply(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenSession) TotalSupply() (*big.Int, error) {
+	return _AtmosphereToken.Contract.TotalSupply(&_AtmosphereToken.CallOpts)
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
 // Solidity: function totalSupply() constant returns(uint256)
-func (_EthereumToken *EthereumTokenCallerSession) TotalSupply() (*big.Int, error) {
-	return _EthereumToken.Contract.TotalSupply(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenCallerSession) TotalSupply() (*big.Int, error) {
+	return _AtmosphereToken.Contract.TotalSupply(&_AtmosphereToken.CallOpts)
 }
 
 // Version is a free data retrieval call binding the contract method 0x54fd4d50.
 //
 // Solidity: function version() constant returns(string)
-func (_EthereumToken *EthereumTokenCaller) Version(opts *bind.CallOpts) (string, error) {
+func (_AtmosphereToken *AtmosphereTokenCaller) Version(opts *bind.CallOpts) (string, error) {
 	var (
 		ret0 = new(string)
 	)
 	out := ret0
-	err := _EthereumToken.contract.Call(opts, out, "version")
+	err := _AtmosphereToken.contract.Call(opts, out, "version")
 	return *ret0, err
 }
 
 // Version is a free data retrieval call binding the contract method 0x54fd4d50.
 //
 // Solidity: function version() constant returns(string)
-func (_EthereumToken *EthereumTokenSession) Version() (string, error) {
-	return _EthereumToken.Contract.Version(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenSession) Version() (string, error) {
+	return _AtmosphereToken.Contract.Version(&_AtmosphereToken.CallOpts)
 }
 
 // Version is a free data retrieval call binding the contract method 0x54fd4d50.
 //
 // Solidity: function version() constant returns(string)
-func (_EthereumToken *EthereumTokenCallerSession) Version() (string, error) {
-	return _EthereumToken.Contract.Version(&_EthereumToken.CallOpts)
+func (_AtmosphereToken *AtmosphereTokenCallerSession) Version() (string, error) {
+	return _AtmosphereToken.Contract.Version(&_AtmosphereToken.CallOpts)
 }
 
 // AcceptOwnership is a paid mutator transaction binding the contract method 0x79ba5097.
 //
 // Solidity: function acceptOwnership() returns()
-func (_EthereumToken *EthereumTokenTransactor) AcceptOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "acceptOwnership")
+func (_AtmosphereToken *AtmosphereTokenTransactor) AcceptOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "acceptOwnership")
 }
 
 // AcceptOwnership is a paid mutator transaction binding the contract method 0x79ba5097.
 //
 // Solidity: function acceptOwnership() returns()
-func (_EthereumToken *EthereumTokenSession) AcceptOwnership() (*types.Transaction, error) {
-	return _EthereumToken.Contract.AcceptOwnership(&_EthereumToken.TransactOpts)
+func (_AtmosphereToken *AtmosphereTokenSession) AcceptOwnership() (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.AcceptOwnership(&_AtmosphereToken.TransactOpts)
 }
 
 // AcceptOwnership is a paid mutator transaction binding the contract method 0x79ba5097.
 //
 // Solidity: function acceptOwnership() returns()
-func (_EthereumToken *EthereumTokenTransactorSession) AcceptOwnership() (*types.Transaction, error) {
-	return _EthereumToken.Contract.AcceptOwnership(&_EthereumToken.TransactOpts)
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) AcceptOwnership() (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.AcceptOwnership(&_AtmosphereToken.TransactOpts)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
 // Solidity: function approve(_spender address, _value uint256) returns(success bool)
-func (_EthereumToken *EthereumTokenTransactor) Approve(opts *bind.TransactOpts, _spender common.Address, _value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "approve", _spender, _value)
+func (_AtmosphereToken *AtmosphereTokenTransactor) Approve(opts *bind.TransactOpts, _spender common.Address, _value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "approve", _spender, _value)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
 // Solidity: function approve(_spender address, _value uint256) returns(success bool)
-func (_EthereumToken *EthereumTokenSession) Approve(_spender common.Address, _value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.Contract.Approve(&_EthereumToken.TransactOpts, _spender, _value)
+func (_AtmosphereToken *AtmosphereTokenSession) Approve(_spender common.Address, _value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.Approve(&_AtmosphereToken.TransactOpts, _spender, _value)
 }
 
 // Approve is a paid mutator transaction binding the contract method 0x095ea7b3.
 //
 // Solidity: function approve(_spender address, _value uint256) returns(success bool)
-func (_EthereumToken *EthereumTokenTransactorSession) Approve(_spender common.Address, _value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.Contract.Approve(&_EthereumToken.TransactOpts, _spender, _value)
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) Approve(_spender common.Address, _value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.Approve(&_AtmosphereToken.TransactOpts, _spender, _value)
+}
+
+// CancelLockOut is a paid mutator transaction binding the contract method 0x93bd8121.
+//
+// Solidity: function cancelLockOut(account address) returns()
+func (_AtmosphereToken *AtmosphereTokenTransactor) CancelLockOut(opts *bind.TransactOpts, account common.Address) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "cancelLockOut", account)
+}
+
+// CancelLockOut is a paid mutator transaction binding the contract method 0x93bd8121.
+//
+// Solidity: function cancelLockOut(account address) returns()
+func (_AtmosphereToken *AtmosphereTokenSession) CancelLockOut(account common.Address) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.CancelLockOut(&_AtmosphereToken.TransactOpts, account)
+}
+
+// CancelLockOut is a paid mutator transaction binding the contract method 0x93bd8121.
+//
+// Solidity: function cancelLockOut(account address) returns()
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) CancelLockOut(account common.Address) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.CancelLockOut(&_AtmosphereToken.TransactOpts, account)
 }
 
 // CancelLockin is a paid mutator transaction binding the contract method 0x76188aa5.
 //
 // Solidity: function cancelLockin(account address) returns()
-func (_EthereumToken *EthereumTokenTransactor) CancelLockin(opts *bind.TransactOpts, account common.Address) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "cancelLockin", account)
+func (_AtmosphereToken *AtmosphereTokenTransactor) CancelLockin(opts *bind.TransactOpts, account common.Address) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "cancelLockin", account)
 }
 
 // CancelLockin is a paid mutator transaction binding the contract method 0x76188aa5.
 //
 // Solidity: function cancelLockin(account address) returns()
-func (_EthereumToken *EthereumTokenSession) CancelLockin(account common.Address) (*types.Transaction, error) {
-	return _EthereumToken.Contract.CancelLockin(&_EthereumToken.TransactOpts, account)
+func (_AtmosphereToken *AtmosphereTokenSession) CancelLockin(account common.Address) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.CancelLockin(&_AtmosphereToken.TransactOpts, account)
 }
 
 // CancelLockin is a paid mutator transaction binding the contract method 0x76188aa5.
 //
 // Solidity: function cancelLockin(account address) returns()
-func (_EthereumToken *EthereumTokenTransactorSession) CancelLockin(account common.Address) (*types.Transaction, error) {
-	return _EthereumToken.Contract.CancelLockin(&_EthereumToken.TransactOpts, account)
-}
-
-// CancleLockOut is a paid mutator transaction binding the contract method 0x43ba603e.
-//
-// Solidity: function cancleLockOut() returns()
-func (_EthereumToken *EthereumTokenTransactor) CancleLockOut(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "cancleLockOut")
-}
-
-// CancleLockOut is a paid mutator transaction binding the contract method 0x43ba603e.
-//
-// Solidity: function cancleLockOut() returns()
-func (_EthereumToken *EthereumTokenSession) CancleLockOut() (*types.Transaction, error) {
-	return _EthereumToken.Contract.CancleLockOut(&_EthereumToken.TransactOpts)
-}
-
-// CancleLockOut is a paid mutator transaction binding the contract method 0x43ba603e.
-//
-// Solidity: function cancleLockOut() returns()
-func (_EthereumToken *EthereumTokenTransactorSession) CancleLockOut() (*types.Transaction, error) {
-	return _EthereumToken.Contract.CancleLockOut(&_EthereumToken.TransactOpts)
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) CancelLockin(account common.Address) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.CancelLockin(&_AtmosphereToken.TransactOpts, account)
 }
 
 // ChangeOwner is a paid mutator transaction binding the contract method 0xa6f9dae1.
 //
 // Solidity: function changeOwner(_newOwner address) returns()
-func (_EthereumToken *EthereumTokenTransactor) ChangeOwner(opts *bind.TransactOpts, _newOwner common.Address) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "changeOwner", _newOwner)
+func (_AtmosphereToken *AtmosphereTokenTransactor) ChangeOwner(opts *bind.TransactOpts, _newOwner common.Address) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "changeOwner", _newOwner)
 }
 
 // ChangeOwner is a paid mutator transaction binding the contract method 0xa6f9dae1.
 //
 // Solidity: function changeOwner(_newOwner address) returns()
-func (_EthereumToken *EthereumTokenSession) ChangeOwner(_newOwner common.Address) (*types.Transaction, error) {
-	return _EthereumToken.Contract.ChangeOwner(&_EthereumToken.TransactOpts, _newOwner)
+func (_AtmosphereToken *AtmosphereTokenSession) ChangeOwner(_newOwner common.Address) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.ChangeOwner(&_AtmosphereToken.TransactOpts, _newOwner)
 }
 
 // ChangeOwner is a paid mutator transaction binding the contract method 0xa6f9dae1.
 //
 // Solidity: function changeOwner(_newOwner address) returns()
-func (_EthereumToken *EthereumTokenTransactorSession) ChangeOwner(_newOwner common.Address) (*types.Transaction, error) {
-	return _EthereumToken.Contract.ChangeOwner(&_EthereumToken.TransactOpts, _newOwner)
-}
-
-// LockedOut is a paid mutator transaction binding the contract method 0x84540a28.
-//
-// Solidity: function lockedOut(from address, secret bytes32) returns()
-func (_EthereumToken *EthereumTokenTransactor) LockedOut(opts *bind.TransactOpts, from common.Address, secret [32]byte) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "lockedOut", from, secret)
-}
-
-// LockedOut is a paid mutator transaction binding the contract method 0x84540a28.
-//
-// Solidity: function lockedOut(from address, secret bytes32) returns()
-func (_EthereumToken *EthereumTokenSession) LockedOut(from common.Address, secret [32]byte) (*types.Transaction, error) {
-	return _EthereumToken.Contract.LockedOut(&_EthereumToken.TransactOpts, from, secret)
-}
-
-// LockedOut is a paid mutator transaction binding the contract method 0x84540a28.
-//
-// Solidity: function lockedOut(from address, secret bytes32) returns()
-func (_EthereumToken *EthereumTokenTransactorSession) LockedOut(from common.Address, secret [32]byte) (*types.Transaction, error) {
-	return _EthereumToken.Contract.LockedOut(&_EthereumToken.TransactOpts, from, secret)
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) ChangeOwner(_newOwner common.Address) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.ChangeOwner(&_AtmosphereToken.TransactOpts, _newOwner)
 }
 
 // Lockin is a paid mutator transaction binding the contract method 0x7fd408d2.
 //
 // Solidity: function lockin(account address, secret bytes32) returns()
-func (_EthereumToken *EthereumTokenTransactor) Lockin(opts *bind.TransactOpts, account common.Address, secret [32]byte) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "lockin", account, secret)
+func (_AtmosphereToken *AtmosphereTokenTransactor) Lockin(opts *bind.TransactOpts, account common.Address, secret [32]byte) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "lockin", account, secret)
 }
 
 // Lockin is a paid mutator transaction binding the contract method 0x7fd408d2.
 //
 // Solidity: function lockin(account address, secret bytes32) returns()
-func (_EthereumToken *EthereumTokenSession) Lockin(account common.Address, secret [32]byte) (*types.Transaction, error) {
-	return _EthereumToken.Contract.Lockin(&_EthereumToken.TransactOpts, account, secret)
+func (_AtmosphereToken *AtmosphereTokenSession) Lockin(account common.Address, secret [32]byte) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.Lockin(&_AtmosphereToken.TransactOpts, account, secret)
 }
 
 // Lockin is a paid mutator transaction binding the contract method 0x7fd408d2.
 //
 // Solidity: function lockin(account address, secret bytes32) returns()
-func (_EthereumToken *EthereumTokenTransactorSession) Lockin(account common.Address, secret [32]byte) (*types.Transaction, error) {
-	return _EthereumToken.Contract.Lockin(&_EthereumToken.TransactOpts, account, secret)
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) Lockin(account common.Address, secret [32]byte) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.Lockin(&_AtmosphereToken.TransactOpts, account, secret)
 }
 
-// PrePareLockedOut is a paid mutator transaction binding the contract method 0x065edecb.
+// Lockout is a paid mutator transaction binding the contract method 0x043d9180.
 //
-// Solidity: function prePareLockedOut(secret_hash bytes32, expiration uint256, value uint256, data bytes32) returns()
-func (_EthereumToken *EthereumTokenTransactor) PrePareLockedOut(opts *bind.TransactOpts, secret_hash [32]byte, expiration *big.Int, value *big.Int, data [32]byte) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "prePareLockedOut", secret_hash, expiration, value, data)
+// Solidity: function lockout(from address, secret bytes32) returns()
+func (_AtmosphereToken *AtmosphereTokenTransactor) Lockout(opts *bind.TransactOpts, from common.Address, secret [32]byte) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "lockout", from, secret)
 }
 
-// PrePareLockedOut is a paid mutator transaction binding the contract method 0x065edecb.
+// Lockout is a paid mutator transaction binding the contract method 0x043d9180.
 //
-// Solidity: function prePareLockedOut(secret_hash bytes32, expiration uint256, value uint256, data bytes32) returns()
-func (_EthereumToken *EthereumTokenSession) PrePareLockedOut(secret_hash [32]byte, expiration *big.Int, value *big.Int, data [32]byte) (*types.Transaction, error) {
-	return _EthereumToken.Contract.PrePareLockedOut(&_EthereumToken.TransactOpts, secret_hash, expiration, value, data)
+// Solidity: function lockout(from address, secret bytes32) returns()
+func (_AtmosphereToken *AtmosphereTokenSession) Lockout(from common.Address, secret [32]byte) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.Lockout(&_AtmosphereToken.TransactOpts, from, secret)
 }
 
-// PrePareLockedOut is a paid mutator transaction binding the contract method 0x065edecb.
+// Lockout is a paid mutator transaction binding the contract method 0x043d9180.
 //
-// Solidity: function prePareLockedOut(secret_hash bytes32, expiration uint256, value uint256, data bytes32) returns()
-func (_EthereumToken *EthereumTokenTransactorSession) PrePareLockedOut(secret_hash [32]byte, expiration *big.Int, value *big.Int, data [32]byte) (*types.Transaction, error) {
-	return _EthereumToken.Contract.PrePareLockedOut(&_EthereumToken.TransactOpts, secret_hash, expiration, value, data)
+// Solidity: function lockout(from address, secret bytes32) returns()
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) Lockout(from common.Address, secret [32]byte) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.Lockout(&_AtmosphereToken.TransactOpts, from, secret)
 }
 
 // PrepareLockin is a paid mutator transaction binding the contract method 0x9a716549.
 //
 // Solidity: function prepareLockin(account address, secret_hash bytes32, expiration uint256, value uint256) returns()
-func (_EthereumToken *EthereumTokenTransactor) PrepareLockin(opts *bind.TransactOpts, account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "prepareLockin", account, secret_hash, expiration, value)
+func (_AtmosphereToken *AtmosphereTokenTransactor) PrepareLockin(opts *bind.TransactOpts, account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "prepareLockin", account, secret_hash, expiration, value)
 }
 
 // PrepareLockin is a paid mutator transaction binding the contract method 0x9a716549.
 //
 // Solidity: function prepareLockin(account address, secret_hash bytes32, expiration uint256, value uint256) returns()
-func (_EthereumToken *EthereumTokenSession) PrepareLockin(account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.Contract.PrepareLockin(&_EthereumToken.TransactOpts, account, secret_hash, expiration, value)
+func (_AtmosphereToken *AtmosphereTokenSession) PrepareLockin(account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.PrepareLockin(&_AtmosphereToken.TransactOpts, account, secret_hash, expiration, value)
 }
 
 // PrepareLockin is a paid mutator transaction binding the contract method 0x9a716549.
 //
 // Solidity: function prepareLockin(account address, secret_hash bytes32, expiration uint256, value uint256) returns()
-func (_EthereumToken *EthereumTokenTransactorSession) PrepareLockin(account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.Contract.PrepareLockin(&_EthereumToken.TransactOpts, account, secret_hash, expiration, value)
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) PrepareLockin(account common.Address, secret_hash [32]byte, expiration *big.Int, value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.PrepareLockin(&_AtmosphereToken.TransactOpts, account, secret_hash, expiration, value)
+}
+
+// PrepareLockout is a paid mutator transaction binding the contract method 0x90d45d4d.
+//
+// Solidity: function prepareLockout(secret_hash bytes32, expiration uint256, value uint256, data bytes32) returns()
+func (_AtmosphereToken *AtmosphereTokenTransactor) PrepareLockout(opts *bind.TransactOpts, secret_hash [32]byte, expiration *big.Int, value *big.Int, data [32]byte) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "prepareLockout", secret_hash, expiration, value, data)
+}
+
+// PrepareLockout is a paid mutator transaction binding the contract method 0x90d45d4d.
+//
+// Solidity: function prepareLockout(secret_hash bytes32, expiration uint256, value uint256, data bytes32) returns()
+func (_AtmosphereToken *AtmosphereTokenSession) PrepareLockout(secret_hash [32]byte, expiration *big.Int, value *big.Int, data [32]byte) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.PrepareLockout(&_AtmosphereToken.TransactOpts, secret_hash, expiration, value, data)
+}
+
+// PrepareLockout is a paid mutator transaction binding the contract method 0x90d45d4d.
+//
+// Solidity: function prepareLockout(secret_hash bytes32, expiration uint256, value uint256, data bytes32) returns()
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) PrepareLockout(secret_hash [32]byte, expiration *big.Int, value *big.Int, data [32]byte) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.PrepareLockout(&_AtmosphereToken.TransactOpts, secret_hash, expiration, value, data)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
 // Solidity: function transfer(_to address, _value uint256) returns(success bool)
-func (_EthereumToken *EthereumTokenTransactor) Transfer(opts *bind.TransactOpts, _to common.Address, _value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "transfer", _to, _value)
+func (_AtmosphereToken *AtmosphereTokenTransactor) Transfer(opts *bind.TransactOpts, _to common.Address, _value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "transfer", _to, _value)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
 // Solidity: function transfer(_to address, _value uint256) returns(success bool)
-func (_EthereumToken *EthereumTokenSession) Transfer(_to common.Address, _value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.Contract.Transfer(&_EthereumToken.TransactOpts, _to, _value)
+func (_AtmosphereToken *AtmosphereTokenSession) Transfer(_to common.Address, _value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.Transfer(&_AtmosphereToken.TransactOpts, _to, _value)
 }
 
 // Transfer is a paid mutator transaction binding the contract method 0xa9059cbb.
 //
 // Solidity: function transfer(_to address, _value uint256) returns(success bool)
-func (_EthereumToken *EthereumTokenTransactorSession) Transfer(_to common.Address, _value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.Contract.Transfer(&_EthereumToken.TransactOpts, _to, _value)
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) Transfer(_to common.Address, _value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.Transfer(&_AtmosphereToken.TransactOpts, _to, _value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
 // Solidity: function transferFrom(_from address, _to address, _value uint256) returns(success bool)
-func (_EthereumToken *EthereumTokenTransactor) TransferFrom(opts *bind.TransactOpts, _from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.contract.Transact(opts, "transferFrom", _from, _to, _value)
+func (_AtmosphereToken *AtmosphereTokenTransactor) TransferFrom(opts *bind.TransactOpts, _from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.contract.Transact(opts, "transferFrom", _from, _to, _value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
 // Solidity: function transferFrom(_from address, _to address, _value uint256) returns(success bool)
-func (_EthereumToken *EthereumTokenSession) TransferFrom(_from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.Contract.TransferFrom(&_EthereumToken.TransactOpts, _from, _to, _value)
+func (_AtmosphereToken *AtmosphereTokenSession) TransferFrom(_from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.TransferFrom(&_AtmosphereToken.TransactOpts, _from, _to, _value)
 }
 
 // TransferFrom is a paid mutator transaction binding the contract method 0x23b872dd.
 //
 // Solidity: function transferFrom(_from address, _to address, _value uint256) returns(success bool)
-func (_EthereumToken *EthereumTokenTransactorSession) TransferFrom(_from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
-	return _EthereumToken.Contract.TransferFrom(&_EthereumToken.TransactOpts, _from, _to, _value)
+func (_AtmosphereToken *AtmosphereTokenTransactorSession) TransferFrom(_from common.Address, _to common.Address, _value *big.Int) (*types.Transaction, error) {
+	return _AtmosphereToken.Contract.TransferFrom(&_AtmosphereToken.TransactOpts, _from, _to, _value)
 }
 
-// EthereumTokenApprovalIterator is returned from FilterApproval and is used to iterate over the raw logs and unpacked data for Approval events raised by the EthereumToken contract.
-type EthereumTokenApprovalIterator struct {
-	Event *EthereumTokenApproval // Event containing the contract specifics and raw log
+// AtmosphereTokenApprovalIterator is returned from FilterApproval and is used to iterate over the raw logs and unpacked data for Approval events raised by the AtmosphereToken contract.
+type AtmosphereTokenApprovalIterator struct {
+	Event *AtmosphereTokenApproval // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -781,7 +755,7 @@ type EthereumTokenApprovalIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *EthereumTokenApprovalIterator) Next() bool {
+func (it *AtmosphereTokenApprovalIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -790,7 +764,7 @@ func (it *EthereumTokenApprovalIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(EthereumTokenApproval)
+			it.Event = new(AtmosphereTokenApproval)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -805,7 +779,7 @@ func (it *EthereumTokenApprovalIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(EthereumTokenApproval)
+		it.Event = new(AtmosphereTokenApproval)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -821,19 +795,19 @@ func (it *EthereumTokenApprovalIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *EthereumTokenApprovalIterator) Error() error {
+func (it *AtmosphereTokenApprovalIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *EthereumTokenApprovalIterator) Close() error {
+func (it *AtmosphereTokenApprovalIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// EthereumTokenApproval represents a Approval event raised by the EthereumToken contract.
-type EthereumTokenApproval struct {
+// AtmosphereTokenApproval represents a Approval event raised by the AtmosphereToken contract.
+type AtmosphereTokenApproval struct {
 	Owner   common.Address
 	Spender common.Address
 	Value   *big.Int
@@ -843,7 +817,7 @@ type EthereumTokenApproval struct {
 // FilterApproval is a free log retrieval operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
 // Solidity: e Approval(_owner indexed address, _spender indexed address, _value uint256)
-func (_EthereumToken *EthereumTokenFilterer) FilterApproval(opts *bind.FilterOpts, _owner []common.Address, _spender []common.Address) (*EthereumTokenApprovalIterator, error) {
+func (_AtmosphereToken *AtmosphereTokenFilterer) FilterApproval(opts *bind.FilterOpts, _owner []common.Address, _spender []common.Address) (*AtmosphereTokenApprovalIterator, error) {
 
 	var _ownerRule []interface{}
 	for _, _ownerItem := range _owner {
@@ -854,17 +828,17 @@ func (_EthereumToken *EthereumTokenFilterer) FilterApproval(opts *bind.FilterOpt
 		_spenderRule = append(_spenderRule, _spenderItem)
 	}
 
-	logs, sub, err := _EthereumToken.contract.FilterLogs(opts, "Approval", _ownerRule, _spenderRule)
+	logs, sub, err := _AtmosphereToken.contract.FilterLogs(opts, "Approval", _ownerRule, _spenderRule)
 	if err != nil {
 		return nil, err
 	}
-	return &EthereumTokenApprovalIterator{contract: _EthereumToken.contract, event: "Approval", logs: logs, sub: sub}, nil
+	return &AtmosphereTokenApprovalIterator{contract: _AtmosphereToken.contract, event: "Approval", logs: logs, sub: sub}, nil
 }
 
 // WatchApproval is a free log subscription operation binding the contract event 0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925.
 //
 // Solidity: e Approval(_owner indexed address, _spender indexed address, _value uint256)
-func (_EthereumToken *EthereumTokenFilterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *EthereumTokenApproval, _owner []common.Address, _spender []common.Address) (event.Subscription, error) {
+func (_AtmosphereToken *AtmosphereTokenFilterer) WatchApproval(opts *bind.WatchOpts, sink chan<- *AtmosphereTokenApproval, _owner []common.Address, _spender []common.Address) (event.Subscription, error) {
 
 	var _ownerRule []interface{}
 	for _, _ownerItem := range _owner {
@@ -875,7 +849,7 @@ func (_EthereumToken *EthereumTokenFilterer) WatchApproval(opts *bind.WatchOpts,
 		_spenderRule = append(_spenderRule, _spenderItem)
 	}
 
-	logs, sub, err := _EthereumToken.contract.WatchLogs(opts, "Approval", _ownerRule, _spenderRule)
+	logs, sub, err := _AtmosphereToken.contract.WatchLogs(opts, "Approval", _ownerRule, _spenderRule)
 	if err != nil {
 		return nil, err
 	}
@@ -885,8 +859,8 @@ func (_EthereumToken *EthereumTokenFilterer) WatchApproval(opts *bind.WatchOpts,
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(EthereumTokenApproval)
-				if err := _EthereumToken.contract.UnpackLog(event, "Approval", log); err != nil {
+				event := new(AtmosphereTokenApproval)
+				if err := _AtmosphereToken.contract.UnpackLog(event, "Approval", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -907,9 +881,9 @@ func (_EthereumToken *EthereumTokenFilterer) WatchApproval(opts *bind.WatchOpts,
 	}), nil
 }
 
-// EthereumTokenLockinSecretIterator is returned from FilterLockinSecret and is used to iterate over the raw logs and unpacked data for LockinSecret events raised by the EthereumToken contract.
-type EthereumTokenLockinSecretIterator struct {
-	Event *EthereumTokenLockinSecret // Event containing the contract specifics and raw log
+// AtmosphereTokenCancelLockinIterator is returned from FilterCancelLockin and is used to iterate over the raw logs and unpacked data for CancelLockin events raised by the AtmosphereToken contract.
+type AtmosphereTokenCancelLockinIterator struct {
+	Event *AtmosphereTokenCancelLockin // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -923,7 +897,7 @@ type EthereumTokenLockinSecretIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *EthereumTokenLockinSecretIterator) Next() bool {
+func (it *AtmosphereTokenCancelLockinIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -932,7 +906,7 @@ func (it *EthereumTokenLockinSecretIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(EthereumTokenLockinSecret)
+			it.Event = new(AtmosphereTokenCancelLockin)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -947,7 +921,7 @@ func (it *EthereumTokenLockinSecretIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(EthereumTokenLockinSecret)
+		it.Event = new(AtmosphereTokenCancelLockin)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -963,19 +937,263 @@ func (it *EthereumTokenLockinSecretIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *EthereumTokenLockinSecretIterator) Error() error {
+func (it *AtmosphereTokenCancelLockinIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *EthereumTokenLockinSecretIterator) Close() error {
+func (it *AtmosphereTokenCancelLockinIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// EthereumTokenLockinSecret represents a LockinSecret event raised by the EthereumToken contract.
-type EthereumTokenLockinSecret struct {
+// AtmosphereTokenCancelLockin represents a CancelLockin event raised by the AtmosphereToken contract.
+type AtmosphereTokenCancelLockin struct {
+	Account common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterCancelLockin is a free log retrieval operation binding the contract event 0x1049e4593ee9996b154e5cdebecd383a1252c7b08e01f83df030fec3680adef3.
+//
+// Solidity: e CancelLockin(account address)
+func (_AtmosphereToken *AtmosphereTokenFilterer) FilterCancelLockin(opts *bind.FilterOpts) (*AtmosphereTokenCancelLockinIterator, error) {
+
+	logs, sub, err := _AtmosphereToken.contract.FilterLogs(opts, "CancelLockin")
+	if err != nil {
+		return nil, err
+	}
+	return &AtmosphereTokenCancelLockinIterator{contract: _AtmosphereToken.contract, event: "CancelLockin", logs: logs, sub: sub}, nil
+}
+
+// WatchCancelLockin is a free log subscription operation binding the contract event 0x1049e4593ee9996b154e5cdebecd383a1252c7b08e01f83df030fec3680adef3.
+//
+// Solidity: e CancelLockin(account address)
+func (_AtmosphereToken *AtmosphereTokenFilterer) WatchCancelLockin(opts *bind.WatchOpts, sink chan<- *AtmosphereTokenCancelLockin) (event.Subscription, error) {
+
+	logs, sub, err := _AtmosphereToken.contract.WatchLogs(opts, "CancelLockin")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AtmosphereTokenCancelLockin)
+				if err := _AtmosphereToken.contract.UnpackLog(event, "CancelLockin", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// AtmosphereTokenCancelLockoutIterator is returned from FilterCancelLockout and is used to iterate over the raw logs and unpacked data for CancelLockout events raised by the AtmosphereToken contract.
+type AtmosphereTokenCancelLockoutIterator struct {
+	Event *AtmosphereTokenCancelLockout // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AtmosphereTokenCancelLockoutIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AtmosphereTokenCancelLockout)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AtmosphereTokenCancelLockout)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AtmosphereTokenCancelLockoutIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AtmosphereTokenCancelLockoutIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AtmosphereTokenCancelLockout represents a CancelLockout event raised by the AtmosphereToken contract.
+type AtmosphereTokenCancelLockout struct {
+	Account common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterCancelLockout is a free log retrieval operation binding the contract event 0x4a985ac51f12559bf2627d79a647c493393d8d4e59e14137cfef6b61559053d0.
+//
+// Solidity: e CancelLockout(account address)
+func (_AtmosphereToken *AtmosphereTokenFilterer) FilterCancelLockout(opts *bind.FilterOpts) (*AtmosphereTokenCancelLockoutIterator, error) {
+
+	logs, sub, err := _AtmosphereToken.contract.FilterLogs(opts, "CancelLockout")
+	if err != nil {
+		return nil, err
+	}
+	return &AtmosphereTokenCancelLockoutIterator{contract: _AtmosphereToken.contract, event: "CancelLockout", logs: logs, sub: sub}, nil
+}
+
+// WatchCancelLockout is a free log subscription operation binding the contract event 0x4a985ac51f12559bf2627d79a647c493393d8d4e59e14137cfef6b61559053d0.
+//
+// Solidity: e CancelLockout(account address)
+func (_AtmosphereToken *AtmosphereTokenFilterer) WatchCancelLockout(opts *bind.WatchOpts, sink chan<- *AtmosphereTokenCancelLockout) (event.Subscription, error) {
+
+	logs, sub, err := _AtmosphereToken.contract.WatchLogs(opts, "CancelLockout")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AtmosphereTokenCancelLockout)
+				if err := _AtmosphereToken.contract.UnpackLog(event, "CancelLockout", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// AtmosphereTokenLockinSecretIterator is returned from FilterLockinSecret and is used to iterate over the raw logs and unpacked data for LockinSecret events raised by the AtmosphereToken contract.
+type AtmosphereTokenLockinSecretIterator struct {
+	Event *AtmosphereTokenLockinSecret // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AtmosphereTokenLockinSecretIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AtmosphereTokenLockinSecret)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AtmosphereTokenLockinSecret)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AtmosphereTokenLockinSecretIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AtmosphereTokenLockinSecretIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AtmosphereTokenLockinSecret represents a LockinSecret event raised by the AtmosphereToken contract.
+type AtmosphereTokenLockinSecret struct {
 	Secret [32]byte
 	Raw    types.Log // Blockchain specific contextual infos
 }
@@ -983,21 +1201,21 @@ type EthereumTokenLockinSecret struct {
 // FilterLockinSecret is a free log retrieval operation binding the contract event 0x284a65d036cbbc9dd3c8f871862236ea013cdbf2d086ae0031b86fb27a97c12c.
 //
 // Solidity: e LockinSecret(secret bytes32)
-func (_EthereumToken *EthereumTokenFilterer) FilterLockinSecret(opts *bind.FilterOpts) (*EthereumTokenLockinSecretIterator, error) {
+func (_AtmosphereToken *AtmosphereTokenFilterer) FilterLockinSecret(opts *bind.FilterOpts) (*AtmosphereTokenLockinSecretIterator, error) {
 
-	logs, sub, err := _EthereumToken.contract.FilterLogs(opts, "LockinSecret")
+	logs, sub, err := _AtmosphereToken.contract.FilterLogs(opts, "LockinSecret")
 	if err != nil {
 		return nil, err
 	}
-	return &EthereumTokenLockinSecretIterator{contract: _EthereumToken.contract, event: "LockinSecret", logs: logs, sub: sub}, nil
+	return &AtmosphereTokenLockinSecretIterator{contract: _AtmosphereToken.contract, event: "LockinSecret", logs: logs, sub: sub}, nil
 }
 
 // WatchLockinSecret is a free log subscription operation binding the contract event 0x284a65d036cbbc9dd3c8f871862236ea013cdbf2d086ae0031b86fb27a97c12c.
 //
 // Solidity: e LockinSecret(secret bytes32)
-func (_EthereumToken *EthereumTokenFilterer) WatchLockinSecret(opts *bind.WatchOpts, sink chan<- *EthereumTokenLockinSecret) (event.Subscription, error) {
+func (_AtmosphereToken *AtmosphereTokenFilterer) WatchLockinSecret(opts *bind.WatchOpts, sink chan<- *AtmosphereTokenLockinSecret) (event.Subscription, error) {
 
-	logs, sub, err := _EthereumToken.contract.WatchLogs(opts, "LockinSecret")
+	logs, sub, err := _AtmosphereToken.contract.WatchLogs(opts, "LockinSecret")
 	if err != nil {
 		return nil, err
 	}
@@ -1007,8 +1225,8 @@ func (_EthereumToken *EthereumTokenFilterer) WatchLockinSecret(opts *bind.WatchO
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(EthereumTokenLockinSecret)
-				if err := _EthereumToken.contract.UnpackLog(event, "LockinSecret", log); err != nil {
+				event := new(AtmosphereTokenLockinSecret)
+				if err := _AtmosphereToken.contract.UnpackLog(event, "LockinSecret", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1029,9 +1247,9 @@ func (_EthereumToken *EthereumTokenFilterer) WatchLockinSecret(opts *bind.WatchO
 	}), nil
 }
 
-// EthereumTokenOwnerUpdateIterator is returned from FilterOwnerUpdate and is used to iterate over the raw logs and unpacked data for OwnerUpdate events raised by the EthereumToken contract.
-type EthereumTokenOwnerUpdateIterator struct {
-	Event *EthereumTokenOwnerUpdate // Event containing the contract specifics and raw log
+// AtmosphereTokenLockoutIterator is returned from FilterLockout and is used to iterate over the raw logs and unpacked data for Lockout events raised by the AtmosphereToken contract.
+type AtmosphereTokenLockoutIterator struct {
+	Event *AtmosphereTokenLockout // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1045,7 +1263,7 @@ type EthereumTokenOwnerUpdateIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *EthereumTokenOwnerUpdateIterator) Next() bool {
+func (it *AtmosphereTokenLockoutIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1054,7 +1272,7 @@ func (it *EthereumTokenOwnerUpdateIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(EthereumTokenOwnerUpdate)
+			it.Event = new(AtmosphereTokenLockout)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1069,7 +1287,7 @@ func (it *EthereumTokenOwnerUpdateIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(EthereumTokenOwnerUpdate)
+		it.Event = new(AtmosphereTokenLockout)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1085,19 +1303,141 @@ func (it *EthereumTokenOwnerUpdateIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *EthereumTokenOwnerUpdateIterator) Error() error {
+func (it *AtmosphereTokenLockoutIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *EthereumTokenOwnerUpdateIterator) Close() error {
+func (it *AtmosphereTokenLockoutIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// EthereumTokenOwnerUpdate represents a OwnerUpdate event raised by the EthereumToken contract.
-type EthereumTokenOwnerUpdate struct {
+// AtmosphereTokenLockout represents a Lockout event raised by the AtmosphereToken contract.
+type AtmosphereTokenLockout struct {
+	Account common.Address
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterLockout is a free log retrieval operation binding the contract event 0x898300cae06386d3e505e7e9a5b482dd3bfd677d3e14af1448e4f9304d82e8f3.
+//
+// Solidity: e Lockout(account address)
+func (_AtmosphereToken *AtmosphereTokenFilterer) FilterLockout(opts *bind.FilterOpts) (*AtmosphereTokenLockoutIterator, error) {
+
+	logs, sub, err := _AtmosphereToken.contract.FilterLogs(opts, "Lockout")
+	if err != nil {
+		return nil, err
+	}
+	return &AtmosphereTokenLockoutIterator{contract: _AtmosphereToken.contract, event: "Lockout", logs: logs, sub: sub}, nil
+}
+
+// WatchLockout is a free log subscription operation binding the contract event 0x898300cae06386d3e505e7e9a5b482dd3bfd677d3e14af1448e4f9304d82e8f3.
+//
+// Solidity: e Lockout(account address)
+func (_AtmosphereToken *AtmosphereTokenFilterer) WatchLockout(opts *bind.WatchOpts, sink chan<- *AtmosphereTokenLockout) (event.Subscription, error) {
+
+	logs, sub, err := _AtmosphereToken.contract.WatchLogs(opts, "Lockout")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AtmosphereTokenLockout)
+				if err := _AtmosphereToken.contract.UnpackLog(event, "Lockout", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// AtmosphereTokenOwnerUpdateIterator is returned from FilterOwnerUpdate and is used to iterate over the raw logs and unpacked data for OwnerUpdate events raised by the AtmosphereToken contract.
+type AtmosphereTokenOwnerUpdateIterator struct {
+	Event *AtmosphereTokenOwnerUpdate // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AtmosphereTokenOwnerUpdateIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AtmosphereTokenOwnerUpdate)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AtmosphereTokenOwnerUpdate)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AtmosphereTokenOwnerUpdateIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AtmosphereTokenOwnerUpdateIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AtmosphereTokenOwnerUpdate represents a OwnerUpdate event raised by the AtmosphereToken contract.
+type AtmosphereTokenOwnerUpdate struct {
 	PrevOwner common.Address
 	NewOwner  common.Address
 	Raw       types.Log // Blockchain specific contextual infos
@@ -1106,21 +1446,21 @@ type EthereumTokenOwnerUpdate struct {
 // FilterOwnerUpdate is a free log retrieval operation binding the contract event 0x343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a.
 //
 // Solidity: e OwnerUpdate(_prevOwner address, _newOwner address)
-func (_EthereumToken *EthereumTokenFilterer) FilterOwnerUpdate(opts *bind.FilterOpts) (*EthereumTokenOwnerUpdateIterator, error) {
+func (_AtmosphereToken *AtmosphereTokenFilterer) FilterOwnerUpdate(opts *bind.FilterOpts) (*AtmosphereTokenOwnerUpdateIterator, error) {
 
-	logs, sub, err := _EthereumToken.contract.FilterLogs(opts, "OwnerUpdate")
+	logs, sub, err := _AtmosphereToken.contract.FilterLogs(opts, "OwnerUpdate")
 	if err != nil {
 		return nil, err
 	}
-	return &EthereumTokenOwnerUpdateIterator{contract: _EthereumToken.contract, event: "OwnerUpdate", logs: logs, sub: sub}, nil
+	return &AtmosphereTokenOwnerUpdateIterator{contract: _AtmosphereToken.contract, event: "OwnerUpdate", logs: logs, sub: sub}, nil
 }
 
 // WatchOwnerUpdate is a free log subscription operation binding the contract event 0x343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a.
 //
 // Solidity: e OwnerUpdate(_prevOwner address, _newOwner address)
-func (_EthereumToken *EthereumTokenFilterer) WatchOwnerUpdate(opts *bind.WatchOpts, sink chan<- *EthereumTokenOwnerUpdate) (event.Subscription, error) {
+func (_AtmosphereToken *AtmosphereTokenFilterer) WatchOwnerUpdate(opts *bind.WatchOpts, sink chan<- *AtmosphereTokenOwnerUpdate) (event.Subscription, error) {
 
-	logs, sub, err := _EthereumToken.contract.WatchLogs(opts, "OwnerUpdate")
+	logs, sub, err := _AtmosphereToken.contract.WatchLogs(opts, "OwnerUpdate")
 	if err != nil {
 		return nil, err
 	}
@@ -1130,8 +1470,8 @@ func (_EthereumToken *EthereumTokenFilterer) WatchOwnerUpdate(opts *bind.WatchOp
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(EthereumTokenOwnerUpdate)
-				if err := _EthereumToken.contract.UnpackLog(event, "OwnerUpdate", log); err != nil {
+				event := new(AtmosphereTokenOwnerUpdate)
+				if err := _AtmosphereToken.contract.UnpackLog(event, "OwnerUpdate", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1152,9 +1492,9 @@ func (_EthereumToken *EthereumTokenFilterer) WatchOwnerUpdate(opts *bind.WatchOp
 	}), nil
 }
 
-// EthereumTokenPrePareLockedOutIterator is returned from FilterPrePareLockedOut and is used to iterate over the raw logs and unpacked data for PrePareLockedOut events raised by the EthereumToken contract.
-type EthereumTokenPrePareLockedOutIterator struct {
-	Event *EthereumTokenPrePareLockedOut // Event containing the contract specifics and raw log
+// AtmosphereTokenPrepareLockinIterator is returned from FilterPrepareLockin and is used to iterate over the raw logs and unpacked data for PrepareLockin events raised by the AtmosphereToken contract.
+type AtmosphereTokenPrepareLockinIterator struct {
+	Event *AtmosphereTokenPrepareLockin // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1168,7 +1508,7 @@ type EthereumTokenPrePareLockedOutIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *EthereumTokenPrePareLockedOutIterator) Next() bool {
+func (it *AtmosphereTokenPrepareLockinIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1177,7 +1517,7 @@ func (it *EthereumTokenPrePareLockedOutIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(EthereumTokenPrePareLockedOut)
+			it.Event = new(AtmosphereTokenPrepareLockin)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1192,7 +1532,7 @@ func (it *EthereumTokenPrePareLockedOutIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(EthereumTokenPrePareLockedOut)
+		it.Event = new(AtmosphereTokenPrepareLockin)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1208,152 +1548,19 @@ func (it *EthereumTokenPrePareLockedOutIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *EthereumTokenPrePareLockedOutIterator) Error() error {
+func (it *AtmosphereTokenPrepareLockinIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *EthereumTokenPrePareLockedOutIterator) Close() error {
+func (it *AtmosphereTokenPrepareLockinIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// EthereumTokenPrePareLockedOut represents a PrePareLockedOut event raised by the EthereumToken contract.
-type EthereumTokenPrePareLockedOut struct {
-	Account common.Address
-	Value   *big.Int
-	Raw     types.Log // Blockchain specific contextual infos
-}
-
-// FilterPrePareLockedOut is a free log retrieval operation binding the contract event 0xecaa134d03b9436d19a5de74adbad850315cb95f6a84b2a343cf97588c5fe19d.
-//
-// Solidity: e PrePareLockedOut(account indexed address, _value uint256)
-func (_EthereumToken *EthereumTokenFilterer) FilterPrePareLockedOut(opts *bind.FilterOpts, account []common.Address) (*EthereumTokenPrePareLockedOutIterator, error) {
-
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _EthereumToken.contract.FilterLogs(opts, "PrePareLockedOut", accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return &EthereumTokenPrePareLockedOutIterator{contract: _EthereumToken.contract, event: "PrePareLockedOut", logs: logs, sub: sub}, nil
-}
-
-// WatchPrePareLockedOut is a free log subscription operation binding the contract event 0xecaa134d03b9436d19a5de74adbad850315cb95f6a84b2a343cf97588c5fe19d.
-//
-// Solidity: e PrePareLockedOut(account indexed address, _value uint256)
-func (_EthereumToken *EthereumTokenFilterer) WatchPrePareLockedOut(opts *bind.WatchOpts, sink chan<- *EthereumTokenPrePareLockedOut, account []common.Address) (event.Subscription, error) {
-
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _EthereumToken.contract.WatchLogs(opts, "PrePareLockedOut", accountRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(EthereumTokenPrePareLockedOut)
-				if err := _EthereumToken.contract.UnpackLog(event, "PrePareLockedOut", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// EthereumTokenPrepareLockinIterator is returned from FilterPrepareLockin and is used to iterate over the raw logs and unpacked data for PrepareLockin events raised by the EthereumToken contract.
-type EthereumTokenPrepareLockinIterator struct {
-	Event *EthereumTokenPrepareLockin // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *EthereumTokenPrepareLockinIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(EthereumTokenPrepareLockin)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(EthereumTokenPrepareLockin)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *EthereumTokenPrepareLockinIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *EthereumTokenPrepareLockinIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// EthereumTokenPrepareLockin represents a PrepareLockin event raised by the EthereumToken contract.
-type EthereumTokenPrepareLockin struct {
+// AtmosphereTokenPrepareLockin represents a PrepareLockin event raised by the AtmosphereToken contract.
+type AtmosphereTokenPrepareLockin struct {
 	Account common.Address
 	Value   *big.Int
 	Raw     types.Log // Blockchain specific contextual infos
@@ -1361,32 +1568,22 @@ type EthereumTokenPrepareLockin struct {
 
 // FilterPrepareLockin is a free log retrieval operation binding the contract event 0x1cc3ff93fb861f5fb2869fc15945f233d14ea7a4afa5721ad3c9804be90f3c6a.
 //
-// Solidity: e PrepareLockin(account indexed address, value uint256)
-func (_EthereumToken *EthereumTokenFilterer) FilterPrepareLockin(opts *bind.FilterOpts, account []common.Address) (*EthereumTokenPrepareLockinIterator, error) {
+// Solidity: e PrepareLockin(account address, value uint256)
+func (_AtmosphereToken *AtmosphereTokenFilterer) FilterPrepareLockin(opts *bind.FilterOpts) (*AtmosphereTokenPrepareLockinIterator, error) {
 
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _EthereumToken.contract.FilterLogs(opts, "PrepareLockin", accountRule)
+	logs, sub, err := _AtmosphereToken.contract.FilterLogs(opts, "PrepareLockin")
 	if err != nil {
 		return nil, err
 	}
-	return &EthereumTokenPrepareLockinIterator{contract: _EthereumToken.contract, event: "PrepareLockin", logs: logs, sub: sub}, nil
+	return &AtmosphereTokenPrepareLockinIterator{contract: _AtmosphereToken.contract, event: "PrepareLockin", logs: logs, sub: sub}, nil
 }
 
 // WatchPrepareLockin is a free log subscription operation binding the contract event 0x1cc3ff93fb861f5fb2869fc15945f233d14ea7a4afa5721ad3c9804be90f3c6a.
 //
-// Solidity: e PrepareLockin(account indexed address, value uint256)
-func (_EthereumToken *EthereumTokenFilterer) WatchPrepareLockin(opts *bind.WatchOpts, sink chan<- *EthereumTokenPrepareLockin, account []common.Address) (event.Subscription, error) {
+// Solidity: e PrepareLockin(account address, value uint256)
+func (_AtmosphereToken *AtmosphereTokenFilterer) WatchPrepareLockin(opts *bind.WatchOpts, sink chan<- *AtmosphereTokenPrepareLockin) (event.Subscription, error) {
 
-	var accountRule []interface{}
-	for _, accountItem := range account {
-		accountRule = append(accountRule, accountItem)
-	}
-
-	logs, sub, err := _EthereumToken.contract.WatchLogs(opts, "PrepareLockin", accountRule)
+	logs, sub, err := _AtmosphereToken.contract.WatchLogs(opts, "PrepareLockin")
 	if err != nil {
 		return nil, err
 	}
@@ -1396,8 +1593,8 @@ func (_EthereumToken *EthereumTokenFilterer) WatchPrepareLockin(opts *bind.Watch
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(EthereumTokenPrepareLockin)
-				if err := _EthereumToken.contract.UnpackLog(event, "PrepareLockin", log); err != nil {
+				event := new(AtmosphereTokenPrepareLockin)
+				if err := _AtmosphereToken.contract.UnpackLog(event, "PrepareLockin", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1418,9 +1615,9 @@ func (_EthereumToken *EthereumTokenFilterer) WatchPrepareLockin(opts *bind.Watch
 	}), nil
 }
 
-// EthereumTokenTransferIterator is returned from FilterTransfer and is used to iterate over the raw logs and unpacked data for Transfer events raised by the EthereumToken contract.
-type EthereumTokenTransferIterator struct {
-	Event *EthereumTokenTransfer // Event containing the contract specifics and raw log
+// AtmosphereTokenPrepareLockoutIterator is returned from FilterPrepareLockout and is used to iterate over the raw logs and unpacked data for PrepareLockout events raised by the AtmosphereToken contract.
+type AtmosphereTokenPrepareLockoutIterator struct {
+	Event *AtmosphereTokenPrepareLockout // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1434,7 +1631,7 @@ type EthereumTokenTransferIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *EthereumTokenTransferIterator) Next() bool {
+func (it *AtmosphereTokenPrepareLockoutIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1443,7 +1640,7 @@ func (it *EthereumTokenTransferIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(EthereumTokenTransfer)
+			it.Event = new(AtmosphereTokenPrepareLockout)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1458,7 +1655,7 @@ func (it *EthereumTokenTransferIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(EthereumTokenTransfer)
+		it.Event = new(AtmosphereTokenPrepareLockout)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1474,19 +1671,142 @@ func (it *EthereumTokenTransferIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *EthereumTokenTransferIterator) Error() error {
+func (it *AtmosphereTokenPrepareLockoutIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *EthereumTokenTransferIterator) Close() error {
+func (it *AtmosphereTokenPrepareLockoutIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// EthereumTokenTransfer represents a Transfer event raised by the EthereumToken contract.
-type EthereumTokenTransfer struct {
+// AtmosphereTokenPrepareLockout represents a PrepareLockout event raised by the AtmosphereToken contract.
+type AtmosphereTokenPrepareLockout struct {
+	Account common.Address
+	Value   *big.Int
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterPrepareLockout is a free log retrieval operation binding the contract event 0xbbae3304c67c8fbb052efa093374fc235534c3d862512a40007e7e35062a0475.
+//
+// Solidity: e PrepareLockout(account address, _value uint256)
+func (_AtmosphereToken *AtmosphereTokenFilterer) FilterPrepareLockout(opts *bind.FilterOpts) (*AtmosphereTokenPrepareLockoutIterator, error) {
+
+	logs, sub, err := _AtmosphereToken.contract.FilterLogs(opts, "PrepareLockout")
+	if err != nil {
+		return nil, err
+	}
+	return &AtmosphereTokenPrepareLockoutIterator{contract: _AtmosphereToken.contract, event: "PrepareLockout", logs: logs, sub: sub}, nil
+}
+
+// WatchPrepareLockout is a free log subscription operation binding the contract event 0xbbae3304c67c8fbb052efa093374fc235534c3d862512a40007e7e35062a0475.
+//
+// Solidity: e PrepareLockout(account address, _value uint256)
+func (_AtmosphereToken *AtmosphereTokenFilterer) WatchPrepareLockout(opts *bind.WatchOpts, sink chan<- *AtmosphereTokenPrepareLockout) (event.Subscription, error) {
+
+	logs, sub, err := _AtmosphereToken.contract.WatchLogs(opts, "PrepareLockout")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AtmosphereTokenPrepareLockout)
+				if err := _AtmosphereToken.contract.UnpackLog(event, "PrepareLockout", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// AtmosphereTokenTransferIterator is returned from FilterTransfer and is used to iterate over the raw logs and unpacked data for Transfer events raised by the AtmosphereToken contract.
+type AtmosphereTokenTransferIterator struct {
+	Event *AtmosphereTokenTransfer // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AtmosphereTokenTransferIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AtmosphereTokenTransfer)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AtmosphereTokenTransfer)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AtmosphereTokenTransferIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AtmosphereTokenTransferIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AtmosphereTokenTransfer represents a Transfer event raised by the AtmosphereToken contract.
+type AtmosphereTokenTransfer struct {
 	From  common.Address
 	To    common.Address
 	Value *big.Int
@@ -1496,7 +1816,7 @@ type EthereumTokenTransfer struct {
 // FilterTransfer is a free log retrieval operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
 // Solidity: e Transfer(_from indexed address, _to indexed address, _value uint256)
-func (_EthereumToken *EthereumTokenFilterer) FilterTransfer(opts *bind.FilterOpts, _from []common.Address, _to []common.Address) (*EthereumTokenTransferIterator, error) {
+func (_AtmosphereToken *AtmosphereTokenFilterer) FilterTransfer(opts *bind.FilterOpts, _from []common.Address, _to []common.Address) (*AtmosphereTokenTransferIterator, error) {
 
 	var _fromRule []interface{}
 	for _, _fromItem := range _from {
@@ -1507,17 +1827,17 @@ func (_EthereumToken *EthereumTokenFilterer) FilterTransfer(opts *bind.FilterOpt
 		_toRule = append(_toRule, _toItem)
 	}
 
-	logs, sub, err := _EthereumToken.contract.FilterLogs(opts, "Transfer", _fromRule, _toRule)
+	logs, sub, err := _AtmosphereToken.contract.FilterLogs(opts, "Transfer", _fromRule, _toRule)
 	if err != nil {
 		return nil, err
 	}
-	return &EthereumTokenTransferIterator{contract: _EthereumToken.contract, event: "Transfer", logs: logs, sub: sub}, nil
+	return &AtmosphereTokenTransferIterator{contract: _AtmosphereToken.contract, event: "Transfer", logs: logs, sub: sub}, nil
 }
 
 // WatchTransfer is a free log subscription operation binding the contract event 0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef.
 //
 // Solidity: e Transfer(_from indexed address, _to indexed address, _value uint256)
-func (_EthereumToken *EthereumTokenFilterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *EthereumTokenTransfer, _from []common.Address, _to []common.Address) (event.Subscription, error) {
+func (_AtmosphereToken *AtmosphereTokenFilterer) WatchTransfer(opts *bind.WatchOpts, sink chan<- *AtmosphereTokenTransfer, _from []common.Address, _to []common.Address) (event.Subscription, error) {
 
 	var _fromRule []interface{}
 	for _, _fromItem := range _from {
@@ -1528,7 +1848,7 @@ func (_EthereumToken *EthereumTokenFilterer) WatchTransfer(opts *bind.WatchOpts,
 		_toRule = append(_toRule, _toItem)
 	}
 
-	logs, sub, err := _EthereumToken.contract.WatchLogs(opts, "Transfer", _fromRule, _toRule)
+	logs, sub, err := _AtmosphereToken.contract.WatchLogs(opts, "Transfer", _fromRule, _toRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1538,8 +1858,8 @@ func (_EthereumToken *EthereumTokenFilterer) WatchTransfer(opts *bind.WatchOpts,
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(EthereumTokenTransfer)
-				if err := _EthereumToken.contract.UnpackLog(event, "Transfer", log); err != nil {
+				event := new(AtmosphereTokenTransfer)
+				if err := _AtmosphereToken.contract.UnpackLog(event, "Transfer", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1564,7 +1884,7 @@ func (_EthereumToken *EthereumTokenFilterer) WatchTransfer(opts *bind.WatchOpts,
 const OwnedABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"changeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_prevOwner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"OwnerUpdate\",\"type\":\"event\"}]"
 
 // OwnedBin is the compiled bytecode used for deploying new contracts.
-const OwnedBin = `0x608060405260018054600160a060020a031916905534801561002057600080fd5b5060008054600160a060020a031916331790556101f7806100426000396000f3006080604052600436106100565763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166379ba5097811461005b5780638da5cb5b14610072578063a6f9dae1146100a3575b600080fd5b34801561006757600080fd5b506100706100c4565b005b34801561007e57600080fd5b5061008761015b565b60408051600160a060020a039092168252519081900360200190f35b3480156100af57600080fd5b50610070600160a060020a036004351661016a565b600154600160a060020a031633146100db57600080fd5b60005460015460408051600160a060020a03938416815292909116602083015280517f343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a9281900390910190a1600180546000805473ffffffffffffffffffffffffffffffffffffffff19908116600160a060020a03841617909155169055565b600054600160a060020a031681565b600054600160a060020a0316331461018157600080fd5b600054600160a060020a038281169116141561019c57600080fd5b6001805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a03929092169190911790555600a165627a7a723058207902eb57074a1738b933521da045f917136a308388b5b7391c1a7198d2c8bd780029`
+const OwnedBin = `0x608060405260018054600160a060020a031916905534801561002057600080fd5b5060008054600160a060020a031916331790556101f7806100426000396000f3006080604052600436106100565763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166379ba5097811461005b5780638da5cb5b14610072578063a6f9dae1146100a3575b600080fd5b34801561006757600080fd5b506100706100c4565b005b34801561007e57600080fd5b5061008761015b565b60408051600160a060020a039092168252519081900360200190f35b3480156100af57600080fd5b50610070600160a060020a036004351661016a565b600154600160a060020a031633146100db57600080fd5b60005460015460408051600160a060020a03938416815292909116602083015280517f343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a9281900390910190a1600180546000805473ffffffffffffffffffffffffffffffffffffffff19908116600160a060020a03841617909155169055565b600054600160a060020a031681565b600054600160a060020a0316331461018157600080fd5b600054600160a060020a038281169116141561019c57600080fd5b6001805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a03929092169190911790555600a165627a7a72305820ca63fcfc52ce92ce8bcd83ece3ccc324fd88f44cdcff36b377529c8d953f36f60029`
 
 // DeployOwned deploys a new Ethereum contract, binding an instance of Owned to it.
 func DeployOwned(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Owned, error) {
@@ -1916,7 +2236,7 @@ func (_Owned *OwnedFilterer) WatchOwnerUpdate(opts *bind.WatchOpts, sink chan<- 
 const StandardTokenABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"_spender\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_from\",\"type\":\"address\"},{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"acceptOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"changeOwner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_to\",\"type\":\"address\"},{\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"name\":\"success\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_owner\",\"type\":\"address\"},{\"name\":\"_spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"name\":\"remaining\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"_prevOwner\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_newOwner\",\"type\":\"address\"}],\"name\":\"OwnerUpdate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_to\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"_spender\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"}]"
 
 // StandardTokenBin is the compiled bytecode used for deploying new contracts.
-const StandardTokenBin = `0x608060405260028054600160a060020a03199081169091556001805490911633179055610599806100316000396000f3006080604052600436106100985763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663095ea7b3811461009d57806318160ddd146100d557806323b872dd146100fc57806370a082311461012657806379ba5097146101475780638da5cb5b1461015e578063a6f9dae11461018f578063a9059cbb146101b0578063dd62ed3e146101d4575b600080fd5b3480156100a957600080fd5b506100c1600160a060020a03600435166024356101fb565b604080519115158252519081900360200190f35b3480156100e157600080fd5b506100ea610262565b60408051918252519081900360200190f35b34801561010857600080fd5b506100c1600160a060020a0360043581169060243516604435610268565b34801561013257600080fd5b506100ea600160a060020a036004351661036e565b34801561015357600080fd5b5061015c610389565b005b34801561016a57600080fd5b50610173610420565b60408051600160a060020a039092168252519081900360200190f35b34801561019b57600080fd5b5061015c600160a060020a036004351661042f565b3480156101bc57600080fd5b506100c1600160a060020a0360043516602435610490565b3480156101e057600080fd5b506100ea600160a060020a0360043581169060243516610542565b336000818152600460209081526040808320600160a060020a038716808552908352818420869055815186815291519394909390927f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925928290030190a35060015b92915050565b60005481565b600160a060020a03831660009081526003602052604081205482118015906102b35750600160a060020a03841660009081526004602090815260408083203384529091529020548211155b80156102d85750600160a060020a038316600090815260036020526040902054828101115b1561036357600160a060020a03808416600081815260036020908152604080832080548801905593881680835284832080548890039055600482528483203384528252918490208054879003905583518681529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a3506001610367565b5060005b9392505050565b600160a060020a031660009081526003602052604090205490565b600254600160a060020a031633146103a057600080fd5b60015460025460408051600160a060020a03938416815292909116602083015280517f343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a9281900390910190a1600280546001805473ffffffffffffffffffffffffffffffffffffffff19908116600160a060020a03841617909155169055565b600154600160a060020a031681565b600154600160a060020a0316331461044657600080fd5b600154600160a060020a038281169116141561046157600080fd5b6002805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0392909216919091179055565b3360009081526003602052604081205482118015906104c85750600160a060020a038316600090815260036020526040902054828101115b1561053a5733600081815260036020908152604080832080548790039055600160a060020a03871680845292819020805487019055805186815290519293927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef929181900390910190a350600161025c565b50600061025c565b600160a060020a039182166000908152600460209081526040808320939094168252919091522054905600a165627a7a723058205b96f43e75f09171dc9822fb94a0e08b52a810dee069a9860ca0a3869e1b0eda0029`
+const StandardTokenBin = `0x608060405260028054600160a060020a03199081169091556001805490911633179055610599806100316000396000f3006080604052600436106100985763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663095ea7b3811461009d57806318160ddd146100d557806323b872dd146100fc57806370a082311461012657806379ba5097146101475780638da5cb5b1461015e578063a6f9dae11461018f578063a9059cbb146101b0578063dd62ed3e146101d4575b600080fd5b3480156100a957600080fd5b506100c1600160a060020a03600435166024356101fb565b604080519115158252519081900360200190f35b3480156100e157600080fd5b506100ea610262565b60408051918252519081900360200190f35b34801561010857600080fd5b506100c1600160a060020a0360043581169060243516604435610268565b34801561013257600080fd5b506100ea600160a060020a036004351661036e565b34801561015357600080fd5b5061015c610389565b005b34801561016a57600080fd5b50610173610420565b60408051600160a060020a039092168252519081900360200190f35b34801561019b57600080fd5b5061015c600160a060020a036004351661042f565b3480156101bc57600080fd5b506100c1600160a060020a0360043516602435610490565b3480156101e057600080fd5b506100ea600160a060020a0360043581169060243516610542565b336000818152600460209081526040808320600160a060020a038716808552908352818420869055815186815291519394909390927f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925928290030190a35060015b92915050565b60005481565b600160a060020a03831660009081526003602052604081205482118015906102b35750600160a060020a03841660009081526004602090815260408083203384529091529020548211155b80156102d85750600160a060020a038316600090815260036020526040902054828101115b1561036357600160a060020a03808416600081815260036020908152604080832080548801905593881680835284832080548890039055600482528483203384528252918490208054879003905583518681529351929391927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9281900390910190a3506001610367565b5060005b9392505050565b600160a060020a031660009081526003602052604090205490565b600254600160a060020a031633146103a057600080fd5b60015460025460408051600160a060020a03938416815292909116602083015280517f343765429aea5a34b3ff6a3785a98a5abb2597aca87bfbb58632c173d585373a9281900390910190a1600280546001805473ffffffffffffffffffffffffffffffffffffffff19908116600160a060020a03841617909155169055565b600154600160a060020a031681565b600154600160a060020a0316331461044657600080fd5b600154600160a060020a038281169116141561046157600080fd5b6002805473ffffffffffffffffffffffffffffffffffffffff1916600160a060020a0392909216919091179055565b3360009081526003602052604081205482118015906104c85750600160a060020a038316600090815260036020526040902054828101115b1561053a5733600081815260036020908152604080832080548790039055600160a060020a03871680845292819020805487019055805186815290519293927fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef929181900390910190a350600161025c565b50600061025c565b600160a060020a039182166000908152600460209081526040808320939094168252919091522054905600a165627a7a7230582044640849dd2dd0a7af6693c68cd23b200b1a20d95e3f68f0aab347bdd2cb3a470029`
 
 // DeployStandardToken deploys a new Ethereum contract, binding an instance of StandardToken to it.
 func DeployStandardToken(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *StandardToken, error) {

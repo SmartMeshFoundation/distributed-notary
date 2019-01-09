@@ -20,7 +20,7 @@ type PrepareLockinEvent struct {
 // CreatePrepareLockinEvent :
 func CreatePrepareLockinEvent(log types.Log) (event PrepareLockinEvent, err error) {
 	e := &contracts.LockedEthereumPrepareLockin{}
-	err = UnpackLog(&lockedEthereumABI, e, LockedEthereumPrepareLockinEventName, &log)
+	err = unpackLog(&lockedEthereumABI, e, LockedEthereumPrepareLockinEventName, &log)
 	if err != nil {
 		return
 	}

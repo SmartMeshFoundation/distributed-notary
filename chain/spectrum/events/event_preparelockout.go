@@ -4,7 +4,7 @@ import (
 	"math/big"
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -18,12 +18,12 @@ type PrepareLockoutEvent struct {
 
 // CreatePrepareLockoutEvent :
 func CreatePrepareLockoutEvent(log types.Log) (event PrepareLockoutEvent, err error) {
-	e := &contracts.LockedEthereumPrePareLockedOut{}
-	err = UnpackLog(&lockedEthereumABI, e, LockedEthereumPrePareLockedOutEventName, &log)
+	e := &contracts.AtmosphereTokenPrepareLockout{}
+	err = unpackLog(&atmosphereTokenABI, e, AtmosphereTokenPrepareLockoutEventName, &log)
 	if err != nil {
 		return
 	}
-	event.BaseEvent = createBaseEventFromEthereumLog(LockedEthereumPrePareLockedOutEventName, log)
+	event.BaseEvent = createBaseEventFromSpectrumLog(AtmosphereTokenPrepareLockoutEventName, log)
 	// params
 	event.Account = e.Account
 	event.Amount = e.Value
