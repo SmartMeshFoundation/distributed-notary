@@ -14,10 +14,6 @@ import (
 // OnEvent 链上事件逻辑处理 TODO
 func (ns *CrossChainService) OnEvent(e chain.Event) {
 	logPrefix := fmt.Sprintf("CrossChainService[SCToken=%s] ", utils.APex(ns.meta.SCToken))
-	if e.GetChainName() != ns.meta.MCName {
-		// never happend
-		panic("dispatch event to wrong CrossChainService")
-	}
 	var err error
 	switch event := e.(type) {
 	/*
