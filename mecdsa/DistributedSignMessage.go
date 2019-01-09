@@ -718,8 +718,8 @@ func phase5d(l *models.LocalSignature, deCommitments2 []*models.Phase5DDecom2,
 			deCommitments2[i].UI.X, deCommitments2[i].UI.Y,
 		)
 	}
-	log.Trace(fmt.Sprintf("(gx,gy)=(%s,%s)", share.S.Gx.Text(16), share.S.Gy.Text(16)))
-	log.Trace(fmt.Sprintf("(tbx,tby)=(%s,%s)", biasedSumTbX.Text(16), biasedSumTbY.Text(16)))
+	//log.Trace(fmt.Sprintf("(gx,gy)=(%s,%s)", share.S.Gx.Text(16), share.S.Gy.Text(16)))
+	//log.Trace(fmt.Sprintf("(tbx,tby)=(%s,%s)", biasedSumTbX.Text(16), biasedSumTbY.Text(16)))
 	if share.S.Gx.Cmp(biasedSumTbX) == 0 &&
 		share.S.Gy.Cmp(biasedSumTbY) == 0 {
 		return l.SI.Clone(), nil

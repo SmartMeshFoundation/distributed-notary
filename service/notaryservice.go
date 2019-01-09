@@ -267,6 +267,7 @@ func (ns *NotaryService) onKeyGenerationPhase4MessageRequest(req *notaryapi.KeyG
 */
 func (ns *NotaryService) startDistributedSignAndWait(msgToSign mecdsa.MessageToSign, privateKeyInfo *models.PrivateKeyInfo) (signature []byte, err error) {
 	// 1. DSMAsk
+	start := time.Now()
 	var sessionID common.Hash
 	var notaryIDs []int
 	sessionID, notaryIDs, err = ns.startDSMAsk()
@@ -302,6 +303,8 @@ func (ns *NotaryService) startDistributedSignAndWait(msgToSign mecdsa.MessageToS
 			return
 		}
 		if finish {
+			timeUsed := time.Since(start)
+			log.Trace("distributedSignMessage end ,total use %d seconds", timeUsed.Nanoseconds()/1000)
 			return
 		}
 		if times%10 == 0 {

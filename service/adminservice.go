@@ -8,8 +8,6 @@ import (
 
 	"bytes"
 
-	"math/big"
-
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
@@ -257,13 +255,6 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 		err = fmt.Errorf("wrong signature expect addr=%s, but got %s", privateKeyInfo.ToAddress().String(), addr.String())
 		return
 	}
-	var chainID *big.Int
-	if c.GetChainName() == smcevents.ChainName {
-		chainID = big.NewInt(3)
-	} else {
-		chainID = big.NewInt(8888)
-	}
-	// 3. unlock
 	// 4. 部署合约
 	transactor := &bind.TransactOpts{
 		From: privateKeyInfo.ToAddress(),
@@ -272,17 +263,11 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 				return nil, errors.New("not authorized to sign this account")
 			}
 			msgToSign2 := signer.Hash(tx).Bytes()
-			txSign, err := tx.WithSignature(signer, signature)
-			eip155Signer := types.NewEIP155Signer(chainID)
-			addr, err = eip155Signer.Sender(txSign)
-			fmt.Println("============================== eip155Signer")
-			fmt.Println(addr, err)
-			err = nil
 			if bytes.Compare(msgToSign.GetBytes(), msgToSign2) != 0 {
 				err = fmt.Errorf("txbytes when deploy contract step1 and step2 does't match")
 				return nil, err
 			}
-			return txSign, err
+			return tx.WithSignature(signer, signature)
 		},
 	}
 	return c.DeployContract(transactor)

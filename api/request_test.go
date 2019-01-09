@@ -108,7 +108,7 @@ func TestNotaryRequestSignature(t *testing.T) {
 	sender := crypto.PubkeyToAddress(privateKey.PublicKey)
 	req := &TestRequest{
 		BaseRequest:       NewBaseRequest("NotaryAPI-TestRequest"),
-		BaseNotaryRequest: NewBaseNotaryRequest(sessionID, sender),
+		BaseNotaryRequest: NewBaseNotaryRequest(sessionID, sender, 1),
 	}
 	fmt.Println("Before sign : \n", utils.ToJSONStringFormat(req))
 

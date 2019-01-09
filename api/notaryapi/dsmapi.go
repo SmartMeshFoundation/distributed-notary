@@ -15,10 +15,10 @@ type DSMAskRequest struct {
 }
 
 // NewDSMAskRequest :
-func NewDSMAskRequest(sessionID common.Hash, senderAddress common.Address) *DSMAskRequest {
+func NewDSMAskRequest(sessionID common.Hash, self *models.NotaryInfo) *DSMAskRequest {
 	return &DSMAskRequest{
 		BaseRequest:       api.NewBaseRequest(APINameDSMAsk),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 	}
 }
 
@@ -33,10 +33,10 @@ type DSMNotifySelectionRequest struct {
 }
 
 // NewDSMNotifySelectionRequest :
-func NewDSMNotifySelectionRequest(sessionID common.Hash, senderAddress common.Address, notaryIDs []int, privateKeyID common.Hash, msgToSign mecdsa.MessageToSign) *DSMNotifySelectionRequest {
+func NewDSMNotifySelectionRequest(sessionID common.Hash, self *models.NotaryInfo, notaryIDs []int, privateKeyID common.Hash, msgToSign mecdsa.MessageToSign) *DSMNotifySelectionRequest {
 	return &DSMNotifySelectionRequest{
 		BaseRequest:       api.NewBaseRequest(APINameDSMNotifySelection),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		NotaryIDs:         notaryIDs,
 		PrivateKeyID:      privateKeyID,
 		MsgBytesToSign:    msgToSign.GetBytes(),
@@ -53,10 +53,10 @@ type DSMPhase1BroadcastRequest struct {
 }
 
 // NewDSMPhase1BroadcastRequest :
-func NewDSMPhase1BroadcastRequest(sessionID common.Hash, senderAddress common.Address, privateKeyID common.Hash, msg *models.SignBroadcastPhase1) *DSMPhase1BroadcastRequest {
+func NewDSMPhase1BroadcastRequest(sessionID common.Hash, self *models.NotaryInfo, privateKeyID common.Hash, msg *models.SignBroadcastPhase1) *DSMPhase1BroadcastRequest {
 	return &DSMPhase1BroadcastRequest{
 		BaseRequest:       api.NewBaseRequest(APINameDSMPhase1Broadcast),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		PrivateKeyID:      privateKeyID,
 		Msg:               msg,
 	}
@@ -71,10 +71,10 @@ type DSMPhase2MessageARequest struct {
 }
 
 // NewDSMPhase2MessageARequest :
-func NewDSMPhase2MessageARequest(sessionID common.Hash, senderAddress common.Address, privateKeyID common.Hash, msg *models.MessageA) *DSMPhase2MessageARequest {
+func NewDSMPhase2MessageARequest(sessionID common.Hash, self *models.NotaryInfo, privateKeyID common.Hash, msg *models.MessageA) *DSMPhase2MessageARequest {
 	return &DSMPhase2MessageARequest{
 		BaseRequest:       api.NewBaseRequest(APINameDSMPhase2MessageA),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		PrivateKeyID:      privateKeyID,
 		Msg:               msg,
 	}
@@ -89,10 +89,10 @@ type DSMPhase3DeltaIRequest struct {
 }
 
 // NewDSMPhase3DeltaIRequest :
-func NewDSMPhase3DeltaIRequest(sessionID common.Hash, senderAddress common.Address, privateKeyID common.Hash, msg *models.DeltaPhase3) *DSMPhase3DeltaIRequest {
+func NewDSMPhase3DeltaIRequest(sessionID common.Hash, self *models.NotaryInfo, privateKeyID common.Hash, msg *models.DeltaPhase3) *DSMPhase3DeltaIRequest {
 	return &DSMPhase3DeltaIRequest{
 		BaseRequest:       api.NewBaseRequest(APINameDSMPhase3DeltaI),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		PrivateKeyID:      privateKeyID,
 		Msg:               msg,
 	}
@@ -107,10 +107,10 @@ type DSMPhase5A5BProofRequest struct {
 }
 
 // NewDSMPhase5A5BProofRequest :
-func NewDSMPhase5A5BProofRequest(sessionID common.Hash, senderAddress common.Address, privateKeyID common.Hash, msg *models.Phase5A) *DSMPhase5A5BProofRequest {
+func NewDSMPhase5A5BProofRequest(sessionID common.Hash, self *models.NotaryInfo, privateKeyID common.Hash, msg *models.Phase5A) *DSMPhase5A5BProofRequest {
 	return &DSMPhase5A5BProofRequest{
 		BaseRequest:       api.NewBaseRequest(APINameDSMPhase5A5BProof),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		PrivateKeyID:      privateKeyID,
 		Msg:               msg,
 	}
@@ -125,10 +125,10 @@ type DSMPhase5CProofRequest struct {
 }
 
 // NewDSMPhase5CProofRequest :
-func NewDSMPhase5CProofRequest(sessionID common.Hash, senderAddress common.Address, privateKeyID common.Hash, msg *models.Phase5C) *DSMPhase5CProofRequest {
+func NewDSMPhase5CProofRequest(sessionID common.Hash, self *models.NotaryInfo, privateKeyID common.Hash, msg *models.Phase5C) *DSMPhase5CProofRequest {
 	return &DSMPhase5CProofRequest{
 		BaseRequest:       api.NewBaseRequest(APINameDSMPhase5CProof),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		PrivateKeyID:      privateKeyID,
 		Msg:               msg,
 	}
@@ -143,10 +143,10 @@ type DSMPhase6ReceiveSIRequest struct {
 }
 
 // NewDSMPhase6ReceiveSIRequest :
-func NewDSMPhase6ReceiveSIRequest(sessionID common.Hash, senderAddress common.Address, privateKeyID common.Hash, msg share.SPrivKey) *DSMPhase6ReceiveSIRequest {
+func NewDSMPhase6ReceiveSIRequest(sessionID common.Hash, self *models.NotaryInfo, privateKeyID common.Hash, msg share.SPrivKey) *DSMPhase6ReceiveSIRequest {
 	return &DSMPhase6ReceiveSIRequest{
 		BaseRequest:       api.NewBaseRequest(APINameDSMPhase6ReceiveSI),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		PrivateKeyID:      privateKeyID,
 		Msg:               msg,
 	}

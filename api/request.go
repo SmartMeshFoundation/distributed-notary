@@ -1,9 +1,7 @@
 package api
 
 import (
-	"fmt"
-	"time"
-
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -23,6 +21,7 @@ type Request interface {
 type NotaryRequest interface {
 	GetSessionID() common.Hash
 	GetSender() common.Address
+	GetSenderID() int
 	getSignature() []byte
 	setSignature(sig []byte)
 }
@@ -43,7 +42,7 @@ type BaseRequest struct {
 func NewBaseRequest(name RequestName) BaseRequest {
 	var req BaseRequest
 	req.Name = name
-	req.RequestID = fmt.Sprintf("%d", time.Now().Nanosecond())
+	req.RequestID = utils.HPex(utils.NewRandomHash())
 	return req
 }
 
@@ -93,20 +92,27 @@ func (br *BaseRequest) WriteErrorResponse(errorCode ErrorCode, errorMsg ...strin
 type BaseNotaryRequest struct {
 	SessionID common.Hash    `json:"session_id,omitempty"`
 	Sender    common.Address `json:"sender,omitempty"`
+	SenderID  int            `json:"sender_id"`
 	Signature []byte         `json:"signature,omitempty"` // 签名内容req全文json序列化后的字符串
 }
 
 // NewBaseNotaryRequest :
-func NewBaseNotaryRequest(sessionID common.Hash, sender common.Address) BaseNotaryRequest {
+func NewBaseNotaryRequest(sessionID common.Hash, sender common.Address, senderID int) BaseNotaryRequest {
 	return BaseNotaryRequest{
 		SessionID: sessionID,
 		Sender:    sender,
+		SenderID:  senderID,
 	}
 }
 
 // GetSender :
 func (bnr *BaseNotaryRequest) GetSender() common.Address {
 	return bnr.Sender
+}
+
+// GetSenderID :
+func (bnr *BaseNotaryRequest) GetSenderID() int {
+	return bnr.SenderID
 }
 
 // GetSessionID :

@@ -59,19 +59,19 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 		pkn
 	*/
 	case *models.KeyGenBroadcastMessage1:
-		req := notaryapi.NewKeyGenerationPhase1MessageRequest(sessionID, ns.self.GetAddress(), m)
+		req := notaryapi.NewKeyGenerationPhase1MessageRequest(sessionID, &ns.self, m)
 		api.NotarySign(req, ns.privateKey)
 		payload = utils.ToJSONString(req)
 	case *models.KeyGenBroadcastMessage2:
-		req := notaryapi.NewKeyGenerationPhase2MessageRequest(sessionID, ns.self.GetAddress(), m)
+		req := notaryapi.NewKeyGenerationPhase2MessageRequest(sessionID, &ns.self, m)
 		api.NotarySign(req, ns.privateKey)
 		payload = utils.ToJSONString(req)
 	case *models.KeyGenBroadcastMessage3:
-		req := notaryapi.NewKeyGenerationPhase3MessageRequest(sessionID, ns.self.GetAddress(), m)
+		req := notaryapi.NewKeyGenerationPhase3MessageRequest(sessionID, &ns.self, m)
 		api.NotarySign(req, ns.privateKey)
 		payload = utils.ToJSONString(req)
 	case *models.KeyGenBroadcastMessage4:
-		req := notaryapi.NewKeyGenerationPhase4MessageRequest(sessionID, ns.self.GetAddress(), m)
+		req := notaryapi.NewKeyGenerationPhase4MessageRequest(sessionID, &ns.self, m)
 		api.NotarySign(req, ns.privateKey)
 		payload = utils.ToJSONString(req)
 	/*
@@ -139,7 +139,7 @@ func (ns *NotaryService) getNotaryHostByID(notaryID int) string {
 
 func doPost(requestID string, sessionID common.Hash, url string, payload string, responseTo api.Response) (err error) {
 	//log.Trace(SessionLogMsg(sessionID, "post to %s, payload : %s", url, payload))
-	log.Trace(SessionLogMsg(sessionID, "post to %s, requestID=%s", url, requestID))
+	//log.Trace(SessionLogMsg(sessionID, "post to %s, requestID=%s", url, requestID))
 	var reqBody io.Reader
 	if payload == "" {
 		reqBody = nil
@@ -184,10 +184,8 @@ func doPost(requestID string, sessionID common.Hash, url string, payload string,
 		return
 	}
 	if responseTo.GetErrorCode() != api.ErrorCodeSuccess {
-		log.Trace(SessionLogMsg(sessionID, "get fail response %s", utils.ToJSONString(responseTo)))
+		log.Error(SessionLogMsg(sessionID, "post %s get fail response %s", url, utils.ToJSONString(responseTo)))
 		err = errors.New(responseTo.GetErrorMsg())
-	} else {
-		log.Trace(SessionLogMsg(sessionID, "get success response for requestID=%s", requestID))
 	}
 	return
 }

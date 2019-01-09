@@ -79,7 +79,6 @@ func (ba *BaseAPI) SetTimeout(timeout time.Duration) {
 
 // SendToServiceAndWaitResponse :
 func (ba *BaseAPI) SendToServiceAndWaitResponse(req Request, timeout ...time.Duration) *BaseResponse {
-	apiRequestLog(req)
 	if r, ok := req.(NotaryRequest); ok {
 		if !VerifyNotarySignature(r) {
 			return NewFailResponse(req.GetRequestID(), ErrorCodePermissionDenied)
@@ -100,7 +99,7 @@ func (ba *BaseAPI) SendToServiceAndWaitResponse(req Request, timeout ...time.Dur
 	} else {
 		resp = <-req.GetResponseChan()
 	}
-	apiResponseLog(req, resp)
+	apiLog(req, resp)
 	return resp
 }
 
@@ -119,11 +118,13 @@ func Return(w rest.ResponseWriter, response *BaseResponse) {
 	}
 }
 
-func apiRequestLog(req Request) {
+func apiLog(req Request, resp *BaseResponse) {
 	prefix := ""
-	body := ""
-	if nr, ok := req.(NotaryRequest); ok {
-		// NotaryRequest 只打印基本信息,否则太多了
+	body := utils.ToJSONStringFormat(req)
+	switch r := req.(type) {
+	case CrossChainRequest:
+		prefix = fmt.Sprintf("==> API [RequestID=%s Name=%s SCToken=%s]", req.GetRequestID(), req.GetRequestName(), utils.APex(r.GetSCTokenAddress()))
+	case NotaryRequest:
 		type requestToLog struct {
 			BaseRequest
 			BaseNotaryRequest
@@ -132,25 +133,17 @@ func apiRequestLog(req Request) {
 		var l requestToLog
 		l.BaseRequest.RequestID = req.GetRequestID()
 		l.BaseRequest.Name = req.GetRequestName()
-		l.BaseNotaryRequest.SessionID = nr.GetSessionID()
-		l.BaseNotaryRequest.Sender = nr.GetSender()
-		l.BaseNotaryRequest.Signature = nr.getSignature()
+		l.BaseNotaryRequest.SessionID = r.GetSessionID()
+		l.BaseNotaryRequest.Sender = r.GetSender()
+		l.BaseNotaryRequest.Signature = r.getSignature()
 		body = utils.ToJSONStringFormat(l)
-		prefix = fmt.Sprintf("[SessionID=%s] ", utils.HPex(nr.GetSessionID()))
-	} else {
-		body = utils.ToJSONStringFormat(req)
-	}
-	log.Trace("%s===> API Request %s :\n%s", prefix, req.GetRequestID(), body)
-}
-
-func apiResponseLog(req Request, resp *BaseResponse) {
-	prefix := ""
-	if nr, ok := req.(NotaryRequest); ok {
-		prefix = fmt.Sprintf("[SessionID=%s] ", utils.HPex(nr.GetSessionID()))
+		prefix = fmt.Sprintf("[SessionID=%s] ==> API [RequestID=%s Name=%s SenderID=%d]", utils.HPex(r.GetSessionID()), req.GetRequestID(), req.GetRequestName(), r.GetSenderID())
+	default:
+		prefix = fmt.Sprintf("==> API [RequestID=%s Name=%s]", req.GetRequestID(), req.GetRequestName())
 	}
 	if resp.GetErrorCode() == ErrorCodeSuccess {
-		log.Trace(fmt.Sprintf("%s===> API Response %s : SUCCESS", prefix, req.GetRequestID()))
+		log.Trace(fmt.Sprintf("%s deal SUCCESS", prefix))
 	} else {
-		log.Trace(fmt.Sprintf("%s===> API Response %s :\n%s", prefix, req.GetRequestID(), utils.ToJSONStringFormat(resp)))
+		log.Error(fmt.Sprintf("%s deal FAIL: \nRequest :\n%s\nResponse :\n%s", prefix, body, utils.ToJSONStringFormat(resp)))
 	}
 }

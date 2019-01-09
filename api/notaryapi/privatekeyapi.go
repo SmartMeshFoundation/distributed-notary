@@ -15,10 +15,10 @@ type KeyGenerationPhase1MessageRequest struct {
 }
 
 // NewKeyGenerationPhase1MessageRequest :
-func NewKeyGenerationPhase1MessageRequest(sessionID common.Hash, senderAddress common.Address, msg *models.KeyGenBroadcastMessage1) *KeyGenerationPhase1MessageRequest {
+func NewKeyGenerationPhase1MessageRequest(sessionID common.Hash, self *models.NotaryInfo, msg *models.KeyGenBroadcastMessage1) *KeyGenerationPhase1MessageRequest {
 	return &KeyGenerationPhase1MessageRequest{
 		BaseRequest:       api.NewBaseRequest(APINamePKNPhase1PubKeyProof),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		Msg:               msg,
 	}
 }
@@ -41,10 +41,10 @@ type KeyGenerationPhase2MessageRequest struct {
 }
 
 // NewKeyGenerationPhase2MessageRequest :
-func NewKeyGenerationPhase2MessageRequest(sessionID common.Hash, senderAddress common.Address, msg *models.KeyGenBroadcastMessage2) *KeyGenerationPhase2MessageRequest {
+func NewKeyGenerationPhase2MessageRequest(sessionID common.Hash, self *models.NotaryInfo, msg *models.KeyGenBroadcastMessage2) *KeyGenerationPhase2MessageRequest {
 	return &KeyGenerationPhase2MessageRequest{
 		BaseRequest:       api.NewBaseRequest(APINamePKNPhase2PaillierKeyProof),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		Msg:               msg,
 	}
 }
@@ -67,10 +67,10 @@ type KeyGenerationPhase3MessageRequest struct {
 }
 
 // NewKeyGenerationPhase3MessageRequest :
-func NewKeyGenerationPhase3MessageRequest(sessionID common.Hash, senderAddress common.Address, msg *models.KeyGenBroadcastMessage3) *KeyGenerationPhase3MessageRequest {
+func NewKeyGenerationPhase3MessageRequest(sessionID common.Hash, self *models.NotaryInfo, msg *models.KeyGenBroadcastMessage3) *KeyGenerationPhase3MessageRequest {
 	return &KeyGenerationPhase3MessageRequest{
 		BaseRequest:       api.NewBaseRequest(APINamePKNPhase3SecretShare),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		Msg:               msg,
 	}
 }
@@ -93,10 +93,10 @@ type KeyGenerationPhase4MessageRequest struct {
 }
 
 // NewKeyGenerationPhase4MessageRequest :
-func NewKeyGenerationPhase4MessageRequest(sessionID common.Hash, senderAddress common.Address, msg *models.KeyGenBroadcastMessage4) *KeyGenerationPhase4MessageRequest {
+func NewKeyGenerationPhase4MessageRequest(sessionID common.Hash, self *models.NotaryInfo, msg *models.KeyGenBroadcastMessage4) *KeyGenerationPhase4MessageRequest {
 	return &KeyGenerationPhase4MessageRequest{
 		BaseRequest:       api.NewBaseRequest(APINamePKNPhase4PubKeyProof),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, senderAddress),
+		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
 		Msg:               msg,
 	}
 }
