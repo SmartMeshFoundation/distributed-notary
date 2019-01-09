@@ -14,17 +14,36 @@ import (
 // OnEvent 链上事件逻辑处理 TODO
 func (ns *CrossChainService) OnEvent(e chain.Event) {
 	logPrefix := fmt.Sprintf("CrossChainService[SCToken=%s] ", utils.APex(ns.meta.SCToken))
+	if e.GetChainName() != ns.meta.MCName {
+		// never happend
+		panic("dispatch event to wrong CrossChainService")
+	}
 	var err error
 	switch event := e.(type) {
+	/*
+		events about block number
+	*/
 	case ethevents.NewBlockEvent:
 		err = onEthereumNewBlockEvent(ns, event)
-	case ethevents.PrepareLockinEvent:
-	case ethevents.PrepareLockoutEvent:
-	case ethevents.LockoutSecretEvent:
 	case smcevents.NewBlockEvent:
-	case smcevents.PrepareLockinEvent:
-	case smcevents.PrepareLockoutEvent:
-	case smcevents.LockinSecretEvent:
+	/*
+		events about lockin
+	*/
+	case ethevents.PrepareLockinEvent: // MCPLI
+	case smcevents.PrepareLockinEvent: // SCPLI
+	case smcevents.LockinSecretEvent: //  SCLIS
+	case ethevents.LockinEvent: // MCLI
+	case ethevents.CancelLockinEvent: // MCCancelLI
+	case smcevents.CancelLockinEvent: // SCCancelLI
+	/*
+		events about lockout
+	*/
+	case smcevents.PrepareLockoutEvent: // SCPLO
+	case ethevents.PrepareLockoutEvent: // MCPLO
+	case ethevents.LockoutSecretEvent: // MCLOS
+	case smcevents.LockoutEvent: // SCLO
+	case ethevents.CancelLockoutEvent: // MCCancelLO
+	case smcevents.CancelLockoutEvent: // SCCancelLO
 	default:
 		err = errors.New("unknow event")
 	}

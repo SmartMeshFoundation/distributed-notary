@@ -286,6 +286,8 @@ func (ds *DispatchService) dispatchEvent(e chain.Event) {
 				return
 			}
 		}
+		// never happen
+		panic(fmt.Errorf("can not find CrossChainService with MCContractAddress %s", e.GetFromAddress().String()))
 	} else {
 		// 侧链事件,直接根据SCToken地址调度
 		service, ok := ds.scToken2CrossChainServiceMap[e.GetSCTokenAddress()]

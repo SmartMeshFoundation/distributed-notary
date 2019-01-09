@@ -20,7 +20,7 @@ type SpectrumContractDeployTXData struct {
 }
 
 // NewSpectrumContractDeployTX :
-func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address) (tx *SpectrumContractDeployTXData) {
+func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address, params ...string) (tx *SpectrumContractDeployTXData) {
 	var txBytes []byte
 	transactor := &bind.TransactOpts{
 		From: callerAddress,
@@ -32,7 +32,7 @@ func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address) (t
 			return nil, errShouldBe
 		},
 	}
-	_, err := c.DeployContract(transactor)
+	_, err := c.DeployContract(transactor, params...)
 	if err != errShouldBe {
 		// 这里不可能发生
 		panic(err)

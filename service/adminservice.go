@@ -280,13 +280,14 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 	if err != nil {
 		return
 	}
-	return as.distributedDeployOnSpectrum(c, privateKeyInfo)
+	tokenName := c.GetChainName() + "-AtmosphereToken"
+	return as.distributedDeployOnSpectrum(c, privateKeyInfo, tokenName)
 }
 
-func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, err error) {
+func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo, params ...string) (contractAddress common.Address, err error) {
 	// 1. 获取待签名的数据
 	var msgToSign mecdsa.MessageToSign
-	msgToSign = messagetosign.NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress())
+	msgToSign = messagetosign.NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress(), params...)
 	// 2. 签名
 	var signature []byte
 	signature, err = as.notaryService.startDistributedSignAndWait(msgToSign, privateKeyInfo)
@@ -321,5 +322,5 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 			return tx.WithSignature(signer, signature)
 		},
 	}
-	return c.DeployContract(transactor)
+	return c.DeployContract(transactor, params...)
 }
