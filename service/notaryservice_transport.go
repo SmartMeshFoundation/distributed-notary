@@ -117,6 +117,11 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 			api.NotarySign(m, ns.privateKey)
 		}
 		payload = utils.ToJSONString(m)
+	/*
+		admin
+	*/
+	case *notaryapi.NewSCTokenRequest:
+		payload = utils.ToJSONString(m)
 	default:
 		err = errors.New("api call not expect")
 		return

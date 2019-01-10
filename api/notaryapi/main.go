@@ -29,6 +29,8 @@ const (
 	APINameDSMPhase5A5BProof  = "DSM-Phase5A5BProof"
 	APINameDSMPhase5CProof    = "DSM-Phase5CProof"
 	APINameDSMPhase6ReceiveSI = "DSM-Phase6ReceiveSI"
+
+	APIAdminNameNewSCToken = "NotaryNewSCToken" // 该接口在公证人参与签名部署合约时,由合约部署操作发起人在合约部署成功后,将合约信息广播给所有公证人
 )
 
 // APIName2URLMap :
@@ -55,6 +57,11 @@ func init() {
 	APIName2URLMap[APINameDSMPhase5A5BProof] = "/api/1/sign/phase5A5B"
 	APIName2URLMap[APINameDSMPhase5CProof] = "/api/1/sign/phase5C"
 	APIName2URLMap[APINameDSMPhase6ReceiveSI] = "/api/1/sign/phase6"
+
+	/*
+		admin api
+	*/
+	APIName2URLMap[APIAdminNameNewSCToken] = "/api/1/admin/sctoken"
 }
 
 /*
@@ -87,6 +94,10 @@ func NewNotaryAPI(host string) *NotaryAPI {
 		rest.Post(APIName2URLMap[APINameDSMPhase5A5BProof], notaryAPI.postRequestWithBody),
 		rest.Post(APIName2URLMap[APINameDSMPhase5CProof], notaryAPI.postRequestWithBody),
 		rest.Post(APIName2URLMap[APINameDSMPhase6ReceiveSI], notaryAPI.postRequestWithBody),
+		/*
+			others
+		*/
+		rest.Post(APIName2URLMap[APIAdminNameNewSCToken], notaryAPI.postRequestWithBody),
 	)
 	if err != nil {
 		log.Crit(fmt.Sprintf("maker router :%s", err))
@@ -151,6 +162,9 @@ func (na *NotaryAPI) postRequestWithBody(w rest.ResponseWriter, r *rest.Request)
 		err = json.Unmarshal(content, &req2)
 	case APINameDSMPhase6ReceiveSI:
 		req2 = &DSMPhase6ReceiveSIRequest{}
+		err = json.Unmarshal(content, &req2)
+	case APIAdminNameNewSCToken:
+		req2 = &NewSCTokenRequest{}
 		err = json.Unmarshal(content, &req2)
 	}
 	if err != nil {

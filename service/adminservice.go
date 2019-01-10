@@ -9,6 +9,7 @@ import (
 	"bytes"
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
+	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
@@ -17,6 +18,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -64,6 +66,8 @@ func (as *AdminService) OnRequest(req api.Request) {
 		as.onCreatePrivateKeyRequest(r)
 	case *userapi.RegisterSCTokenRequest:
 		as.onRegisterSCTokenRequest(r)
+	case *notaryapi.NewSCTokenRequest:
+		as.onNewSCTokenRequest(r)
 	/*
 		debug api
 	*/
@@ -261,6 +265,14 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 		return
 	}
+	// 6. 通知其余公证人
+	newSCTokenReq := notaryapi.NewNewSCTokenRequest(&scTokenMetaInfo)
+	err = as.notaryService.BroadcastMsg(utils.EmptyHash, notaryapi.APIAdminNameNewSCToken, newSCTokenReq, true)
+	if err != nil {
+		log.Error("err when broadcast NewSCTokenRequest to other notaries err=", err.Error())
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
+	}
 	// 7. 返回
 	req.WriteSuccessResponse(scTokenMetaInfo)
 }
@@ -314,4 +326,23 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 	}
 	contractAddress, err = c.DeployContract(transactor, params...)
 	return
+}
+
+func (as *AdminService) onNewSCTokenRequest(req *notaryapi.NewSCTokenRequest) {
+	var err error
+	scTokenMetaInfo := req.SCTokenMetaInfo
+	// 1. 校验信息 TODO
+	// 2. 保存
+	err = as.db.NewSCTokenMetaInfo(scTokenMetaInfo)
+	if err != nil {
+		req.WriteErrorResponse(api.ErrorCodeException)
+		return
+	}
+	// 3. 注册到DispatchService并开始提供服务
+	err = as.dispatchService.registerNewSCToken(scTokenMetaInfo)
+	if err != nil {
+		req.WriteErrorResponse(api.ErrorCodeException)
+		return
+	}
+	req.WriteSuccessResponse(nil)
 }
