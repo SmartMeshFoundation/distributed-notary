@@ -10,7 +10,8 @@ import (
 // LockoutEvent :
 type LockoutEvent struct {
 	*chain.BaseEvent
-	Account common.Address // lockout的用户地址
+	Account    common.Address `json:"account"` // lockout的用户地址
+	SecretHash common.Hash    `json:"secret_hash"`
 }
 
 // CreateLockoutEvent :
@@ -23,5 +24,6 @@ func CreateLockoutEvent(log types.Log) (event LockoutEvent, err error) {
 	event.BaseEvent = createBaseEventFromSpectrumLog(AtmosphereTokenLockoutEventName, log)
 	// params
 	event.Account = e.Account
+	event.SecretHash = e.SecretHash
 	return
 }

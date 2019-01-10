@@ -10,7 +10,7 @@ import (
 // LockinSecretEvent :
 type LockinSecretEvent struct {
 	*chain.BaseEvent
-	Secret common.Hash // 用户提交到合约的密码
+	Secret common.Hash `json:"secret"` // 用户提交到合约的密码
 }
 
 // CreateLockinSecretEvent :

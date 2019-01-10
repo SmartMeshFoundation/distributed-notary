@@ -41,17 +41,45 @@ LockinInfo 状态变更:
 	7. 锁过期							 	: MCLockStatus/SCLockStatus = LockStatusExpiration
 */
 
+// UnknownNotaryIDInCharge 为确定负责公证人之前的默认值
+var UnknownNotaryIDInCharge = -1
+
 /*
 LockinInfo :
 该结构体记录一次Lockin的所有数据及状态
 */
 type LockinInfo struct {
-	UserAddress    common.Address `json:"user_address"`     // 提出lockin请求用户的地址,唯一ID
-	SCTokenAddress common.Address `json:"sc_token_address"` // SCToken
-	PrivateKeyID   common.Hash    `json:"private_key_id"`   // 该次Lockin使用的keyID
-	Amount         *big.Int       `json:"amount"`           // 金额
-	MCExpiration   int64          `json:"mc_expiration"`    // 主链过期块
-	SCExpiration   int64          `json:"sc_expiration"`    // 侧链过期块
-	MCLockStatus   LockStatus     `json:"mc_lock_status"`   // 主链锁状态
-	SCLockStatus   LockStatus     `json:"sc_lock_status"`   // 侧链锁状态
+	SecretHash         common.Hash    `json:"secret_hash"`         // 密码hash,db唯一ID
+	Secret             common.Hash    `json:"secret"`              // 密码
+	UserAddress        common.Address `json:"user_address"`        // 提出lockin请求用户的地址
+	SCTokenAddress     common.Address `json:"sc_token_address"`    // SCToken
+	Amount             *big.Int       `json:"amount"`              // 金额
+	MCExpiration       uint64         `json:"mc_expiration"`       // 主链过期块
+	SCExpiration       uint64         `json:"sc_expiration"`       // 侧链过期块
+	MCLockStatus       LockStatus     `json:"mc_lock_status"`      // 主链锁状态
+	SCLockStatus       LockStatus     `json:"sc_lock_status"`      // 侧链锁状态
+	Data               []byte         `json:"data"`                // 附加信息
+	NotaryIDInCharge   int            `json:"notary_id_in_charge"` // 负责公证人ID,如果没参与lockin签名的公证人,在整个LockinInfo生命周期中,该值都为UnknownNotaryIdInCharge
+	StartTime          int64          `json:"start_time"`          // 开始时间,即MCPrepareLockin事件发生的时间
+	StartMCBlockNumber uint64         `json:"start_block_number"`  // 开始时主链块数
+	EndTime            int64          `json:"end_time"`            // 结束时间,即MCLockin事件发生的时间
+	EndMCBlockNumber   uint64         `json:"end_mc_block_number"` // 结束时主链块数
+}
+
+// NewLockinInfo :
+func (db *DB) NewLockinInfo(lockinInfo *LockinInfo) (err error) {
+	// TODO
+	return
+}
+
+// GetLockinInfo :
+func (db *DB) GetLockinInfo(secretHash common.Hash) (lockinInfo *LockinInfo, err error) {
+	// TODO
+	return
+}
+
+// UpdateLockinInfo :
+func (db *DB) UpdateLockinInfo(lockinInfo *LockinInfo) (err error) {
+	// TODO
+	return
 }

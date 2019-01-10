@@ -10,7 +10,8 @@ import (
 // CancelLockinEvent :
 type CancelLockinEvent struct {
 	*chain.BaseEvent
-	Account common.Address // lockin的用户地址
+	Account    common.Address `json:"account"` // lockin的用户地址
+	SecretHash common.Hash    `json:"secret_hash"`
 }
 
 // CreateCancelLockinEvent :
@@ -23,5 +24,6 @@ func CreateCancelLockinEvent(log types.Log) (event CancelLockinEvent, err error)
 	event.BaseEvent = createBaseEventFromSpectrumLog(AtmosphereTokenCancelLockinEventName, log)
 	// params
 	event.Account = e.Account
+	event.SecretHash = e.SecretHash
 	return
 }

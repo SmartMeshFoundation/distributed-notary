@@ -12,8 +12,8 @@ import (
 // PrepareLockoutEvent :
 type PrepareLockoutEvent struct {
 	*chain.BaseEvent
-	Account common.Address // 提出lockout的用户地址
-	Amount  *big.Int       // 金额
+	Account common.Address `json:"account"` // 提出lockout的用户地址
+	Amount  *big.Int       `json:"amount"`  // 金额
 }
 
 // CreatePrepareLockoutEvent :

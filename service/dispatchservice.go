@@ -279,7 +279,7 @@ func (ds *DispatchService) dispatchEvent(e chain.Event) {
 	if e.GetSCTokenAddress() == utils.EmptyAddress {
 		// 主链事件,根据主链合约地址FromAddress调度,遍历,后续可优化,维护一个主链合约地址-SCToken地址的map即可
 		for _, service := range ds.scToken2CrossChainServiceMap {
-			if service.GetMCContractAddress() == e.GetFromAddress() {
+			if service.getMCContractAddress() == e.GetFromAddress() {
 				// 事件业务逻辑处理
 				go service.OnEvent(e)
 				// 每个事件应该只有一个对应service,所以这里处理完毕直接return

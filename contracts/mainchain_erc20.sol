@@ -58,9 +58,9 @@ contract LockedEthereum is Owned {
     event PrepareLockin(address account,uint256 value);
     event LockoutSecret(bytes32 secret);
     event PrepareLockout(address account, uint256 _value);
-    event Lockin(address account);
-    event CancelLockin(address account);
-    event CancelLockout(address account);
+    event Lockin(address account, bytes32 secretHash);
+    event CancelLockin(address account, bytes32 secretHash);
+    event CancelLockout(address account, bytes32 secretHash);
     struct LockoutInfo {
         bytes32 SecretHash; //转出时指定的密码hash
         uint256 Expiration; //超期以后可以撤销
@@ -99,12 +99,14 @@ contract LockedEthereum is Owned {
         require(li.value>0);
         require(li.SecretHash==keccak256(abi.encodePacked(secret)));
         require(li.Expiration>block.number);
+        // 下发事件用
+        bytes32 secretHash = li.SecretHash;
 
         //根据HTLC信息,为这个账户分配相应的token
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
-        emit Lockin(account);
+        emit Lockin(account, secretHash);
     }
     //lockin过程出错,expiration过期以后,任何人都可以撤销此次交易,实际上最可能的就是用户自己
     function cancelLockin(address account)   public {
@@ -113,7 +115,8 @@ contract LockedEthereum is Owned {
         uint256 value=li.value;
         require(li.value>0);
         require(block.number>li.Expiration);
-
+        // 下发事件用
+        bytes32 secretHash = li.SecretHash;
         //清空记录,也节省gas
         li.value=0;
         li.SecretHash=bytes32(0);
@@ -122,7 +125,7 @@ contract LockedEthereum is Owned {
 
         //清空后在进行,防止递归调用.
         account.transfer(value);
-        emit CancelLockin(account);
+        emit CancelLockin(account, secretHash);
     }
 
     //退出的过程和lockin过程类似,
@@ -155,15 +158,17 @@ contract LockedEthereum is Owned {
         emit LockoutSecret(secret);
     }
     //锁过期以后,由公证人取消(任何人)
-    function cancleLockOut(address count) public {
-        LockoutInfo storage li=lockout_htlc[count];
+    function cancleLockOut(address account) public {
+        LockoutInfo storage li=lockout_htlc[account];
         uint256 value=li.value;
         require(value>0);
         require(block.number>li.Expiration);
+        // 下发事件用
+        bytes32 secretHash = li.SecretHash;
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
-        emit CancelLockout(count);
+        emit CancelLockout(account, secretHash);
     }
     function queryLockin(address account)   view external returns(bytes32,uint256,uint256,bytes32) {
         LockinInfo storage li=lockin_htlc[account];

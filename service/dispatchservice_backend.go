@@ -35,7 +35,7 @@ func (ds *DispatchService) registerNewSCToken(scTokenMetaInfo *models.SideChainT
 	// 6. 构造CrossChainService开始提供服务
 	ds.scToken2CrossChainServiceMapLock.Lock()
 	defer ds.scToken2CrossChainServiceMapLock.Unlock()
-	ds.scToken2CrossChainServiceMap[scTokenMetaInfo.SCToken] = NewCrossChainService(scTokenMetaInfo)
+	ds.scToken2CrossChainServiceMap[scTokenMetaInfo.SCToken] = NewCrossChainService(ds.db, ds.notaryService.self, scTokenMetaInfo)
 	// 注册侧链合约:
 	err = ds.chainMap[spectrumevents.ChainName].RegisterEventListenContract(scTokenMetaInfo.SCToken)
 	if err != nil {

@@ -137,9 +137,9 @@ contract AtmosphereToken is StandardToken {
     event PrepareLockin(address account, uint256 value);
     event LockinSecret(bytes32 secret);
     event PrepareLockout(address account, uint256 _value);
-    event Lockout(address account);
-    event CancelLockin(address account);
-    event CancelLockout(address account);
+    event Lockout(address account, bytes32 secretHash);
+    event CancelLockin(address account, bytes32 secretHash);
+    event CancelLockout(address account, bytes32 secretHash);
     struct LockoutInfo {
         bytes32 SecretHash; //转出时指定的密码hash
         uint256 Expiration; //超期以后可以撤销
@@ -198,12 +198,14 @@ contract AtmosphereToken is StandardToken {
         //已经过期了
         require(li.value>0);
         require(block.number>li.Expiration);
+        // 下发事件用
+        bytes32 secretHash = li.SecretHash;
 
         //清空记录,也节省gas
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
-        emit CancelLockin(account);
+        emit CancelLockin(account,secretHash);
     }
 
     //退出的过程和lockin过程类似,第一步是退出人(用户)在侧链PrepareLockout,公证人在接收到用户请求,并且收到相应的事件以后(需要足够的确认块数),会在主链上PrepareLockout 要求ce>c+ze
@@ -231,6 +233,8 @@ contract AtmosphereToken is StandardToken {
         require(value>0);
         require(li.Expiration>block.number);
         require(li.SecretHash==keccak256(abi.encodePacked(secret)));
+        // 下发事件用
+        bytes32 secretHash = li.SecretHash;
 
         li.value=0;
         li.SecretHash=bytes32(0);
@@ -239,7 +243,7 @@ contract AtmosphereToken is StandardToken {
         //侧链发行总量要降低
         totalSupply-=value;
         require(totalSupply>=1);
-        emit Lockout(from);
+        emit Lockout(from, secretHash);
     }
     //锁过期以后,由用户取消 其他任何人也都可以做
     function cancelLockOut(address account) public {
@@ -247,13 +251,15 @@ contract AtmosphereToken is StandardToken {
         uint256 value=li.value;
         require(value>0);
         require(block.number>li.Expiration);
+        // 下发事件用
+        bytes32 secretHash = li.SecretHash;
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
         li.Data=bytes32(0);
         //退回到个人账户上
         balances[account]+=value;
-        emit CancelLockout(account);
+        emit CancelLockout(account, secretHash);
     }
     function queryLockin(address account) view external returns(bytes32,uint256,uint256) {
         LockinInfo storage li=lockin_htlc[account];

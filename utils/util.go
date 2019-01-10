@@ -7,6 +7,7 @@ import (
 
 	"crypto/ecdsa"
 	rand2 "crypto/rand"
+	"crypto/sha256"
 
 	"encoding/hex"
 	"encoding/json"
@@ -57,6 +58,12 @@ func Random(n int) []byte {
 //Sha3 is short for Keccak256Hash
 func Sha3(data ...[]byte) common.Hash {
 	return crypto.Keccak256Hash(data...)
+}
+
+//ShaSecret is short for sha256
+func ShaSecret(data []byte) common.Hash {
+	//	return crypto.Keccak256Hash(data...)
+	return sha256.Sum256(data)
 }
 
 //PublicKeyToAddress convert public key bin to address

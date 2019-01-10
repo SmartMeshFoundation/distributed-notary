@@ -10,7 +10,8 @@ import (
 // LockinEvent :
 type LockinEvent struct {
 	*chain.BaseEvent
-	Account common.Address // lockout的用户地址
+	Account    common.Address `json:"account"` // lockout的用户地址
+	SecretHash common.Hash    `json:"secret_hash"`
 }
 
 // CreateLockinEvent :
@@ -23,5 +24,6 @@ func CreateLockinEvent(log types.Log) (event LockinEvent, err error) {
 	event.BaseEvent = createBaseEventFromEthereumLog(LockedEthereumLockinEventName, log)
 	// params
 	event.Account = e.Account
+	event.SecretHash = e.SecretHash
 	return
 }

@@ -12,9 +12,9 @@ import (
 // PrepareLockinEvent :
 type PrepareLockinEvent struct {
 	*chain.BaseEvent
-	Account common.Address // lockin的用户地址
+	Account common.Address `json:"account"` // lockin的用户地址
 	// htlc
-	Amount *big.Int
+	Amount *big.Int `json:"amount"`
 }
 
 // CreatePrepareLockinEvent :
