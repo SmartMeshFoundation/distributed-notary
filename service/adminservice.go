@@ -331,7 +331,12 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 func (as *AdminService) onNewSCTokenRequest(req *notaryapi.NewSCTokenRequest) {
 	var err error
 	scTokenMetaInfo := req.SCTokenMetaInfo
-	// 1. 校验信息 TODO
+	// 1. 校验信息 TODO 需要验证两个sessionID在本地是否存在且状态为签名完成
+	/*
+		TODO 需要验证的信息 :
+		a. 主链合约状态,对应签名在本地是否有记录,跟请求是否匹配
+		b. 侧链合约状态,对应签名在本地是否有记录,跟请求是否匹配
+	*/
 	// 2. 保存
 	err = as.db.NewSCTokenMetaInfo(scTokenMetaInfo)
 	if err != nil {
