@@ -12,6 +12,9 @@ var ListenIP = "127.0.0.1"
 //ListenPort my listen port
 var ListenPort = "18000"
 
+// SCTokenNameSuffix 侧链Token名统一后缀
+var SCTokenNameSuffix = "-AtmosphereToken"
+
 /*
 ThresholdCount 要求2/3以上的人都同意才能生成有效签名.
 */

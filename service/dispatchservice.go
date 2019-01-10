@@ -119,7 +119,7 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		return
 	}
 	// 5. 初始化NotaryService
-	ds.notaryService, err = NewNotaryService(db, privateKey, notaries)
+	ds.notaryService, err = NewNotaryService(db, privateKey, notaries, ds)
 	if err != nil {
 		log.Error("init NotaryService err : %s", err.Error())
 		return

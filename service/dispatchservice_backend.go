@@ -14,6 +14,10 @@ import (
 */
 type dispatchServiceBackend interface {
 	getChainByName(chainName string) (c chain.Chain, err error)
+
+	/*
+		notaryService在部署合约之后调用,原则上除此和启动时,其余地方不能调用
+	*/
 	registerNewSCToken(scTokenMetaInfo *models.SideChainTokenMetaInfo) (err error)
 }
 

@@ -22,6 +22,8 @@ type SignMessgeModel struct {
 	Key             []byte `gorm:"primary_key"`
 	UsedPrivateKey  []byte //使用哪个privatekey foreign key
 	Message         []byte `gorm:"type:varchar(4096);"` //代签名消息
+	MessageName     []byte // 签名消息类型名
+	SignTime        int64  // 签名时间
 	S               []byte //此次签名指定的一组公证人,大于t即可
 	SignedKey       []byte `gorm:"type:varchar(4096);"`
 	Phase1BroadCast []byte `gorm:"type:varchar(4096);"`
@@ -121,7 +123,9 @@ type SignMessage struct {
 	Key             common.Hash
 	UsedPrivateKey  common.Hash //使用哪个privatekey
 	Message         []byte      //代签名消息
-	S               []int       //此次签名指定的一组公证人,大于t即可
+	MessageName     string      //签名消息类型名
+	SignTime        int64
+	S               []int //此次签名指定的一组公证人,大于t即可
 	SignedKey       *SignedKey
 	Phase1BroadCast map[int]*SignBroadcastPhase1
 	//phase2
@@ -255,6 +259,8 @@ func fromSignMessageModel(p *SignMessgeModel) *SignMessage {
 	if p.Message != nil && len(p.Message) > 1 {
 		p2.Message = p.Message
 	}
+	p2.MessageName = string(p.MessageName)
+	p2.SignTime = p.SignTime
 	if p.MessageA != nil && len(p.MessageA) > 1 {
 		p2.MessageA = &MessageA{p.MessageA}
 	}
@@ -266,6 +272,8 @@ func toSignMessageModle(p *SignMessage) *SignMessgeModel {
 		Key:             p.Key[:],
 		UsedPrivateKey:  p.UsedPrivateKey[:],
 		Message:         p.Message,
+		MessageName:     []byte(p.MessageName),
+		SignTime:        p.SignTime,
 		S:               interface2Byte(p.S, p.S == nil),
 		SignedKey:       interface2Byte(p.SignedKey, p.SignedKey == nil),
 		Phase1BroadCast: interface2Byte(p.Phase1BroadCast, p.Phase1BroadCast == nil),

@@ -12,7 +12,11 @@ type testMessage struct {
 	data []byte
 }
 
-func (tm *testMessage) GetBytes() []byte {
+func (tm *testMessage) GetSignBytes() []byte {
+	return tm.data
+}
+
+func (tm *testMessage) GetTransportBytes() []byte {
 	return tm.data
 }
 
@@ -283,7 +287,7 @@ func TestLockout(t *testing.T) {
 	assert.EqualValues(t, finish, true)
 	_ = sig
 	//var h common.Hash
-	//h.SetBytes(message.GetBytes())
+	//h.SetBytes(message.GetSignBytes())
 	//_, err = utils.Ecrecover(h, sig)
 	//if err != nil {
 	//	panic(err)

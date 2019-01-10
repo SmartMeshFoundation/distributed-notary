@@ -26,21 +26,21 @@ func NewDSMAskRequest(sessionID common.Hash, self *models.NotaryInfo) *DSMAskReq
 type DSMNotifySelectionRequest struct {
 	api.BaseRequest
 	api.BaseNotaryRequest
-	NotaryIDs      []int       `json:"notary_ids"`
-	PrivateKeyID   common.Hash `json:"private_key_id"`
-	MsgName        string      `json:"msg_name"`
-	MsgBytesToSign []byte      `json:"msg_bytes_to_sign"`
+	NotaryIDs               []int       `json:"notary_ids"`
+	PrivateKeyID            common.Hash `json:"private_key_id"`
+	MsgName                 string      `json:"msg_name"`
+	MsgToSignTransportBytes []byte      `json:"msg_to_sign_transport_bytes"`
 }
 
 // NewDSMNotifySelectionRequest :
 func NewDSMNotifySelectionRequest(sessionID common.Hash, self *models.NotaryInfo, notaryIDs []int, privateKeyID common.Hash, msgToSign mecdsa.MessageToSign) *DSMNotifySelectionRequest {
 	return &DSMNotifySelectionRequest{
-		BaseRequest:       api.NewBaseRequest(APINameDSMNotifySelection),
-		BaseNotaryRequest: api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
-		NotaryIDs:         notaryIDs,
-		PrivateKeyID:      privateKeyID,
-		MsgBytesToSign:    msgToSign.GetBytes(),
-		MsgName:           msgToSign.GetName(),
+		BaseRequest:             api.NewBaseRequest(APINameDSMNotifySelection),
+		BaseNotaryRequest:       api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
+		NotaryIDs:               notaryIDs,
+		PrivateKeyID:            privateKeyID,
+		MsgToSignTransportBytes: msgToSign.GetTransportBytes(),
+		MsgName:                 msgToSign.GetName(),
 	}
 }
 

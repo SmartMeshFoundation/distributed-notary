@@ -11,6 +11,8 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/params"
+	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -20,19 +22,21 @@ import (
 
 // NotaryService :
 type NotaryService struct {
-	privateKey     *ecdsa.PrivateKey
-	self           models.NotaryInfo
-	notaries       []models.NotaryInfo //这里保存除我以外的notary信息
-	db             *models.DB
-	sessionLockMap map[common.Hash]*sync.Mutex
+	privateKey      *ecdsa.PrivateKey
+	self            models.NotaryInfo
+	notaries        []models.NotaryInfo //这里保存除我以外的notary信息
+	db              *models.DB
+	dispatchService dispatchServiceBackend
+	sessionLockMap  map[common.Hash]*sync.Mutex
 }
 
 // NewNotaryService :
-func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries []models.NotaryInfo) (ns *NotaryService, err error) {
+func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries []models.NotaryInfo, dispatchService dispatchServiceBackend) (ns *NotaryService, err error) {
 	ns = &NotaryService{
-		db:             db,
-		privateKey:     privateKey,
-		sessionLockMap: make(map[common.Hash]*sync.Mutex),
+		db:              db,
+		privateKey:      privateKey,
+		sessionLockMap:  make(map[common.Hash]*sync.Mutex),
+		dispatchService: dispatchService,
 	}
 	// 初始化self, notaries
 	selfAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
@@ -268,12 +272,16 @@ func (ns *NotaryService) onKeyGenerationPhase4MessageRequest(req *notaryapi.KeyG
 /*
 主动开始一次签名,并等待最终的签名结果
 */
-func (ns *NotaryService) startDistributedSignAndWait(msgToSign mecdsa.MessageToSign, privateKeyInfo *models.PrivateKeyInfo) (signature []byte, err error) {
+func (ns *NotaryService) startDistributedSignAndWait(msgToSign mecdsa.MessageToSign, privateKeyInfo *models.PrivateKeyInfo) (signature []byte, sessionID common.Hash, err error) {
 	// 1. DSMAsk
 	start := time.Now()
-	var sessionID common.Hash
+	notaryNumNeed := params.ThresholdCount + 1
+	if msgToSign.GetName() == messagetosign.SpectrumContractDeployTXDataName {
+		// 如果需要签名的是部署合约的tx,则要求所有公证人参与
+		notaryNumNeed = params.ShareCount
+	}
 	var notaryIDs []int
-	sessionID, notaryIDs, err = ns.startDSMAsk()
+	sessionID, notaryIDs, err = ns.startDSMAsk(notaryNumNeed)
 	if err != nil {
 		log.Error("startDSMAsk err = %s", err.Error())
 		return

@@ -7,17 +7,17 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
+	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/nkbai/log"
 )
 
-func (ns *NotaryService) startDSMAsk() (sessionID common.Hash, notaryIDs []int, err error) {
+func (ns *NotaryService) startDSMAsk(notaryNumNeed int) (sessionID common.Hash, notaryIDs []int, err error) {
 	sessionID = utils.NewRandomHash()
 	log.Trace(SessionLogMsg(sessionID, "DSMAsk start..."))
 	notaryIDs = append(notaryIDs, ns.self.ID)
@@ -27,12 +27,12 @@ func (ns *NotaryService) startDSMAsk() (sessionID common.Hash, notaryIDs []int, 
 		if err == nil {
 			notaryIDs = append(notaryIDs, notary.ID)
 		}
-		if len(notaryIDs) > params.ThresholdCount {
+		if len(notaryIDs) >= notaryNumNeed {
 			break
 		}
 	}
-	if len(notaryIDs) <= params.ThresholdCount {
-		err = errors.New("no enough notary to sign message")
+	if len(notaryIDs) < notaryNumNeed {
+		err = fmt.Errorf("no enough notary to sign message, need %d but only got %d", notaryNumNeed, len(notaryIDs))
 		return
 	}
 	log.Trace(SessionLogMsg(sessionID, "DSMAsk done..."))
@@ -69,13 +69,28 @@ func (ns *NotaryService) saveDSMNotifySelection(req *notaryapi.DSMNotifySelectio
 	sessionID := req.GetSessionID()
 	ns.lockSession(sessionID)
 	log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection start..."))
-	// 1. 构造dsm
-	var msgToSign mecdsa.MessageToSign
-	msgToSign, err = parseMessageToSign(req.MsgName, req.MsgBytesToSign)
+	// 0. 校验私钥ID可用性
+	var privateKeyInfo *models.PrivateKeyInfo
+	privateKeyInfo, err = ns.db.LoadPrivateKeyInfo(req.PrivateKeyID)
 	if err != nil {
 		ns.unlockSession(sessionID)
 		return
 	}
+	// 1. 解析msgToSign
+	var msgToSign mecdsa.MessageToSign
+	msgToSign, err = parseMessageToSign(req.MsgName, req.MsgToSignTransportBytes)
+	if err != nil {
+		ns.unlockSession(sessionID)
+		return
+	}
+	// 2. 校验msgToSign
+	err = ns.checkMsgToSign(sessionID, privateKeyInfo, msgToSign)
+	if err != nil {
+		ns.unlockSession(sessionID)
+		return
+	}
+	fmt.Println("======================== MsgToChain check SUCCESS")
+	// 3. 构造dsm
 	_, err = mecdsa.NewDistributedSignMessage(ns.db, ns.self.ID, msgToSign, sessionID, req.PrivateKeyID, req.NotaryIDs)
 	if err != nil {
 		ns.unlockSession(sessionID)
@@ -370,11 +385,33 @@ func (ns *NotaryService) saveDSMPhase6(sessionID, privateKeyID common.Hash, msg 
 */
 func parseMessageToSign(msgName string, buf []byte) (msg mecdsa.MessageToSign, err error) {
 	switch msgName {
-	case messagetosign.SpectrumContractDeployTXDataNameName:
+	case messagetosign.SpectrumContractDeployTXDataName:
 		msg = new(messagetosign.SpectrumContractDeployTXData)
 		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")
+	}
+	return
+}
+
+/*
+签名信息校验,根据收到的消息类型,自己生成一份对应的消息体,并与收到的比对
+*/
+func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *models.PrivateKeyInfo, msg mecdsa.MessageToSign) (err error) {
+	// TODO
+	switch m := msg.(type) {
+	// 1. 合约部署消息
+	case *messagetosign.SpectrumContractDeployTXData:
+		log.Trace(SessionLogMsg(sessionID, "Got %s-%s MsgToSign,run checkMsgToSign...", m.GetName(), m.DeployChainName))
+		var c chain.Chain
+		c, err = ns.dispatchService.getChainByName(m.DeployChainName)
+		if err != nil {
+			return
+		}
+		err = m.VerifySignBytes(c, privateKeyInfo.ToAddress())
+	// 2. 合约调用消息
+	default:
+		err = fmt.Errorf("unknow message name=%s", msg.GetName())
 	}
 	return
 }

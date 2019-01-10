@@ -15,8 +15,8 @@ import (
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
-	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -220,7 +220,7 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 		return
 	}
 	// 3. 部署主链合约
-	mcContractAddress, err := as.distributedDeployMCContact(req.MainChainName, privateKeyInfo)
+	mcContractAddress, mcDeploySessionID, err := as.distributedDeployMCContact(req.MainChainName, privateKeyInfo)
 	if err != nil {
 		err = fmt.Errorf("err when distributedDeployMCContact : %s", err.Error())
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
@@ -229,7 +229,7 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	log.Info("deploy MCContract success, contract address = %s", mcContractAddress.String())
 	// TODO 这里是否需要中途存储
 	// 4. 部署侧链合约
-	scTokenAddress, err := as.distributedDeploySCToken(privateKeyInfo)
+	scTokenAddress, scDeploySessionID, err := as.distributedDeploySCToken(privateKeyInfo)
 	if err != nil {
 		err = fmt.Errorf("err when distributedDeploySCToken : %s", err.Error())
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
@@ -242,8 +242,10 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	scTokenMetaInfo.SCTokenName = req.MainChainName + "-Token"
 	scTokenMetaInfo.SCToken = scTokenAddress
 	scTokenMetaInfo.SCTokenOwnerKey = privateKeyInfo.Key
+	scTokenMetaInfo.SCTokenDeploySessionID = scDeploySessionID
 	scTokenMetaInfo.MCLockedContractAddress = mcContractAddress
 	scTokenMetaInfo.MCLockedContractOwnerKey = privateKeyInfo.Key
+	scTokenMetaInfo.MCLockedContractDeploySessionID = mcDeploySessionID
 	scTokenMetaInfo.CreateTime = time.Now().Unix()
 	scTokenMetaInfo.OrganiserID = as.notaryService.self.ID
 	err = as.db.NewSCTokenMetaInfo(&scTokenMetaInfo)
@@ -263,7 +265,7 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	req.WriteSuccessResponse(scTokenMetaInfo)
 }
 
-func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, err error) {
+func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, sessionID common.Hash, err error) {
 	if chainName != ethevents.ChainName {
 		err = errors.New("only support ethereum as main chain now")
 		return
@@ -274,39 +276,27 @@ func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyI
 	return as.distributedDeployOnSpectrum(c, privateKeyInfo)
 }
 
-func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, err error) {
+func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, sessionID common.Hash, err error) {
 	var c chain.Chain
 	c, err = as.dispatchService.getChainByName(smcevents.ChainName)
 	if err != nil {
 		return
 	}
-	tokenName := c.GetChainName() + "-AtmosphereToken"
+	tokenName := c.GetChainName() + params.SCTokenNameSuffix
 	return as.distributedDeployOnSpectrum(c, privateKeyInfo, tokenName)
 }
 
-func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo, params ...string) (contractAddress common.Address, err error) {
+func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo, params ...string) (contractAddress common.Address, sessionID common.Hash, err error) {
 	// 1. 获取待签名的数据
 	var msgToSign mecdsa.MessageToSign
 	msgToSign = messagetosign.NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress(), params...)
 	// 2. 签名
 	var signature []byte
-	signature, err = as.notaryService.startDistributedSignAndWait(msgToSign, privateKeyInfo)
+	signature, sessionID, err = as.notaryService.startDistributedSignAndWait(msgToSign, privateKeyInfo)
 	if err != nil {
 		return
 	}
 	log.Info("deploy contract on %s with account=%s, signature=%s", c.GetChainName(), privateKeyInfo.ToAddress().String(), common.Bytes2Hex(signature))
-	// 验证
-	var addr common.Address
-	var h common.Hash
-	h.SetBytes(msgToSign.GetBytes())
-	addr, err = utils.Ecrecover(h, signature)
-	if err != nil {
-		panic(err)
-	}
-	if addr != privateKeyInfo.ToAddress() {
-		err = fmt.Errorf("wrong signature expect addr=%s, but got %s", privateKeyInfo.ToAddress().String(), addr.String())
-		return
-	}
 	// 4. 部署合约
 	transactor := &bind.TransactOpts{
 		From: privateKeyInfo.ToAddress(),
@@ -315,12 +305,13 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 				return nil, errors.New("not authorized to sign this account")
 			}
 			msgToSign2 := signer.Hash(tx).Bytes()
-			if bytes.Compare(msgToSign.GetBytes(), msgToSign2) != 0 {
+			if bytes.Compare(msgToSign.GetSignBytes(), msgToSign2) != 0 {
 				err = fmt.Errorf("txbytes when deploy contract step1 and step2 does't match")
 				return nil, err
 			}
 			return tx.WithSignature(signer, signature)
 		},
 	}
-	return c.DeployContract(transactor, params...)
+	contractAddress, err = c.DeployContract(transactor, params...)
+	return
 }

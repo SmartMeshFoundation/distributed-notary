@@ -12,6 +12,8 @@ import (
 
 	"math/big"
 
+	"time"
+
 	"github.com/SmartMeshFoundation/distributed-notary/curv/feldman"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/proofs"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
@@ -24,7 +26,8 @@ import (
 // MessageToSign 待签名的消息体
 type MessageToSign interface {
 	GetName() string
-	GetBytes() []byte
+	GetTransportBytes() []byte
+	GetSignBytes() []byte
 	Parse(buf []byte) error
 }
 
@@ -63,7 +66,9 @@ func NewDistributedSignMessage(db *models.DB, notaryID int, message MessageToSig
 	l2 := &models.SignMessage{
 		Key:             l.Key,
 		UsedPrivateKey:  l.PrivateKey,
-		Message:         message.GetBytes(),
+		Message:         message.GetSignBytes(),
+		MessageName:     message.GetName(),
+		SignTime:        time.Now().Unix(),
 		S:               s,
 		Phase1BroadCast: make(map[int]*models.SignBroadcastPhase1),
 		Phase2MessageB:  make(map[int]*models.MessageBPhase2),

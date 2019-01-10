@@ -3,7 +3,14 @@ package messagetosign
 import (
 	"errors"
 
+	"encoding/json"
+
+	"bytes"
+
+	"fmt"
+
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -11,12 +18,14 @@ import (
 
 var errShouldBe = errors.New("should error")
 
-// SpectrumContractDeployTXDataNameName 用做消息传输时识别
-const SpectrumContractDeployTXDataNameName = "SpectrumContractDeployTXData"
+// SpectrumContractDeployTXDataName 用做消息传输时识别
+const SpectrumContractDeployTXDataName = "SpectrumContractDeployTXData"
 
 // SpectrumContractDeployTXData :
 type SpectrumContractDeployTXData struct {
-	tx []byte
+	BytesToSign     []byte `json:"bytes_to_sign"`
+	DeployChainName string `json:"deploy_chain_name"`
+	TokenName       string `json:"token_name"` // 如果为侧链token,需要token名
 }
 
 // NewSpectrumContractDeployTX :
@@ -37,19 +46,33 @@ func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address, pa
 		// 这里不可能发生
 		panic(err)
 	}
-	return &SpectrumContractDeployTXData{
-		tx: txBytes,
+	tx = &SpectrumContractDeployTXData{
+		BytesToSign:     txBytes,
+		DeployChainName: c.GetChainName(),
 	}
+	if c.GetChainName() == events.ChainName {
+		tx.TokenName = params[0]
+	}
+	return
 }
 
-// GetBytes : impl MessageToSign
-func (s *SpectrumContractDeployTXData) GetBytes() []byte {
-	return s.tx
+// GetSignBytes : impl MessageToSign
+func (s *SpectrumContractDeployTXData) GetSignBytes() []byte {
+	return s.BytesToSign
 }
 
 // GetName : impl MessageToSign
 func (s *SpectrumContractDeployTXData) GetName() string {
-	return SpectrumContractDeployTXDataNameName
+	return SpectrumContractDeployTXDataName
+}
+
+// GetTransportBytes : impl MessageToSign
+func (s *SpectrumContractDeployTXData) GetTransportBytes() []byte {
+	buf, err := json.Marshal(s)
+	if err != nil {
+		panic(err)
+	}
+	return buf
 }
 
 // Parse : impl MessageToSign
@@ -57,6 +80,19 @@ func (s *SpectrumContractDeployTXData) Parse(buf []byte) error {
 	if buf == nil || len(buf) == 0 {
 		return errors.New("can not parse empty data to SpectrumContractDeployTXData")
 	}
-	s.tx = buf
-	return nil
+	return json.Unmarshal(buf, s)
+}
+
+// VerifySignBytes :
+func (s *SpectrumContractDeployTXData) VerifySignBytes(c chain.Chain, callerAddress common.Address) (err error) {
+	var local *SpectrumContractDeployTXData
+	if s.DeployChainName == events.ChainName {
+		local = NewSpectrumContractDeployTX(c, callerAddress, s.TokenName)
+	} else {
+		local = NewSpectrumContractDeployTX(c, callerAddress)
+	}
+	if bytes.Compare(local.GetSignBytes(), s.GetSignBytes()) != 0 {
+		err = fmt.Errorf("SpectrumContractDeployTXData.VerifySignBytes() fail,maybe attack")
+	}
+	return
 }
