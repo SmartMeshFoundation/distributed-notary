@@ -66,6 +66,22 @@ type LockinInfo struct {
 	EndMCBlockNumber   uint64         `json:"end_mc_block_number"` // 结束时主链块数
 }
 
+/*
+IsEnd :
+判断一次lockin流程是否已经完整结束
+*/
+func (l *LockinInfo) IsEnd() bool {
+	if l.MCLockStatus == LockStatusUnlock && l.SCLockStatus == LockStatusUnlock {
+		//主侧链都已解锁
+		return true
+	}
+	if l.MCLockStatus == LockStatusCancel && l.SCLockStatus == LockStatusCancel {
+		//主侧链都已Cancel
+		return true
+	}
+	return false
+}
+
 // NewLockinInfo :
 func (db *DB) NewLockinInfo(lockinInfo *LockinInfo) (err error) {
 	// TODO

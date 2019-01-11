@@ -37,7 +37,8 @@ type DispatchService struct {
 	notaryAPI *notaryapi.NotaryAPI
 
 	// 区块链事件监听
-	chainMap map[string]chain.Chain
+	chainMap           map[string]chain.Chain
+	blockNumberService *BlockNumberService
 
 	// 数据库
 	db *models.DB
@@ -106,32 +107,38 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 	}
 	// 4. 初始化侧链事件监听
 	chainName := spectrumevents.ChainName
-	ds.chainMap[chainName], err = spectrum.NewSMCService(cfg.SmcRPCEndPoint, db.GetLastBlockNumber(chainName))
+	ds.chainMap[chainName], err = spectrum.NewSMCService(cfg.SmcRPCEndPoint)
 	if err != nil {
 		log.Error("new SMCService err : %s", err.Error())
 		return
 	}
 	// 5. 初始化主链事件监听
 	chainName = ethereumevents.ChainName
-	ds.chainMap[chainName], err = ethereum.NewETHService(cfg.EthRPCEndPoint, db.GetLastBlockNumber(chainName))
+	ds.chainMap[chainName], err = ethereum.NewETHService(cfg.EthRPCEndPoint)
 	if err != nil {
 		log.Error("new ETHService err : %s", err.Error())
 		return
 	}
-	// 5. 初始化NotaryService
+	// 5.5 初始化BlockNumberService,这里同时会初始化每条链的LastBlockNumber
+	ds.blockNumberService, err = NewBlockNumberService(db, ds.chainMap)
+	if err != nil {
+		log.Error("new NewBlockNumberService err : %s", err.Error())
+		return
+	}
+	// 6. 初始化NotaryService
 	ds.notaryService, err = NewNotaryService(db, privateKey, notaries, ds)
 	if err != nil {
 		log.Error("init NotaryService err : %s", err.Error())
 		return
 	}
 	log.Info("self notary info :\n%s", utils.ToJSONStringFormat(ds.notaryService.self))
-	// 6. 初始化AdminService
+	// 7. 初始化AdminService
 	ds.adminService, err = NewAdminService(db, ds.notaryService, ds)
 	if err != nil {
 		log.Error("init AdminService err : %s", err.Error())
 		return
 	}
-	// 7. 读取db中的SCToken数据,o初始化CrossChainService,并将所有合约地址注册到对应链的监听器中
+	// 8. 读取db中的SCToken数据,o初始化CrossChainService,并将所有合约地址注册到对应链的监听器中
 	scTokenMetaInfoList, err := ds.db.GetSCTokenMetaInfoList()
 	if err != nil {
 		log.Error("GetSCTokenMetaInfoList err : %s", err.Error())
@@ -252,6 +259,8 @@ func (ds *DispatchService) chainEventDispatcherLoop(c chain.Chain) {
 				panic(err)
 			}
 			if e.GetEventName() == chain.NewBlockNumberEventName {
+				// 保存新块号到DB
+				ds.blockNumberService.NewBlockNumber(e)
 				// 新块事件
 				ds.dispatchEvent2All(e)
 			} else {

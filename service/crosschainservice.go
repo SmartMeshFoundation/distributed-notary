@@ -12,19 +12,20 @@ CrossChainService :
 */
 type CrossChainService struct {
 	self         models.NotaryInfo
-	db           *models.DB
 	meta         *models.SideChainTokenMetaInfo
 	scTokenProxy chain.ContractProxy
 	mcProxy      chain.ContractProxy
+
+	lockinHandler *lockinHandler
 }
 
 // NewCrossChainService :
 func NewCrossChainService(db *models.DB, self models.NotaryInfo, scTokenMetaInfo *models.SideChainTokenMetaInfo) *CrossChainService {
-	// TODO init proxy
+	// TODO init proxy,map
 	return &CrossChainService{
-		self: self,
-		db:   db,
-		meta: scTokenMetaInfo,
+		self:          self,
+		meta:          scTokenMetaInfo,
+		lockinHandler: newLockinhandler(db),
 	}
 }
 
@@ -47,7 +48,7 @@ func (cs *CrossChainService) callMCLockin() (err error) {
 	return
 }
 
-func (cs *CrossChainService) callSCCancelLockin() (err error) {
+func (cs *CrossChainService) callSCCancelLockin(lockinInfo *models.LockinInfo) (err error) {
 	// TODO
 	return
 }

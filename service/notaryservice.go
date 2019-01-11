@@ -52,7 +52,6 @@ func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries [
 
 // OnEvent 链上事件逻辑处理 预留
 func (ns *NotaryService) OnEvent(e chain.Event) {
-
 }
 
 // OnRequest restful请求处理

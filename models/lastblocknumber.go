@@ -17,3 +17,11 @@ func (db *DB) GetLastBlockNumber(chainName string) uint64 {
 	}
 	return lb.LastBlockNumber
 }
+
+// SaveLastBlockNumber :
+func (db *DB) SaveLastBlockNumber(chainName string, blockNumber uint64) (err error) {
+	return db.Save(&LastBlockNumberInfo{
+		ChainName:       chainName,
+		LastBlockNumber: blockNumber,
+	}).Error
+}

@@ -50,7 +50,7 @@ type SMCService struct {
 }
 
 // NewSMCService :
-func NewSMCService(host string, lastBlockNumber uint64, contractAddresses ...common.Address) (ss *SMCService, err error) {
+func NewSMCService(host string, contractAddresses ...common.Address) (ss *SMCService, err error) {
 	// init client
 	var c *ethclient.Client
 	ctx, cancelFunc := context.WithTimeout(context.Background(), spectrumRPCTimeout)
@@ -63,7 +63,6 @@ func NewSMCService(host string, lastBlockNumber uint64, contractAddresses ...com
 		c:                          client.NewSafeClient(c),
 		host:                       host,
 		connectStatus:              commons.Disconnected,
-		lastBlockNumber:            lastBlockNumber,
 		tokenProxyMap:              make(map[common.Address]*proxy.SideChainErc20TokenProxy),
 		connectStatusChangeChanMap: make(map[string]chan commons.ConnectStatusChange),
 		eventChan:                  make(chan chain.Event, 100),
@@ -87,6 +86,11 @@ func NewSMCService(host string, lastBlockNumber uint64, contractAddresses ...com
 		}
 	}
 	return
+}
+
+// SetLastBlockNumber :
+func (ss *SMCService) SetLastBlockNumber(lastBlockNumber uint64) {
+	ss.lastBlockNumber = lastBlockNumber
 }
 
 // GetProxyByTokenAddress :

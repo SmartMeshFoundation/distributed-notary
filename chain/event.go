@@ -20,6 +20,7 @@ type Event interface {
 	GetFromAddress() common.Address
 	GetEventName() EventName
 	GetChainName() string
+	GetBlockNumber() uint64
 }
 
 /*
@@ -53,4 +54,9 @@ func (be *BaseEvent) GetEventName() EventName {
 // GetChainName :
 func (be *BaseEvent) GetChainName() string {
 	return be.ChainName
+}
+
+// GetBlockNumber :
+func (be *BaseEvent) GetBlockNumber() uint64 {
+	return be.BlockNumber
 }

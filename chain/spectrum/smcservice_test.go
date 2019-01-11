@@ -17,7 +17,7 @@ func TestChain(t *testing.T) {
 	var spectrumContract1Address common.Address
 	spectrumContract1Address = common.HexToAddress("0x0f75Cc3e01d6802bca296094cEcdBb88fc50e0a6")
 	// 1. 创建service
-	smc, err := NewSMCService(spectrumHost, 0, spectrumContract1Address)
+	smc, err := NewSMCService(spectrumHost, spectrumContract1Address)
 	if err != nil {
 		t.Error(err)
 		return

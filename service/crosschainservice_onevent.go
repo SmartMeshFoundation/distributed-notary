@@ -66,12 +66,26 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 }
 
 func (cs *CrossChainService) onMCNewBlockEvent(event ethevents.NewBlockEvent) (err error) {
-	// TODO
-	return
+	return cs.lockinHandler.onMCNewBlockEvent(event.BlockNumber)
 }
 
 func (cs *CrossChainService) onSCNewBlockEvent(event smcevents.NewBlockEvent) (err error) {
-	// TODO
+	var lockinListNeedCancel []*models.LockinInfo
+	lockinListNeedCancel, err = cs.lockinHandler.onSCNewBlockEvent(event.BlockNumber)
+	if err != nil {
+		return
+	}
+	if len(lockinListNeedCancel) > 0 {
+		for _, lockin := range lockinListNeedCancel {
+			if lockin.NotaryIDInCharge == cs.self.ID {
+				// 如果我是负责人,尽快cancel,这里如果调用合约出错,也继续去尝试cancel下一个
+				err = cs.callSCCancelLockin(lockin)
+				if err != nil {
+					log.Error(err.Error())
+				}
+			}
+		}
+	}
 	return
 }
 
@@ -103,10 +117,10 @@ func (cs *CrossChainService) onMCPrepareLockin(event ethevents.PrepareLockinEven
 		StartTime:          event.Time.Unix(),
 		StartMCBlockNumber: event.BlockNumber,
 	}
-	// 3. 保存至db
-	err = cs.db.NewLockinInfo(lockinInfo)
+	// 3. 调用handler处理
+	err = cs.lockinHandler.registerLockin(lockinInfo)
 	if err != nil {
-		err = fmt.Errorf("db.NewLockinInfo err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.registerLockin err = %s", err.Error())
 		return
 	}
 	return
@@ -125,9 +139,9 @@ func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEven
 		return
 	}
 	// 2. 获取本地LockinInfo信息
-	lockinInfo, err := cs.db.GetLockinInfo(secretHash)
+	lockinInfo, err := cs.lockinHandler.getLockin(secretHash)
 	if err != nil {
-		err = fmt.Errorf("db.GetLockinInfo err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.getLockin err = %s", err.Error())
 		return
 	}
 	// 3.　校验 TODO
@@ -159,7 +173,7 @@ func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEven
 	// 4. 修改状态,等待后续调用
 	lockinInfo.SCExpiration = scExpiration
 	lockinInfo.SCLockStatus = models.LockStatusLock
-	err = cs.db.UpdateLockinInfo(lockinInfo)
+	err = cs.lockinHandler.updateLockin(lockinInfo)
 	if err != nil {
 		err = fmt.Errorf("db.UpdateLockinInfo err = %s", err.Error())
 		return
@@ -174,9 +188,9 @@ func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEven
 func (cs *CrossChainService) onSCLockinSecret(event smcevents.LockinSecretEvent) (err error) {
 	// 1.根据密码hash查询LockinInfo
 	secretHash := utils.ShaSecret(event.Secret[:])
-	lockinInfo, err := cs.db.GetLockinInfo(secretHash)
+	lockinInfo, err := cs.lockinHandler.getLockin(secretHash)
 	if err != nil {
-		err = fmt.Errorf("db.GetLockinInfoBySecretHash err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.getLockin err = %s", err.Error())
 		return
 	}
 	// 2. 重复校验 TODO
@@ -191,16 +205,16 @@ func (cs *CrossChainService) onSCLockinSecret(event smcevents.LockinSecretEvent)
 	// 3. 更新状态
 	lockinInfo.Secret = event.Secret
 	lockinInfo.SCLockStatus = models.LockStatusUnlock
-	err = cs.db.UpdateLockinInfo(lockinInfo)
+	err = cs.lockinHandler.updateLockin(lockinInfo)
 	if err != nil {
-		err = fmt.Errorf("db.UpdateLockinInfo err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.updateLockin err = %s", err.Error())
 		return
 	}
 	// 4. 如果自己是负责人,发起主链Lockin
 	if lockinInfo.NotaryIDInCharge == cs.self.ID {
 		err = cs.callMCLockin()
 		if err != nil {
-			err = fmt.Errorf("db.callMCLockin err = %s", err.Error())
+			err = fmt.Errorf("callMCLockin err = %s", err.Error())
 			return
 		}
 	}
@@ -213,9 +227,9 @@ func (cs *CrossChainService) onSCLockinSecret(event smcevents.LockinSecretEvent)
 */
 func (cs *CrossChainService) onMCLockin(event ethevents.LockinEvent) (err error) {
 	// 1. 获取本地LockinInfo信息
-	lockinInfo, err := cs.db.GetLockinInfo(event.SecretHash)
+	lockinInfo, err := cs.lockinHandler.getLockin(event.SecretHash)
 	if err != nil {
-		err = fmt.Errorf("db.GetLockinInfo err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.getLockin err = %s", err.Error())
 		return
 	}
 	// 2. 校验 TODO
@@ -227,9 +241,9 @@ func (cs *CrossChainService) onMCLockin(event ethevents.LockinEvent) (err error)
 	lockinInfo.MCLockStatus = models.LockStatusUnlock
 	lockinInfo.EndTime = event.Time.Unix()
 	lockinInfo.EndMCBlockNumber = event.BlockNumber
-	err = cs.db.UpdateLockinInfo(lockinInfo)
+	err = cs.lockinHandler.updateLockin(lockinInfo)
 	if err != nil {
-		err = fmt.Errorf("db.UpdateLockinInfo err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.UpdateLockinInfo err = %s", err.Error())
 		return
 	}
 	return
@@ -240,9 +254,9 @@ func (cs *CrossChainService) onMCLockin(event ethevents.LockinEvent) (err error)
 */
 func (cs *CrossChainService) onMCCancelLockin(event ethevents.CancelLockinEvent) (err error) {
 	// 1. 获取本地LockinInfo信息
-	lockinInfo, err := cs.db.GetLockinInfo(event.SecretHash)
+	lockinInfo, err := cs.lockinHandler.getLockin(event.SecretHash)
 	if err != nil {
-		err = fmt.Errorf("db.GetLockinInfo err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.getLockin err = %s", err.Error())
 		return
 	}
 	// 2. 校验 TODO
@@ -254,9 +268,9 @@ func (cs *CrossChainService) onMCCancelLockin(event ethevents.CancelLockinEvent)
 	lockinInfo.MCLockStatus = models.LockStatusCancel
 	lockinInfo.EndTime = event.Time.Unix()
 	lockinInfo.EndMCBlockNumber = event.BlockNumber
-	err = cs.db.UpdateLockinInfo(lockinInfo)
+	err = cs.lockinHandler.updateLockin(lockinInfo)
 	if err != nil {
-		err = fmt.Errorf("db.UpdateLockinInfo err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.updateLockin err = %s", err.Error())
 		return
 	}
 	return
@@ -267,9 +281,9 @@ func (cs *CrossChainService) onMCCancelLockin(event ethevents.CancelLockinEvent)
 */
 func (cs *CrossChainService) onSCCancelLockin(event smcevents.CancelLockinEvent) (err error) {
 	// 1. 获取本地LockinInfo信息
-	lockinInfo, err := cs.db.GetLockinInfo(event.SecretHash)
+	lockinInfo, err := cs.lockinHandler.getLockin(event.SecretHash)
 	if err != nil {
-		err = fmt.Errorf("db.GetLockinInfo err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.getLockin err = %s", err.Error())
 		return
 	}
 	// 2. 校验 TODO
@@ -281,9 +295,9 @@ func (cs *CrossChainService) onSCCancelLockin(event smcevents.CancelLockinEvent)
 	lockinInfo.SCLockStatus = models.LockStatusCancel
 	lockinInfo.EndTime = event.Time.Unix()
 	lockinInfo.EndMCBlockNumber = event.BlockNumber
-	err = cs.db.UpdateLockinInfo(lockinInfo)
+	err = cs.lockinHandler.updateLockin(lockinInfo)
 	if err != nil {
-		err = fmt.Errorf("db.UpdateLockinInfo err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.updateLockin err = %s", err.Error())
 		return
 	}
 	return

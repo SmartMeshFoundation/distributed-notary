@@ -50,7 +50,7 @@ type ETHService struct {
 }
 
 // NewETHService :
-func NewETHService(host string, lastBlockNumber uint64, contractAddresses ...common.Address) (ss *ETHService, err error) {
+func NewETHService(host string, contractAddresses ...common.Address) (ss *ETHService, err error) {
 	// init client
 	var c *ethclient.Client
 	ctx, cancelFunc := context.WithTimeout(context.Background(), spectrumRPCTimeout)
@@ -63,7 +63,6 @@ func NewETHService(host string, lastBlockNumber uint64, contractAddresses ...com
 		c:                          client.NewSafeClient(c),
 		host:                       host,
 		connectStatus:              commons.Disconnected,
-		lastBlockNumber:            lastBlockNumber,
 		lockedEthereumProxyMap:     make(map[common.Address]*proxy.LockedEthereumProxy),
 		connectStatusChangeChanMap: make(map[string]chan commons.ConnectStatusChange),
 		eventChan:                  make(chan chain.Event, 100),
@@ -87,6 +86,11 @@ func NewETHService(host string, lastBlockNumber uint64, contractAddresses ...com
 		}
 	}
 	return
+}
+
+// SetLastBlockNumber :
+func (ss *ETHService) SetLastBlockNumber(lastBlockNumber uint64) {
+	ss.lastBlockNumber = lastBlockNumber
 }
 
 // GetProxyByLockedEthereumAddress :

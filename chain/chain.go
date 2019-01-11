@@ -20,6 +20,7 @@ type Chain interface {
 	RegisterEventListenContract(contractAddresses ...common.Address) error
 	UnRegisterEventListenContract(contractAddresses ...common.Address)
 	DeployContract(opts *bind.TransactOpts, params ...string) (contractAddress common.Address, err error)
+	SetLastBlockNumber(lastBlockNumber uint64)
 
 	Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int) (err error) // for debug
 }

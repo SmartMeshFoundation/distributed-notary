@@ -42,9 +42,8 @@ func NewAdminService(db *models.DB, notaryService *NotaryService, dispatchServic
 	return
 }
 
-// OnEvent 链上事件逻辑处理
+// OnEvent 链上事件逻辑处理 预留
 func (as *AdminService) OnEvent(e chain.Event) {
-	// TODO 处理新块事件,保存各链最新块号
 }
 
 // OnRequest restful请求处理
