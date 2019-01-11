@@ -89,7 +89,6 @@ func (ns *NotaryService) saveDSMNotifySelection(req *notaryapi.DSMNotifySelectio
 		ns.unlockSession(sessionID)
 		return
 	}
-	fmt.Println("======================== MsgToChain check SUCCESS")
 	// 3. 构造dsm
 	_, err = mecdsa.NewDistributedSignMessage(ns.db, ns.self.ID, msgToSign, sessionID, req.PrivateKeyID, req.NotaryIDs)
 	if err != nil {

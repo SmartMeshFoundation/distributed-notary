@@ -11,7 +11,7 @@ import (
 	"fmt"
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
+	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -51,7 +51,7 @@ func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address, pa
 		BytesToSign:     txBytes,
 		DeployChainName: c.GetChainName(),
 	}
-	if c.GetChainName() == events.ChainName {
+	if c.GetChainName() == smcevents.ChainName {
 		tx.TokenName = params[0]
 	}
 	return
@@ -87,7 +87,7 @@ func (s *SpectrumContractDeployTXData) Parse(buf []byte) error {
 // VerifySignBytes :
 func (s *SpectrumContractDeployTXData) VerifySignBytes(c chain.Chain, callerAddress common.Address) (err error) {
 	var local *SpectrumContractDeployTXData
-	if s.DeployChainName == events.ChainName {
+	if s.DeployChainName == smcevents.ChainName {
 		local = NewSpectrumContractDeployTX(c, callerAddress, s.TokenName)
 	} else {
 		local = NewSpectrumContractDeployTX(c, callerAddress)
