@@ -16,11 +16,18 @@ type lockinHandler struct {
 }
 
 func newLockinhandler(db *models.DB) *lockinHandler {
-	// TODO 读取数据库并初始化数据
-	return &lockinHandler{
+	lockinInfoList, err := db.GetAllLockinInfo()
+	if err != nil {
+		panic(err)
+	}
+	h := &lockinHandler{
 		db:         db,
 		dealingMap: make(map[common.Hash]*models.LockinInfo),
 	}
+	for _, lockinInfo := range lockinInfoList {
+		h.dealingMap[lockinInfo.SecretHash] = lockinInfo
+	}
+	return h
 }
 
 func (lh *lockinHandler) registerLockin(lockinInfo *models.LockinInfo) (err error) {

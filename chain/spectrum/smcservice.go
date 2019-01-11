@@ -279,6 +279,14 @@ func (ss *SMCService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo commo
 	return
 }
 
+// GetContractProxy : impl chain.Chain
+func (ss *SMCService) GetContractProxy(contractAddress common.Address) (proxy chain.ContractProxy) {
+	ss.tokenProxyMapLock.Lock()
+	proxy = ss.tokenProxyMap[contractAddress]
+	ss.tokenProxyMapLock.Unlock()
+	return
+}
+
 func (ss *SMCService) checkConnectStatus() (err error) {
 	if ss.c == nil || ss.c.Client == nil {
 		return client.ErrNotConnected

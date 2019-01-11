@@ -5,8 +5,6 @@ import (
 
 	"fmt"
 
-	"bytes"
-
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
@@ -15,7 +13,7 @@ import (
 	"github.com/nkbai/log"
 )
 
-// OnEvent 链上事件逻辑处理 TODO
+// OnEvent 链上事件逻辑处理
 func (cs *CrossChainService) OnEvent(e chain.Event) {
 	var err error
 	switch event := e.(type) {
@@ -31,7 +29,7 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 	*/
 	case ethevents.PrepareLockinEvent: // MCPLI
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC PrepareLockinEvent :\n%s", utils.ToJSONStringFormat(event)))
-		err = cs.onMCPrepareLockin(event)
+		err = cs.onMCPrepareLockin4Ethereum(event)
 	case smcevents.PrepareLockinEvent: // SCPLI
 		log.Info(SCTokenLogMsg(cs.meta, "Receive SC PrepareLockinEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onSCPrepareLockin(event)
@@ -40,10 +38,10 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 		err = cs.onSCLockinSecret(event)
 	case ethevents.LockinEvent: // MCLI
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC LockinEvent :\n%s", utils.ToJSONStringFormat(event)))
-		err = cs.onMCLockin(event)
+		err = cs.onMCLockin4Ethereum(event)
 	case ethevents.CancelLockinEvent: // MCCancelLI
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC CancelLockinEvent :\n%s", utils.ToJSONStringFormat(event)))
-		err = cs.onMCCancelLockin(event)
+		err = cs.onMCCancelLockin4Ethereum(event)
 	case smcevents.CancelLockinEvent: // SCCancelLI
 		log.Info(SCTokenLogMsg(cs.meta, "Receive SC CancelLockinEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onSCCancelLockin(event)
@@ -77,9 +75,9 @@ func (cs *CrossChainService) onSCNewBlockEvent(event smcevents.NewBlockEvent) (e
 	}
 	if len(lockinListNeedCancel) > 0 {
 		for _, lockin := range lockinListNeedCancel {
-			if lockin.NotaryIDInCharge == cs.self.ID {
+			if lockin.NotaryIDInCharge == cs.selfNotaryID {
 				// 如果我是负责人,尽快cancel,这里如果调用合约出错,也继续去尝试cancel下一个
-				err = cs.callSCCancelLockin(lockin)
+				err = cs.callSCCancelLockin(lockin.SCUserAddress.String())
 				if err != nil {
 					log.Error(err.Error())
 				}
@@ -94,25 +92,26 @@ func (cs *CrossChainService) onSCNewBlockEvent(event smcevents.NewBlockEvent) (e
 该事件为一个LockinInfo的生命周期开端,发生于用户调用时
 事件为已确认事件,直接构造LockinInfo并保存,等待后续调用
 */
-func (cs *CrossChainService) onMCPrepareLockin(event ethevents.PrepareLockinEvent) (err error) {
+func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareLockinEvent) (err error) {
 	// 1. 查询
-	secretHash, mcExpiration, amount, data, err := cs.mcProxy.QueryLockin(event.Account)
+	secretHash, mcExpiration, amount, err := cs.mcProxy.QueryLockin(event.Account.String())
 	if err != nil {
 		err = fmt.Errorf("mcProxy.QueryLockin err = %s", err.Error())
 		return
 	}
 	// 2. 构造LockinInfo
 	lockinInfo := &models.LockinInfo{
-		SecretHash:         secretHash,
-		Secret:             utils.EmptyHash,
-		UserAddress:        event.Account,
-		SCTokenAddress:     cs.meta.SCToken,
-		Amount:             amount,
-		MCExpiration:       mcExpiration,
-		SCExpiration:       0,
-		MCLockStatus:       models.LockStatusLock,
-		SCLockStatus:       models.LockStatusNone,
-		Data:               data,
+		SecretHash:       secretHash,
+		Secret:           utils.EmptyHash,
+		MCUserAddressHex: event.Account.String(),
+		SCUserAddress:    utils.EmptyAddress,
+		SCTokenAddress:   cs.meta.SCToken,
+		Amount:           amount,
+		MCExpiration:     mcExpiration,
+		SCExpiration:     0,
+		MCLockStatus:     models.LockStatusLock,
+		SCLockStatus:     models.LockStatusNone,
+		//Data:               data,
 		NotaryIDInCharge:   models.UnknownNotaryIDInCharge,
 		StartTime:          event.Time.Unix(),
 		StartMCBlockNumber: event.BlockNumber,
@@ -133,7 +132,7 @@ func (cs *CrossChainService) onMCPrepareLockin(event ethevents.PrepareLockinEven
 */
 func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEvent) (err error) {
 	// 1. 查询
-	secretHash, scExpiration, amount, data, err := cs.scTokenProxy.QueryLockin(event.Account)
+	secretHash, scExpiration, amount, err := cs.scTokenProxy.QueryLockin(event.Account.String())
 	if err != nil {
 		err = fmt.Errorf("scTokenProxy.QueryLockin err = %s", err.Error())
 		return
@@ -145,8 +144,8 @@ func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEven
 		return
 	}
 	// 3.　校验 TODO
-	if lockinInfo.UserAddress != event.Account {
-		err = fmt.Errorf("userAddress does't match")
+	if lockinInfo.SCUserAddress != event.Account {
+		err = fmt.Errorf("SCUserAddress does't match")
 		return
 	}
 	if lockinInfo.SCExpiration != 0 || lockinInfo.MCLockStatus != models.LockStatusLock || lockinInfo.SCLockStatus != models.LockStatusNone || lockinInfo.Secret != utils.EmptyHash {
@@ -159,10 +158,6 @@ func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEven
 	}
 	if lockinInfo.Amount.Cmp(amount) != 0 {
 		err = fmt.Errorf("amount does't match")
-		return
-	}
-	if bytes.Compare(lockinInfo.Data, data) != 0 {
-		err = fmt.Errorf("data does't match")
 		return
 	}
 	// 主链Expiration　必须大于　5倍侧链Expiration TODO
@@ -211,8 +206,8 @@ func (cs *CrossChainService) onSCLockinSecret(event smcevents.LockinSecretEvent)
 		return
 	}
 	// 4. 如果自己是负责人,发起主链Lockin
-	if lockinInfo.NotaryIDInCharge == cs.self.ID {
-		err = cs.callMCLockin()
+	if lockinInfo.NotaryIDInCharge == cs.selfNotaryID {
+		err = cs.callMCLockin(lockinInfo.MCUserAddressHex, lockinInfo.Secret)
 		if err != nil {
 			err = fmt.Errorf("callMCLockin err = %s", err.Error())
 			return
@@ -225,7 +220,7 @@ func (cs *CrossChainService) onSCLockinSecret(event smcevents.LockinSecretEvent)
 主链Lockin
 收到该事件,说明一次Lockin完整结束,合约上已经清楚该UserAccount的lockin信息
 */
-func (cs *CrossChainService) onMCLockin(event ethevents.LockinEvent) (err error) {
+func (cs *CrossChainService) onMCLockin4Ethereum(event ethevents.LockinEvent) (err error) {
 	// 1. 获取本地LockinInfo信息
 	lockinInfo, err := cs.lockinHandler.getLockin(event.SecretHash)
 	if err != nil {
@@ -233,8 +228,8 @@ func (cs *CrossChainService) onMCLockin(event ethevents.LockinEvent) (err error)
 		return
 	}
 	// 2. 校验 TODO
-	if lockinInfo.UserAddress != event.Account {
-		err = fmt.Errorf("userAddress does't match")
+	if lockinInfo.MCUserAddressHex != event.Account.String() {
+		err = fmt.Errorf("MCUserAddressHex does't match")
 		return
 	}
 	// 3. 更新本地信息
@@ -252,7 +247,7 @@ func (cs *CrossChainService) onMCLockin(event ethevents.LockinEvent) (err error)
 /*
 主链取消
 */
-func (cs *CrossChainService) onMCCancelLockin(event ethevents.CancelLockinEvent) (err error) {
+func (cs *CrossChainService) onMCCancelLockin4Ethereum(event ethevents.CancelLockinEvent) (err error) {
 	// 1. 获取本地LockinInfo信息
 	lockinInfo, err := cs.lockinHandler.getLockin(event.SecretHash)
 	if err != nil {
@@ -260,8 +255,8 @@ func (cs *CrossChainService) onMCCancelLockin(event ethevents.CancelLockinEvent)
 		return
 	}
 	// 2. 校验 TODO
-	if lockinInfo.UserAddress != event.Account {
-		err = fmt.Errorf("userAddress does't match")
+	if lockinInfo.MCUserAddressHex != event.Account.String() {
+		err = fmt.Errorf("MCUserAddressHex does't match")
 		return
 	}
 	// 3. 更新本地信息,endTime哪个链取消在后面取哪个
@@ -287,8 +282,8 @@ func (cs *CrossChainService) onSCCancelLockin(event smcevents.CancelLockinEvent)
 		return
 	}
 	// 2. 校验 TODO
-	if lockinInfo.UserAddress != event.Account {
-		err = fmt.Errorf("userAddress does't match")
+	if lockinInfo.SCUserAddress != event.Account {
+		err = fmt.Errorf("SCUserAddress does't match")
 		return
 	}
 	// 3. 更新本地信息,endTime哪个链取消在后面取哪个

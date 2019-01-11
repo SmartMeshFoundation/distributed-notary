@@ -1,16 +1,17 @@
 package messagetosign
 
+/*
+	以太坊合约部署及specrum合约部署均使用该消息体
+*/
+
 import (
-	"errors"
-
-	"encoding/json"
-
 	"bytes"
-
+	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"

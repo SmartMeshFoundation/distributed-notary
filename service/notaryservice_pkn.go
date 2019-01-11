@@ -1,10 +1,6 @@
 package service
 
 import (
-	"time"
-
-	"errors"
-
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
@@ -87,7 +83,7 @@ func (ns *NotaryService) startPKNPhase3(keyGenerator *mecdsa.ThresholdPrivKeyGen
 	ns.unlockSession(keyGenerator.PrivateKeyID)
 	for notaryID, msg := range msgMap {
 		// 按ID分别发送phase3消息给其他人
-		// 这里虽然是定向发送,但是所有参与者都主动发起SecretShare,所以无需关心返回值,在phase3接口中处理即可 TODO
+		// 这里虽然是定向发送,但是所有参与者都主动发起SecretShare,所以无需关心返回值,在phase3接口中处理即可
 		err2 := ns.SendMsg(keyGenerator.PrivateKeyID, notaryapi.APINamePKNPhase3SecretShare, notaryID, msg, nil)
 		if err2 != nil {
 			err = err2
@@ -128,24 +124,4 @@ func (ns *NotaryService) savePKNPhase4Msg(keyGenerator *mecdsa.ThresholdPrivKeyG
 	}
 	ns.unlockSession(keyGenerator.PrivateKeyID)
 	return
-}
-
-func (ns *NotaryService) pknWaitForPrivateKeyStatus(privateKeyID common.Hash, status int, timeout time.Duration) error {
-	start := time.Now()
-	if timeout == 0 {
-		timeout = 60 * time.Second // TODO 默认60秒是否合理
-	}
-	for {
-		if time.Since(start) >= timeout {
-			return errors.New("timeout")
-		}
-		privateKeyInfo, err := ns.db.LoadPrivateKeyInfo(privateKeyID)
-		if err != nil {
-			return err
-		}
-		if privateKeyInfo.Status == status {
-			return nil
-		}
-		time.Sleep(time.Second)
-	}
 }

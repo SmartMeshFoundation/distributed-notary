@@ -144,7 +144,6 @@ contract AtmosphereToken is StandardToken {
         bytes32 SecretHash; //转出时指定的密码hash
         uint256 Expiration; //超期以后可以撤销
         uint256 value; //金额是多少
-        bytes32 Data;  //附加数据
     }
     mapping(address=>LockoutInfo) public lockout_htlc; //lockout 过程中的HTLC
 
@@ -212,7 +211,7 @@ contract AtmosphereToken is StandardToken {
     //第二步 用户观察到主链上发生了PrepareLockout,会在过期时间之内,用密码在主链上进行lockout
     //第三部,公证人则根据主链上观察到的密码,销毁相应的token
     //准备退出,需要在合约里记录,公证人需要监控这里的事件,采用相应的操作, 后续应该提供PrepareLockoutProxy函数,可以保证交易方没有侧链主币的情况下,仍然可以发起合约
-    function prepareLockout(bytes32 secret_hash,uint256 expiration,uint256 value, bytes32 data) public{
+    function prepareLockout(bytes32 secret_hash,uint256 expiration,uint256 value) public{
         LockoutInfo storage li=lockout_htlc[msg.sender];
         require(value>0);
         require(li.value==0); // 没有正在退出的历史交易
@@ -220,7 +219,6 @@ contract AtmosphereToken is StandardToken {
         li.value=value;
         li.SecretHash=secret_hash;
         li.Expiration=expiration;
-        li.Data=data;
 
         balances[msg.sender]-=value;
 
@@ -239,7 +237,6 @@ contract AtmosphereToken is StandardToken {
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
-        li.Data=bytes32(0);
         //侧链发行总量要降低
         totalSupply-=value;
         require(totalSupply>=1);
@@ -256,7 +253,6 @@ contract AtmosphereToken is StandardToken {
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
-        li.Data=bytes32(0);
         //退回到个人账户上
         balances[account]+=value;
         emit CancelLockout(account, secretHash);
@@ -265,9 +261,9 @@ contract AtmosphereToken is StandardToken {
         LockinInfo storage li=lockin_htlc[account];
         return (li.SecretHash, li.Expiration,li.value);
     }
-    function queryLockout(address account)   view external returns(bytes32,uint256,uint256,bytes32) {
+    function queryLockout(address account)   view external returns(bytes32,uint256,uint256) {
         LockoutInfo storage li=lockout_htlc[account];
-        return  (li.SecretHash, li.Expiration,li.value,li.Data);
+        return  (li.SecretHash, li.Expiration,li.value);
     }
 
 }

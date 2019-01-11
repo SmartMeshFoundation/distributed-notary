@@ -52,7 +52,6 @@ contract LockedEthereum is Owned {
      bytes32 SecretHash; //这是lockin发起人提供的hash
         uint256 Expiration; //锁过期时间
         uint256 value; //转入金额
-        bytes32 Data; //转入附加信息
     }
     mapping(address=>LockinInfo) public lockin_htlc; //lockin过程中的htlc
     event PrepareLockin(address account,uint256 value);
@@ -82,14 +81,13 @@ contract LockedEthereum is Owned {
     //第三步: 用户依据密码在侧连上发起lockin,在侧连上获取到相应的token
     //第四步:  公证人观察到侧连上真正发生了lockin(由用户发起),就会知道密码,这时公证人可以在有效期内将主链资产转移到指定合约中去
     //如果交易发起人没有在规定时间内在侧连上进行相应的lockin,公证人(任何人)可以在过期以后在主链cance lockout
-    function prepareLockin( bytes32 secret_hash,uint256 expiration,bytes32 data )  payable public{
+    function prepareLockin( bytes32 secret_hash,uint256 expiration)  payable public{
         require(lockin_htlc[msg.sender].value==0);
         require(msg.value > 0);
         LockinInfo storage li=lockin_htlc[msg.sender];
         li.SecretHash=secret_hash;
         li.Expiration=expiration;
         li.value=msg.value;
-        li.Data=data;
         emit PrepareLockin(msg.sender ,msg.value);
     }
     //公证人观察到侧链上用户提供的密码,凭密码销毁凭据,防止用户在过期以后再次获取到token
@@ -121,7 +119,6 @@ contract LockedEthereum is Owned {
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
-        li.Data=bytes32(0);
 
         //清空后在进行,防止递归调用.
         account.transfer(value);
@@ -170,9 +167,9 @@ contract LockedEthereum is Owned {
         li.Expiration=0;
         emit CancelLockout(account, secretHash);
     }
-    function queryLockin(address account)   view external returns(bytes32,uint256,uint256,bytes32) {
+    function queryLockin(address account)   view external returns(bytes32,uint256,uint256) {
         LockinInfo storage li=lockin_htlc[account];
-        return  (li.SecretHash, li.Expiration,li.value,li.Data);
+        return  (li.SecretHash, li.Expiration,li.value);
     }
     function queryLockout(address account) view external returns(bytes32,uint256,uint256) {
         LockoutInfo storage li=lockout_htlc[account];

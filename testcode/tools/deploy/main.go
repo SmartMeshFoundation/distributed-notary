@@ -88,7 +88,7 @@ func deployContractOnETH(key *ecdsa.PrivateKey, conn *ethclient.Client) {
 func deployContractOnSMC(key *ecdsa.PrivateKey, conn *ethclient.Client) {
 	auth := bind.NewKeyedTransactor(key)
 	// Deploy Sepctrum Contract
-	ethereumTokenAddress, tx, _, err := smccontracts.DeployEthereumToken(auth, conn)
+	ethereumTokenAddress, tx, _, err := smccontracts.DeployAtmosphereToken(auth, conn, "")
 	if err != nil {
 		log.Fatalf("Failed to deploy EthereumToken contract on spectrum : %v", err)
 	}

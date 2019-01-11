@@ -36,8 +36,8 @@ type ETHService struct {
 	lastBlockNumber uint64
 	chainName       string
 
-	lockedEthereumProxyMap map[common.Address]*proxy.LockedEthereumProxy
-	tokenProxyMapLock      sync.Mutex
+	lockedEthereumProxyMap     map[common.Address]*proxy.LockedEthereumProxy
+	lockedEthereumProxyMapLock sync.Mutex
 
 	connectStatus                  commons.ConnectStatus
 	connectStatusChangeChanMap     map[string]chan commons.ConnectStatusChange
@@ -103,7 +103,7 @@ func (ss *ETHService) RegisterEventListenContract(contractAddresses ...common.Ad
 	if ss.connectStatus != commons.Connected {
 		return errors.New("ETHService can not register when not connected")
 	}
-	ss.tokenProxyMapLock.Lock()
+	ss.lockedEthereumProxyMapLock.Lock()
 	for _, addr := range contractAddresses {
 		if proxy, ok := ss.lockedEthereumProxyMap[addr]; ok && proxy != nil {
 			continue
@@ -115,17 +115,17 @@ func (ss *ETHService) RegisterEventListenContract(contractAddresses ...common.Ad
 		}
 		ss.lockedEthereumProxyMap[addr] = p
 	}
-	ss.tokenProxyMapLock.Unlock()
+	ss.lockedEthereumProxyMapLock.Unlock()
 	return nil
 }
 
 // UnRegisterEventListenContract :
 func (ss *ETHService) UnRegisterEventListenContract(contractAddresses ...common.Address) {
-	ss.tokenProxyMapLock.Lock()
+	ss.lockedEthereumProxyMapLock.Lock()
 	for _, addr := range contractAddresses {
 		delete(ss.lockedEthereumProxyMap, addr)
 	}
-	ss.tokenProxyMapLock.Unlock()
+	ss.lockedEthereumProxyMapLock.Unlock()
 }
 
 // StartEventListener :
@@ -253,6 +253,14 @@ func (ss *ETHService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo commo
 		return err
 	}
 	_, err = bind.WaitMined(ctx, conn, signedTx)
+	return
+}
+
+// GetContractProxy : impl chain.Chain
+func (ss *ETHService) GetContractProxy(contractAddress common.Address) (proxy chain.ContractProxy) {
+	ss.lockedEthereumProxyMapLock.Lock()
+	proxy = ss.lockedEthereumProxyMap[contractAddress]
+	ss.lockedEthereumProxyMapLock.Unlock()
 	return
 }
 
@@ -389,7 +397,7 @@ func (ss *ETHService) loop() {
 }
 
 func (ss *ETHService) refreshContractProxy() {
-	ss.tokenProxyMapLock.Lock()
+	ss.lockedEthereumProxyMapLock.Lock()
 	for addr := range ss.lockedEthereumProxyMap {
 		// rebuild proxy
 		p, err := proxy.NewLockedEthereumProxy(ss.c, addr)
@@ -399,7 +407,7 @@ func (ss *ETHService) refreshContractProxy() {
 		}
 		ss.lockedEthereumProxyMap[addr] = p
 	}
-	ss.tokenProxyMapLock.Unlock()
+	ss.lockedEthereumProxyMapLock.Unlock()
 }
 
 func (ss *ETHService) queryAllEvents(fromBlockNumber uint64, toBlockNumber uint64) (es []chain.Event, err error) {
@@ -417,8 +425,8 @@ func (ss *ETHService) getLogsFromChain(fromBlock uint64, toBlock uint64) (logs [
 	if len(ss.lockedEthereumProxyMap) == 0 {
 		return
 	}
-	ss.tokenProxyMapLock.Lock()
-	defer ss.tokenProxyMapLock.Unlock()
+	ss.lockedEthereumProxyMapLock.Lock()
+	defer ss.lockedEthereumProxyMapLock.Unlock()
 	var contractsAddress []common.Address
 	for key := range ss.lockedEthereumProxyMap {
 		contractsAddress = append(contractsAddress, key)

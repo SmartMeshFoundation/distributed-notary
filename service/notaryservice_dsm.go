@@ -398,7 +398,6 @@ func parseMessageToSign(msgName string, buf []byte) (msg mecdsa.MessageToSign, e
 签名信息校验,根据收到的消息类型,自己生成一份对应的消息体,并与收到的比对
 */
 func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *models.PrivateKeyInfo, msg mecdsa.MessageToSign) (err error) {
-	// TODO
 	switch m := msg.(type) {
 	// 1. 合约部署消息
 	case *messagetosign.SpectrumContractDeployTXData:
@@ -409,7 +408,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 			return
 		}
 		err = m.VerifySignBytes(c, privateKeyInfo.ToAddress())
-	// 2. 合约调用消息
+	// 2. TODO 合约调用消息
 	default:
 		err = fmt.Errorf("unknow message name=%s", msg.GetName())
 	}

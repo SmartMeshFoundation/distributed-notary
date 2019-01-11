@@ -224,7 +224,6 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Request) {
 		1. CrossChainRequest 带SCToken的请求,下发至对应的CrossChainService,如果找不到,返回错误
 		2. NotaryRequest 带key且不带SCToken的请求,一定是公证人之间的请求,比如私钥生成过程中的消息交互,下发至NotaryService
 		3. Request 不带key且不带SCToken的请求,一定为管理用户的非交易请求,下发至SystemService
-		TODO
 	*/
 	switch r := req.(type) {
 	case api.CrossChainRequest:
