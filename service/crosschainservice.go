@@ -38,7 +38,7 @@ func NewCrossChainService(db *models.DB, dispatchService dispatchServiceBackend,
 		selfPrivateKey: dispatchService.getSelfPrivateKey(),
 		selfNotaryID:   dispatchService.getSelfNotaryInfo().ID,
 		meta:           scTokenMetaInfo,
-		lockinHandler:  newLockinhandler(db),
+		lockinHandler:  newLockinhandler(db, scTokenMetaInfo.SCToken),
 		scTokenProxy:   scChain.GetContractProxy(scTokenMetaInfo.SCToken),
 		mcProxy:        mcChain.GetContractProxy(scTokenMetaInfo.MCLockedContractAddress),
 	}

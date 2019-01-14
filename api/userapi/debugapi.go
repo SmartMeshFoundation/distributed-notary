@@ -24,3 +24,15 @@ func (ua *UserAPI) transferToAccount(w rest.ResponseWriter, r *rest.Request) {
 	}
 	api.Return(w, ua.SendToServiceAndWaitResponse(req))
 }
+
+// DebugGetAllLockinInfoRequest :
+type DebugGetAllLockinInfoRequest struct {
+	api.BaseRequest
+}
+
+func (ua *UserAPI) getAllLockinInfo(w rest.ResponseWriter, r *rest.Request) {
+	req := &DebugGetAllLockinInfoRequest{
+		BaseRequest: api.NewBaseRequest(APIDebugNameGetAllLockinInfo),
+	}
+	api.Return(w, ua.SendToServiceAndWaitResponse(req))
+}

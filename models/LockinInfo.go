@@ -166,6 +166,22 @@ func (db *DB) GetAllLockinInfo() (list []*LockinInfo, err error) {
 	return
 }
 
+// GetAllLockinInfoBySCToken :
+func (db *DB) GetAllLockinInfoBySCToken(scToken common.Address) (list []*LockinInfo, err error) {
+	var t []lockinInfoModel
+	err = db.Where(&lockinInfoModel{
+		SCTokenAddress: scToken[:],
+	}).Find(&t).Error
+	if err == storm.ErrNotFound {
+		err = nil
+		return
+	}
+	for _, l := range t {
+		list = append(list, l.toLockinInfo())
+	}
+	return
+}
+
 // GetLockinInfo :
 func (db *DB) GetLockinInfo(secretHash common.Hash) (lockinInfo *LockinInfo, err error) {
 	var lim lockinInfoModel

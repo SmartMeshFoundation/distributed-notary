@@ -27,3 +27,12 @@ func (as *AdminService) onDebugTransferToAccountRequest(req *userapi.DebugTransf
 	}
 	req.WriteSuccessResponse(nil)
 }
+
+func (as *AdminService) onDebugGetAllLockinInfo(req *userapi.DebugGetAllLockinInfoRequest) {
+	lockinInfoList, err := as.db.GetAllLockinInfo()
+	if err != nil {
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
+	}
+	req.WriteSuccessResponse(lockinInfoList)
+}

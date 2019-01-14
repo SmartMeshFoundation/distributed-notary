@@ -15,8 +15,8 @@ type lockinHandler struct {
 	dealingMapLock sync.Mutex
 }
 
-func newLockinhandler(db *models.DB) *lockinHandler {
-	lockinInfoList, err := db.GetAllLockinInfo()
+func newLockinhandler(db *models.DB, scTokenAddress common.Address) *lockinHandler {
+	lockinInfoList, err := db.GetAllLockinInfoBySCToken(scTokenAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -57,6 +57,7 @@ func (lh *lockinHandler) getLockin(secretHash common.Hash) (lockinInfo *models.L
 		lh.dealingMapLock.Unlock()
 		return
 	}
+	lh.dealingMapLock.Unlock()
 	// 2. 查db
 	return lh.db.GetLockinInfo(secretHash)
 }
@@ -70,6 +71,7 @@ func (lh *lockinHandler) updateLockin(lockinInfo *models.LockinInfo) (err error)
 	// 1. 写入db
 	err = lh.db.UpdateLockinInfo(lockinInfo)
 	if err != nil {
+		lh.dealingMapLock.Lock()
 		err = fmt.Errorf("db.UpdateLockinInfo err = %s", err.Error())
 		return
 	}

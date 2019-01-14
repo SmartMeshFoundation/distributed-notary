@@ -27,8 +27,9 @@ const (
 	APIUserNameMCPrepareLockout = APIUserNamePrefix + "MCPrepareLockout"
 
 	APIDebugNamePrefix            = "Debug-"
-	APIDebugNameTransferToAccount = APIDebugNamePrefix + "transferToAccount" // 给某个账户在所有链上转10eth,为了测试
-	APIDebugNameClearSCTokenList  = APIDebugNamePrefix + "ClearSCTokenList"  // 清空所有的SCToken
+	APIDebugNameTransferToAccount = APIDebugNamePrefix + "TransferToAccount" // 给某个账户在所有链上转10eth,为了测试
+	APIDebugNameGetAllLockinInfo  = APIDebugNamePrefix + "GetAllLockinInfo"
+	APIDebugNameClearSCTokenList  = APIDebugNamePrefix + "ClearSCTokenList" // 清空所有的SCToken
 )
 
 // APIName2URLMap :
@@ -51,6 +52,7 @@ func init() {
 	/*
 		debug
 	*/
+	APIName2URLMap[APIDebugNameGetAllLockinInfo] = "/api/1/debug/lockin"
 	APIName2URLMap[APIDebugNameTransferToAccount] = "/api/1/debug/transfer-to-account/:account"
 }
 
@@ -85,6 +87,7 @@ func NewUserAPI(host string) *UserAPI {
 		/*
 			debug api
 		*/
+		rest.Get(APIName2URLMap[APIDebugNameGetAllLockinInfo], userAPI.getAllLockinInfo),
 		rest.Get(APIName2URLMap[APIDebugNameTransferToAccount], userAPI.transferToAccount),
 	)
 	if err != nil {

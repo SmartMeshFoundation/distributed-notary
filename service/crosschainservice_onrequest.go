@@ -27,6 +27,7 @@ func (cs *CrossChainService) onGetLockinStatusRequest(req *userapi.GetLockinStat
 	lockinInfo, err := cs.lockinHandler.getLockin(req.SecretHash)
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
 	}
 	req.WriteSuccessResponse(lockinInfo)
 }

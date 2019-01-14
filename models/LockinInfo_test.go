@@ -15,17 +15,20 @@ func TestLockinInfo(t *testing.T) {
 	db := SetupTestDB()
 	secret := utils.NewRandomHash()
 	secretHash := utils.ShaSecret(secret[:])
+	scToken := utils.NewRandomAddress()
 	data := &LockinInfo{
-		Secret:        secret,
-		SecretHash:    secretHash,
-		SCUserAddress: utils.NewRandomAddress(),
-		Amount:        big.NewInt(5),
-		MCLockStatus:  LockStatusLock,
+		Secret:         secret,
+		SecretHash:     secretHash,
+		SCTokenAddress: scToken,
+		SCUserAddress:  utils.NewRandomAddress(),
+		Amount:         big.NewInt(5),
+		MCLockStatus:   LockStatusLock,
 	}
 	var err error
 	list, err := db.GetAllLockinInfo()
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(list))
+
 	err = db.UpdateLockinInfo(data)
 	fmt.Println("1----", err)
 	assert.NotNil(t, err)
@@ -53,4 +56,13 @@ func TestLockinInfo(t *testing.T) {
 	list, err = db.GetAllLockinInfo()
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(list))
+
+	list2, err := db.GetAllLockinInfoBySCToken(scToken)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(list2))
+
+	list3, err := db.GetAllLockinInfoBySCToken(utils.EmptyAddress)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(list3))
+
 }
