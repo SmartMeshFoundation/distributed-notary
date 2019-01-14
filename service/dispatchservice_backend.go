@@ -44,10 +44,6 @@ func (ds *DispatchService) getChainByName(chainName string) (c chain.Chain, err 
 }
 
 func (ds *DispatchService) registerNewSCToken(scTokenMetaInfo *models.SideChainTokenMetaInfo) (err error) {
-	// 6. 构造CrossChainService开始提供服务
-	ds.scToken2CrossChainServiceMapLock.Lock()
-	defer ds.scToken2CrossChainServiceMapLock.Unlock()
-	ds.scToken2CrossChainServiceMap[scTokenMetaInfo.SCToken] = NewCrossChainService(ds.db, ds, scTokenMetaInfo)
 	// 注册侧链合约:
 	err = ds.chainMap[spectrumevents.ChainName].RegisterEventListenContract(scTokenMetaInfo.SCToken)
 	if err != nil {
@@ -65,5 +61,9 @@ func (ds *DispatchService) registerNewSCToken(scTokenMetaInfo *models.SideChainT
 		log.Error("RegisterEventListenContract on main chain %s err : %s", scTokenMetaInfo.MCName, err.Error())
 		return
 	}
+	// 6. 构造CrossChainService开始提供服务
+	ds.scToken2CrossChainServiceMapLock.Lock()
+	ds.scToken2CrossChainServiceMap[scTokenMetaInfo.SCToken] = NewCrossChainService(ds.db, ds, scTokenMetaInfo)
+	ds.scToken2CrossChainServiceMapLock.Unlock()
 	return
 }

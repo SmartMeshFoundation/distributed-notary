@@ -31,15 +31,14 @@ func init() {
 	TopicToEventName[lockedEthereumABI.Events[LockedEthereumLockinEventName].Id()] = LockedEthereumLockinEventName
 	TopicToEventName[lockedEthereumABI.Events[LockedEthereumCancelLockinEventName].Id()] = LockedEthereumCancelLockinEventName
 	TopicToEventName[lockedEthereumABI.Events[LockedEthereumCancelLockoutEventName].Id()] = LockedEthereumCancelLockoutEventName
-
 }
 
 /* #nosec */
 const (
-	LockedEthereumPrepareLockinEventName  = "LockedEthereumPrepareLockin"
-	LockedEthereumLockoutSecretEventName  = "LockedEthereumLockoutSecret"
-	LockedEthereumPrepareLockoutEventName = "LockedEthereumPrepareLockout"
-	LockedEthereumLockinEventName         = "LockedEthereumLockin"
-	LockedEthereumCancelLockinEventName   = "LockedEthereumCancelLockin"
-	LockedEthereumCancelLockoutEventName  = "LockedEthereumCancelLockout"
+	LockedEthereumPrepareLockinEventName  = "PrepareLockin"
+	LockedEthereumLockoutSecretEventName  = "LockoutSecret"
+	LockedEthereumPrepareLockoutEventName = "PrepareLockout"
+	LockedEthereumLockinEventName         = "Lockin"
+	LockedEthereumCancelLockinEventName   = "CancelLockin"
+	LockedEthereumCancelLockoutEventName  = "CancelLockout"
 )

@@ -59,6 +59,8 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 	}
 	if err != nil {
 		log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s", e.GetEventName(), err.Error()))
+	} else {
+		log.Info(SCTokenLogMsg(cs.meta, "Event deal SUCCESS"))
 	}
 	return
 }

@@ -92,6 +92,7 @@ func (as *AdminService) onGetNotaryListRequest(req *userapi.GetNotaryListRequest
 	req.WriteSuccessResponse(notaries)
 }
 
+// ScTokenInfoToResponse :
 type ScTokenInfoToResponse struct {
 	SCToken                  common.Address `json:"sc_token"`                               // 侧链token地址
 	SCTokenName              string         `json:"sc_token_name"`                          // 侧链Token名

@@ -36,10 +36,10 @@ func init() {
 
 /* #nosec */
 const (
-	AtmosphereTokenPrepareLockinEventName  = "AtmosphereTokenPrepareLockin"
-	AtmosphereTokenLockinSecretEventName   = "AtmosphereTokenLockinSecret"
-	AtmosphereTokenPrepareLockoutEventName = "AtmosphereTokenPrepareLockout"
-	AtmosphereTokenLockoutEventName        = "AtmosphereTokenLockout"
-	AtmosphereTokenCancelLockinEventName   = "AtmosphereTokenCancelLockin"
-	AtmosphereTokenCancelLockoutEventName  = "AtmosphereTokenCancelLockout"
+	AtmosphereTokenPrepareLockinEventName  = "PrepareLockin"
+	AtmosphereTokenLockinSecretEventName   = "LockinSecret"
+	AtmosphereTokenPrepareLockoutEventName = "PrepareLockout"
+	AtmosphereTokenLockoutEventName        = "Lockout"
+	AtmosphereTokenCancelLockinEventName   = "CancelLockin"
+	AtmosphereTokenCancelLockoutEventName  = "CancelLockout"
 )

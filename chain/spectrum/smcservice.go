@@ -114,6 +114,7 @@ func (ss *SMCService) RegisterEventListenContract(contractAddresses ...common.Ad
 			return err
 		}
 		ss.tokenProxyMap[addr] = p
+		log.Info("SMCService start to listen events of contract %s", addr.String())
 	}
 	ss.tokenProxyMapLock.Unlock()
 	return nil
