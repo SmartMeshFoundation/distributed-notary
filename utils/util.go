@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 	"io"
-	"os"
 
 	"crypto/ecdsa"
 	rand2 "crypto/rand"
@@ -123,12 +122,4 @@ func ToJSONString(v interface{}) string {
 		panic(err)
 	}
 	return string(buf)
-}
-
-// Exists returns true if directory||file exists
-func Exists(dir string) bool {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		return false
-	}
-	return true
 }

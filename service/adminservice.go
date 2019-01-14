@@ -92,7 +92,7 @@ func (as *AdminService) onGetNotaryListRequest(req *userapi.GetNotaryListRequest
 	req.WriteSuccessResponse(notaries)
 }
 
-type scTokenInfoToResponse struct {
+type ScTokenInfoToResponse struct {
 	SCToken                  common.Address `json:"sc_token"`                               // 侧链token地址
 	SCTokenName              string         `json:"sc_token_name"`                          // 侧链Token名
 	SCTokenOwnerKey          common.Hash    `json:"sc_token_owner_key"`                     // 侧链token合约owner的key
@@ -103,8 +103,8 @@ type scTokenInfoToResponse struct {
 	OrganiserID              int            `json:"organiser_id"`                           // 发起人ID
 }
 
-func newSCTokenInfoToResponse(s *models.SideChainTokenMetaInfo) (r *scTokenInfoToResponse) {
-	r = &scTokenInfoToResponse{
+func newSCTokenInfoToResponse(s *models.SideChainTokenMetaInfo) (r *ScTokenInfoToResponse) {
+	r = &ScTokenInfoToResponse{
 		SCToken:                  s.SCToken,
 		SCTokenName:              s.SCTokenName,
 		SCTokenOwnerKey:          s.SCTokenOwnerKey,
@@ -127,7 +127,7 @@ func (as *AdminService) onGetSCTokenListRequest(req *userapi.GetSCTokenListReque
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 	}
-	var resp []*scTokenInfoToResponse
+	var resp []*ScTokenInfoToResponse
 	for _, token := range tokens {
 		resp = append(resp, newSCTokenInfoToResponse(token))
 	}

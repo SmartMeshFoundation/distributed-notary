@@ -60,6 +60,19 @@ func (p *LockedEthereumProxy) QueryLockout(accountHex string) (secretHash common
 	return
 }
 
+// PrepareLockin :
+func (p *LockedEthereumProxy) PrepareLockin(opts *bind.TransactOpts, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
+	opts.Value = amount
+	expiration2 := new(big.Int).SetUint64(expiration)
+	tx, err := p.Contract.PrepareLockin(opts, secretHash, expiration2)
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	_, err = bind.WaitMined(ctx, p.conn, tx)
+	return
+}
+
 // Lockin impl chain.ContractProxy
 func (p *LockedEthereumProxy) Lockin(opts *bind.TransactOpts, accountHex string, secret common.Hash) (err error) {
 	account := common.HexToAddress(accountHex)
