@@ -16,7 +16,7 @@ import (
 */
 type dispatchServiceBackend interface {
 	getSelfPrivateKey() *ecdsa.PrivateKey
-	getSelfNotaryInfo() models.NotaryInfo
+	getSelfNotaryInfo() *models.NotaryInfo
 	getChainByName(chainName string) (c chain.Chain, err error)
 
 	/*
@@ -29,8 +29,8 @@ func (ds *DispatchService) getSelfPrivateKey() *ecdsa.PrivateKey {
 	return ds.notaryService.privateKey
 }
 
-func (ds *DispatchService) getSelfNotaryInfo() models.NotaryInfo {
-	return ds.notaryService.self
+func (ds *DispatchService) getSelfNotaryInfo() *models.NotaryInfo {
+	return &ds.notaryService.self
 }
 
 func (ds *DispatchService) getChainByName(chainName string) (c chain.Chain, err error) {

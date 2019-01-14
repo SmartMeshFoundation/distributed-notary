@@ -65,8 +65,6 @@ func (as *AdminService) OnRequest(req api.Request) {
 		as.onCreatePrivateKeyRequest(r)
 	case *userapi.RegisterSCTokenRequest:
 		as.onRegisterSCTokenRequest(r)
-	case *notaryapi.NewSCTokenRequest:
-		as.onNewSCTokenRequest(r)
 	/*
 		debug api
 	*/
@@ -265,8 +263,8 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 		return
 	}
 	// 6. 通知其余公证人
-	newSCTokenReq := notaryapi.NewNewSCTokenRequest(&scTokenMetaInfo)
-	err = as.notaryService.BroadcastMsg(utils.EmptyHash, notaryapi.APIAdminNameNewSCToken, newSCTokenReq, true)
+	newSCTokenReq := notaryapi.NewNewSCTokenRequest(as.dispatchService.getSelfNotaryInfo(), &scTokenMetaInfo)
+	err = as.notaryService.BroadcastMsg(utils.EmptyHash, notaryapi.APINameNewSCToken, newSCTokenReq, true)
 	if err != nil {
 		log.Error("err when broadcast NewSCTokenRequest to other notaries err=", err.Error())
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
@@ -325,28 +323,4 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 	}
 	contractAddress, err = c.DeployContract(transactor, params...)
 	return
-}
-
-func (as *AdminService) onNewSCTokenRequest(req *notaryapi.NewSCTokenRequest) {
-	var err error
-	scTokenMetaInfo := req.SCTokenMetaInfo
-	// 1. 校验信息 TODO 需要验证两个sessionID在本地是否存在且状态为签名完成
-	/*
-		TODO 需要验证的信息 :
-		a. 主链合约状态,对应签名在本地是否有记录,跟请求是否匹配
-		b. 侧链合约状态,对应签名在本地是否有记录,跟请求是否匹配
-	*/
-	// 2. 保存
-	err = as.db.NewSCTokenMetaInfo(scTokenMetaInfo)
-	if err != nil {
-		req.WriteErrorResponse(api.ErrorCodeException)
-		return
-	}
-	// 3. 注册到DispatchService并开始提供服务
-	err = as.dispatchService.registerNewSCToken(scTokenMetaInfo)
-	if err != nil {
-		req.WriteErrorResponse(api.ErrorCodeException)
-		return
-	}
-	req.WriteSuccessResponse(nil)
 }

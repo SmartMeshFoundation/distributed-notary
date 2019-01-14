@@ -132,6 +132,13 @@ type BaseCrossChainRequest struct {
 	SCTokenAddress common.Address `json:"sc_token_address,omitempty"`
 }
 
+//NewBaseCrossChainRequest :
+func NewBaseCrossChainRequest(scTokenAddress common.Address) BaseCrossChainRequest {
+	return BaseCrossChainRequest{
+		SCTokenAddress: scTokenAddress,
+	}
+}
+
 // GetSCTokenAddress :
 func (bcr *BaseCrossChainRequest) GetSCTokenAddress() common.Address {
 	return bcr.SCTokenAddress

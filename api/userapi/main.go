@@ -22,9 +22,9 @@ const (
 	APIUserNameGetNotaryList    = APIUserNamePrefix + "GetNotaryList"  // 公证人列表查询
 	APIUserNameGetSCTokenList   = APIUserNamePrefix + "GetSCTokenList" // 当前支持的SCToken列表查询
 	APIUserNameGetLockinStatus  = APIUserNamePrefix + "GetLockinStatus"
-	APIUserNameLockin           = APIUserNamePrefix + "Lockin"
+	APIUserNameSCPrepareLockin  = APIUserNamePrefix + "SCPrepareLockin"
 	APIUserNameGetLockoutStatus = APIUserNamePrefix + "GetLockoutStatus"
-	APIUserNameLockout          = APIUserNamePrefix + "Lockout"
+	APIUserNameMCPrepareLockout = APIUserNamePrefix + "MCPrepareLockout"
 
 	APIDebugNamePrefix            = "Debug-"
 	APIDebugNameTransferToAccount = APIDebugNamePrefix + "transferToAccount" // 给某个账户在所有链上转10eth,为了测试
@@ -47,6 +47,7 @@ func init() {
 	*/
 	APIName2URLMap[APIUserNameGetNotaryList] = "/api/1/user/notaries"
 	APIName2URLMap[APIUserNameGetSCTokenList] = "/api/1/user/sctokens"
+	APIName2URLMap[APIUserNameGetLockinStatus] = "/api/1/user/lockin/:sctoken/:secrethash"
 	/*
 		debug
 	*/
@@ -75,6 +76,7 @@ func NewUserAPI(host string) *UserAPI {
 		*/
 		rest.Get(APIName2URLMap[APIUserNameGetNotaryList], userAPI.getNotaryList),
 		rest.Get(APIName2URLMap[APIUserNameGetSCTokenList], userAPI.getSCTokenList),
+		rest.Get(APIName2URLMap[APIUserNameGetLockinStatus], userAPI.getLockinStatus),
 		/*
 			admin api
 		*/

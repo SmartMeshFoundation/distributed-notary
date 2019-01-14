@@ -3,6 +3,7 @@ package notaryapi
 import (
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 )
 
 /*
@@ -12,13 +13,18 @@ NewSCTokenRequest :
 */
 type NewSCTokenRequest struct {
 	api.BaseRequest
-	SCTokenMetaInfo *models.SideChainTokenMetaInfo
+	api.BaseNotaryRequest
+	api.BaseCrossChainRequest
+	SCTokenMetaInfo *models.SideChainTokenMetaInfo `json:"sc_token_meta_info"`
 }
 
 // NewNewSCTokenRequest :
-func NewNewSCTokenRequest(scTokenMetaInfo *models.SideChainTokenMetaInfo) *NewSCTokenRequest {
+func NewNewSCTokenRequest(self *models.NotaryInfo, scTokenMetaInfo *models.SideChainTokenMetaInfo) *NewSCTokenRequest {
+	sessionID := utils.NewRandomHash()
 	return &NewSCTokenRequest{
-		BaseRequest:     api.NewBaseRequest(APIAdminNameNewSCToken),
-		SCTokenMetaInfo: scTokenMetaInfo,
+		BaseRequest:           api.NewBaseRequest(APINameNewSCToken),
+		BaseNotaryRequest:     api.NewBaseNotaryRequest(sessionID, self.GetAddress(), self.ID),
+		BaseCrossChainRequest: api.NewBaseCrossChainRequest(scTokenMetaInfo.SCToken),
+		SCTokenMetaInfo:       scTokenMetaInfo,
 	}
 }

@@ -229,6 +229,26 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Request) {
 	case api.CrossChainRequest:
 		service, ok := ds.scToken2CrossChainServiceMap[r.GetSCTokenAddress()]
 		if !ok {
+			if r2, ok := r.(*notaryapi.NewSCTokenRequest); ok {
+				// 新的sctoken
+				var err error
+				scTokenMetaInfo := r2.SCTokenMetaInfo
+				// 1. 校验信息 TODO
+				// 2. 保存
+				err = ds.db.NewSCTokenMetaInfo(scTokenMetaInfo)
+				if err != nil {
+					req.WriteErrorResponse(api.ErrorCodeException)
+					return
+				}
+				// 3. 注册到DispatchService并开始提供服务
+				err = ds.registerNewSCToken(scTokenMetaInfo)
+				if err != nil {
+					req.WriteErrorResponse(api.ErrorCodeException)
+					return
+				}
+				req.WriteSuccessResponse(nil)
+				return
+			}
 			log.Error(fmt.Sprintf("%s receive request with out notary service : \n%s\n", logPrefix, utils.ToJSONStringFormat(req)))
 			// 返回api错误
 			req.WriteErrorResponse(api.ErrorCodeException)

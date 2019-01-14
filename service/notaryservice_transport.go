@@ -56,6 +56,14 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 	var payload string
 	switch m := msg.(type) {
 	/*
+		notary
+	*/
+	case *notaryapi.NewSCTokenRequest:
+		if m.Signature == nil {
+			api.NotarySign(m, ns.privateKey)
+		}
+		payload = utils.ToJSONString(m)
+	/*
 		pkn
 	*/
 	case *models.KeyGenBroadcastMessage1:
@@ -120,8 +128,6 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 	/*
 		admin
 	*/
-	case *notaryapi.NewSCTokenRequest:
-		payload = utils.ToJSONString(m)
 	default:
 		err = errors.New("api call not expect")
 		return
