@@ -78,8 +78,8 @@ func (l *LockinInfo) IsEnd() bool {
 		//主侧链都已解锁
 		return true
 	}
-	if l.MCLockStatus == LockStatusCancel && l.SCLockStatus == LockStatusCancel {
-		//主侧链都已Cancel
+	if l.MCLockStatus == LockStatusCancel && (l.SCLockStatus == LockStatusCancel || l.SCLockStatus == LockStatusNone) {
+		//主侧链都已Cancel 或主链canncel,侧链没发生
 		return true
 	}
 	return false
