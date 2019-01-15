@@ -1,0 +1,21 @@
+1. 拉取最新代码
+2. 在cmd下两个目录:dnc 和 dnotary 下分别go install ,并确保之后dnc命令和dnotary命令在命令行可用(即确保在环境变量PATH下)
+3. cd testdata/run, 
+    三个文件说明:
+                1. notary.conf : 公证人信息配置文件, 内有格式说明,该文件中指定的公证人数量即公证人总人数,代码中ShareCount会取该值,ThresholdCount会根据ShareCount自动计算
+                2. clean.sh :  测试用脚本,清理子目录数据
+                3. stopall.sh : 测试用脚本,杀死当前所有dnotary节点
+4. cd deploygeth 运行deploygeth.sh脚本,如果报错找我
+5. 在run目录下有对应节点的子目录,进去执行start.sh脚本启动一个节点,之前notary.conf中配置了几个公证人,这里就需要启动几个,且启动脚本中参数需与配置文件中匹配,默认创建了7个,有需要自己改动
+6. postman调用任一节点CreatePrivateKey接口
+7. postman调用任一节点GetPrivateKeyList接口,查询生成结果, status=4则为可用
+8. postman调用任一节点RegisterNewSCToken接口部署合约,参数使用上一步生成的PrivateKeyInfoID
+9. postman调用任一节点GetSCTokenList接口查看部署结果
+10. 另起一个终端,运行dnc c list命令查看dnc的配置
+11. dnc c xxx=xxx 修改配置项,确保用户的地址在两个链有钱,因为需要调用合约,确保dnc连接的公证人节点正确
+12. 运行dnc c refresh加载SCToken信息
+13. 运行dnc pli --amount=1 发起主链PrepareLockin,参数参考－h
+14. 运行dnc scpli 发起侧链PrepareLockin,该命令dnc会调用配置里面的公证人节点来实现
+15. 运行dnc li 发起侧链Lockin
+--------至此lockin流程完成
+16.  在13-15步骤间隔期间,使用postman调用任一节点GetAllLockinInfo接口实时观测查询lockin状态,主要看主侧链的锁状态
