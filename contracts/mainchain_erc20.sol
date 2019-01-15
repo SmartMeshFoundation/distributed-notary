@@ -130,6 +130,7 @@ contract LockedEthereum is Owned {
     //第二步 用户观察到主链上发生了PrepareLockout,会在过期时间之内,用密码解锁交易,
     //第三部,公证人则根据主链上观察到的密码,销毁相应的token
     function prepareLockoutHTLC(address account,bytes32 secret_hash,uint256 expiration,uint256 value ) onlyOwner public{
+        require(account != 0);
         LockoutInfo storage li=lockout_htlc[account];
         require(value>0);
         require(li.value==0);

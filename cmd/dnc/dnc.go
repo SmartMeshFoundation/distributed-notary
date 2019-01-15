@@ -9,6 +9,8 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/accounts"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
+	client2 "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/client"
+	"github.com/SmartMeshFoundation/distributed-notary/service"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -27,11 +29,12 @@ var Version string
 func main() {
 	app := cli.NewApp()
 	app.Commands = []cli.Command{
-		configCmd,
+		configCmd, // 管理
 		pliCmd,
+		scpliCmd,
+		licmd,
 		cpliCmd,
 	}
-	app.Action = startMain
 	app.Name = "dnc"
 	app.Version = Version
 	err := app.Run(os.Args)
@@ -40,12 +43,9 @@ func main() {
 	}
 }
 
-func startMain(ctx *cli.Context) {
-}
-
-func getEthPrivateKey() (privateKey *ecdsa.PrivateKey, err error) {
+func getPrivateKey(addressHex, password string) (privateKey *ecdsa.PrivateKey, err error) {
 	am := accounts.NewAccountManager(globalConfig.Keystore)
-	privateKeyBin, err := am.GetPrivateKey(common.HexToAddress(globalConfig.EthUserAddress), globalConfig.EthUserPassword)
+	privateKeyBin, err := am.GetPrivateKey(common.HexToAddress(addressHex), password)
 	if err != nil {
 		log.Error("load private key err : %s", err.Error())
 		return
@@ -66,6 +66,23 @@ func getEthLastBlockNumber(c *client.SafeEthClient) uint64 {
 	return h.Number.Uint64()
 }
 
+func getSmcLastBlockNumber(c *client2.SafeEthClient) uint64 {
+	h, err := c.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		panic(err)
+	}
+	return h.Number.Uint64()
+}
+
+func getSCTokenByMCName(mcName string) *service.ScTokenInfoToResponse {
+	for _, sctoken := range globalConfig.SCTokenList {
+		if sctoken.MCName == mcName {
+			return &sctoken
+		}
+	}
+	return nil
+}
+
 func getMCContractAddressByMCName(mcName string) common.Address {
 	if globalConfig.SCTokenList == nil || len(globalConfig.SCTokenList) == 0 {
 		fmt.Println("must run dnc config refresh first")
@@ -77,6 +94,21 @@ func getMCContractAddressByMCName(mcName string) common.Address {
 		}
 	}
 	fmt.Printf("can not found mc contract address of %s\n", mcName)
+	os.Exit(-1)
+	return utils.EmptyAddress
+}
+
+func getSCContractAddressByMCName(mcName string) common.Address {
+	if globalConfig.SCTokenList == nil || len(globalConfig.SCTokenList) == 0 {
+		fmt.Println("must run dnc config refresh first")
+		os.Exit(-1)
+	}
+	for _, sctoken := range globalConfig.SCTokenList {
+		if sctoken.MCName == mcName {
+			return sctoken.SCToken
+		}
+	}
+	fmt.Printf("can not found sc token address of %s\n", mcName)
 	os.Exit(-1)
 	return utils.EmptyAddress
 }

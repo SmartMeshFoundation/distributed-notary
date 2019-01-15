@@ -62,6 +62,20 @@ func (p *SideChainErc20TokenProxy) QueryLockout(accountHex string) (secretHash c
 	return
 }
 
+// PrepareLockin impl chain.ContractProxy
+func (p *SideChainErc20TokenProxy) PrepareLockin(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
+	account := common.HexToAddress(accountHex)
+	expiration2 := new(big.Int).SetUint64(expiration)
+	var tx *types.Transaction
+	tx, err = p.Contract.PrepareLockin(opts, account, secretHash, expiration2, amount)
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	_, err = bind.WaitMined(ctx, p.conn, tx)
+	return
+}
+
 // Lockin impl chain.ContractProxy
 func (p *SideChainErc20TokenProxy) Lockin(opts *bind.TransactOpts, accountHex string, secret common.Hash) (err error) {
 	account := common.HexToAddress(accountHex)

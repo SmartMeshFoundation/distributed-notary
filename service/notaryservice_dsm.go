@@ -8,6 +8,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
@@ -84,7 +85,7 @@ func (ns *NotaryService) saveDSMNotifySelection(req *notaryapi.DSMNotifySelectio
 		return
 	}
 	// 2. 校验msgToSign
-	err = ns.checkMsgToSign(sessionID, privateKeyInfo, msgToSign)
+	err = ns.checkMsgToSign(sessionID, privateKeyInfo, msgToSign, req.GetSenderID())
 	if err != nil {
 		ns.unlockSession(sessionID)
 		return
@@ -387,6 +388,9 @@ func parseMessageToSign(msgName string, buf []byte) (msg mecdsa.MessageToSign, e
 	case messagetosign.SpectrumContractDeployTXDataName:
 		msg = new(messagetosign.SpectrumContractDeployTXData)
 		err = msg.Parse(buf)
+	case messagetosign.SpectrumPrepareLockinTxDataName:
+		msg = new(messagetosign.SpectrumPrepareLockinTxData)
+		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")
 	}
@@ -396,7 +400,7 @@ func parseMessageToSign(msgName string, buf []byte) (msg mecdsa.MessageToSign, e
 /*
 签名信息校验,根据收到的消息类型,自己生成一份对应的消息体,并与收到的比对
 */
-func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *models.PrivateKeyInfo, msg mecdsa.MessageToSign) (err error) {
+func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *models.PrivateKeyInfo, msg mecdsa.MessageToSign, senderID int) (err error) {
 	switch m := msg.(type) {
 	// 1. 合约部署消息
 	case *messagetosign.SpectrumContractDeployTXData:
@@ -407,7 +411,26 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 			return
 		}
 		err = m.VerifySignBytes(c, privateKeyInfo.ToAddress())
-	// 2. TODO 合约调用消息
+	// 2. 合约调用消息
+	case *messagetosign.SpectrumPrepareLockinTxData:
+		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
+		// 1. 获取本地lockinInfo
+		var localLockinInfo *models.LockinInfo
+		localLockinInfo, err = ns.dispatchService.getLockinInfo(m.UserRequest.SCTokenAddress, m.UserRequest.SecretHash)
+		if err != nil {
+			return
+		}
+		// 2. 获取本地scTokenProxy
+		var c chain.Chain
+		c, err = ns.dispatchService.getChainByName(events.ChainName)
+		scTokenProxy := c.GetContractProxy(localLockinInfo.SCTokenAddress)
+		// 2. 校验
+		err = m.VerifySignData(scTokenProxy, privateKeyInfo, localLockinInfo)
+		if err != nil {
+			return
+		}
+		// 2.5. 更新本地locinInfo
+		err = ns.dispatchService.updateLockinInfoNotaryIDInChargeID(localLockinInfo.SCTokenAddress, localLockinInfo.Secret, senderID)
 	default:
 		err = fmt.Errorf("unknow message name=%s", msg.GetName())
 	}

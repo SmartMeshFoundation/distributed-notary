@@ -60,8 +60,9 @@ func (p *LockedEthereumProxy) QueryLockout(accountHex string) (secretHash common
 	return
 }
 
-// PrepareLockin :
-func (p *LockedEthereumProxy) PrepareLockin(opts *bind.TransactOpts, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
+// PrepareLockin : impl chain.ContractProxy
+// 主链的PrepareLockin由用户发起,不需要使用accountHex参数,传""即可
+func (p *LockedEthereumProxy) PrepareLockin(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
 	opts.Value = amount
 	expiration2 := new(big.Int).SetUint64(expiration)
 	tx, err := p.Contract.PrepareLockin(opts, secretHash, expiration2)

@@ -49,6 +49,7 @@ func init() {
 	APIName2URLMap[APIUserNameGetNotaryList] = "/api/1/user/notaries"
 	APIName2URLMap[APIUserNameGetSCTokenList] = "/api/1/user/sctokens"
 	APIName2URLMap[APIUserNameGetLockinStatus] = "/api/1/user/lockin/:sctoken/:secrethash"
+	APIName2URLMap[APIUserNameSCPrepareLockin] = "/api/1/user/scpreparelockin/:sctoken"
 	/*
 		debug
 	*/
@@ -79,6 +80,7 @@ func NewUserAPI(host string) *UserAPI {
 		rest.Get(APIName2URLMap[APIUserNameGetNotaryList], userAPI.getNotaryList),
 		rest.Get(APIName2URLMap[APIUserNameGetSCTokenList], userAPI.getSCTokenList),
 		rest.Get(APIName2URLMap[APIUserNameGetLockinStatus], userAPI.getLockinStatus),
+		rest.Post(APIName2URLMap[APIUserNameSCPrepareLockin], userAPI.scPrepareLockin),
 		/*
 			admin api
 		*/

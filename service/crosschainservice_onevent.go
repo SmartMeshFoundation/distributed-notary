@@ -9,6 +9,7 @@ import (
 	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/nkbai/log"
 )
@@ -22,8 +23,16 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 	*/
 	case ethevents.NewBlockEvent:
 		err = cs.onMCNewBlockEvent(event)
+		if err != nil {
+			log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s", e.GetEventName(), err.Error()))
+		}
+		return
 	case smcevents.NewBlockEvent:
 		err = cs.onSCNewBlockEvent(event)
+		if err != nil {
+			log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s", e.GetEventName(), err.Error()))
+		}
+		return
 	/*
 		events about lockin
 	*/
@@ -66,10 +75,12 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 }
 
 func (cs *CrossChainService) onMCNewBlockEvent(event ethevents.NewBlockEvent) (err error) {
+	cs.mcLastedBlockNumber = event.BlockNumber
 	return cs.lockinHandler.onMCNewBlockEvent(event.BlockNumber)
 }
 
 func (cs *CrossChainService) onSCNewBlockEvent(event smcevents.NewBlockEvent) (err error) {
+	cs.scLastedBlockNumber = event.BlockNumber
 	var lockinListNeedCancel []*models.LockinInfo
 	lockinListNeedCancel, err = cs.lockinHandler.onSCNewBlockEvent(event.BlockNumber)
 	if err != nil {
@@ -81,7 +92,7 @@ func (cs *CrossChainService) onSCNewBlockEvent(event smcevents.NewBlockEvent) (e
 				// 如果我是负责人,尽快cancel,这里如果调用合约出错,也继续去尝试cancel下一个
 				err = cs.callSCCancelLockin(lockin.SCUserAddress.String())
 				if err != nil {
-					log.Error(err.Error())
+					log.Error("callSCCancelLockin err = %s", err.Error())
 				}
 			}
 		}
@@ -101,6 +112,14 @@ func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareL
 		err = fmt.Errorf("mcProxy.QueryLockin err = %s", err.Error())
 		return
 	}
+	// 1.5 校验mcExpiration
+	if mcExpiration-event.BlockNumber <= params.MinMCExpiration {
+		err = fmt.Errorf("mcExpiration must bigger than %d", params.MinMCExpiration)
+		return
+	}
+	// 1.6 计算scExpiration
+	scExpiration := cs.scLastedBlockNumber + (mcExpiration - event.BlockNumber - 5*params.ForkConfirmNumber - 1)
+
 	// 2. 构造LockinInfo
 	lockinInfo := &models.LockinInfo{
 		SecretHash:       secretHash,
@@ -110,7 +129,7 @@ func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareL
 		SCTokenAddress:   cs.meta.SCToken,
 		Amount:           amount,
 		MCExpiration:     mcExpiration,
-		SCExpiration:     0,
+		SCExpiration:     scExpiration,
 		MCLockStatus:     models.LockStatusLock,
 		SCLockStatus:     models.LockStatusNone,
 		//Data:               data,
@@ -146,30 +165,22 @@ func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEven
 		return
 	}
 	// 3.　校验 TODO
-	if lockinInfo.SCUserAddress != event.Account {
-		err = fmt.Errorf("SCUserAddress does't match")
-		return
-	}
-	if lockinInfo.SCExpiration != 0 || lockinInfo.MCLockStatus != models.LockStatusLock || lockinInfo.SCLockStatus != models.LockStatusNone || lockinInfo.Secret != utils.EmptyHash {
+	if lockinInfo.MCLockStatus != models.LockStatusLock || lockinInfo.SCLockStatus != models.LockStatusNone || lockinInfo.Secret != utils.EmptyHash {
 		err = fmt.Errorf("local lockinInfo status does't right,something must wrong, local lockinInfo:\n%s", utils.ToJSONStringFormat(lockinInfo))
-		return
-	}
-	if secretHash != lockinInfo.SecretHash {
-		err = fmt.Errorf("secretHash does't match")
 		return
 	}
 	if lockinInfo.Amount.Cmp(amount) != 0 {
 		err = fmt.Errorf("amount does't match")
 		return
 	}
-	// 主链Expiration　必须大于　5倍侧链Expiration TODO
-	if lockinInfo.MCExpiration < 5*scExpiration {
-		err = fmt.Errorf("mcExpiration must bigger than scExpiration *  5")
+	if lockinInfo.SCExpiration != scExpiration {
+		err = fmt.Errorf("scExpiration does't match")
 		return
 	}
+
 	// 4. 修改状态,等待后续调用
-	lockinInfo.SCExpiration = scExpiration
 	lockinInfo.SCLockStatus = models.LockStatusLock
+	lockinInfo.SCUserAddress = event.Account
 	err = cs.lockinHandler.updateLockin(lockinInfo)
 	if err != nil {
 		err = fmt.Errorf("db.UpdateLockinInfo err = %s", err.Error())

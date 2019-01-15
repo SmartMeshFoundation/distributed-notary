@@ -19,7 +19,7 @@ func (as *AdminService) onDebugTransferToAccountRequest(req *userapi.DebugTransf
 			req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 			return
 		}
-		err = c.Transfer10ToAccount(as.notaryService.privateKey, req.Account, amount)
+		err = c.Transfer10ToAccount(as.dispatchService.getSelfPrivateKey(), req.Account, amount)
 		if err != nil {
 			req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 			return

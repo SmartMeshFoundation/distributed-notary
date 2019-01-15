@@ -48,7 +48,7 @@ func cancelPrepareLockin(ctx *cli.Context) error {
 		os.Exit(-1)
 	}
 	// 3. get auth
-	privateKey, err := getEthPrivateKey()
+	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

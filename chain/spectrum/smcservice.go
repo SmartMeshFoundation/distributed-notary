@@ -268,8 +268,12 @@ func (ss *SMCService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo commo
 	if err != nil {
 		return fmt.Errorf("failed to suggest gas price: %v", err)
 	}
+	chainID, err := conn.NetworkID(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get networkID : %v", err)
+	}
 	rawTx := types.NewTransaction(nonce, accountTo, amount, gasLimit, gasPrice, nil)
-	signedTx, err := auth.Signer(types.NewEIP155Signer(big.NewInt(3)), auth.From, rawTx)
+	signedTx, err := auth.Signer(types.NewEIP155Signer(chainID), auth.From, rawTx)
 	if err != nil {
 		return err
 	}

@@ -48,12 +48,12 @@ func main() {
 		cli.StringFlag{
 			Name:  "smc-rpc-point",
 			Usage: "host:port of spectrum rpc server",
-			Value: "http://192.168.124.13:28545",
+			Value: "http://127.0.0.1:17888",
 		},
 		cli.StringFlag{
 			Name:  "eth-rpc-point",
 			Usage: "host:port of spectrum rpc server",
-			Value: "http://127.0.0.1:9001",
+			Value: "http://127.0.0.1:19888",
 		},
 		cli.StringFlag{
 			Name:  "user-listen",

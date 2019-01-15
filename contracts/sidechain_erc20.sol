@@ -135,7 +135,7 @@ contract AtmosphereToken is StandardToken {
     }
     mapping(address=>LockinInfo) public lockin_htlc; //lockin过程中的htlc
     event PrepareLockin(address account, uint256 value);
-    event LockinSecret(bytes32 secret);
+    event LockinSecret(address account,bytes32 secret);
     event PrepareLockout(address account, uint256 _value);
     event Lockout(address account, bytes32 secretHash);
     event CancelLockin(address account, bytes32 secretHash);
@@ -162,6 +162,7 @@ contract AtmosphereToken is StandardToken {
     //第二步:  公证人观察到侧连上真正发生了lockin(由用户发起),就会知道密码,这时公证人可以在有效期内将主链资产转移到指定合约中去
     //如果交易发起人没有在规定时间内在侧连上进行相应的lockin,公证人(任何人)可以在过期以后,在侧链撤销HTLC(cancel lockin)
     function prepareLockin(address account,bytes32 secret_hash,uint256 expiration,uint256 value) onlyOwner public{
+        require(account != 0);
         require(lockin_htlc[account].value==0);
         LockinInfo storage li=lockin_htlc[account];
         li.SecretHash=secret_hash;
@@ -189,7 +190,7 @@ contract AtmosphereToken is StandardToken {
         li.value=0;
         li.SecretHash=bytes32(0);
         li.Expiration=0;
-        emit LockinSecret(secret);
+        emit LockinSecret(account, secret);
     }
     //lockin过程出错,expiration过期以后,任何人都可以撤销此次交易
     function cancelLockin(address account)   public {

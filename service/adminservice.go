@@ -28,15 +28,13 @@ import (
 // AdminService :
 type AdminService struct {
 	db              *models.DB
-	notaryService   *NotaryService
 	dispatchService dispatchServiceBackend
 }
 
 // NewAdminService :
-func NewAdminService(db *models.DB, notaryService *NotaryService, dispatchService dispatchServiceBackend) (ns *AdminService, err error) {
+func NewAdminService(db *models.DB, dispatchService dispatchServiceBackend) (ns *AdminService, err error) {
 	ns = &AdminService{
 		db:              db,
-		notaryService:   notaryService,
 		dispatchService: dispatchService,
 	}
 	return
@@ -182,7 +180,7 @@ func (as *AdminService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKeyR
 		return
 	}
 	// 1. 调用自己的notaryService,生成KeyGenerator,并开始协商过程
-	privateKeyID, err := as.notaryService.startNewPrivateKeyNegotiation()
+	privateKeyID, err := as.dispatchService.getNotaryService().startNewPrivateKeyNegotiation()
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 		return
@@ -251,7 +249,7 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	scTokenMetaInfo.MCLockedContractOwnerKey = privateKeyInfo.Key
 	scTokenMetaInfo.MCLockedContractDeploySessionID = mcDeploySessionID
 	scTokenMetaInfo.CreateTime = time.Now().Unix()
-	scTokenMetaInfo.OrganiserID = as.notaryService.self.ID
+	scTokenMetaInfo.OrganiserID = as.dispatchService.getSelfNotaryInfo().ID
 	err = as.db.NewSCTokenMetaInfo(&scTokenMetaInfo)
 	if err != nil {
 		log.Error("err when NewSCTokenMetaInfo : %s", err.Error())
@@ -267,7 +265,7 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	}
 	// 6. 通知其余公证人
 	newSCTokenReq := notaryapi.NewNewSCTokenRequest(as.dispatchService.getSelfNotaryInfo(), &scTokenMetaInfo)
-	err = as.notaryService.BroadcastMsg(utils.EmptyHash, notaryapi.APINameNewSCToken, newSCTokenReq, true)
+	err = as.dispatchService.getNotaryService().BroadcastMsg(utils.EmptyHash, notaryapi.APINameNewSCToken, newSCTokenReq, true)
 	if err != nil {
 		log.Error("err when broadcast NewSCTokenRequest to other notaries err=", err.Error())
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
@@ -304,7 +302,7 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 	msgToSign = messagetosign.NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress(), params...)
 	// 2. 签名
 	var signature []byte
-	signature, sessionID, err = as.notaryService.startDistributedSignAndWait(msgToSign, privateKeyInfo)
+	signature, sessionID, err = as.dispatchService.getNotaryService().startDistributedSignAndWait(msgToSign, privateKeyInfo)
 	if err != nil {
 		return
 	}

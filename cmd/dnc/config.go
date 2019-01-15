@@ -25,6 +25,10 @@ import (
 	"github.com/urfave/cli"
 )
 
+type runTime struct {
+	Secret     string `json:"secret"`
+	SecretHash string `json:"secret_hash"`
+}
 type dncConfig struct {
 	NotaryHost string `json:"notary_host"`
 	Keystore   string `json:"keystore"`
@@ -38,6 +42,8 @@ type dncConfig struct {
 	SmcRPCEndpoint  string `json:"smc_rpc_endpoint"`
 
 	SCTokenList []service.ScTokenInfoToResponse `json:"sc_token_list"`
+
+	RunTime *runTime `json:"run_time"`
 }
 
 var globalConfig *dncConfig
@@ -48,11 +54,11 @@ var defaultConfig = &dncConfig{
 
 	EthUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	EthUserPassword: "123",
-	EthRPCEndpoint:  "http://127.0.0.1:9001",
+	EthRPCEndpoint:  "http://127.0.0.1:19888",
 
 	SmcUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	SmcUserPassword: "123",
-	SmcRPCEndpoint:  "http://192.168.124.13:28545",
+	SmcRPCEndpoint:  "http://127.0.0.1:17888",
 }
 
 var configDir = path.Join(utils.GetHomePath(), ".dnc-client")

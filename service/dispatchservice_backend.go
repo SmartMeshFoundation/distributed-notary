@@ -8,6 +8,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	spectrumevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/nkbai/log"
 )
 
@@ -18,11 +19,18 @@ type dispatchServiceBackend interface {
 	getSelfPrivateKey() *ecdsa.PrivateKey
 	getSelfNotaryInfo() *models.NotaryInfo
 	getChainByName(chainName string) (c chain.Chain, err error)
+	getLockinInfo(scTokenAddress common.Address, secretHash common.Hash) (lockinInfo *models.LockinInfo, err error)
+	getNotaryService() *NotaryService
 
 	/*
 		notaryService在部署合约之后调用,原则上除此和启动时,其余地方不能调用
 	*/
 	registerNewSCToken(scTokenMetaInfo *models.SideChainTokenMetaInfo) (err error)
+
+	/*
+		notaryService在协商调用合约之后,更新lockinInfo中的NotaryIDInCharge字段,其余地方不应该调用
+	*/
+	updateLockinInfoNotaryIDInChargeID(scTokenAddress common.Address, secretHash common.Hash, notaryID int) (err error)
 }
 
 func (ds *DispatchService) getSelfPrivateKey() *ecdsa.PrivateKey {
@@ -41,6 +49,20 @@ func (ds *DispatchService) getChainByName(chainName string) (c chain.Chain, err 
 		return
 	}
 	return
+}
+
+func (ds *DispatchService) getNotaryService() *NotaryService {
+	return ds.notaryService
+}
+
+func (ds *DispatchService) getLockinInfo(scTokenAddress common.Address, secretHash common.Hash) (lockinInfo *models.LockinInfo, err error) {
+	ds.scToken2CrossChainServiceMapLock.Lock()
+	defer ds.scToken2CrossChainServiceMapLock.Unlock()
+	cs, ok := ds.scToken2CrossChainServiceMap[scTokenAddress]
+	if !ok {
+		panic("never happen")
+	}
+	return cs.lockinHandler.getLockin(secretHash)
 }
 
 func (ds *DispatchService) registerNewSCToken(scTokenMetaInfo *models.SideChainTokenMetaInfo) (err error) {
@@ -66,4 +88,16 @@ func (ds *DispatchService) registerNewSCToken(scTokenMetaInfo *models.SideChainT
 	ds.scToken2CrossChainServiceMap[scTokenMetaInfo.SCToken] = NewCrossChainService(ds.db, ds, scTokenMetaInfo)
 	ds.scToken2CrossChainServiceMapLock.Unlock()
 	return
+}
+
+func (ds *DispatchService) updateLockinInfoNotaryIDInChargeID(scTokenAddress common.Address, secretHash common.Hash, notaryID int) (err error) {
+	ds.scToken2CrossChainServiceMapLock.Lock()
+	lh := ds.scToken2CrossChainServiceMap[scTokenAddress].lockinHandler
+	ds.scToken2CrossChainServiceMapLock.Unlock()
+	lockinInfo, err := lh.getLockin(secretHash)
+	if err != nil {
+		return
+	}
+	lockinInfo.NotaryIDInCharge = notaryID
+	return lh.updateLockin(lockinInfo)
 }

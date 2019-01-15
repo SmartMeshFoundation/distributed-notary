@@ -10,7 +10,7 @@ var confirmBlockNumber uint64 = 17
 var pollPeriod = 500 * time.Millisecond
 
 // NewBlockNumber日志间隔
-var logPeriod = uint64(150)
+var logPeriod = uint64(20)
 
 //defaultPollTimeout  request wait time
 const defaultPollTimeout = 180 * time.Second

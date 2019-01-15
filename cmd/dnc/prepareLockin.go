@@ -42,6 +42,10 @@ var pliCmd = cli.Command{
 func prepareLockin(ctx *cli.Context) error {
 	contract := getMCContractAddressByMCName(ctx.String("mcname"))
 	amount := ctx.Int64("amount")
+	if amount == 0 {
+		fmt.Println("pli must wrong with --amount")
+		os.Exit(-1)
+	}
 	expiration := ctx.Uint64("expiration")
 	fmt.Printf("start to prepare lockin :\n ======> [contract=%s amount=%d expiartion=%d]\n", contract.String(), amount, expiration)
 
@@ -62,7 +66,7 @@ func prepareLockin(ctx *cli.Context) error {
 		os.Exit(-1)
 	}
 	// 3. get auth
-	privateKey, err := getEthPrivateKey()
+	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -73,7 +77,12 @@ func prepareLockin(ctx *cli.Context) error {
 	secretHash := utils.ShaSecret(secret[:])
 	expiration2 := getEthLastBlockNumber(conn) + expiration
 	fmt.Printf(" ======> [secret=%s, secretHash=%s]\n", secret.String(), secretHash.String())
-	err = cp.PrepareLockin(auth, secretHash, expiration2, getEther(amount))
+	globalConfig.RunTime = &runTime{
+		Secret:     secret.String(),
+		SecretHash: secretHash.String(),
+	}
+	updateConfigFile()
+	err = cp.PrepareLockin(auth, "", secretHash, expiration2, getEther(amount))
 	if err != nil {
 		fmt.Println("prepare lockin err : ", err.Error())
 		os.Exit(-1)
