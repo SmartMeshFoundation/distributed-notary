@@ -126,23 +126,23 @@ func configManage(ctx *cli.Context) error {
 		}
 		switch s[0] {
 		case "nh", "notary-host":
-			globalConfig.NotaryHost = s[2]
+			globalConfig.NotaryHost = s[1]
 		case "keystore":
-			globalConfig.Keystore = s[2]
+			globalConfig.Keystore = s[1]
 
 		case "eua", "eth-user-address":
-			globalConfig.EthUserAddress = s[2]
+			globalConfig.EthUserAddress = s[1]
 		case "eup", "eth-user-password":
-			globalConfig.EthUserPassword = s[2]
+			globalConfig.EthUserPassword = s[1]
 		case "eth", "eth-rpc-endpoint":
 			globalConfig.EthRPCEndpoint = s[1]
 
 		case "sua", "smc-user-address":
-			globalConfig.SmcUserAddress = s[2]
+			globalConfig.SmcUserAddress = s[1]
 		case "sup", "smc-user-password":
-			globalConfig.SmcUserPassword = s[2]
+			globalConfig.SmcUserPassword = s[1]
 		case "smc", "smc-rpc-endpoint":
-			globalConfig.SmcRPCEndpoint = s[2]
+			globalConfig.SmcRPCEndpoint = s[1]
 		default:
 			fmt.Printf("wrong param : %s\n", param)
 			os.Exit(-1)
@@ -184,6 +184,7 @@ func refreshSCTokenList(ctx *cli.Context) (err error) {
 		fmt.Println(err)
 	}
 	updateConfigFile()
+	fmt.Println(utils.ToJSONStringFormat(globalConfig))
 	return
 }
 

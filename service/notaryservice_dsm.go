@@ -430,7 +430,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 			return
 		}
 		// 2.5. 更新本地locinInfo
-		err = ns.dispatchService.updateLockinInfoNotaryIDInChargeID(localLockinInfo.SCTokenAddress, localLockinInfo.Secret, senderID)
+		err = ns.dispatchService.updateLockinInfoNotaryIDInChargeID(localLockinInfo.SCTokenAddress, localLockinInfo.SecretHash, senderID)
 	default:
 		err = fmt.Errorf("unknow message name=%s", msg.GetName())
 	}
