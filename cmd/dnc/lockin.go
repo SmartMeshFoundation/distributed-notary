@@ -63,12 +63,6 @@ func lockin(ctx *cli.Context) error {
 	// 4. call li
 	auth := bind.NewKeyedTransactor(privateKey)
 
-	sh, e, a, err := cp.QueryLockin(globalConfig.SmcUserAddress)
-	fmt.Println("contract data :")
-	fmt.Println("secretHash = ", sh.String())
-	fmt.Println("expiration = ", e)
-	fmt.Println("amount     = ", a)
-
 	err = cp.Lockin(auth, globalConfig.SmcUserAddress, secret)
 	if err != nil {
 		fmt.Println("lockin err : ", err.Error())

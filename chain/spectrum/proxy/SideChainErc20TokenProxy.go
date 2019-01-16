@@ -101,3 +101,30 @@ func (p *SideChainErc20TokenProxy) CancelLockin(opts *bind.TransactOpts, account
 	_, err = bind.WaitMined(ctx, p.conn, tx)
 	return
 }
+
+// PrepareLockout impl chain.ContractProxy
+// 侧链的PrepareLockout由用户发起,不需要使用accountHex参数,传""即可
+func (p *SideChainErc20TokenProxy) PrepareLockout(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
+	expiration2 := new(big.Int).SetUint64(expiration)
+	var tx *types.Transaction
+	tx, err = p.Contract.PrepareLockout(opts, secretHash, expiration2, amount)
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	_, err = bind.WaitMined(ctx, p.conn, tx)
+	return
+}
+
+// CancelLockout impl chain.ContractProxy
+func (p *SideChainErc20TokenProxy) CancelLockout(opts *bind.TransactOpts, accountHex string) (err error) {
+	account := common.HexToAddress(accountHex)
+	var tx *types.Transaction
+	tx, err = p.Contract.CancelLockOut(opts, account)
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	_, err = bind.WaitMined(ctx, p.conn, tx)
+	return
+}

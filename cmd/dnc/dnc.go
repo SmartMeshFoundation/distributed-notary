@@ -6,14 +6,18 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"time"
 
 	"github.com/SmartMeshFoundation/distributed-notary/accounts"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
-	client2 "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/client"
+	etclient "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
+	ethproxy "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/proxy"
+	smcclient "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/client"
+	smcproxy "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/service"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/nkbai/log"
 	"github.com/urfave/cli"
@@ -30,10 +34,22 @@ func main() {
 	app := cli.NewApp()
 	app.Commands = []cli.Command{
 		configCmd, // 管理
+		/*
+			lockin
+		*/
 		pliCmd,
 		scpliCmd,
 		licmd,
 		cpliCmd,
+		/*
+			lockout
+		*/
+		ploCmd,
+		cploCmd,
+		/*
+			query
+		*/
+		queryCmd,
 	}
 	app.Name = "dnc"
 	app.Version = Version
@@ -58,7 +74,7 @@ func getPrivateKey(addressHex, password string) (privateKey *ecdsa.PrivateKey, e
 	return
 }
 
-func getEthLastBlockNumber(c *client.SafeEthClient) uint64 {
+func getEthLastBlockNumber(c *etclient.SafeEthClient) uint64 {
 	h, err := c.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		panic(err)
@@ -66,7 +82,7 @@ func getEthLastBlockNumber(c *client.SafeEthClient) uint64 {
 	return h.Number.Uint64()
 }
 
-func getSmcLastBlockNumber(c *client2.SafeEthClient) uint64 {
+func getSmcLastBlockNumber(c *smcclient.SafeEthClient) uint64 {
 	h, err := c.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		panic(err)
@@ -115,4 +131,52 @@ func getSCContractAddressByMCName(mcName string) common.Address {
 
 func getEther(amount int64) *big.Int {
 	return new(big.Int).Mul(big.NewInt(int64(params.Ether)), big.NewInt(amount))
+}
+
+func getSCContractProxy(mcName string) *smcproxy.SideChainErc20TokenProxy {
+	if globalConfig.SCTokenList == nil {
+		fmt.Println("must run dnc config refresh first")
+		os.Exit(-1)
+	}
+	// 1. init connect
+	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
+	c, err := ethclient.DialContext(ctx2, globalConfig.SmcRPCEndpoint)
+	cancelFunc()
+	if err != nil {
+		fmt.Println("connect to eth fail : ", err)
+		os.Exit(-1)
+	}
+	conn := smcclient.NewSafeClient(c)
+
+	// 2. init contract proxy
+	cp, err := smcproxy.NewSideChainErc20TokenProxy(conn, getSCContractAddressByMCName(mcName))
+	if err != nil {
+		fmt.Println("init contract proxy err : ", err)
+		os.Exit(-1)
+	}
+	return cp
+}
+
+func getMCContractProxy(mcName string) *ethproxy.LockedEthereumProxy {
+	if globalConfig.SCTokenList == nil {
+		fmt.Println("must run dnc config refresh first")
+		os.Exit(-1)
+	}
+	// 1. init connect
+	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
+	c, err := ethclient.DialContext(ctx2, globalConfig.EthRPCEndpoint)
+	cancelFunc()
+	if err != nil {
+		fmt.Println("connect to eth fail : ", err)
+		os.Exit(-1)
+	}
+	conn := etclient.NewSafeClient(c)
+
+	// 2. init contract proxy
+	cp, err := ethproxy.NewLockedEthereumProxy(conn, getMCContractAddressByMCName(mcName))
+	if err != nil {
+		fmt.Println("init contract proxy err : ", err)
+		os.Exit(-1)
+	}
+	return cp
 }

@@ -43,7 +43,7 @@ func prepareLockin(ctx *cli.Context) error {
 	contract := getMCContractAddressByMCName(ctx.String("mcname"))
 	amount := ctx.Int64("amount")
 	if amount == 0 {
-		fmt.Println("pli must wrong with --amount")
+		fmt.Println("pli must run with --amount")
 		os.Exit(-1)
 	}
 	expiration := ctx.Uint64("expiration")
