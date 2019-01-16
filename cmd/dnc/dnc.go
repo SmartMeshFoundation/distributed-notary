@@ -45,6 +45,8 @@ func main() {
 			lockout
 		*/
 		ploCmd,
+		mcploCmd,
+		locmd,
 		cploCmd,
 		/*
 			query

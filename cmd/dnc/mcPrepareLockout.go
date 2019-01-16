@@ -14,21 +14,21 @@ import (
 	"github.com/urfave/cli"
 )
 
-var scpliCmd = cli.Command{
-	Name:      "side-chain-prepare-lock-in",
-	ShortName: "scpli",
-	Usage:     "call SCPrepareLockin API of notary",
-	Action:    scPrepareLockin,
+var mcploCmd = cli.Command{
+	Name:      "main-chain-prepare-lock-out",
+	ShortName: "mcplo",
+	Usage:     "call MCPrepareLockout API of notary",
+	Action:    mcPrepareLockout,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "mcname",
-			Usage: "name of main chain contract which you want to lockin",
+			Usage: "name of main chain contract which you want to lockout",
 			Value: "ethereum",
 		},
 	},
 }
 
-func scPrepareLockin(ctx *cli.Context) (err error) {
+func mcPrepareLockout(ctx *cli.Context) (err error) {
 	scTokenInfo := getSCTokenByMCName(ctx.String("mcname"))
 	if scTokenInfo == nil {
 		fmt.Println("wrong mcname")
@@ -38,15 +38,15 @@ func scPrepareLockin(ctx *cli.Context) (err error) {
 		fmt.Println("must call pli first")
 		os.Exit(-1)
 	}
-	url := globalConfig.NotaryHost + "/api/1/user/scpreparelockin/" + scTokenInfo.SCToken.String()
-	req := &userapi.SCPrepareLockinRequest{
-		BaseRequest:           api.NewBaseRequest(userapi.APIUserNameSCPrepareLockin),
+	url := globalConfig.NotaryHost + "/api/1/user/mcpreparelockout/" + scTokenInfo.SCToken.String()
+	req := &userapi.MCPrepareLockoutRequest{
+		BaseRequest:           api.NewBaseRequest(userapi.APIUserNameMCPrepareLockout),
 		BaseCrossChainRequest: api.NewBaseCrossChainRequest(scTokenInfo.SCToken),
 		SecretHash:            common.HexToHash(globalConfig.RunTime.SecretHash),
 		MCUserAddress:         common.HexToAddress(globalConfig.EthUserAddress),
 		SCUserAddress:         common.HexToAddress(globalConfig.SmcUserAddress),
 	}
-	privateKey, err := getPrivateKey(globalConfig.SmcUserAddress, globalConfig.SmcUserPassword)
+	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserAddress)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

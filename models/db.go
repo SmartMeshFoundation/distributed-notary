@@ -37,6 +37,7 @@ func SetUpDB(dbtype, path string) (mdb *DB) {
 	db.AutoMigrate(&LastBlockNumberInfo{})
 	db.AutoMigrate(&sideChainTokenMetaInfoModel{})
 	db.AutoMigrate(&lockinInfoModel{})
+	db.AutoMigrate(&lockoutInfoModel{})
 	//db.Model(&ChannelParticipantInfo{}).AddForeignKey("channel_id", "channels(channel_id)", "CASCADE", "CASCADE") // Foreign key need to define manually
 	//db.AutoMigrate(&SettledChannel{})
 	//db.AutoMigrate(&latestBlockNumber{})

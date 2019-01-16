@@ -70,6 +70,8 @@ func (as *AdminService) OnRequest(req api.Request) {
 		as.onDebugTransferToAccountRequest(r)
 	case *userapi.DebugGetAllLockinInfoRequest:
 		as.onDebugGetAllLockinInfo(r)
+	case *userapi.DebugGetAllLockoutInfoRequest:
+		as.onDebugGetAllLockoutInfo(r)
 	default:
 		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
 		return

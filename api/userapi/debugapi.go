@@ -36,3 +36,15 @@ func (ua *UserAPI) getAllLockinInfo(w rest.ResponseWriter, r *rest.Request) {
 	}
 	api.Return(w, ua.SendToServiceAndWaitResponse(req))
 }
+
+// DebugGetAllLockoutInfoRequest :
+type DebugGetAllLockoutInfoRequest struct {
+	api.BaseRequest
+}
+
+func (ua *UserAPI) getAllLockoutInfo(w rest.ResponseWriter, r *rest.Request) {
+	req := &DebugGetAllLockoutInfoRequest{
+		BaseRequest: api.NewBaseRequest(APIDebugNameGetAllLockoutInfo),
+	}
+	api.Return(w, ua.SendToServiceAndWaitResponse(req))
+}

@@ -58,11 +58,23 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 		events about lockout
 	*/
 	case smcevents.PrepareLockoutEvent: // SCPLO
+		log.Info(SCTokenLogMsg(cs.meta, "Receive SC PrepareLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onSCPrepareLockout(event)
 	case ethevents.PrepareLockoutEvent: // MCPLO
+		log.Info(SCTokenLogMsg(cs.meta, "Receive MC PrepareLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onMCPrepareLockout4Ethereum(event)
 	case ethevents.LockoutSecretEvent: // MCLOS
+		log.Info(SCTokenLogMsg(cs.meta, "Receive MC LockoutSecretEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onMCLockoutSecret4Ethereum(event)
 	case smcevents.LockoutEvent: // SCLO
+		log.Info(SCTokenLogMsg(cs.meta, "Receive SC LockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onSCLockout(event)
 	case ethevents.CancelLockoutEvent: // MCCancelLO
+		log.Info(SCTokenLogMsg(cs.meta, "Receive MC CancelLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onMCCancelLockout4Ethereum(event)
 	case smcevents.CancelLockoutEvent: // SCCancelLO
+		log.Info(SCTokenLogMsg(cs.meta, "Receive SC CancelLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onSCCancelLockout(event)
 	default:
 		err = errors.New("unknow event")
 	}
@@ -76,11 +88,34 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 
 func (cs *CrossChainService) onMCNewBlockEvent(event ethevents.NewBlockEvent) (err error) {
 	cs.mcLastedBlockNumber = event.BlockNumber
-	return cs.lockinHandler.onMCNewBlockEvent(event.BlockNumber)
+	// lockin
+	err = cs.lockinHandler.onMCNewBlockEvent(event.BlockNumber)
+	if err != nil {
+		return
+	}
+	// lockout
+	var lockoutListNeedCancel []*models.LockoutInfo
+	lockoutListNeedCancel, err = cs.lockoutHandler.onMCNewBlockEvent(event.BlockNumber)
+	if err != nil {
+		return
+	}
+	if len(lockoutListNeedCancel) > 0 {
+		for _, lockout := range lockoutListNeedCancel {
+			if lockout.NotaryIDInCharge == cs.selfNotaryID {
+				// 如果我是负责人,尽快cancel,这里如果调用合约出错,也继续去尝试cancel下一个
+				err = cs.callMCCancelLockout(lockout.MCUserAddressHex)
+				if err != nil {
+					log.Error("callMCCancelLockout err = %s", err.Error())
+				}
+			}
+		}
+	}
+	return
 }
 
 func (cs *CrossChainService) onSCNewBlockEvent(event smcevents.NewBlockEvent) (err error) {
 	cs.scLastedBlockNumber = event.BlockNumber
+	// lockin
 	var lockinListNeedCancel []*models.LockinInfo
 	lockinListNeedCancel, err = cs.lockinHandler.onSCNewBlockEvent(event.BlockNumber)
 	if err != nil {
@@ -97,6 +132,8 @@ func (cs *CrossChainService) onSCNewBlockEvent(event smcevents.NewBlockEvent) (e
 			}
 		}
 	}
+	// lockout
+	err = cs.lockoutHandler.onSCNewBlockEvent(event.BlockNumber)
 	return
 }
 
@@ -113,8 +150,8 @@ func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareL
 		return
 	}
 	// 1.5 校验mcExpiration
-	if mcExpiration-event.BlockNumber <= params.MinMCExpiration {
-		err = fmt.Errorf("mcExpiration must bigger than %d", params.MinMCExpiration)
+	if mcExpiration-event.BlockNumber <= params.MinLockinMCExpiration {
+		err = fmt.Errorf("mcExpiration must bigger than %d", params.MinLockinMCExpiration)
 		return
 	}
 	// 1.6 计算scExpiration
@@ -183,7 +220,7 @@ func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEven
 	lockinInfo.SCUserAddress = event.Account
 	err = cs.lockinHandler.updateLockin(lockinInfo)
 	if err != nil {
-		err = fmt.Errorf("db.UpdateLockinInfo err = %s", err.Error())
+		err = fmt.Errorf("lockinHandler.UpdateLockinInfo err = %s", err.Error())
 		return
 	}
 	return
@@ -302,10 +339,218 @@ func (cs *CrossChainService) onSCCancelLockin(event smcevents.CancelLockinEvent)
 	// 3. 更新本地信息,endTime哪个链取消在后面取哪个
 	lockinInfo.SCLockStatus = models.LockStatusCancel
 	lockinInfo.EndTime = event.Time.Unix()
-	lockinInfo.EndMCBlockNumber = event.BlockNumber
 	err = cs.lockinHandler.updateLockin(lockinInfo)
 	if err != nil {
 		err = fmt.Errorf("lockinHandler.updateLockin err = %s", err.Error())
+		return
+	}
+	return
+}
+
+/*
+	lockout 相关事件处理
+*/
+
+func (cs *CrossChainService) onSCPrepareLockout(event smcevents.PrepareLockoutEvent) (err error) {
+	// 1. 查询
+	secretHash, scExpiration, amount, err := cs.scTokenProxy.QueryLockout(event.Account.String())
+	if err != nil {
+		err = fmt.Errorf("scTokenProxy.QueryLockout err = %s", err.Error())
+		return
+	}
+	// 1.5 校验scExpiration
+	if scExpiration-event.BlockNumber <= params.MinLockoutSCExpiration {
+		err = fmt.Errorf("scExpiration must bigger than %d", params.MinLockoutSCExpiration)
+		return
+	}
+	// 1.6 计算mcExpiration
+	mcExpiration := cs.mcLastedBlockNumber + (scExpiration - event.BlockNumber - 5*params.ForkConfirmNumber - 1)
+
+	// 2. 构造LockoutInfo
+	lockoutInfo := &models.LockoutInfo{
+		SecretHash:       secretHash,
+		Secret:           utils.EmptyHash,
+		MCUserAddressHex: "",
+		SCUserAddress:    event.Account,
+		SCTokenAddress:   cs.meta.SCToken,
+		Amount:           amount,
+		MCExpiration:     mcExpiration,
+		SCExpiration:     scExpiration,
+		MCLockStatus:     models.LockStatusNone,
+		SCLockStatus:     models.LockStatusLock,
+		//Data:               data,
+		NotaryIDInCharge:   models.UnknownNotaryIDInCharge,
+		StartTime:          event.Time.Unix(),
+		StartSCBlockNumber: event.BlockNumber,
+	}
+	// 3. 调用handler处理
+	err = cs.lockoutHandler.registerLockout(lockoutInfo)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.registerLockout err = %s", err.Error())
+		return
+	}
+	return
+}
+
+/*
+主链PrepareLockout(MCPLO)
+该事件的发起方为公证人,可能为自己
+事件为已确认事件,修改LockoutInfo状态
+*/
+func (cs *CrossChainService) onMCPrepareLockout4Ethereum(event ethevents.PrepareLockoutEvent) (err error) {
+	// 1. 查询
+	secretHash, mcExpiration, amount, err := cs.mcProxy.QueryLockout(event.Account.String())
+	if err != nil {
+		err = fmt.Errorf("mcProxy.QueryLockout err = %s", err.Error())
+		return
+	}
+	// 2. 获取本地LockoutInfo信息
+	lockoutInfo, err := cs.lockoutHandler.getLockout(secretHash)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.getLockout err = %s", err.Error())
+		return
+	}
+	// 3.　校验 TODO
+	if lockoutInfo.MCLockStatus != models.LockStatusNone || lockoutInfo.SCLockStatus != models.LockStatusLock || lockoutInfo.Secret != utils.EmptyHash {
+		err = fmt.Errorf("local lockoutInfo status does't right,something must wrong, local lockoutInfo:\n%s", utils.ToJSONStringFormat(lockoutInfo))
+		return
+	}
+	if lockoutInfo.Amount.Cmp(amount) != 0 {
+		err = fmt.Errorf("amount does't match")
+		return
+	}
+	if lockoutInfo.MCExpiration != mcExpiration {
+		err = fmt.Errorf("scExpiration does't match")
+		return
+	}
+
+	// 4. 修改状态,等待后续调用
+	lockoutInfo.MCLockStatus = models.LockStatusLock
+	lockoutInfo.MCUserAddressHex = event.Account.String()
+	err = cs.lockoutHandler.updateLockout(lockoutInfo)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.updateLockout err = %s", err.Error())
+		return
+	}
+	return
+}
+
+/*
+主链LockoutSecret(MCLOS)
+该事件由用户发起,已确认
+*/
+func (cs *CrossChainService) onMCLockoutSecret4Ethereum(event ethevents.LockoutSecretEvent) (err error) {
+	// 1.根据密码hash查询LockoutInfo
+	secretHash := utils.ShaSecret(event.Secret[:])
+	lockoutInfo, err := cs.lockoutHandler.getLockout(secretHash)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.getLockout err = %s", err.Error())
+		return
+	}
+	// 2. 重复校验 TODO
+	if lockoutInfo.Secret != utils.EmptyHash {
+		err = fmt.Errorf("receive repeat MCLockoutSecret, ignore")
+		return
+	}
+	// 3. 校验状态,好像没啥用,用户都拿走钱了,就算状态不对,也需要继续操作,让负责人尝试去侧链lockout
+	if lockoutInfo.MCLockStatus != models.LockStatusLock || lockoutInfo.SCLockStatus != models.LockStatusLock {
+		err = fmt.Errorf("local lockoutInfo status does't right,something must wrong, local lockoutInfo:\n%s", utils.ToJSONStringFormat(lockoutInfo))
+	}
+	// 3. 更新状态
+	lockoutInfo.Secret = event.Secret
+	lockoutInfo.MCLockStatus = models.LockStatusUnlock
+	err = cs.lockoutHandler.updateLockout(lockoutInfo)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.updateLockout err = %s", err.Error())
+		return
+	}
+	// 4. 如果自己是负责人,发起侧链Lockout
+	if lockoutInfo.NotaryIDInCharge == cs.selfNotaryID {
+		err = cs.callSCLockout(lockoutInfo.SCUserAddress.String(), lockoutInfo.Secret)
+		if err != nil {
+			err = fmt.Errorf("callSCLockout err = %s", err.Error())
+			return
+		}
+	}
+	return
+}
+
+/*
+侧链链Lockout
+收到该事件,说明一次Lockout完整结束,合约上已经清楚该UserAccount的lockout信息
+*/
+func (cs *CrossChainService) onSCLockout(event smcevents.LockoutEvent) (err error) {
+	// 1. 获取本地LockoutInfo信息
+	lockoutInfo, err := cs.lockoutHandler.getLockout(event.SecretHash)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.getLockout err = %s", err.Error())
+		return
+	}
+	// 2. 校验 TODO
+	if lockoutInfo.SCUserAddress != event.Account {
+		err = fmt.Errorf("SCUserAddress does't match")
+		return
+	}
+	// 3. 更新本地信息
+	lockoutInfo.SCLockStatus = models.LockStatusUnlock
+	lockoutInfo.EndTime = event.Time.Unix()
+	lockoutInfo.EndSCBlockNumber = event.BlockNumber
+	err = cs.lockoutHandler.updateLockout(lockoutInfo)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.updateLockout err = %s", err.Error())
+		return
+	}
+	return
+}
+
+/*
+主链取消
+*/
+func (cs *CrossChainService) onMCCancelLockout4Ethereum(event ethevents.CancelLockoutEvent) (err error) {
+	// 1. 获取本地LockoutInfo信息
+	lockoutInfo, err := cs.lockoutHandler.getLockout(event.SecretHash)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.getLockout err = %s", err.Error())
+		return
+	}
+	// 2. 校验 TODO
+	if lockoutInfo.MCUserAddressHex != event.Account.String() {
+		err = fmt.Errorf("MCUserAddressHex does't match")
+		return
+	}
+	// 3. 更新本地信息,endTime哪个链取消在后面取哪个
+	lockoutInfo.MCLockStatus = models.LockStatusCancel
+	lockoutInfo.EndTime = event.Time.Unix()
+	err = cs.lockoutHandler.updateLockout(lockoutInfo)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.updateLockout err = %s", err.Error())
+		return
+	}
+	return
+}
+
+/*
+侧链取消
+*/
+func (cs *CrossChainService) onSCCancelLockout(event smcevents.CancelLockoutEvent) (err error) {
+	// 1. 获取本地LockoutInfo信息
+	lockoutInfo, err := cs.lockoutHandler.getLockout(event.SecretHash)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.getLockout err = %s", err.Error())
+		return
+	}
+	// 2. 校验 TODO
+	if lockoutInfo.SCUserAddress != event.Account {
+		err = fmt.Errorf("SCUserAddress does't match")
+		return
+	}
+	// 3. 更新本地信息,endTime哪个链取消在后面取哪个
+	lockoutInfo.SCLockStatus = models.LockStatusCancel
+	lockoutInfo.EndTime = event.Time.Unix()
+	lockoutInfo.EndSCBlockNumber = event.BlockNumber
+	err = cs.lockoutHandler.updateLockout(lockoutInfo)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.updateLockout err = %s", err.Error())
 		return
 	}
 	return

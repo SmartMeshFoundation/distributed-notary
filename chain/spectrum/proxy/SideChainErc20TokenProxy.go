@@ -116,6 +116,19 @@ func (p *SideChainErc20TokenProxy) PrepareLockout(opts *bind.TransactOpts, accou
 	return
 }
 
+// Lockout impl chain.ContractProxy
+func (p *SideChainErc20TokenProxy) Lockout(opts *bind.TransactOpts, accountHex string, secret common.Hash) (err error) {
+	account := common.HexToAddress(accountHex)
+	var tx *types.Transaction
+	tx, err = p.Contract.Lockout(opts, account, secret)
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	_, err = bind.WaitMined(ctx, p.conn, tx)
+	return
+}
+
 // CancelLockout impl chain.ContractProxy
 func (p *SideChainErc20TokenProxy) CancelLockout(opts *bind.TransactOpts, accountHex string) (err error) {
 	account := common.HexToAddress(accountHex)

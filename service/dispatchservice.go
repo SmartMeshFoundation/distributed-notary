@@ -251,7 +251,7 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Request) {
 			}
 			log.Error(fmt.Sprintf("%s receive request with out notary service : \n%s\n", logPrefix, utils.ToJSONStringFormat(req)))
 			// 返回api错误
-			req.WriteErrorResponse(api.ErrorCodeException)
+			req.WriteErrorResponse(api.ErrorCodeException, "can not found sctoken")
 			return
 		}
 		go service.OnRequest(req)

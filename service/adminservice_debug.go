@@ -36,3 +36,12 @@ func (as *AdminService) onDebugGetAllLockinInfo(req *userapi.DebugGetAllLockinIn
 	}
 	req.WriteSuccessResponse(lockinInfoList)
 }
+
+func (as *AdminService) onDebugGetAllLockoutInfo(req *userapi.DebugGetAllLockoutInfoRequest) {
+	lockinInfoList, err := as.db.GetAllLockoutInfo()
+	if err != nil {
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
+	}
+	req.WriteSuccessResponse(lockinInfoList)
+}

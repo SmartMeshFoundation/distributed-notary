@@ -29,7 +29,7 @@ const (
 	APIDebugNamePrefix            = "Debug-"
 	APIDebugNameTransferToAccount = APIDebugNamePrefix + "TransferToAccount" // 给某个账户在所有链上转10eth,为了测试
 	APIDebugNameGetAllLockinInfo  = APIDebugNamePrefix + "GetAllLockinInfo"
-	APIDebugNameClearSCTokenList  = APIDebugNamePrefix + "ClearSCTokenList" // 清空所有的SCToken
+	APIDebugNameGetAllLockoutInfo = APIDebugNamePrefix + "GetAllLockoutInfo"
 )
 
 // APIName2URLMap :
@@ -48,12 +48,17 @@ func init() {
 	*/
 	APIName2URLMap[APIUserNameGetNotaryList] = "/api/1/user/notaries"
 	APIName2URLMap[APIUserNameGetSCTokenList] = "/api/1/user/sctokens"
+	// lockin
 	APIName2URLMap[APIUserNameGetLockinStatus] = "/api/1/user/lockin/:sctoken/:secrethash"
 	APIName2URLMap[APIUserNameSCPrepareLockin] = "/api/1/user/scpreparelockin/:sctoken"
+	// lockout
+	APIName2URLMap[APIUserNameGetLockoutStatus] = "/api/1/user/lockout/:sctoken/:secrethash"
+	APIName2URLMap[APIUserNameMCPrepareLockout] = "/api/1/user/mcpreparelockout/:sctoken"
 	/*
 		debug
 	*/
 	APIName2URLMap[APIDebugNameGetAllLockinInfo] = "/api/1/debug/lockin"
+	APIName2URLMap[APIDebugNameGetAllLockoutInfo] = "/api/1/debug/lockout"
 	APIName2URLMap[APIDebugNameTransferToAccount] = "/api/1/debug/transfer-to-account/:account"
 }
 
@@ -79,8 +84,12 @@ func NewUserAPI(host string) *UserAPI {
 		*/
 		rest.Get(APIName2URLMap[APIUserNameGetNotaryList], userAPI.getNotaryList),
 		rest.Get(APIName2URLMap[APIUserNameGetSCTokenList], userAPI.getSCTokenList),
+		// lockin
 		rest.Get(APIName2URLMap[APIUserNameGetLockinStatus], userAPI.getLockinStatus),
 		rest.Post(APIName2URLMap[APIUserNameSCPrepareLockin], userAPI.scPrepareLockin),
+		// lockout
+		rest.Get(APIName2URLMap[APIUserNameGetLockoutStatus], userAPI.getLockoutStatus),
+		rest.Post(APIName2URLMap[APIUserNameMCPrepareLockout], userAPI.mcPrepareLockout),
 		/*
 			admin api
 		*/
@@ -90,6 +99,7 @@ func NewUserAPI(host string) *UserAPI {
 			debug api
 		*/
 		rest.Get(APIName2URLMap[APIDebugNameGetAllLockinInfo], userAPI.getAllLockinInfo),
+		rest.Get(APIName2URLMap[APIDebugNameGetAllLockoutInfo], userAPI.getAllLockoutInfo),
 		rest.Get(APIName2URLMap[APIDebugNameTransferToAccount], userAPI.transferToAccount),
 	)
 	if err != nil {

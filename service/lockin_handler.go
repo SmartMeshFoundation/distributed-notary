@@ -15,7 +15,7 @@ type lockinHandler struct {
 	dealingMapLock sync.Mutex
 }
 
-func newLockinhandler(db *models.DB, scTokenAddress common.Address) *lockinHandler {
+func newLockinHandler(db *models.DB, scTokenAddress common.Address) *lockinHandler {
 	lockinInfoList, err := db.GetAllLockinInfoBySCToken(scTokenAddress)
 	if err != nil {
 		panic(err)

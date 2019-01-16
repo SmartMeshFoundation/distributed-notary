@@ -99,3 +99,42 @@ func (p *LockedEthereumProxy) CancelLockin(opts *bind.TransactOpts, accountHex s
 	_, err = bind.WaitMined(ctx, p.conn, tx)
 	return
 }
+
+// PrepareLockout : impl chain.ContractProxy
+func (p *LockedEthereumProxy) PrepareLockout(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
+	opts.Value = amount
+	expiration2 := new(big.Int).SetUint64(expiration)
+	tx, err := p.Contract.PrepareLockin(opts, secretHash, expiration2)
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	_, err = bind.WaitMined(ctx, p.conn, tx)
+	return
+}
+
+// Lockout impl chain.ContractProxy
+func (p *LockedEthereumProxy) Lockout(opts *bind.TransactOpts, accountHex string, secret common.Hash) (err error) {
+	account := common.HexToAddress(accountHex)
+	var tx *types.Transaction
+	tx, err = p.Contract.Lockout(opts, account, secret)
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	_, err = bind.WaitMined(ctx, p.conn, tx)
+	return
+}
+
+// CancelLockout impl chain.ContractProxy
+func (p *LockedEthereumProxy) CancelLockout(opts *bind.TransactOpts, accountHex string) (err error) {
+	account := common.HexToAddress(accountHex)
+	var tx *types.Transaction
+	tx, err = p.Contract.CancleLockOut(opts, account)
+	if err != nil {
+		return
+	}
+	ctx := context.Background()
+	_, err = bind.WaitMined(ctx, p.conn, tx)
+	return
+}

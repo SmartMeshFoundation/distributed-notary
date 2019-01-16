@@ -149,6 +149,7 @@ func configManage(ctx *cli.Context) error {
 		}
 	}
 	updateConfigFile()
+	fmt.Println(utils.ToJSONStringFormat(globalConfig))
 	return nil
 }
 
