@@ -79,7 +79,7 @@ func (d *EthereumPrepareLockoutTxData) Parse(buf []byte) error {
 }
 
 // VerifySignData :
-func (d *EthereumPrepareLockoutTxData) VerifySignData(scTokenProxy chain.ContractProxy, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
+func (d *EthereumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProxy, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
 	// 1. 校验本地lockinInfo状态
 	if localLockoutInfo.SCUserAddress != d.UserRequest.SCUserAddress {
 		err = fmt.Errorf("SCUserAddress wrong")
@@ -95,7 +95,7 @@ func (d *EthereumPrepareLockoutTxData) VerifySignData(scTokenProxy chain.Contrac
 	}
 	if localLockoutInfo.MCExpiration != d.MCExpiration {
 		log.Warn("localLockoutInfo.MCExpiration != request.MCExpiration, use request.MCExpiration")
-		localLockoutInfo.SCExpiration = d.MCExpiration
+		localLockoutInfo.MCExpiration = d.MCExpiration
 	}
 	// 2. 校验用户原始请求签名,验证请求中的SCUserAddress有效性
 	if !d.UserRequest.VerifySign() {
@@ -108,7 +108,7 @@ func (d *EthereumPrepareLockoutTxData) VerifySignData(scTokenProxy chain.Contrac
 	secretHash := localLockoutInfo.SecretHash
 	amount := localLockoutInfo.Amount
 	var local *EthereumPrepareLockoutTxData
-	local = NewEthereumPrepareLockoutTxData(scTokenProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount)
+	local = NewEthereumPrepareLockoutTxData(mcProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount)
 	if bytes.Compare(local.GetSignBytes(), d.GetSignBytes()) != 0 {
 		err = fmt.Errorf("EthereumPrepareLockoutTxData.VerifySignBytes() fail,maybe attack")
 	}

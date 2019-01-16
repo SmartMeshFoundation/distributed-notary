@@ -59,5 +59,6 @@ func scPrepareLockin(ctx *cli.Context) (err error) {
 		fmt.Printf("call %s with payload=%s err :%s", url, payload, err.Error())
 		os.Exit(-1)
 	}
+	fmt.Println("SCPrepareLockin SUCCESS")
 	return
 }

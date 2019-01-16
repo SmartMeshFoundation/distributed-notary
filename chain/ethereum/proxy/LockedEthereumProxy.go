@@ -102,9 +102,10 @@ func (p *LockedEthereumProxy) CancelLockin(opts *bind.TransactOpts, accountHex s
 
 // PrepareLockout : impl chain.ContractProxy
 func (p *LockedEthereumProxy) PrepareLockout(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
-	opts.Value = amount
+	//opts.Value = amount
+	account := common.HexToAddress(accountHex)
 	expiration2 := new(big.Int).SetUint64(expiration)
-	tx, err := p.Contract.PrepareLockin(opts, secretHash, expiration2)
+	tx, err := p.Contract.PrepareLockoutHTLC(opts, account, secretHash, expiration2, amount)
 	if err != nil {
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/params"
 )
 
 // OnRequest restful请求处理
@@ -127,6 +128,10 @@ func (cs *CrossChainService) onMCPrepareLockoutRequest(req *userapi.MCPrepareLoc
 	}
 	if lockoutInfo.MCLockStatus != models.LockStatusNone {
 		req.WriteErrorResponse(api.ErrorCodeException, "MCLockStatus wrong")
+		return
+	}
+	if lockoutInfo.MCExpiration-cs.mcLastedBlockNumber <= params.MinLockoutMCExpiration {
+		req.WriteErrorResponse(api.ErrorCodeException, "too late to MCPrepareLockout")
 		return
 	}
 	// 3. 发起合约调用

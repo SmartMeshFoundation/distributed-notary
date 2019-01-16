@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/urfave/cli"
 )
 
@@ -47,56 +48,70 @@ func queryContract(ctx *cli.Context) {
 		os.Exit(-1)
 	}
 	mcName := ctx.String("mcname")
+	mcp := getMCContractProxy(mcName)
+	scp := getSCContractProxy(mcName)
 	if ctx.Bool("mcli") || ctx.Bool("all") {
-		cp := getMCContractProxy(mcName)
-		sh, e, a, err := cp.QueryLockin(globalConfig.EthUserAddress)
+		sh, e, a, err := mcp.QueryLockin(globalConfig.EthUserAddress)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
 		fmt.Println("===> contract data of mc lockin:")
-		fmt.Println("account    = ", globalConfig.EthUserAddress)
-		fmt.Println("secretHash = ", sh.String())
-		fmt.Println("expiration = ", e)
-		fmt.Println("amount     = ", a)
-	}
-	if ctx.Bool("mclo") || ctx.Bool("all") {
-		cp := getMCContractProxy(mcName)
-		sh, e, a, err := cp.QueryLockout(globalConfig.EthUserAddress)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(-1)
+		if sh != utils.EmptyHash {
+			fmt.Println("\t account    = ", globalConfig.EthUserAddress)
+			fmt.Println("\t secretHash = ", sh.String())
+			fmt.Println("\t expiration = ", e)
+			fmt.Println("\t amount     = ", a)
+		} else {
+			fmt.Println("Empty")
 		}
-		fmt.Println("===> contract data of mc lockout:")
-		fmt.Println("account    = ", globalConfig.EthUserAddress)
-		fmt.Println("secretHash = ", sh.String())
-		fmt.Println("expiration = ", e)
-		fmt.Println("amount     = ", a)
 	}
 	if ctx.Bool("scli") || ctx.Bool("all") {
-		cp := getSCContractProxy(mcName)
-		sh, e, a, err := cp.QueryLockin(globalConfig.SmcUserAddress)
+		sh, e, a, err := scp.QueryLockin(globalConfig.SmcUserAddress)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
 		fmt.Println("===> contract data of sc lockin:")
-		fmt.Println("account    = ", globalConfig.SmcUserAddress)
-		fmt.Println("secretHash = ", sh.String())
-		fmt.Println("expiration = ", e)
-		fmt.Println("amount     = ", a)
+		if sh != utils.EmptyHash {
+			fmt.Println("\t account    = ", globalConfig.SmcUserAddress)
+			fmt.Println("\t secretHash = ", sh.String())
+			fmt.Println("\t expiration = ", e)
+			fmt.Println("\t amount     = ", a)
+		} else {
+			fmt.Println("Empty")
+		}
+	}
+	if ctx.Bool("mclo") || ctx.Bool("all") {
+		sh, e, a, err := mcp.QueryLockout(globalConfig.EthUserAddress)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+		fmt.Println("===> contract data of mc lockout:")
+		if sh != utils.EmptyHash {
+			fmt.Println("\t account    = ", globalConfig.EthUserAddress)
+			fmt.Println("\t secretHash = ", sh.String())
+			fmt.Println("\t expiration = ", e)
+			fmt.Println("\t amount     = ", a)
+		} else {
+			fmt.Println("Empty")
+		}
 	}
 	if ctx.Bool("sclo") || ctx.Bool("all") {
-		cp := getSCContractProxy(mcName)
-		sh, e, a, err := cp.QueryLockout(globalConfig.SmcUserAddress)
+		sh, e, a, err := scp.QueryLockout(globalConfig.SmcUserAddress)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
 		fmt.Println("===> contract data of sc lockout:")
-		fmt.Println("account    = ", globalConfig.SmcUserAddress)
-		fmt.Println("secretHash = ", sh.String())
-		fmt.Println("expiration = ", e)
-		fmt.Println("amount     = ", a)
+		if sh != utils.EmptyHash {
+			fmt.Println("\t account    = ", globalConfig.SmcUserAddress)
+			fmt.Println("\t secretHash = ", sh.String())
+			fmt.Println("\t expiration = ", e)
+			fmt.Println("\t amount     = ", a)
+		} else {
+			fmt.Println("Empty")
+		}
 	}
 }

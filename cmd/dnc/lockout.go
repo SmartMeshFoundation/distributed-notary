@@ -35,7 +35,7 @@ func lockout(ctx *cli.Context) error {
 	fmt.Printf("start to lockout :\n ======> [account=%s secret=%s secretHash=%s]\n", globalConfig.SmcUserAddress, secret.String(), utils.ShaSecret(secret[:]).String())
 
 	// 3. get auth
-	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserAddress)
+	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

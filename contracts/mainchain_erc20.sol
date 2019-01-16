@@ -55,7 +55,7 @@ contract LockedEthereum is Owned {
     }
     mapping(address=>LockinInfo) public lockin_htlc; //lockin过程中的htlc
     event PrepareLockin(address account,uint256 value);
-    event LockoutSecret(bytes32 secret);
+    event LockoutSecret(address account, bytes32 secret);
     event PrepareLockout(address account, uint256 _value);
     event Lockin(address account, bytes32 secretHash);
     event CancelLockin(address account, bytes32 secretHash);
@@ -134,7 +134,8 @@ contract LockedEthereum is Owned {
         LockoutInfo storage li=lockout_htlc[account];
         require(value>0);
         require(li.value==0);
-        require(expiration>50000); //不能低于三天,这样一旦公证人做出了错误的lockout,也应该
+        require(expiration > block.number + 300);
+//        require(expiration>50000); //不能低于三天,这样一旦公证人做出了错误的lockout,也应该
         li.value=value;
         li.SecretHash=secret_hash;
         li.Expiration=expiration;
@@ -153,7 +154,7 @@ contract LockedEthereum is Owned {
         li.Expiration=0;
 
         account.transfer(value);
-        emit LockoutSecret(secret);
+        emit LockoutSecret(account,secret);
     }
     //锁过期以后,由公证人取消(任何人)
     function cancleLockOut(address account) public {

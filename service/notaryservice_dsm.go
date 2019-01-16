@@ -8,7 +8,8 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
+	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
+	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
@@ -391,6 +392,9 @@ func parseMessageToSign(msgName string, buf []byte) (msg mecdsa.MessageToSign, e
 	case messagetosign.SpectrumPrepareLockinTxDataName:
 		msg = new(messagetosign.SpectrumPrepareLockinTxData)
 		err = msg.Parse(buf)
+	case messagetosign.EthereumPrepareLockoutTxDataName:
+		msg = new(messagetosign.EthereumPrepareLockoutTxData)
+		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")
 	}
@@ -422,7 +426,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		}
 		// 2. 获取本地scTokenProxy
 		var c chain.Chain
-		c, err = ns.dispatchService.getChainByName(events.ChainName)
+		c, err = ns.dispatchService.getChainByName(smcevents.ChainName)
 		scTokenProxy := c.GetContractProxy(localLockinInfo.SCTokenAddress)
 		// 2. 校验
 		err = m.VerifySignData(scTokenProxy, privateKeyInfo, localLockinInfo)
@@ -431,6 +435,28 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		}
 		// 2.5. 更新本地locinInfo的NotaryIDInChargeID,记录该lockinInfo的负责人
 		err = ns.dispatchService.updateLockinInfoNotaryIDInChargeID(localLockinInfo.SCTokenAddress, localLockinInfo.SecretHash, senderID)
+	// 3. 主链PrepareLockout合约调用消息
+	case *messagetosign.EthereumPrepareLockoutTxData:
+		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
+		// 1. 获取本地lockoutInfo
+		var localLockoutInfo *models.LockoutInfo
+		localLockoutInfo, err = ns.dispatchService.getLockoutInfo(m.UserRequest.SCTokenAddress, m.UserRequest.SecretHash)
+		if err != nil {
+			return
+		}
+		// 2. 获取scTokenInfo
+		scToken := ns.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress)
+		// 3. 获取本地mcProxy
+		var c chain.Chain
+		c, err = ns.dispatchService.getChainByName(ethevents.ChainName)
+		mcProxy := c.GetContractProxy(scToken.MCLockedContractAddress)
+		// 4. 校验
+		err = m.VerifySignData(mcProxy, privateKeyInfo, localLockoutInfo)
+		if err != nil {
+			return
+		}
+		// 5. 更新本地lockoutInfo的NotaryIDInChargeID,记录该lockinInfo的负责人
+		err = ns.dispatchService.updateLockoutInfoNotaryIDInChargeID(localLockoutInfo.SCTokenAddress, localLockoutInfo.SecretHash, senderID)
 	default:
 		err = fmt.Errorf("unknow message name=%s", msg.GetName())
 	}

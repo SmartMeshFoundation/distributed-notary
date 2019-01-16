@@ -150,6 +150,13 @@ func getSCContractProxy(mcName string) *smcproxy.SideChainErc20TokenProxy {
 	}
 	conn := smcclient.NewSafeClient(c)
 
+	lastBlockNumber, err := conn.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		fmt.Println("HeaderByNumber err : ", err)
+		os.Exit(-1)
+	}
+	fmt.Printf("Spectrum Lasted BlockNumber = %d\n", lastBlockNumber.Number.Uint64())
+
 	// 2. init contract proxy
 	cp, err := smcproxy.NewSideChainErc20TokenProxy(conn, getSCContractAddressByMCName(mcName))
 	if err != nil {
@@ -174,6 +181,12 @@ func getMCContractProxy(mcName string) *ethproxy.LockedEthereumProxy {
 	}
 	conn := etclient.NewSafeClient(c)
 
+	lastBlockNumber, err := conn.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		fmt.Println("HeaderByNumber err : ", err)
+		os.Exit(-1)
+	}
+	fmt.Printf("Ethereum Lasted BlockNumber = %d\n", lastBlockNumber.Number.Uint64())
 	// 2. init contract proxy
 	cp, err := ethproxy.NewLockedEthereumProxy(conn, getMCContractAddressByMCName(mcName))
 	if err != nil {

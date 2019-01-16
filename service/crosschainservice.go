@@ -130,7 +130,7 @@ func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutR
 	amount := localLockoutInfo.Amount
 	// 1. 构造MessageToSign
 	var msgToSign mecdsa.MessageToSign
-	msgToSign = messagetosign.NewEthereumPrepareLockoutTxData(cs.scTokenProxy, req, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount)
+	msgToSign = messagetosign.NewEthereumPrepareLockoutTxData(cs.mcProxy, req, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount)
 	// 2. 发起分布式签名
 	var signature []byte
 	var _ common.Hash

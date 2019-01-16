@@ -46,7 +46,7 @@ func mcPrepareLockout(ctx *cli.Context) (err error) {
 		MCUserAddress:         common.HexToAddress(globalConfig.EthUserAddress),
 		SCUserAddress:         common.HexToAddress(globalConfig.SmcUserAddress),
 	}
-	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserAddress)
+	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -59,5 +59,6 @@ func mcPrepareLockout(ctx *cli.Context) (err error) {
 		fmt.Printf("call %s with payload=%s err :%s", url, payload, err.Error())
 		os.Exit(-1)
 	}
+	fmt.Println("MCPrepareLockout SUCCESS")
 	return
 }
