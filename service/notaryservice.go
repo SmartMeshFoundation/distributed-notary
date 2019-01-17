@@ -47,6 +47,7 @@ func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries [
 			ns.notaries = append(ns.notaries, n)
 		}
 	}
+	models.SortNotaryInfoSlice(ns.notaries)
 	return
 }
 
@@ -314,7 +315,7 @@ func (ns *NotaryService) startDistributedSignAndWait(msgToSign mecdsa.MessageToS
 		}
 		if finish {
 			timeUsed := time.Since(start)
-			log.Trace("distributedSignMessage end ,total use %d seconds", timeUsed.Nanoseconds()/1000)
+			log.Trace("distributedSignMessage end ,total use %f seconds", timeUsed.Seconds())
 			return
 		}
 		if times%10 == 0 {

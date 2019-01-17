@@ -170,7 +170,6 @@ func (l *ThresholdPrivKeyGenerator) ReceivePhase2PaillierPubKeyProof(m *models.K
 		err = fmt.Errorf("paillier pubkey roof for %d verify not pass", index)
 		return
 	}
-	fmt.Println("====================index", index)
 	if createCommitmentWithUserDefinedRandomNess(p.PubKeysProof1[index].Proof.PK.X, m.BlindFactor).Cmp(m.Com) != 0 {
 		err = fmt.Errorf("blind factor error for %d", index)
 		return

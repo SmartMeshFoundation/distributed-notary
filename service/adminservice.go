@@ -182,6 +182,7 @@ func (as *AdminService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKeyR
 		return
 	}
 	// 1. 调用自己的notaryService,生成KeyGenerator,并开始协商过程
+	start := time.Now()
 	privateKeyID, err := as.dispatchService.getNotaryService().startNewPrivateKeyNegotiation()
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
@@ -204,6 +205,8 @@ func (as *AdminService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKeyR
 			times++
 			continue
 		}
+		timeUsed := time.Since(start)
+		log.Trace("PrivateKeyNegotiation end ,total use %f seconds", timeUsed.Seconds())
 		req.WriteSuccessResponse(newPrivateKeyInfoToResponse(privateKey))
 		return
 	}

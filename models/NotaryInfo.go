@@ -7,6 +7,8 @@ import (
 
 	"strconv"
 
+	"sort"
+
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/huamou/config"
@@ -21,6 +23,26 @@ type NotaryInfo struct {
 	Name       string `json:"name"`
 	Host       string `json:"host"` //how to contact with this notary
 	AddressStr string `json:"address"`
+}
+
+type notaryInfoSlice []NotaryInfo
+
+func (c notaryInfoSlice) Len() int {
+	return len(c)
+}
+func (c notaryInfoSlice) Less(i, j int) bool {
+	return c[i].ID < c[j].ID
+}
+func (c notaryInfoSlice) Swap(i, j int) {
+	c[i], c[j] = c[j], c[i]
+}
+
+/*
+SortNotaryInfoSlice :
+要求有先后顺序,影响消息发送顺序
+*/
+func SortNotaryInfoSlice(chs []NotaryInfo) {
+	sort.Stable(notaryInfoSlice(chs))
 }
 
 // GetAddress :
