@@ -22,12 +22,13 @@ import (
 
 // NotaryService :
 type NotaryService struct {
-	privateKey      *ecdsa.PrivateKey
-	self            models.NotaryInfo
-	notaries        []models.NotaryInfo //这里保存除我以外的notary信息
-	db              *models.DB
-	dispatchService dispatchServiceBackend
-	sessionLockMap  map[common.Hash]*sync.Mutex
+	privateKey         *ecdsa.PrivateKey
+	self               models.NotaryInfo
+	notaries           []models.NotaryInfo //这里保存除我以外的notary信息
+	db                 *models.DB
+	dispatchService    dispatchServiceBackend
+	sessionLockMap     map[common.Hash]*sync.Mutex
+	sessionLockMapLock sync.Mutex
 }
 
 // NewNotaryService :
@@ -560,14 +561,25 @@ func (ns *NotaryService) getNotaryInfoByAddress(addr common.Address) (notaryInfo
 }
 
 func (ns *NotaryService) lockSession(sessionID common.Hash) {
-	if _, ok := ns.sessionLockMap[sessionID]; !ok {
-		ns.sessionLockMap[sessionID] = &sync.Mutex{}
+	var lock *sync.Mutex
+	var ok bool
+	ns.sessionLockMapLock.Lock()
+	if lock, ok = ns.sessionLockMap[sessionID]; !ok {
+		lock = &sync.Mutex{}
+		ns.sessionLockMap[sessionID] = lock
 	}
-	ns.sessionLockMap[sessionID].Lock()
+	ns.sessionLockMapLock.Unlock()
+	lock.Lock()
 }
 func (ns *NotaryService) unlockSession(sessionID common.Hash) {
-	ns.sessionLockMap[sessionID].Unlock()
+	var lock *sync.Mutex
+	ns.sessionLockMapLock.Lock()
+	lock = ns.sessionLockMap[sessionID]
+	ns.sessionLockMapLock.Unlock()
+	lock.Unlock()
 }
 func (ns *NotaryService) removeSessionLock(sessionID common.Hash) {
+	ns.sessionLockMapLock.Lock()
 	delete(ns.sessionLockMap, sessionID)
+	ns.sessionLockMapLock.Unlock()
 }

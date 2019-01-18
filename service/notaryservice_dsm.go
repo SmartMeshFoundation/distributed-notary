@@ -109,6 +109,7 @@ func (ns *NotaryService) startDSMPhase1(sessionID, privateKeyID common.Hash) (er
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+		ns.unlockSession(sessionID)
 		return
 	}
 	// 2. 生成 SignBroadcastPhase1并广播至参与者
@@ -131,6 +132,7 @@ func (ns *NotaryService) saveDSMPhase1(sessionID, privateKeyID common.Hash, msg 
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+		ns.unlockSession(sessionID)
 		return
 	}
 	// 2.
@@ -169,6 +171,7 @@ func (ns *NotaryService) startDSMPhase2(sessionID, privateKeyID common.Hash) (fi
 	// 1. 获取dsm
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
+		ns.unlockSession(sessionID)
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
 		return
 	}
@@ -227,6 +230,7 @@ func (ns *NotaryService) startDSMPhase3(sessionID, privateKeyID common.Hash) (er
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+		ns.unlockSession(sessionID)
 		return
 	}
 	// 2.
@@ -248,6 +252,7 @@ func (ns *NotaryService) saveDSMPhase3(sessionID, privateKeyID common.Hash, msg 
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+		ns.unlockSession(sessionID)
 		return
 	}
 	// 2.
@@ -266,6 +271,7 @@ func (ns *NotaryService) startDSMPhase5A5B(sessionID, privateKeyID common.Hash) 
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+		ns.unlockSession(sessionID)
 		return
 	}
 	// 2.
@@ -292,6 +298,7 @@ func (ns *NotaryService) saveDSMPhase5A5B(sessionID, privateKeyID common.Hash, m
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+		ns.unlockSession(sessionID)
 		return
 	}
 	// 2.
@@ -310,6 +317,7 @@ func (ns *NotaryService) startDSMPhase5C(sessionID, privateKeyID common.Hash) (e
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+		ns.unlockSession(sessionID)
 		return
 	}
 	// 2.
@@ -331,6 +339,7 @@ func (ns *NotaryService) saveDSMPhase5C(sessionID, privateKeyID common.Hash, msg
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+		ns.unlockSession(sessionID)
 		return
 	}
 	// 2.
@@ -349,6 +358,7 @@ func (ns *NotaryService) startDSMPhase6(sessionID, privateKeyID common.Hash) (er
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+		ns.unlockSession(sessionID)
 		return
 	}
 	// 2.
@@ -370,6 +380,7 @@ func (ns *NotaryService) saveDSMPhase6(sessionID, privateKeyID common.Hash, msg 
 	dsm, err := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyID)
 	if err != nil {
 		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
+		ns.unlockSession(sessionID)
 		return
 	}
 	// 2.

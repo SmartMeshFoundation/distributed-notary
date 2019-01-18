@@ -75,11 +75,11 @@ func (cs *CrossChainService) onSCPrepareLockinRequest(req *userapi.SCPrepareLock
 		return
 	}
 	if lockinInfo.MCLockStatus != models.LockStatusLock {
-		req.WriteErrorResponse(api.ErrorCodeException, "MCLockStatus wrong")
+		req.WriteErrorResponse(api.ErrorCodeException, fmt.Sprintf("MCLockStatus %d wrong", lockinInfo.MCLockStatus))
 		return
 	}
 	if lockinInfo.SCLockStatus != models.LockStatusNone {
-		req.WriteErrorResponse(api.ErrorCodeException, "SCLockStatus wrong")
+		req.WriteErrorResponse(api.ErrorCodeException, fmt.Sprintf("SCLockStatus %d wrong", lockinInfo.SCLockStatus))
 		return
 	}
 	// 3. 发起合约调用
