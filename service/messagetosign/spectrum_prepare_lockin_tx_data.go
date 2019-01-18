@@ -19,7 +19,7 @@ import (
 // SpectrumPrepareLockinTxDataName 用做消息传输时识别
 const SpectrumPrepareLockinTxDataName = "SpectrumPrepareLockinTxData"
 
-// SpectrumPrepareLockinTxData : TODO
+// SpectrumPrepareLockinTxData :
 type SpectrumPrepareLockinTxData struct {
 	BytesToSign  []byte                          `json:"bytes_to_sign"`
 	UserRequest  *userapi.SCPrepareLockinRequest `json:"user_request"`  // 用户原始请求,验证用户签名

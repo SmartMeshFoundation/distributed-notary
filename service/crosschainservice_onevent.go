@@ -201,21 +201,18 @@ func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEven
 		err = fmt.Errorf("lockinHandler.getLockin err = %s", err.Error())
 		return
 	}
-	// 3.　校验 TODO
+	// 3.　校验
+	// 如果我参与了签名,那么关键数据的校验我在签名时就已经校验过了
+	// 如果我没有参与签名,而合约不出错,如果收到与之前主链事件数据不匹配的SCPLI事件,此时事件已经发生,也没法挽回,所以还是记录数据
 	if lockinInfo.MCLockStatus != models.LockStatusLock || lockinInfo.SCLockStatus != models.LockStatusNone || lockinInfo.Secret != utils.EmptyHash {
-		err = fmt.Errorf("local lockinInfo status does't right,something must wrong, local lockinInfo:\n%s", utils.ToJSONStringFormat(lockinInfo))
-		return
+		log.Error("local lockinInfo status does't right,something must wrong, local lockinInfo:\n%s", utils.ToJSONStringFormat(lockinInfo))
 	}
 	if lockinInfo.Amount.Cmp(amount) != 0 {
-		err = fmt.Errorf("amount does't match")
-		return
-	}
-	if lockinInfo.SCExpiration != scExpiration {
-		err = fmt.Errorf("scExpiration does't match")
-		return
+		log.Error("amount does't match")
 	}
 
 	// 4. 修改状态,等待后续调用
+	lockinInfo.SCExpiration = scExpiration // 存在因为各节点区块高度细微差距导致的自己之前计算的SCExpiration不对,这里取合约里面的真实值
 	lockinInfo.SCLockStatus = models.LockStatusLock
 	lockinInfo.SCUserAddress = event.Account
 	err = cs.lockinHandler.updateLockin(lockinInfo)
@@ -245,7 +242,7 @@ func (cs *CrossChainService) onSCLockinSecret(event smcevents.LockinSecretEvent)
 	}
 	// 3. 校验状态,好像没啥用,用户都拿走钱了,就算状态不对,也需要继续操作,让负责人尝试去主链lockin
 	if lockinInfo.MCLockStatus != models.LockStatusLock || lockinInfo.SCLockStatus != models.LockStatusLock {
-		err = fmt.Errorf("local lockinInfo status does't right,something must wrong, local lockinInfo:\n%s", utils.ToJSONStringFormat(lockinInfo))
+		log.Error("local lockinInfo status does't right,something must wrong, local lockinInfo:\n%s", utils.ToJSONStringFormat(lockinInfo))
 	}
 	// 3. 更新状态
 	lockinInfo.Secret = event.Secret

@@ -19,7 +19,7 @@ import (
 // EthereumPrepareLockoutTxDataName 用做消息传输时识别
 const EthereumPrepareLockoutTxDataName = "EthereumPrepareLockoutTxData"
 
-// EthereumPrepareLockoutTxData : TODO
+// EthereumPrepareLockoutTxData :
 type EthereumPrepareLockoutTxData struct {
 	BytesToSign  []byte                           `json:"bytes_to_sign"`
 	UserRequest  *userapi.MCPrepareLockoutRequest `json:"user_request"`  // 用户原始请求,验证用户签名
