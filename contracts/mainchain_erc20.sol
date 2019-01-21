@@ -46,7 +46,7 @@ contract LockedEthereum is Owned {
     }
 
     string public name = "LockedEthereum for atmosphere";                   //fancy name
-    string public version = 'v0.1';       //SMT 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'v0.1';
 
     struct LockinInfo  {
      bytes32 SecretHash; //这是lockin发起人提供的hash
