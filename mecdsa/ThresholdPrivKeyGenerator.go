@@ -170,10 +170,6 @@ func (l *ThresholdPrivKeyGenerator) ReceivePhase2PaillierPubKeyProof(m *models.K
 		err = fmt.Errorf("paillier pubkey roof for %d verify not pass", index)
 		return
 	}
-	if createCommitmentWithUserDefinedRandomNess(p.PubKeysProof1[index].Proof.PK.X, m.BlindFactor).Cmp(m.Com) != 0 {
-		err = fmt.Errorf("blind factor error for %d", index)
-		return
-	}
 	p.PaillierKeysProof2[index] = m
 	err = l.db.KGUpdatePaillierKeysProof2(p)
 	if err != nil {
@@ -201,9 +197,20 @@ GeneratePhase3SecretShare phase 3.1基于第一步的随机数生成SecretShares
 每个公证人务必保管好自己的xi,这是后续签名必须.
 */
 func (l *ThresholdPrivKeyGenerator) GeneratePhase3SecretShare() (msgs map[int]*models.KeyGenBroadcastMessage3, err error) {
+
 	p, err := l.db.LoadPrivateKeyInfo(l.PrivateKeyID)
 	if err != nil {
 		return
+	}
+	for i := 0; i < len(p.PubKeysProof1); i++ {
+		if i == l.selfNotaryID {
+			continue
+		}
+		m := p.PaillierKeysProof2[i]
+		if createCommitmentWithUserDefinedRandomNess(p.PubKeysProof1[i].Proof.PK.X, m.BlindFactor).Cmp(m.Com) != 0 {
+			err = fmt.Errorf("blind factor error for %d", i)
+			return
+		}
 	}
 
 	vss, secretShares := feldman.Share(params.ThresholdCount, params.ShareCount, p.UI)
