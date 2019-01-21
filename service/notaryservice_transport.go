@@ -9,12 +9,13 @@ import (
 
 	"encoding/json"
 
+	"errors"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/kataras/iris/core/errors"
 	"github.com/nkbai/log"
 )
 
