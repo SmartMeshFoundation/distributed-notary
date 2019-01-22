@@ -1,4 +1,4 @@
-package main
+package dnc
 
 import (
 	"net/http"

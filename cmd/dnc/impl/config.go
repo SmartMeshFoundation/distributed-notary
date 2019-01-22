@@ -1,4 +1,4 @@
-package main
+package dnc
 
 import (
 	"errors"
@@ -155,6 +155,8 @@ func listAllConfig(ctx *cli.Context) error {
 	fmt.Println(utils.ToJSONStringFormat(globalConfig))
 	return nil
 }
+
+//ListAllConfig :
 func ListAllConfig() string {
 	return utils.ToJSONStringFormat(globalConfig)
 }
