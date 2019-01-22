@@ -21,7 +21,8 @@ type DB struct {
 //SetUpDB init db
 func SetUpDB(dbtype, path string) (mdb *DB) {
 	var err error
-	db, err := gorm.Open(dbtype, path)
+	db, err := gorm.Open(dbtype, dbtype, path+"?cache=shared")
+	db.DB().SetMaxOpenConns(1)
 	if err != nil {
 		panic("failed to connect database")
 	}

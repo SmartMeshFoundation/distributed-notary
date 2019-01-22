@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"context"
+
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/urfave/cli"
 )
 
@@ -44,21 +47,54 @@ var queryCmd = cli.Command{
 
 func queryContract(ctx *cli.Context) {
 	if globalConfig.SCTokenList == nil {
-		fmt.Println("must run dnc config refresh first")
+		fmt.Println("must run dnc config refresh and get a SCToken first")
 		os.Exit(-1)
 	}
 	mcName := ctx.String("mcname")
-	mcp := getMCContractProxy(mcName)
-	scp := getSCContractProxy(mcName)
+	scToken := getSCTokenByMCName(mcName)
+	// 区块高度信息查询
+	fmt.Println("\n===> MC/SC Lasted BlockNumber info :")
+	mconn, mcp := getMCContractProxy(mcName)
+	_, scp := getSCContractProxy(mcName)
+	// 主测链账户余额查询
+	fmt.Println("\n===> MC/SC User account info :")
+	mcUserBalance, err := mconn.BalanceAt(context.Background(), common.HexToAddress(globalConfig.EthUserAddress), nil)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	fmt.Printf("[MC]user %s account balance : %d\n", utils.APex(common.HexToAddress(globalConfig.EthUserAddress)), wei2Eth(mcUserBalance))
+	scUserTokenBalance, err := scp.Contract.BalanceOf(nil, common.HexToAddress(globalConfig.SmcUserAddress))
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	fmt.Printf("[SC]user %s sctoken balance : %d\n", utils.APex(common.HexToAddress(globalConfig.SmcUserAddress)), wei2Eth(scUserTokenBalance))
+	// 主侧链合约余额查询
+	fmt.Println("\n===> MC/SC Contract account info :")
+	mBalance, err := mconn.BalanceAt(context.Background(), scToken.MCLockedContractAddress, nil)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	fmt.Printf("[MC]contract %s account balance : %d\n", utils.APex(scToken.MCLockedContractAddress), wei2Eth(mBalance))
+	scSupply, err := scp.Contract.TotalSupply(nil)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+	fmt.Printf("[SC]contract %s total supply : %d\n", utils.APex(scToken.SCToken), wei2Eth(scSupply))
+	// 主侧链合约锁定查询
+	fmt.Println("\n===> MC/SC Contract data info :")
 	if ctx.Bool("mcli") || ctx.Bool("all") {
 		sh, e, a, err := mcp.QueryLockin(globalConfig.EthUserAddress)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		fmt.Println("===> contract data of mc lockin:")
+		fmt.Printf("[MC]data of lockin  : ")
 		if sh != utils.EmptyHash {
-			fmt.Println("\t account    = ", globalConfig.EthUserAddress)
+			fmt.Println("\n\t account    = ", globalConfig.EthUserAddress)
 			fmt.Println("\t secretHash = ", sh.String())
 			fmt.Println("\t expiration = ", e)
 			fmt.Println("\t amount     = ", a)
@@ -72,9 +108,9 @@ func queryContract(ctx *cli.Context) {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		fmt.Println("===> contract data of sc lockin:")
+		fmt.Printf("[SC]data of lockin  : ")
 		if sh != utils.EmptyHash {
-			fmt.Println("\t account    = ", globalConfig.SmcUserAddress)
+			fmt.Println("\n\t account    = ", globalConfig.SmcUserAddress)
 			fmt.Println("\t secretHash = ", sh.String())
 			fmt.Println("\t expiration = ", e)
 			fmt.Println("\t amount     = ", a)
@@ -88,9 +124,9 @@ func queryContract(ctx *cli.Context) {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		fmt.Println("===> contract data of mc lockout:")
+		fmt.Printf("[MC]data of lockout : ")
 		if sh != utils.EmptyHash {
-			fmt.Println("\t account    = ", globalConfig.EthUserAddress)
+			fmt.Println("\n\t account    = ", globalConfig.EthUserAddress)
 			fmt.Println("\t secretHash = ", sh.String())
 			fmt.Println("\t expiration = ", e)
 			fmt.Println("\t amount     = ", a)
@@ -104,9 +140,9 @@ func queryContract(ctx *cli.Context) {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		fmt.Println("===> contract data of sc lockout:")
+		fmt.Printf("[SC]data of lockout : ")
 		if sh != utils.EmptyHash {
-			fmt.Println("\t account    = ", globalConfig.SmcUserAddress)
+			fmt.Println("\n\t account    = ", globalConfig.SmcUserAddress)
 			fmt.Println("\t secretHash = ", sh.String())
 			fmt.Println("\t expiration = ", e)
 			fmt.Println("\t amount     = ", a)

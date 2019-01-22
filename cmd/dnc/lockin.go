@@ -25,7 +25,7 @@ var licmd = cli.Command{
 }
 
 func lockin(ctx *cli.Context) error {
-	cp := getSCContractProxy(ctx.String("mcname"))
+	_, cp := getSCContractProxy(ctx.String("mcname"))
 	if globalConfig.RunTime == nil {
 		fmt.Println("must call pli first")
 		os.Exit(-1)

@@ -88,6 +88,11 @@ func NewETHService(host string, contractAddresses ...common.Address) (ss *ETHSer
 	return
 }
 
+// GetClient :
+func (ss *ETHService) GetClient() *client.SafeEthClient {
+	return ss.c
+}
+
 // SetLastBlockNumber :
 func (ss *ETHService) SetLastBlockNumber(lastBlockNumber uint64) {
 	ss.lastBlockNumber = lastBlockNumber

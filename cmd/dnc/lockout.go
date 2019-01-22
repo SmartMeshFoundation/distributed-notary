@@ -26,7 +26,7 @@ var locmd = cli.Command{
 
 func lockout(ctx *cli.Context) error {
 	// 1. get proxy
-	cp := getMCContractProxy(ctx.String("mcname"))
+	_, cp := getMCContractProxy(ctx.String("mcname"))
 	if globalConfig.RunTime == nil {
 		fmt.Println("must call plo first")
 		os.Exit(-1)

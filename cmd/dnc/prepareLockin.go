@@ -82,7 +82,7 @@ func prepareLockin(ctx *cli.Context) error {
 		SecretHash: secretHash.String(),
 	}
 	updateConfigFile()
-	err = cp.PrepareLockin(auth, "", secretHash, expiration2, getEther(amount))
+	err = cp.PrepareLockin(auth, "", secretHash, expiration2, eth2Wei(amount))
 	if err != nil {
 		fmt.Println("prepare lockin err : ", err.Error())
 		os.Exit(-1)

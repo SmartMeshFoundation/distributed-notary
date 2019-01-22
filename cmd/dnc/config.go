@@ -12,8 +12,6 @@ import (
 
 	"encoding/json"
 
-	"path"
-
 	"path/filepath"
 
 	"io/ioutil"
@@ -61,19 +59,19 @@ var defaultConfig = &dncConfig{
 	SmcRPCEndpoint:  "http://127.0.0.1:17888",
 }
 
-var configDir = path.Join(utils.GetHomePath(), ".dnc-client")
-var configFile = filepath.Join(configDir, ".config")
+//var configDir = path.Join(".dnc-client")
+var configFile = filepath.Join(".dnc-config")
 
 func init() {
 	var err error
 	// dir
-	if !utils.Exists(configDir) {
-		err = os.MkdirAll(configDir, os.ModePerm)
-		if err != nil {
-			err = fmt.Errorf("configDir:%s doesn't exist and cannot create %v", configDir, err)
-			return
-		}
-	}
+	//if !utils.Exists(configDir) {
+	//	err = os.MkdirAll(configDir, os.ModePerm)
+	//	if err != nil {
+	//		err = fmt.Errorf("configDir:%s doesn't exist and cannot create %v", configDir, err)
+	//		return
+	//	}
+	//}
 	// config file
 	var contents []byte
 	// #nosec

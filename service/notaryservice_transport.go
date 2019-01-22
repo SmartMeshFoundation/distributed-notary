@@ -19,6 +19,67 @@ import (
 	"github.com/nkbai/log"
 )
 
+type notaryRequestToSend interface {
+	api.Request
+	api.NotaryRequest
+}
+
+//func (ns *NotaryService) sendMsg(req notaryRequestToSend, targetNotaryID int) {
+//	host := ns.getNotaryHostByID(targetNotaryID)
+//}
+//
+//func postJson(requestID string, url string, payload string) (response api.BaseResponse) {
+//	var reqBody io.Reader
+//	if payload == "" {
+//		reqBody = nil
+//	} else {
+//		reqBody = strings.NewReader(payload)
+//	}
+//	req, err := http.NewRequest(http.MethodPost, url, reqBody)
+//	if err != nil {
+//		panic(err)
+//	}
+//	req.Header.Set("Content-Type", "application/json")
+//	client := http.Client{}
+//	resp, err := client.Do(req)
+//	defer func() {
+//		if req.Body != nil {
+//			/* #nosec */
+//			req.Body.Close()
+//		}
+//		if resp != nil && resp.Body != nil {
+//			/* #nosec */
+//			resp.Body.Close()
+//		}
+//	}()
+//	if err != nil {
+//		response = api.NewFailResponse(requestID, api.ErrorCodeException, err.Error())
+//		return
+//	}
+//	if resp.StatusCode != http.StatusOK {
+//		err = fmt.Errorf("http request err : status code = %d", resp.StatusCode)
+//	}
+//	var buf [4096 * 1024]byte
+//	n := 0
+//	n, err = resp.Body.Read(buf[:])
+//	if err != nil && err.Error() == "EOF" {
+//		err = nil
+//	}
+//	respBody := buf[:n]
+//	if responseTo == nil {
+//		responseTo = new(api.BaseResponse)
+//	}
+//	err = json.Unmarshal(respBody, responseTo)
+//	if err != nil {
+//		return
+//	}
+//	if responseTo.GetErrorCode() != api.ErrorCodeSuccess {
+//		log.Error(SessionLogMsg(sessionID, "post %s get fail response %s", url, utils.ToJSONString(responseTo)))
+//		err = errors.New(responseTo.GetErrorMsg())
+//	}
+//	return
+//}
+
 /*
 BroadcastMsg :
 群发消息到各个notary的指定api TODO 目前全是同步
@@ -136,6 +197,13 @@ func (ns *NotaryService) SendMsg(sessionID common.Hash, apiName string, notaryID
 	var requestID string
 	if r, ok := msg.(api.Request); ok {
 		requestID = r.GetRequestID()
+	}
+	/*
+		不关心返回值的http请求,全异步
+	*/
+	if response == nil {
+		go doPost(requestID, sessionID, url, payload, response)
+		return
 	}
 	return doPost(requestID, sessionID, url, payload, response)
 }

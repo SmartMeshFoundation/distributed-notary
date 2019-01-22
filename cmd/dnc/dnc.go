@@ -52,6 +52,10 @@ func main() {
 			query
 		*/
 		queryCmd,
+		/*
+			test
+		*/
+		benchmarkCmd,
 	}
 	app.Name = "dnc"
 	app.Version = Version
@@ -131,11 +135,36 @@ func getSCContractAddressByMCName(mcName string) common.Address {
 	return utils.EmptyAddress
 }
 
-func getEther(amount int64) *big.Int {
-	return new(big.Int).Mul(big.NewInt(int64(params.Ether)), big.NewInt(amount))
+func eth2Wei(ethAmount int64) *big.Int {
+	return new(big.Int).Mul(big.NewInt(int64(params.Ether)), big.NewInt(ethAmount))
 }
 
-func getSCContractProxy(mcName string) *smcproxy.SideChainErc20TokenProxy {
+func wei2Eth(weiAmount *big.Int) *big.Int {
+	return new(big.Int).Div(weiAmount, big.NewInt(int64(params.Ether)))
+}
+
+func getEthConn() *etclient.SafeEthClient {
+	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
+	c, err := ethclient.DialContext(ctx2, globalConfig.EthRPCEndpoint)
+	cancelFunc()
+	if err != nil {
+		fmt.Println("connect to eth fail : ", err)
+		os.Exit(-1)
+	}
+	return etclient.NewSafeClient(c)
+}
+func getSmcConn() *smcclient.SafeEthClient {
+	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
+	c, err := ethclient.DialContext(ctx2, globalConfig.SmcRPCEndpoint)
+	cancelFunc()
+	if err != nil {
+		fmt.Println("connect to eth fail : ", err)
+		os.Exit(-1)
+	}
+	return smcclient.NewSafeClient(c)
+}
+
+func getSCContractProxy(mcName string) (*smcclient.SafeEthClient, *smcproxy.SideChainErc20TokenProxy) {
 	if globalConfig.SCTokenList == nil {
 		fmt.Println("must run dnc config refresh first")
 		os.Exit(-1)
@@ -155,7 +184,7 @@ func getSCContractProxy(mcName string) *smcproxy.SideChainErc20TokenProxy {
 		fmt.Println("HeaderByNumber err : ", err)
 		os.Exit(-1)
 	}
-	fmt.Printf("Spectrum Lasted BlockNumber = %d\n", lastBlockNumber.Number.Uint64())
+	fmt.Printf("[SC] lasted block number = %d\n", lastBlockNumber.Number.Uint64())
 
 	// 2. init contract proxy
 	cp, err := smcproxy.NewSideChainErc20TokenProxy(conn, getSCContractAddressByMCName(mcName))
@@ -163,10 +192,10 @@ func getSCContractProxy(mcName string) *smcproxy.SideChainErc20TokenProxy {
 		fmt.Println("init contract proxy err : ", err)
 		os.Exit(-1)
 	}
-	return cp
+	return conn, cp
 }
 
-func getMCContractProxy(mcName string) *ethproxy.LockedEthereumProxy {
+func getMCContractProxy(mcName string) (*etclient.SafeEthClient, *ethproxy.LockedEthereumProxy) {
 	if globalConfig.SCTokenList == nil {
 		fmt.Println("must run dnc config refresh first")
 		os.Exit(-1)
@@ -186,12 +215,12 @@ func getMCContractProxy(mcName string) *ethproxy.LockedEthereumProxy {
 		fmt.Println("HeaderByNumber err : ", err)
 		os.Exit(-1)
 	}
-	fmt.Printf("Ethereum Lasted BlockNumber = %d\n", lastBlockNumber.Number.Uint64())
+	fmt.Printf("[MC] lasted block number = %d\n", lastBlockNumber.Number.Uint64())
 	// 2. init contract proxy
 	cp, err := ethproxy.NewLockedEthereumProxy(conn, getMCContractAddressByMCName(mcName))
 	if err != nil {
 		fmt.Println("init contract proxy err : ", err)
 		os.Exit(-1)
 	}
-	return cp
+	return conn, cp
 }

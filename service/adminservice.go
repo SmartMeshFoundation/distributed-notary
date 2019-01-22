@@ -135,7 +135,8 @@ func (as *AdminService) onGetSCTokenListRequest(req *userapi.GetSCTokenListReque
 	req.WriteSuccessResponse(resp)
 }
 
-type privateKeyInfoToResponse struct {
+// PrivateKeyInfoToResponse :
+type PrivateKeyInfoToResponse struct {
 	ID         string `json:"id"`
 	Address    string `json:"address,omitempty"`
 	Status     int    `json:"status"`
@@ -143,8 +144,8 @@ type privateKeyInfoToResponse struct {
 	CreateTime string `json:"create_time"`
 }
 
-func newPrivateKeyInfoToResponse(p *models.PrivateKeyInfo) (r *privateKeyInfoToResponse) {
-	r = &privateKeyInfoToResponse{
+func newPrivateKeyInfoToResponse(p *models.PrivateKeyInfo) (r *PrivateKeyInfoToResponse) {
+	r = &PrivateKeyInfoToResponse{
 		ID:         p.Key.String(),
 		Status:     p.Status,
 		StatusMsg:  models.PrivateKeyInfoStatusMsgMap[p.Status],
@@ -166,7 +167,7 @@ func (as *AdminService) onGetPrivateKeyListRequest(req *userapi.GetPrivateKeyLis
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 	}
-	var respList []*privateKeyInfoToResponse
+	var respList []*PrivateKeyInfoToResponse
 	for _, privateKeyInfo := range privateKeyInfoList {
 		respList = append(respList, newPrivateKeyInfoToResponse(privateKeyInfo))
 	}

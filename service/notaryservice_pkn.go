@@ -1,8 +1,6 @@
 package service
 
 import (
-	"time"
-
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
@@ -15,7 +13,10 @@ PKN = PrivateKeyNegotiation
 */
 
 func (ns *NotaryService) startPKNPhase1(privateKeyID common.Hash, receivedMsg *models.KeyGenBroadcastMessage1, senderID int) (finish bool, err error) {
-	ns.lockSession(privateKeyID)
+	// 这里主动开始的时候需要锁,被动开始不需要锁,上层已经锁了但是后续解锁流程不变
+	if receivedMsg == nil {
+		ns.lockSession(privateKeyID)
+	}
 	log.Trace(SessionLogMsg(privateKeyID, "PKNPhase1 start..."))
 	// 1. 初始化KeyGenerator
 	keyGenerator := mecdsa.NewThresholdPrivKeyGenerator(ns.self.ID, ns.db, privateKeyID)
@@ -67,20 +68,20 @@ func (ns *NotaryService) savePKNPhase2Msg(keyGenerator *mecdsa.ThresholdPrivKeyG
 		这里存在先收到某个节点的phase2后收到phase1消息的可能,而phase2消息的处理依赖于同节点发来的phase1消息,如果出现这种情况,就会出现NPE
 		目前仅在这一步中发现这种情况,所以先暂时这么处理,测试数据中看来该段等待对总体key生成时间来说影响较小,加不加都在3秒作用.后续再优化
 	*/
-	times := 0
-	for {
-		var p *models.PrivateKeyInfo
-		p, err = ns.db.LoadPrivateKeyInfo(keyGenerator.PrivateKeyID)
-		if err != nil {
-			return
-		}
-		if _, ok := p.PubKeysProof1[senderID]; ok || times > 10 {
-			break
-		}
-		times++
-		time.Sleep(100 * time.Millisecond)
-		log.Warn("wait for phase1 message of notary %d...", senderID)
-	}
+	//times := 0
+	//for {
+	//	var p *models.PrivateKeyInfo
+	//	p, err = ns.db.LoadPrivateKeyInfo(keyGenerator.PrivateKeyID)
+	//	if err != nil {
+	//		return
+	//	}
+	//	if _, ok := p.PubKeysProof1[senderID]; ok || times > 10 {
+	//		break
+	//	}
+	//	times++
+	//	time.Sleep(100 * time.Millisecond)
+	//	log.Warn("wait for phase1 message of notary %d...", senderID)
+	//}
 	ns.lockSession(keyGenerator.PrivateKeyID)
 	finish, err = keyGenerator.ReceivePhase2PaillierPubKeyProof(msg, senderID)
 	if finish {

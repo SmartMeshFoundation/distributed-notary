@@ -85,8 +85,8 @@ func prepareLockout(ctx *cli.Context) error {
 	fmt.Println("callerAddress = ", auth.From.String())
 	fmt.Println("secretHash    = ", secretHash.String())
 	fmt.Println("expiration    = ", expiration2)
-	fmt.Println("amount        = ", getEther(amount))
-	err = cp.PrepareLockout(auth, "", secretHash, expiration2, getEther(amount))
+	fmt.Println("amount        = ", eth2Wei(amount))
+	err = cp.PrepareLockout(auth, "", secretHash, expiration2, eth2Wei(amount))
 	if err != nil {
 		fmt.Println("prepare lockout err : ", err.Error())
 		os.Exit(-1)

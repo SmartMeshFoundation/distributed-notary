@@ -29,6 +29,7 @@ type NotaryService struct {
 	dispatchService    dispatchServiceBackend
 	sessionLockMap     map[common.Hash]*sync.Mutex
 	sessionLockMapLock sync.Mutex
+	sendingQueueMap    map[int]chan api.Request
 }
 
 // NewNotaryService :
@@ -38,6 +39,7 @@ func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries [
 		privateKey:      privateKey,
 		sessionLockMap:  make(map[common.Hash]*sync.Mutex),
 		dispatchService: dispatchService,
+		sendingQueueMap: make(map[int]chan api.Request),
 	}
 	// 初始化self, notaries
 	selfAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
@@ -113,7 +115,8 @@ func (ns *NotaryService) onKeyGenerationPhase1MessageRequest(req *notaryapi.KeyG
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
-	// 2. 从db获取privateKey
+	// 2. 从db获取privateKey, 这里需要在查询的时候先锁,否则同时收到一个session的多个phase1消息时,会都走开始流程
+	ns.lockSession(privateKeyID)
 	_, err := ns.db.LoadPrivateKeyInfo(privateKeyID)
 	if err == gorm.ErrRecordNotFound {
 		// 3. 如果不存在,开始一次私钥协商
@@ -136,6 +139,8 @@ func (ns *NotaryService) onKeyGenerationPhase1MessageRequest(req *notaryapi.KeyG
 		}
 		return
 	}
+	// 如果锁上之后发现不是第一次开始,直接解锁
+	ns.unlockSession(privateKeyID)
 	if err != nil {
 		errMsg := SessionLogMsg(privateKeyID, "LoadPrivateKeyInfo err = %s", err.Error())
 		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
