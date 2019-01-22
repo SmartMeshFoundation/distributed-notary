@@ -155,7 +155,9 @@ func listAllConfig(ctx *cli.Context) error {
 	fmt.Println(utils.ToJSONStringFormat(globalConfig))
 	return nil
 }
-
+func ListAllConfig() string {
+	return utils.ToJSONStringFormat(globalConfig)
+}
 func resetAllConfig(ctx *cli.Context) error {
 	globalConfig = defaultConfig
 	updateConfigFile()
