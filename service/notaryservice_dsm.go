@@ -25,8 +25,9 @@ func (ns *NotaryService) startDSMAsk(notaryNumNeed int) (sessionID common.Hash, 
 	notaryIDs = append(notaryIDs, ns.self.ID)
 	for _, notary := range ns.notaries {
 		// 这里怎么ask会公平一点
-		err = ns.SendMsg(sessionID, notaryapi.APINameDSMAsk, notary.ID, notaryapi.NewDSMAskRequest(sessionID, &ns.self), nil)
-		if err == nil {
+		req := notaryapi.NewDSMAskRequest(sessionID, &ns.self)
+		_, err2 := ns.SendAndWaitResponse(req, notary.ID)
+		if err2 == nil {
 			notaryIDs = append(notaryIDs, notary.ID)
 		}
 		if len(notaryIDs) >= notaryNumNeed {
@@ -54,12 +55,9 @@ func (ns *NotaryService) startDSMNotifySelection(sessionID common.Hash, notaryID
 		return
 	}
 	ns.unlockSession(sessionID)
-	// 2. 通知其他参与的公正人,这里同步通知
+	// 2. 通知其他参与的公正人
 	req := notaryapi.NewDSMNotifySelectionRequest(sessionID, &ns.self, notaryIDs, privateKeyID, msgToSign)
-	err = ns.BroadcastMsg(sessionID, notaryapi.APINameDSMNotifySelection, req, true, notaryIDs...)
-	if err != nil {
-		return
-	}
+	ns.Broadcast(req, notaryIDs...)
 	log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection done..."))
 	return
 }
@@ -86,7 +84,7 @@ func (ns *NotaryService) saveDSMNotifySelection(req *notaryapi.DSMNotifySelectio
 		return
 	}
 	// 2. 校验msgToSign
-	err = ns.checkMsgToSign(sessionID, privateKeyInfo, msgToSign, req.GetSenderID())
+	err = ns.checkMsgToSign(sessionID, privateKeyInfo, msgToSign, req.GetSenderNotaryID())
 	if err != nil {
 		ns.unlockSession(sessionID)
 		return
@@ -122,7 +120,7 @@ func (ns *NotaryService) startDSMPhase1(sessionID, privateKeyID common.Hash) (er
 	ns.unlockSession(sessionID)
 	// 3. 广播
 	req := notaryapi.NewDSMPhase1BroadcastRequest(sessionID, &ns.self, privateKeyID, msg)
-	err = ns.BroadcastMsg(dsm.Key, notaryapi.APINameDSMPhase1Broadcast, req, true, dsm.L.S...)
+	ns.Broadcast(req, dsm.L.S...)
 	return
 }
 
@@ -187,14 +185,20 @@ func (ns *NotaryService) startDSMPhase2(sessionID, privateKeyID common.Hash) (fi
 		if notaryID == ns.self.ID {
 			continue
 		}
-		var resp dsmPhase2Response
+		var resp *api.BaseResponse
 		req := notaryapi.NewDSMPhase2MessageARequest(sessionID, &ns.self, privateKeyID, msg)
-		err = ns.SendMsg(dsm.Key, notaryapi.APINameDSMPhase2MessageA, notaryID, req, &resp)
+		resp, err = ns.SendAndWaitResponse(req, notaryID)
 		if err != nil {
 			ns.unlockSession(sessionID)
 			return
 		}
-		finish, err = dsm.ReceivePhase2MessageB(resp.Data, notaryID)
+		var respMsg *models.MessageBPhase2
+		err = resp.ParseData(respMsg)
+		if err != nil {
+			ns.unlockSession(sessionID)
+			return
+		}
+		finish, err = dsm.ReceivePhase2MessageB(respMsg, notaryID)
 		if err != nil {
 			ns.unlockSession(sessionID)
 			return
@@ -243,7 +247,8 @@ func (ns *NotaryService) startDSMPhase3(sessionID, privateKeyID common.Hash) (er
 	ns.unlockSession(sessionID)
 	// 3. 广播
 	req := notaryapi.NewDSMPhase3DeltaIRequest(sessionID, &ns.self, privateKeyID, msg)
-	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase3DeltaI, req, true, dsm.L.S...)
+	ns.Broadcast(req, dsm.L.S...)
+	return
 }
 
 func (ns *NotaryService) saveDSMPhase3(sessionID, privateKeyID common.Hash, msg *models.DeltaPhase3, senderID int) (finish bool, err error) {
@@ -289,7 +294,8 @@ func (ns *NotaryService) startDSMPhase5A5B(sessionID, privateKeyID common.Hash) 
 	ns.unlockSession(sessionID)
 	// 3. 广播
 	req := notaryapi.NewDSMPhase5A5BProofRequest(sessionID, &ns.self, privateKeyID, msg)
-	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase5A5BProof, req, true, dsm.L.S...)
+	ns.Broadcast(req, dsm.L.S...)
+	return
 }
 
 func (ns *NotaryService) saveDSMPhase5A5B(sessionID, privateKeyID common.Hash, msg *models.Phase5A, senderID int) (finish bool, err error) {
@@ -330,7 +336,8 @@ func (ns *NotaryService) startDSMPhase5C(sessionID, privateKeyID common.Hash) (e
 	ns.unlockSession(sessionID)
 	// 3. 广播
 	req := notaryapi.NewDSMPhase5CProofRequest(sessionID, &ns.self, privateKeyID, msg)
-	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase5CProof, req, true, dsm.L.S...)
+	ns.Broadcast(req, dsm.L.S...)
+	return
 }
 
 func (ns *NotaryService) saveDSMPhase5C(sessionID, privateKeyID common.Hash, msg *models.Phase5C, senderID int) (finish bool, err error) {
@@ -371,7 +378,8 @@ func (ns *NotaryService) startDSMPhase6(sessionID, privateKeyID common.Hash) (er
 	ns.unlockSession(sessionID)
 	// 3. 广播
 	req := notaryapi.NewDSMPhase6ReceiveSIRequest(sessionID, &ns.self, privateKeyID, msg)
-	return ns.BroadcastMsg(sessionID, notaryapi.APINameDSMPhase6ReceiveSI, req, true, dsm.L.S...)
+	ns.Broadcast(req, dsm.L.S...)
+	return
 }
 
 func (ns *NotaryService) saveDSMPhase6(sessionID, privateKeyID common.Hash, msg share.SPrivKey, senderID int) (signature []byte, finish bool, err error) {

@@ -22,6 +22,7 @@ import (
 
 // NotaryService :
 type NotaryService struct {
+	notaryClient       notaryapi.NotaryClient
 	privateKey         *ecdsa.PrivateKey
 	self               models.NotaryInfo
 	notaries           []models.NotaryInfo //这里保存除我以外的notary信息
@@ -29,17 +30,16 @@ type NotaryService struct {
 	dispatchService    dispatchServiceBackend
 	sessionLockMap     map[common.Hash]*sync.Mutex
 	sessionLockMapLock sync.Mutex
-	sendingQueueMap    map[int]chan api.Request
 }
 
 // NewNotaryService :
-func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries []models.NotaryInfo, dispatchService dispatchServiceBackend) (ns *NotaryService, err error) {
+func NewNotaryService(db *models.DB, privateKey *ecdsa.PrivateKey, allNotaries []models.NotaryInfo, notaryClient notaryapi.NotaryClient, dispatchService dispatchServiceBackend) (ns *NotaryService, err error) {
 	ns = &NotaryService{
 		db:              db,
 		privateKey:      privateKey,
 		sessionLockMap:  make(map[common.Hash]*sync.Mutex),
 		dispatchService: dispatchService,
-		sendingQueueMap: make(map[int]chan api.Request),
+		notaryClient:    notaryClient,
 	}
 	// 初始化self, notaries
 	selfAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
@@ -59,7 +59,7 @@ func (ns *NotaryService) OnEvent(e chain.Event) {
 }
 
 // OnRequest restful请求处理
-func (ns *NotaryService) OnRequest(req api.Request) {
+func (ns *NotaryService) OnRequest(req api.Req) {
 	switch r := req.(type) {
 	case *notaryapi.KeyGenerationPhase1MessageRequest:
 		ns.onKeyGenerationPhase1MessageRequest(r)
@@ -86,8 +86,11 @@ func (ns *NotaryService) OnRequest(req api.Request) {
 	case *notaryapi.DSMPhase6ReceiveSIRequest:
 		ns.onDSMPhase6ReceiveSIRequest(r)
 	default:
-		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
-		return
+		r2, ok := req.(api.ReqWithResponse)
+		if ok {
+			r2.WriteErrorResponse(api.ErrorCodeParamsWrong)
+			return
+		}
 	}
 	return
 }
@@ -109,9 +112,9 @@ func (ns *NotaryService) startNewPrivateKeyNegotiation() (privateKeyID common.Ha
 func (ns *NotaryService) onKeyGenerationPhase1MessageRequest(req *notaryapi.KeyGenerationPhase1MessageRequest) {
 	privateKeyID := req.GetSessionID()
 	// 1. 校验sender
-	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(privateKeyID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(privateKeyID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -171,9 +174,9 @@ func (ns *NotaryService) onKeyGenerationPhase1MessageRequest(req *notaryapi.KeyG
 func (ns *NotaryService) onKeyGenerationPhase2MessageRequest(req *notaryapi.KeyGenerationPhase2MessageRequest) {
 	privateKeyID := req.GetSessionID()
 	// 1. 校验sender
-	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(privateKeyID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(privateKeyID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -209,9 +212,9 @@ func (ns *NotaryService) onKeyGenerationPhase2MessageRequest(req *notaryapi.KeyG
 func (ns *NotaryService) onKeyGenerationPhase3MessageRequest(req *notaryapi.KeyGenerationPhase3MessageRequest) {
 	privateKeyID := req.GetSessionID()
 	// 1. 校验sender
-	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(privateKeyID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(privateKeyID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -247,9 +250,9 @@ func (ns *NotaryService) onKeyGenerationPhase3MessageRequest(req *notaryapi.KeyG
 func (ns *NotaryService) onKeyGenerationPhase4MessageRequest(req *notaryapi.KeyGenerationPhase4MessageRequest) {
 	privateKeyID := req.GetSessionID()
 	// 1. 校验sender
-	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(privateKeyID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(privateKeyID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -336,14 +339,14 @@ func (ns *NotaryService) startDistributedSignAndWait(msgToSign mecdsa.MessageToS
 */
 func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
 	// 1. 校验sender
-	_, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	_, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(req.GetSessionID(), "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(req.GetSessionID(), "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
 	// 2. TODO 暂时所有公证人都默认愿意参与所有签名工作
-	log.Trace(SessionLogMsg(req.GetSessionID(), "accept DSMAsk from %s", utils.APex(req.GetSender())))
+	log.Trace(SessionLogMsg(req.GetSessionID(), "accept DSMAsk from %s", utils.APex(req.GetSigner())))
 	req.WriteSuccessResponse(nil)
 	return
 }
@@ -354,9 +357,9 @@ func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
 func (ns *NotaryService) onDSMNotifySelectionRequest(req *notaryapi.DSMNotifySelectionRequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	_, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	_, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -382,9 +385,9 @@ func (ns *NotaryService) onDSMNotifySelectionRequest(req *notaryapi.DSMNotifySel
 func (ns *NotaryService) onDSMPhase1BroadcastRequest(req *notaryapi.DSMPhase1BroadcastRequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -420,9 +423,9 @@ func (ns *NotaryService) onDSMPhase1BroadcastRequest(req *notaryapi.DSMPhase1Bro
 func (ns *NotaryService) onDSMPhase2MessageARequest(req *notaryapi.DSMPhase2MessageARequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -443,9 +446,9 @@ func (ns *NotaryService) onDSMPhase2MessageARequest(req *notaryapi.DSMPhase2Mess
 func (ns *NotaryService) onDSMPhase3DeltaIRequest(req *notaryapi.DSMPhase3DeltaIRequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -473,9 +476,9 @@ func (ns *NotaryService) onDSMPhase3DeltaIRequest(req *notaryapi.DSMPhase3DeltaI
 func (ns *NotaryService) onDSMPhase5A5BProofRequest(req *notaryapi.DSMPhase5A5BProofRequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -503,9 +506,9 @@ func (ns *NotaryService) onDSMPhase5A5BProofRequest(req *notaryapi.DSMPhase5A5BP
 func (ns *NotaryService) onDSMPhase5CProofRequest(req *notaryapi.DSMPhase5CProofRequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -533,9 +536,9 @@ func (ns *NotaryService) onDSMPhase5CProofRequest(req *notaryapi.DSMPhase5CProof
 func (ns *NotaryService) onDSMPhase6ReceiveSIRequest(req *notaryapi.DSMPhase6ReceiveSIRequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSender())
+	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSender().String()))
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}

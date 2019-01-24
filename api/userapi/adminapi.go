@@ -7,7 +7,8 @@ import (
 
 // GetPrivateKeyListRequest :
 type GetPrivateKeyListRequest struct {
-	api.BaseRequest
+	api.BaseReq
+	api.BaseReqWithResponse
 }
 
 /*
@@ -15,14 +16,17 @@ getPrivateKeyList 私钥列表查询
 */
 func (ua *UserAPI) getPrivateKeyList(w rest.ResponseWriter, r *rest.Request) {
 	req := &GetPrivateKeyListRequest{
-		BaseRequest: api.NewBaseRequest(APIAdminNameGetPrivateKeyList),
+		BaseReq:             api.NewBaseReq(APIAdminNameGetPrivateKeyList),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
 	}
-	api.Return(w, ua.SendToServiceAndWaitResponse(req))
+	ua.SendToService(req)
+	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }
 
 // CreatePrivateKeyRequest :
 type CreatePrivateKeyRequest struct {
-	api.BaseRequest
+	api.BaseReq
+	api.BaseReqWithResponse
 }
 
 /*
@@ -31,14 +35,17 @@ CreatePrivateKey 该接口仅仅是发启一次过程,不参与实际协商过�
 */
 func (ua *UserAPI) createPrivateKey(w rest.ResponseWriter, r *rest.Request) {
 	req := &CreatePrivateKeyRequest{
-		BaseRequest: api.NewBaseRequest(APIAdminNameCreatePrivateKey),
+		BaseReq:             api.NewBaseReq(APIAdminNameCreatePrivateKey),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
 	}
-	api.Return(w, ua.SendToServiceAndWaitResponse(req))
+	ua.SendToService(req)
+	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }
 
 // RegisterSCTokenRequest :
 type RegisterSCTokenRequest struct {
-	api.BaseRequest
+	api.BaseReq
+	api.BaseReqWithResponse
 	MainChainName string `json:"main_chain_name,omitempty"` // 主链名,目前仅支持以太坊
 	PrivateKeyID  string `json:"private_key_id,omitempty"`  // 部署合约使用的私钥ID
 }
@@ -50,20 +57,22 @@ registerNewSCToken :
 */
 func (ua *UserAPI) registerNewSCToken(w rest.ResponseWriter, r *rest.Request) {
 	req := &RegisterSCTokenRequest{
-		BaseRequest: api.NewBaseRequest(APIAdminNameRegisterNewSCToken),
+		BaseReq:             api.NewBaseReq(APIAdminNameRegisterNewSCToken),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
 	}
 	err := r.DecodeJsonPayload(req)
 	if err != nil {
-		api.Return(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
 		return
 	}
 	if req.MainChainName == "" {
-		api.Return(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "main_chain_name can not be null"))
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "main_chain_name can not be null"))
 		return
 	}
 	if req.PrivateKeyID == "" {
-		api.Return(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "private_key_id can not be null"))
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "private_key_id can not be null"))
 		return
 	}
-	api.Return(w, ua.SendToServiceAndWaitResponse(req))
+	ua.SendToService(req)
+	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }

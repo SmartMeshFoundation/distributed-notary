@@ -8,7 +8,8 @@ import (
 
 // DebugTransferToAccountRequest  :
 type DebugTransferToAccountRequest struct {
-	api.BaseRequest
+	api.BaseReq
+	api.BaseReqWithResponse
 	Account common.Address
 }
 
@@ -19,32 +20,40 @@ func (ua *UserAPI) transferToAccount(w rest.ResponseWriter, r *rest.Request) {
 	addrStr := r.PathParam("account")
 	account := common.HexToAddress(addrStr)
 	req := &DebugTransferToAccountRequest{
-		BaseRequest: api.NewBaseRequest(APIDebugNameTransferToAccount),
-		Account:     account,
+		BaseReq:             api.NewBaseReq(APIDebugNameTransferToAccount),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
+		Account:             account,
 	}
-	api.Return(w, ua.SendToServiceAndWaitResponse(req))
+	ua.SendToService(req)
+	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }
 
 // DebugGetAllLockinInfoRequest :
 type DebugGetAllLockinInfoRequest struct {
-	api.BaseRequest
+	api.BaseReq
+	api.BaseReqWithResponse
 }
 
 func (ua *UserAPI) getAllLockinInfo(w rest.ResponseWriter, r *rest.Request) {
 	req := &DebugGetAllLockinInfoRequest{
-		BaseRequest: api.NewBaseRequest(APIDebugNameGetAllLockinInfo),
+		BaseReq:             api.NewBaseReq(APIDebugNameGetAllLockinInfo),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
 	}
-	api.Return(w, ua.SendToServiceAndWaitResponse(req))
+	ua.SendToService(req)
+	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }
 
 // DebugGetAllLockoutInfoRequest :
 type DebugGetAllLockoutInfoRequest struct {
-	api.BaseRequest
+	api.BaseReq
+	api.BaseReqWithResponse
 }
 
 func (ua *UserAPI) getAllLockoutInfo(w rest.ResponseWriter, r *rest.Request) {
 	req := &DebugGetAllLockoutInfoRequest{
-		BaseRequest: api.NewBaseRequest(APIDebugNameGetAllLockoutInfo),
+		BaseReq:             api.NewBaseReq(APIDebugNameGetAllLockoutInfo),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
 	}
-	api.Return(w, ua.SendToServiceAndWaitResponse(req))
+	ua.SendToService(req)
+	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }

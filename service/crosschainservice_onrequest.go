@@ -10,7 +10,7 @@ import (
 )
 
 // OnRequest restful请求处理
-func (cs *CrossChainService) OnRequest(req api.Request) {
+func (cs *CrossChainService) OnRequest(req api.Req) {
 
 	switch r := req.(type) {
 	// lockin
@@ -24,8 +24,11 @@ func (cs *CrossChainService) OnRequest(req api.Request) {
 	case *userapi.MCPrepareLockoutRequest:
 		cs.onMCPrepareLockoutRequest(r)
 	default:
-		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
-		return
+		r2, ok := req.(api.ReqWithResponse)
+		if ok {
+			r2.WriteErrorResponse(api.ErrorCodeParamsWrong)
+			return
+		}
 	}
 	return
 }

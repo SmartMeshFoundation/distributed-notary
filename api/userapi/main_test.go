@@ -26,7 +26,7 @@ func TestUserAPI_CreatePrivateKey(t *testing.T) {
 
 func TestRequest(t *testing.T) {
 	r := &RegisterSCTokenRequest{
-		BaseRequest: api.NewBaseRequest("Test"),
+		BaseReq: api.NewBaseReq("Test"),
 	}
 	p := &struct {
 		MainChainName string `json:"main_chain_name"`

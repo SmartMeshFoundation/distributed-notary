@@ -8,9 +8,16 @@ import (
 
 	"os"
 
+	"encoding/json"
+
+	"encoding/binary"
+
+	"bytes"
+
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/nkbai/log"
+	"golang.org/x/net/websocket"
 )
 
 // defaultAPITimeout : 默认api请求超时时间
@@ -25,8 +32,8 @@ type BaseAPI struct {
 	router      rest.App
 	middleWares []rest.Middleware
 	api         *rest.Api
-	timeout     time.Duration // 调用service层的超时时间
-	requestChan chan Request
+	requestChan chan Req
+	Timeout     time.Duration // 调用api的超时时间
 }
 
 // NewBaseAPI :
@@ -35,9 +42,9 @@ func NewBaseAPI(serverName string, host string, router rest.App, middleWares ...
 		serverName:  serverName,
 		host:        host,
 		router:      router,
-		timeout:     defaultAPITimeout,
+		Timeout:     defaultAPITimeout,
 		middleWares: middleWares,
-		requestChan: make(chan Request, 10),
+		requestChan: make(chan Req, 10),
 	}
 }
 
@@ -68,38 +75,52 @@ func (ba *BaseAPI) Start(sync bool) {
 }
 
 // GetRequestChan :
-func (ba *BaseAPI) GetRequestChan() <-chan Request {
+func (ba *BaseAPI) GetRequestChan() <-chan Req {
 	return ba.requestChan
 }
 
 // SetTimeout :
 func (ba *BaseAPI) SetTimeout(timeout time.Duration) {
-	ba.timeout = timeout
+	ba.Timeout = timeout
 }
 
-// SendToServiceAndWaitResponse :
-func (ba *BaseAPI) SendToServiceAndWaitResponse(req Request, timeout ...time.Duration) *BaseResponse {
-	if r, ok := req.(NotaryRequest); ok {
-		if !VerifyNotarySignature(r) {
-			return NewFailResponse(req.GetRequestID(), ErrorCodePermissionDenied)
+// SendToService 该方法只负责发送到Service,不考虑返回值
+func (ba *BaseAPI) SendToService(req Req) {
+	var resp *BaseResponse
+	reqWithResponse, needResponse := req.(ReqWithResponse)
+	if r, ok := req.(ReqWithSignature); ok {
+		if !r.VerifySign() {
+			resp = NewFailResponse(reqWithResponse.GetRequestID(), ErrorCodePermissionDenied)
+			if needResponse {
+				reqWithResponse.WriteResponse(resp)
+			}
+			return
 		}
 	}
+	ba.requestChan <- req
+	if _, ok := req.(ReqWithResponse); !ok {
+		LogAPI(req, nil)
+	}
+	return
+}
+
+// WaitServiceResponse 阻塞等待Service层对请求的返回
+func (ba *BaseAPI) WaitServiceResponse(req ReqWithResponse, timeout ...time.Duration) *BaseResponse {
 	var resp *BaseResponse
-	requestTimeout := ba.timeout
+	requestTimeout := ba.Timeout
 	if len(timeout) > 0 && timeout[0] > 0 {
 		requestTimeout = timeout[0]
 	}
-	ba.requestChan <- req
 	if requestTimeout > 0 {
 		select {
 		case resp = <-req.GetResponseChan():
 		case <-time.After(requestTimeout):
-			resp = NewFailResponse(req.GetRequestID(), ErrorCodeTimeout)
+			resp = NewFailResponse(req.(ReqWithResponse).GetRequestID(), ErrorCodeTimeout)
 		}
 	} else {
 		resp = <-req.GetResponseChan()
 	}
-	apiLog(req, resp)
+	LogAPI(req.(Req), resp)
 	return resp
 }
 
@@ -107,43 +128,94 @@ func (ba *BaseAPI) SendToServiceAndWaitResponse(req Request, timeout ...time.Dur
 tool functions
 */
 
-// Return :
-func Return(w rest.ResponseWriter, response *BaseResponse) {
+// HTTPReturnJSON :
+func HTTPReturnJSON(w rest.ResponseWriter, response *BaseResponse) {
 	if w == nil {
 		return
 	}
 	err := w.WriteJson(response)
 	if err != nil {
-		log.Warn(fmt.Sprintf("writejson err %s", err))
+		log.Warn(fmt.Sprintf("HTTPReturnJSON writejson err %s", err))
 	}
 }
 
-func apiLog(req Request, resp *BaseResponse) {
-	prefix := ""
-	body := utils.ToJSONStringFormat(req)
-	switch r := req.(type) {
-	case CrossChainRequest:
-		prefix = fmt.Sprintf("==> API [RequestID=%s Name=%s SCToken=%s]", req.GetRequestID(), req.GetRequestName(), utils.APex(r.GetSCTokenAddress()))
-	case NotaryRequest:
-		type requestToLog struct {
-			BaseRequest
-			BaseNotaryRequest
-			BaseCrossChainRequest
-		}
-		var l requestToLog
-		l.BaseRequest.RequestID = req.GetRequestID()
-		l.BaseRequest.Name = req.GetRequestName()
-		l.BaseNotaryRequest.SessionID = r.GetSessionID()
-		l.BaseNotaryRequest.Sender = r.GetSender()
-		l.BaseNotaryRequest.Signature = r.getSignature()
-		body = utils.ToJSONStringFormat(l)
-		prefix = fmt.Sprintf("[SessionID=%s] ==> API [RequestID=%s Name=%s SenderID=%d]", utils.HPex(r.GetSessionID()), req.GetRequestID(), req.GetRequestName(), r.GetSenderID())
-	default:
-		prefix = fmt.Sprintf("==> API [RequestID=%s Name=%s]", req.GetRequestID(), req.GetRequestName())
+// WSWriteJSON websocket回写
+func WSWriteJSON(ws *websocket.Conn, data interface{}) {
+	if ws == nil {
+		panic("writeToWSConn ws can not be nil")
 	}
-	if resp.GetErrorCode() == ErrorCodeSuccess {
-		log.Trace(fmt.Sprintf("%s deal SUCCESS", prefix))
+	if data == nil {
+		return
+	}
+	buf, err := json.Marshal(data)
+	if err != nil {
+		log.Error(fmt.Sprintf("WSWriteJSON marshal json err %s", err))
+		return
+	}
+	var length int32
+	length = int32(len(buf))
+	totalBuf := new(bytes.Buffer)
+	err = binary.Write(totalBuf, binary.BigEndian, length)
+	if err != nil {
+		panic(err)
+	}
+	err = binary.Write(totalBuf, binary.BigEndian, buf)
+	if err != nil {
+		panic(err)
+	}
+	n, err := ws.Write(totalBuf.Bytes())
+	if err != nil {
+		log.Error("send data to web socket err : %s", err.Error())
+		return
+	}
+	if n != totalBuf.Len() {
+		log.Error("send data to web socket err : data len=%d, send len=%d", totalBuf.Len(), n)
+	}
+	//fmt.Printf("================== send data length=%d totalBuf.Len()=%d n=%d\n", length, totalBuf.Len(), n)
+}
+
+// LogAPI 统一打印接收到的API调用日志
+func LogAPI(req Req, resp *BaseResponse) {
+	var sessionIDStr, requestIDStr, nameStr, senderIDStr string
+	nameStr = fmt.Sprintf("Name=%s ", req.GetRequestName())
+	if r2, ok := req.(ReqWithSessionID); ok {
+		sessionIDStr = fmt.Sprintf("[SessionID=%s] ", utils.HPex(r2.GetSessionID()))
+		senderIDStr = fmt.Sprintf("SenderID=%d ", r2.GetSenderNotaryID())
+	}
+	if r2, ok := req.(ReqWithResponse); ok {
+		requestIDStr = fmt.Sprintf("RequestID=%s ", r2.GetRequestID())
+	}
+	msg := fmt.Sprintf("%s===> API [ %s%s%s]", sessionIDStr, requestIDStr, nameStr, senderIDStr)
+	if resp == nil {
+		log.Trace(msg)
+	} else if resp.GetErrorCode() == ErrorCodeSuccess {
+		log.Trace(fmt.Sprintf("%s deal SUCCESS", msg))
 	} else {
-		log.Error(fmt.Sprintf("%s deal FAIL: \nRequest :\n%s\nResponse :\n%s", prefix, body, utils.ToJSONStringFormat(resp)))
+		body := utils.ToJSONStringFormat(req)
+		log.Error(fmt.Sprintf("%s deal FAIL: \nRequest :\n%s\nResponse :\n%s", msg, body, utils.ToJSONStringFormat(resp)))
+	}
+}
+
+// LogAPICall 统一打印发送出去的API调用日志
+func LogAPICall(req Req, resp *BaseResponse, targetNotaryID ...int) {
+	var sessionIDStr, requestIDStr, nameStr, targetIDStr string
+	if targetNotaryID != nil && len(targetNotaryID) > 0 {
+		targetIDStr = fmt.Sprintf("TargetID=%d ", targetNotaryID[0])
+	}
+	nameStr = fmt.Sprintf("Name=%s ", req.GetRequestName())
+	if r2, ok := req.(ReqWithSessionID); ok {
+		sessionIDStr = fmt.Sprintf("[SessionID=%s] ", utils.HPex(r2.GetSessionID()))
+	}
+	if r2, ok := req.(ReqWithResponse); ok {
+		requestIDStr = fmt.Sprintf("RequestID=%s ", r2.GetRequestID())
+	}
+	msg := fmt.Sprintf("%s===> CALL [ %s%s%s]", sessionIDStr, requestIDStr, nameStr, targetIDStr)
+	if resp == nil {
+		log.Trace(msg)
+	} else if resp.GetErrorCode() == ErrorCodeSuccess {
+		log.Trace(fmt.Sprintf("%s deal SUCCESS", msg))
+	} else {
+		body := utils.ToJSONStringFormat(req)
+		log.Error(fmt.Sprintf("%s deal FAIL: \nRequest :\n%s\nResponse :\n%s", msg, body, utils.ToJSONStringFormat(resp)))
 	}
 }

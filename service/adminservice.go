@@ -18,7 +18,6 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
-	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -45,7 +44,7 @@ func (as *AdminService) OnEvent(e chain.Event) {
 }
 
 // OnRequest restful请求处理
-func (as *AdminService) OnRequest(req api.Request) {
+func (as *AdminService) OnRequest(req api.Req) {
 	switch r := req.(type) {
 	/*
 		user api
@@ -73,8 +72,11 @@ func (as *AdminService) OnRequest(req api.Request) {
 	case *userapi.DebugGetAllLockoutInfoRequest:
 		as.onDebugGetAllLockoutInfo(r)
 	default:
-		req.WriteErrorResponse(api.ErrorCodeParamsWrong)
-		return
+		r2, ok := req.(api.ReqWithResponse)
+		if ok {
+			r2.WriteErrorResponse(api.ErrorCodeParamsWrong)
+			return
+		}
 	}
 	return
 }
@@ -270,13 +272,8 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 		return
 	}
 	// 6. 通知其余公证人
-	newSCTokenReq := notaryapi.NewNewSCTokenRequest(as.dispatchService.getSelfNotaryInfo(), &scTokenMetaInfo)
-	err = as.dispatchService.getNotaryService().BroadcastMsg(utils.EmptyHash, notaryapi.APINameNewSCToken, newSCTokenReq, true)
-	if err != nil {
-		log.Error("err when broadcast NewSCTokenRequest to other notaries err=", err.Error())
-		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
-		return
-	}
+	newSCTokenReq := notaryapi.NewNotifySCTokenDeployedRequest(as.dispatchService.getSelfNotaryInfo(), &scTokenMetaInfo)
+	as.dispatchService.getNotaryService().Broadcast(newSCTokenReq)
 	// 7. 返回
 	req.WriteSuccessResponse(scTokenMetaInfo)
 }

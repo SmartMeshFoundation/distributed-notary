@@ -1,6 +1,8 @@
 package api
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // ErrorCode :
 type ErrorCode string
@@ -16,16 +18,18 @@ const (
 )
 
 var defaultErrorMsg = "unknown error"
-var errorCode2MsgMap map[ErrorCode]string
+
+// ErrorCode2MsgMap :
+var ErrorCode2MsgMap map[ErrorCode]string
 
 func init() {
-	errorCode2MsgMap = make(map[ErrorCode]string)
-	errorCode2MsgMap[ErrorCodeSuccess] = "success"
-	errorCode2MsgMap[ErrorCodeDataNotFound] = "data not found"
-	errorCode2MsgMap[ErrorCodePermissionDenied] = "permission denied"
-	errorCode2MsgMap[ErrorCodeTimeout] = "request time out"
-	errorCode2MsgMap[ErrorCodeParamsWrong] = "params wrong"
-	errorCode2MsgMap[ErrorCodeException] = "exception,best call admin"
+	ErrorCode2MsgMap = make(map[ErrorCode]string)
+	ErrorCode2MsgMap[ErrorCodeSuccess] = "success"
+	ErrorCode2MsgMap[ErrorCodeDataNotFound] = "data not found"
+	ErrorCode2MsgMap[ErrorCodePermissionDenied] = "permission denied"
+	ErrorCode2MsgMap[ErrorCodeTimeout] = "request time out"
+	ErrorCode2MsgMap[ErrorCodeParamsWrong] = "params wrong"
+	ErrorCode2MsgMap[ErrorCodeException] = "exception,best call admin"
 }
 
 // Response :
@@ -36,19 +40,21 @@ type Response interface {
 
 // BaseResponse :
 type BaseResponse struct {
+	BaseReq
+	BaseReqWithResponse
 	ErrorCode ErrorCode   `json:"error_code"`
 	ErrorMsg  string      `json:"error_msg"`
-	RequestID string      `json:"request_id"`
 	Data      interface{} `json:"data,omitempty"`
 }
 
 // NewSuccessResponse :
 func NewSuccessResponse(requestID string, data interface{}) *BaseResponse {
 	r := &BaseResponse{
+		BaseReq:   NewBaseReq(APINameResponse),
 		ErrorCode: ErrorCodeSuccess,
-		ErrorMsg:  errorCode2MsgMap[ErrorCodeSuccess],
-		RequestID: requestID,
+		ErrorMsg:  ErrorCode2MsgMap[ErrorCodeSuccess],
 	}
+	r.RequestID = requestID
 	if data != nil {
 		r.Data = data
 	}
@@ -58,18 +64,19 @@ func NewSuccessResponse(requestID string, data interface{}) *BaseResponse {
 // NewFailResponse :
 func NewFailResponse(requestID string, errorCode ErrorCode, errorMsg ...string) *BaseResponse {
 	r := &BaseResponse{
+		BaseReq:   NewBaseReq(APINameResponse),
 		ErrorCode: errorCode,
-		RequestID: requestID,
 	}
 	if len(errorMsg) > 0 {
 		r.ErrorMsg = errorMsg[0]
 	} else {
 		var ok bool
-		r.ErrorMsg, ok = errorCode2MsgMap[errorCode]
+		r.ErrorMsg, ok = ErrorCode2MsgMap[errorCode]
 		if !ok {
 			r.ErrorMsg = defaultErrorMsg
 		}
 	}
+	r.RequestID = requestID
 	return r
 }
 

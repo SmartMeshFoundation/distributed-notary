@@ -99,7 +99,7 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 	// 3. init dispatch service
 	ds = &DispatchService{
 		userAPI:                      userapi.NewUserAPI(cfg.UserAPIListen),
-		notaryAPI:                    notaryapi.NewNotaryAPI(cfg.NotaryAPIListen),
+		notaryAPI:                    notaryapi.NewNotaryAPI(cfg.NotaryAPIListen, notaries),
 		chainMap:                     make(map[string]chain.Chain),
 		db:                           db,
 		quitChan:                     make(chan struct{}),
@@ -126,7 +126,7 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		return
 	}
 	// 6. 初始化NotaryService
-	ds.notaryService, err = NewNotaryService(db, privateKey, notaries, ds)
+	ds.notaryService, err = NewNotaryService(db, privateKey, notaries, ds.notaryAPI, ds)
 	if err != nil {
 		log.Error("init NotaryService err : %s", err.Error())
 		return
@@ -217,19 +217,20 @@ func (ds *DispatchService) restfulRequestDispatcherLoop() {
 	}
 }
 
-func (ds *DispatchService) dispatchRestfulRequest(req api.Request) {
+func (ds *DispatchService) dispatchRestfulRequest(req api.Req) {
 	logPrefix := "NotaryRequest : "
 	/*
 		restful 请求调度规则如下,优先级从高到低:
-		1. CrossChainRequest 带SCToken的请求,下发至对应的CrossChainService,如果找不到,返回错误
-		2. NotaryRequest 带key且不带SCToken的请求,一定是公证人之间的请求,比如私钥生成过程中的消息交互,下发至NotaryService
-		3. Request 不带key且不带SCToken的请求,一定为管理用户的非交易请求,下发至SystemService
+		1. ReqWithSCToken 带SCToken的请求,下发至对应的CrossChainService,如果找不到,返回错误
+		2. ReqWithSessionID 带SessionID且不带SCToken的请求,一定是公证人之间的请求,比如私钥生成过程中的消息交互,下发至NotaryService
+		3. Req 不带key且不带SCToken的请求,一定为管理用户的非交易请求,下发至SystemService
 	*/
 	switch r := req.(type) {
-	case api.CrossChainRequest:
+	case api.ReqWithSCToken:
 		service, ok := ds.scToken2CrossChainServiceMap[r.GetSCTokenAddress()]
 		if !ok {
-			if r2, ok := r.(*notaryapi.NewSCTokenRequest); ok {
+			r2, ok := r.(*notaryapi.NotifySCTokenDeployedRequest)
+			if ok {
 				// 新的sctoken
 				var err error
 				scTokenMetaInfo := r2.SCTokenMetaInfo
@@ -237,28 +238,30 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Request) {
 				// 2. 保存
 				err = ds.db.NewSCTokenMetaInfo(scTokenMetaInfo)
 				if err != nil {
-					req.WriteErrorResponse(api.ErrorCodeException)
+					r2.WriteErrorResponse(api.ErrorCodeException)
 					return
 				}
 				// 3. 注册到DispatchService并开始提供服务
 				err = ds.registerNewSCToken(scTokenMetaInfo)
 				if err != nil {
-					req.WriteErrorResponse(api.ErrorCodeException)
+					r2.WriteErrorResponse(api.ErrorCodeException)
 					return
 				}
-				req.WriteSuccessResponse(nil)
+				r2.WriteSuccessResponse(nil)
 				return
 			}
 			log.Error(fmt.Sprintf("%s receive request with out notary service : \n%s\n", logPrefix, utils.ToJSONStringFormat(req)))
 			// 返回api错误
-			req.WriteErrorResponse(api.ErrorCodeException, "can not found sctoken")
+			if r2, ok := req.(api.ReqWithResponse); ok {
+				r2.WriteErrorResponse(api.ErrorCodeException, "can not found sctoken")
+			}
 			return
 		}
 		go service.OnRequest(req)
 		return
-	case api.NotaryRequest:
+	case api.ReqWithSessionID:
 		go ds.notaryService.OnRequest(req)
-	case api.Request:
+	case api.Req:
 		go ds.adminService.OnRequest(req)
 	}
 }

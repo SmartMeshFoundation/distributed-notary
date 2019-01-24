@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"testing"
-
 	"time"
 
 	"github.com/SmartMeshFoundation/Spectrum/common"
@@ -14,69 +13,67 @@ import (
 )
 
 type testR struct {
-	BaseRequest
-	BaseNotaryRequest
-	BaseCrossChainRequest
+	BaseReq
+	BaseReqWithResponse
+	BaseReqWithSignature
+	BaseReqWithSCToken
+	BaseReqWithSessionID
 	other string
 }
 
 func TestRequest(t *testing.T) {
 	tr := testR{
-		BaseRequest: NewBaseRequest("APIName-testR"),
+		BaseReq:              NewBaseReq("APIName-testR"),
+		BaseReqWithResponse:  NewBaseReqWithResponse(),
+		BaseReqWithSignature: NewBaseReqWithSignature(utils.NewRandomAddress()),
+		BaseReqWithSCToken:   NewBaseReqWithSCToken(utils.NewRandomAddress()),
+		BaseReqWithSessionID: NewBaseReqWithSessionID(utils.NewRandomHash(), 1),
 	}
-	tr.SessionID = utils.NewRandomHash()
-	fmt.Println(utils.ToJSONStringFormat(tr))
+	//fmt.Println(utils.ToJSONStringFormat(tr))
 
-	c := make(chan Request, 1)
+	c := make(chan Req, 1)
 	c <- &tr
 	d := <-c
-	fmt.Println(utils.ToJSONStringFormat(d))
+	//fmt.Println(utils.ToJSONStringFormat(d))
 	if _, ok := d.(*testR); ok {
 		fmt.Println("testR")
 	}
 
-	if a, ok := d.(Request); ok {
-		fmt.Println("Request", a.GetRequestName())
+	if a, ok := d.(Req); ok {
+		fmt.Println("Req", a.GetRequestName())
 	}
-	if a, ok := d.(*BaseRequest); ok {
-		fmt.Println("BaseRequest ", a.GetRequestName())
+	if a, ok := d.(*BaseReq); ok {
+		fmt.Println("BaseReq ", a.GetRequestName())
 	}
 
-	if a, ok := d.(NotaryRequest); ok {
-		fmt.Println("NotaryRequest ", a.GetSessionID().String())
+	if _, ok := d.(ReqWithResponse); ok {
+		fmt.Println("ReqWithResponse ")
 	}
-	//if _, ok := d.(*BaseNotaryRequest); ok {
-	//	fmt.Println("BaseNotaryRequest")
-	//}
-	if a, ok := d.(CrossChainRequest); ok {
-		fmt.Println("CrossChainRequest ", a.GetSCTokenAddress().String())
+	if _, ok := d.(ReqWithSCToken); ok {
+		fmt.Println("ReqWithSCToken ")
 	}
-	//if _, ok := d.(*BaseCrossChainRequest); ok {
-	//	fmt.Println("BaseCrossChainRequest")
-	//}
-
-	fmt.Println("----------------------")
-	switch d.(type) {
-	case CrossChainRequest:
-		fmt.Println("deal CrossChainRequest")
-	case NotaryRequest:
-		fmt.Println("deal NotaryRequest")
+	if _, ok := d.(ReqWithSessionID); ok {
+		fmt.Println("ReqWithSessionID ")
+	}
+	if _, ok := d.(ReqWithSignature); ok {
+		fmt.Println("ReqWithSignature ")
 	}
 	fmt.Println("----------------------")
+	d2 := d.(ReqWithResponse)
 	go func() {
 		for {
-			resp := <-d.GetResponseChan()
+			resp := <-d2.GetResponseChan()
 			fmt.Printf("receive response :\n%s\n", utils.ToJSONStringFormat(resp))
 			if resp.ErrorCode == ErrorCodeSuccess {
 				return
 			}
 		}
 	}()
-	d.WriteErrorResponse(ErrorCodeException, "custom errorMsg")
+	d2.WriteErrorResponse(ErrorCodeException, "custom errorMsg")
 	time.Sleep(time.Second)
-	d.WriteErrorResponse(ErrorCodePermissionDenied)
+	d2.WriteErrorResponse(ErrorCodePermissionDenied)
 	time.Sleep(time.Second)
-	d.WriteSuccessResponse(struct {
+	d2.WriteSuccessResponse(struct {
 		A string      `json:"a"`
 		B interface{} `json:"b"`
 	}{
@@ -84,39 +81,31 @@ func TestRequest(t *testing.T) {
 		B: 12567,
 	})
 	time.Sleep(time.Second)
-	fmt.Println("----------------------")
-	r1 := NewBaseRequest("r1")
-	r2 := NewBaseRequest("r2")
-	fmt.Println(utils.ToJSONStringFormat(r1))
-	fmt.Println(utils.ToJSONStringFormat(r2))
 }
 
-func TestNotaryRequestSignature(t *testing.T) {
+func TestBaseReqWithSignature(t *testing.T) {
 	type TestMsg struct {
 		A common.Hash `json:"a"`
 		B int         `json:"b"`
 	}
 	type TestRequest struct {
-		BaseRequest
-		BaseNotaryRequest
+		BaseReqWithSignature
 		Msg TestMsg
 	}
 
 	// 1. 构造request
-	sessionID := utils.NewRandomHash()
 	privateKey := testcode.GetTestPrivateKey1()
 	sender := crypto.PubkeyToAddress(privateKey.PublicKey)
 	req := &TestRequest{
-		BaseRequest:       NewBaseRequest("NotaryAPI-TestRequest"),
-		BaseNotaryRequest: NewBaseNotaryRequest(sessionID, sender, 1),
+		BaseReqWithSignature: NewBaseReqWithSignature(sender),
 	}
 	fmt.Println("Before sign : \n", utils.ToJSONStringFormat(req))
 
 	// 2. Sign
-	sig := NotarySign(req, privateKey)
+	req.Sign(privateKey)
 	fmt.Println("After sign : \n", utils.ToJSONStringFormat(req))
-	assert.EqualValues(t, sig, req.Signature)
 
 	// 3. Verify Signature
-	assert.EqualValues(t, true, VerifyNotarySignature(req))
+	assert.EqualValues(t, true, req.VerifySign())
+
 }
