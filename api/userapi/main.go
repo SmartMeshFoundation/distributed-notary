@@ -105,6 +105,18 @@ func NewUserAPI(host string) *UserAPI {
 	if err != nil {
 		log.Crit(fmt.Sprintf("maker router :%s", err))
 	}
-	userAPI.BaseAPI = api.NewBaseAPI("UserAPI-Server", host, router)
+	// 跨域
+	corsMiddleware := &rest.CorsMiddleware{
+		RejectNonCorsRequests: false,
+		OriginValidator: func(origin string, request *rest.Request) bool {
+			return true
+		},
+		AllowedMethods: []string{"GET", "POST", "PUT"},
+		AllowedHeaders: []string{
+			"Accept", "Content-Type", "X-Custom-Header", "Origin"},
+		AccessControlAllowCredentials: true,
+		AccessControlMaxAge:           3600,
+	}
+	userAPI.BaseAPI = api.NewBaseAPI("UserAPI-Server", host, router, corsMiddleware)
 	return &userAPI
 }

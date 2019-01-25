@@ -107,16 +107,16 @@ func (na *NotaryAPI) wsHandlerFunc(ws *websocket.Conn) {
 	na.notaryWSConnMapLock.Lock()
 	if old, ok := na.notaryWSConnMap.Load(senderID); ok {
 		oldWS := old.(*websocket.Conn)
-		na.notaryWSConnMapLock.Unlock()
 		// 4. 使用老的连接处理消息,然后直接返回,关闭这次多余的连接
 		na.dealReq(oldWS, req)
+		na.notaryWSConnMapLock.Unlock()
 		log.Warn("got new websocket connection with notary[ID=%d], but already have one,use old and ignore new", senderID)
 		return
 	}
 	na.notaryWSConnMap.Store(senderID, ws)
-	na.notaryWSConnMapLock.Unlock()
 	// 4. 处理消息
 	na.dealReq(ws, req)
+	na.notaryWSConnMapLock.Unlock()
 	// 5. 启动消息接收线程,这里不能返回,返回这个ws连接就被框架回收了
 	na.notaryMsgReceiveLoop(ws, senderID)
 }

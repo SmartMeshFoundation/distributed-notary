@@ -67,10 +67,10 @@ func (na *NotaryAPI) notaryMsgSendLoop(targetNotaryID int, sendingQueueChan chan
 			na.notaryWSConnMapLock.Lock()
 			wsInterface, ok := na.notaryWSConnMap.Load(targetNotaryID)
 			if ok {
-				na.notaryWSConnMapLock.Unlock()
 				ws := wsInterface.(*websocket.Conn)
 				//fmt.Printf("=========> send %s to %d\n", req.GetRequestName(), targetNotaryID)
 				api.WSWriteJSON(ws, req)
+				na.notaryWSConnMapLock.Unlock()
 				continue
 			}
 			// 2. 如果没有连接,创建并保存
@@ -87,7 +87,6 @@ func (na *NotaryAPI) notaryMsgSendLoop(targetNotaryID int, sendingQueueChan chan
 				return
 			}
 			na.notaryWSConnMap.Store(targetNotaryID, ws)
-			na.notaryWSConnMapLock.Unlock()
 			// 3. 为这个连接启动消息接收线程,需要在发送之前启动,否则第一次消息的回执可能收不到
 			go func(ws *websocket.Conn, targetNotaryID int) {
 				na.notaryMsgReceiveLoop(ws, targetNotaryID)
@@ -101,6 +100,7 @@ func (na *NotaryAPI) notaryMsgSendLoop(targetNotaryID int, sendingQueueChan chan
 			// 4. 发送
 			//fmt.Printf("=========> first send %s to %d wsURL=%s origin=%s\n", req.GetRequestName(), targetNotaryID, wsURL, origin)
 			api.WSWriteJSON(ws, req)
+			na.notaryWSConnMapLock.Unlock()
 		}
 	}
 }

@@ -79,12 +79,6 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	amount := localLockinInfo.Amount
 	// 1. 构造MessageToSign
 	var msgToSign mecdsa.MessageToSign
-	fmt.Println("=======================1")
-	fmt.Printf("=======================caller       =%s\n", privateKeyInfo.ToAddress().String())
-	fmt.Printf("=======================user         =%s\n", scUserAddressHex)
-	fmt.Printf("=======================secretHash   =%s\n", secretHash.String())
-	fmt.Printf("=======================scExpiration =%d\n", scExpiration)
-	fmt.Printf("=======================amount       =%d\n", amount)
 	msgToSign = messagetosign.NewSpectrumPrepareLockinTxData(cs.scTokenProxy, req, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount)
 	// 2. 发起分布式签名
 	var signature []byte
@@ -101,7 +95,6 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 			if address != privateKeyInfo.ToAddress() {
 				return nil, errors.New("not authorized to sign this account")
 			}
-			fmt.Println("=======================2 nonce=", tx.Nonce())
 			msgToSign2 := signer.Hash(tx).Bytes()
 			if bytes.Compare(msgToSign.GetSignBytes(), msgToSign2) != 0 {
 				err = fmt.Errorf("txbytes when deploy contract step1 and step2 does't match")
@@ -110,12 +103,6 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 			return tx.WithSignature(signer, signature)
 		},
 	}
-	fmt.Println("=======================2")
-	fmt.Printf("=======================caller       =%s\n", privateKeyInfo.ToAddress().String())
-	fmt.Printf("=======================user         =%s\n", scUserAddressHex)
-	fmt.Printf("=======================secretHash   =%s\n", secretHash.String())
-	fmt.Printf("=======================scExpiration =%d\n", scExpiration)
-	fmt.Printf("=======================amount       =%d\n", amount)
 	return cs.scTokenProxy.PrepareLockin(transactor, scUserAddressHex, secretHash, scExpiration, amount)
 }
 
