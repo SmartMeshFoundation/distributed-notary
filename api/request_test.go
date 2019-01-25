@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"encoding/json"
+
 	"github.com/SmartMeshFoundation/Spectrum/common"
 	"github.com/SmartMeshFoundation/distributed-notary/testcode"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
@@ -108,4 +110,51 @@ func TestBaseReqWithSignature(t *testing.T) {
 	// 3. Verify Signature
 	assert.EqualValues(t, true, req.VerifySign())
 
+}
+
+func TestJsonRawMessage(t *testing.T) {
+
+	type UpLoadSomething struct {
+		Type   string
+		Object interface{}
+	}
+
+	type File struct {
+		FileName string
+	}
+
+	type Png struct {
+		Wide  int
+		Hight int
+	}
+
+	input := `
+    {
+        "type": "File",
+        "object": {
+            "filename": "for test"
+        }
+    }
+    `
+	var object json.RawMessage
+	ss := UpLoadSomething{
+		Object: &object,
+	}
+	if err := json.Unmarshal([]byte(input), &ss); err != nil {
+		panic(err)
+	}
+	switch ss.Type {
+	case "File":
+		var f File
+		if err := json.Unmarshal(object, &f); err != nil {
+			panic(err)
+		}
+		println(f.FileName)
+	case "Png":
+		var p Png
+		if err := json.Unmarshal(object, &p); err != nil {
+			panic(err)
+		}
+		println(p.Wide)
+	}
 }

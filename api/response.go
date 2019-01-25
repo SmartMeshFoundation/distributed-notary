@@ -42,9 +42,10 @@ type Response interface {
 type BaseResponse struct {
 	BaseReq
 	BaseReqWithResponse
-	ErrorCode ErrorCode   `json:"error_code"`
-	ErrorMsg  string      `json:"error_msg"`
-	Data      interface{} `json:"data,omitempty"`
+	ErrorCode ErrorCode `json:"error_code"`
+	ErrorMsg  string    `json:"error_msg"`
+	//Data      interface{} `json:"data,omitempty"`
+	Data json.RawMessage
 }
 
 // NewSuccessResponse :
@@ -56,7 +57,11 @@ func NewSuccessResponse(requestID string, data interface{}) *BaseResponse {
 	}
 	r.RequestID = requestID
 	if data != nil {
-		r.Data = data
+		buf, err := json.Marshal(data)
+		if err != nil {
+			panic(err)
+		}
+		r.Data = buf
 	}
 	return r
 }

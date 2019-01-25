@@ -122,13 +122,13 @@ func (na *NotaryAPI) wsHandlerFunc(ws *websocket.Conn) {
 }
 
 func (na *NotaryAPI) notaryMsgReceiveLoop(ws *websocket.Conn, senderID int) {
-	log.Trace("websocket connection with notary[ID=%d] start...", senderID)
+	log.Trace("notaryMsgReceiveLoop with notary[ID=%d] start...", senderID)
 	for {
 		buf, err := readBytesFromWSConn(ws)
 		if err != nil {
 			// 这里直接删除内存中的连接并返回就行,不用close连接,交由上层回收
 			na.notaryWSConnMap.Delete(senderID)
-			log.Warn("websocket connection with notary[ID=%d] close because readBytesFromWSConn err : %s, maybe reconnect", senderID, err.Error())
+			log.Warn("notaryMsgReceiveLoop with notary[ID=%d] end because readBytesFromWSConn err : %s, maybe reconnect", senderID, err.Error())
 			return
 		}
 		req, err := na.parseNotaryRequest(buf)
@@ -150,7 +150,7 @@ func (na *NotaryAPI) dealReq(ws *websocket.Conn, req api.Req) {
 		resp := req.(*api.BaseResponse)
 		oldReqInterface, ok := na.dealingWSReqMap.Load(resp.GetRequestID())
 		if !ok {
-			//log.Warn("get response of req[RequestID=%s], but can not found req in dealingWSReqMap,\n%s\nignore", resp.GetRequestID(), utils.ToFormatJSONString(resp))
+			//log.Warn("get response of req[RequestID=%s], but can not found req in dealingWSReqMap,\n%s\nignore", resp.GetRequestID(), utils.ToJSONStringFormat(resp))
 			return
 		}
 		oldReq := oldReqInterface.(api.ReqWithResponse)
@@ -187,6 +187,7 @@ func (na *NotaryAPI) parseNotaryRequest(content []byte) (req api.Req, err error)
 	case api.APINameResponse:
 		req = &api.BaseResponse{}
 		err = json.Unmarshal(content, &req)
+		// TODO 新增dsmPhase2Response解析
 	/*
 		pkn
 	*/

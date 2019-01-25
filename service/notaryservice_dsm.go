@@ -29,6 +29,8 @@ func (ns *NotaryService) startDSMAsk(notaryNumNeed int) (sessionID common.Hash, 
 		_, err2 := ns.SendAndWaitResponse(req, notary.ID)
 		if err2 == nil {
 			notaryIDs = append(notaryIDs, notary.ID)
+		} else {
+			log.Warn(SessionLogMsg(sessionID, "notary[%d] refuse DSMAsk : %s", err2.Error()))
 		}
 		if len(notaryIDs) >= notaryNumNeed {
 			break
@@ -192,13 +194,14 @@ func (ns *NotaryService) startDSMPhase2(sessionID, privateKeyID common.Hash) (fi
 			ns.unlockSession(sessionID)
 			return
 		}
-		var respMsg *models.MessageBPhase2
-		err = resp.ParseData(respMsg)
+		var respMsg models.MessageBPhase2
+		err = resp.ParseData(&respMsg)
 		if err != nil {
+			log.Error("parse MessageBPhase2 err =%s \n%s", err.Error(), utils.ToJSONStringFormat(resp))
 			ns.unlockSession(sessionID)
 			return
 		}
-		finish, err = dsm.ReceivePhase2MessageB(respMsg, notaryID)
+		finish, err = dsm.ReceivePhase2MessageB(&respMsg, notaryID)
 		if err != nil {
 			ns.unlockSession(sessionID)
 			return
