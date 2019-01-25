@@ -64,10 +64,6 @@ func (ua *UserAPI) mcPrepareLockout(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 	req.BaseReqWithSignature = api.NewBaseReqWithSignature(req.MCUserAddress)
-	if !req.VerifySign() {
-		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodePermissionDenied))
-		return
-	}
 	ua.SendToService(req)
 	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }

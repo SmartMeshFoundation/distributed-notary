@@ -98,7 +98,7 @@ func (d *EthereumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProx
 		localLockoutInfo.MCExpiration = d.MCExpiration
 	}
 	// 2. 校验用户原始请求签名,验证请求中的SCUserAddress有效性
-	if !d.UserRequest.VerifySign() {
+	if !d.UserRequest.VerifySign(d.UserRequest) {
 		err = fmt.Errorf("signature in user request does't wrign")
 		return
 	}

@@ -89,7 +89,7 @@ func (ba *BaseAPI) SendToService(req Req) {
 	var resp *BaseResponse
 	reqWithResponse, needResponse := req.(ReqWithResponse)
 	if r, ok := req.(ReqWithSignature); ok {
-		if !r.VerifySign() {
+		if !r.VerifySign(r) {
 			resp = NewFailResponse(reqWithResponse.GetRequestID(), ErrorCodePermissionDenied)
 			if needResponse {
 				reqWithResponse.WriteResponse(resp)

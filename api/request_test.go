@@ -104,11 +104,11 @@ func TestBaseReqWithSignature(t *testing.T) {
 	fmt.Println("Before sign : \n", utils.ToJSONStringFormat(req))
 
 	// 2. Sign
-	req.Sign(privateKey)
+	req.Sign(req, privateKey)
 	fmt.Println("After sign : \n", utils.ToJSONStringFormat(req))
 
 	// 3. Verify Signature
-	assert.EqualValues(t, true, req.VerifySign())
+	assert.EqualValues(t, true, req.VerifySign(req))
 
 }
 

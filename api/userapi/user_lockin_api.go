@@ -64,10 +64,6 @@ func (ua *UserAPI) scPrepareLockin(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 	req.BaseReqWithSignature = api.NewBaseReqWithSignature(req.SCUserAddress)
-	if !req.VerifySign() {
-		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodePermissionDenied))
-		return
-	}
 	ua.SendToService(req)
 	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }

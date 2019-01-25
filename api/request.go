@@ -1,9 +1,9 @@
 package api
 
 import (
-	"encoding/json"
-
 	"crypto/ecdsa"
+
+	"encoding/json"
 
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -74,9 +74,9 @@ ReqWithSignature **********************************************
 type ReqWithSignature interface {
 	GetSigner() common.Address
 	GetSignature() []byte
-	GetBytesToSign() (bytesToSign []byte, err error)
-	Sign(key *ecdsa.PrivateKey)
-	VerifySign() bool
+	SetSignature(sig []byte)
+	Sign(req ReqWithSignature, key *ecdsa.PrivateKey)
+	VerifySign(req ReqWithSignature) bool
 }
 
 // BaseReqWithSignature 基类
@@ -102,43 +102,48 @@ func (r *BaseReqWithSignature) GetSignature() []byte {
 	return r.Signature
 }
 
-// GetBytesToSign impl ReqWithSignature 默认除签名外全文json,有不同实现请复写
-func (r *BaseReqWithSignature) GetBytesToSign() (bytesToSign []byte, err error) {
-	sig := r.Signature
-	r.Signature = nil
-	bytesToSign, err = json.Marshal(r)
+// SetSignature impl ReqWithSignature
+func (r *BaseReqWithSignature) SetSignature(sig []byte) {
 	r.Signature = sig
-	return
 }
 
 // Sign impl ReqWithSignature
-func (r *BaseReqWithSignature) Sign(key *ecdsa.PrivateKey) {
-	data, err := r.GetBytesToSign()
+func (r *BaseReqWithSignature) Sign(req ReqWithSignature, key *ecdsa.PrivateKey) {
+	sig := req.GetSignature()
+	req.SetSignature(nil)
+	data, err := json.Marshal(req)
 	if err != nil {
 		panic(err)
 	}
-	sig, err := utils.SignData(key, data)
+	//fmt.Println("data to sign :", string(data))
+	sig, err = utils.SignData(key, data)
+	//fmt.Println("sig:", common.Bytes2Hex(sig))
 	if err != nil {
 		panic(err)
 	}
-	r.Signature = sig
+	req.SetSignature(sig)
 	return
 }
 
 // VerifySign impl ReqWithSignature
-func (r *BaseReqWithSignature) VerifySign() bool {
-	if r.Signer == utils.EmptyAddress {
+func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
+	if r.GetSigner() == utils.EmptyAddress {
 		return false
 	}
-	bytesToSign, err := r.GetBytesToSign()
+	sig := req.GetSignature()
+	req.SetSignature(nil)
+	data, err := json.Marshal(req)
 	if err != nil {
 		return false
 	}
-	dataHash := utils.Sha3(bytesToSign)
-	signer, err := utils.Ecrecover(dataHash, r.GetSignature())
+	//fmt.Println("data to verify :", string(data))
+	//fmt.Println("sig:", common.Bytes2Hex(sig))
+	dataHash := utils.Sha3(data)
+	signer, err := utils.Ecrecover(dataHash, sig)
 	if err != nil {
 		panic(err)
 	}
+	req.SetSignature(sig)
 	return signer == r.GetSigner()
 }
 

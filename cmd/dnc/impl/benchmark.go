@@ -222,7 +222,7 @@ func getBenchmarkRequests(scTokenAddress common.Address, keys []*ecdsa.PrivateKe
 			MCUserAddress:       address,
 			SCUserAddress:       address,
 		}
-		body.Sign(key)
+		body.Sign(body, key)
 		requests = append(requests, &req{
 			url:     fmt.Sprintf("http://127.0.0.1:333%d%s", 0, "/api/1/user/scpreparelockin/"+scTokenAddress.String()),
 			payload: utils.ToJSONString(body),

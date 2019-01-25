@@ -234,11 +234,11 @@ func (na *NotaryAPI) parseNotaryRequest(content []byte) (req api.Req, err error)
 	if err != nil {
 		return
 	}
-	if reqWithSignature, ok := req.(api.ReqWithSignature); ok {
-		if !reqWithSignature.VerifySign() {
-			err = errors.New(api.ErrorCode2MsgMap[api.ErrorCodePermissionDenied])
-		}
-	}
+	//if reqWithSignature, ok := req.(api.ReqWithSignature); ok {
+	//	if !reqWithSignature.VerifySign(reqWithSignature) {
+	//		err = errors.New(api.ErrorCode2MsgMap[api.ErrorCodePermissionDenied])
+	//	}
+	//}
 	return
 }
 

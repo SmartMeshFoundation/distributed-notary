@@ -52,7 +52,7 @@ func mcPrepareLockout(ctx *cli.Context) (err error) {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	req.Sign(privateKey)
+	req.Sign(req, privateKey)
 	payload := utils.ToJSONString(req)
 	var resp api.BaseResponse
 	err = call(http.MethodPost, url, payload, &resp)
