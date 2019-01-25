@@ -38,9 +38,8 @@ type MCPrepareLockoutRequest struct {
 	api.BaseReqWithSCToken
 	api.BaseReqWithSignature
 	SecretHash    common.Hash    `json:"secret_hash"`
-	MCUserAddress common.Address `json:"mc_user_address"`     // 主链收款地址,即验证签名
-	SCUserAddress common.Address `json:"sc_user_address"`     // 侧链PrepareLockout使用的地址,校验用
-	Signature     []byte         `json:"signature,omitempty"` // 用户签名
+	MCUserAddress common.Address `json:"mc_user_address"` // 主链收款地址,即验证签名
+	SCUserAddress common.Address `json:"sc_user_address"` // 侧链PrepareLockout使用的地址,校验用
 }
 
 func (ua *UserAPI) mcPrepareLockout(w rest.ResponseWriter, r *rest.Request) {
@@ -63,7 +62,6 @@ func (ua *UserAPI) mcPrepareLockout(w rest.ResponseWriter, r *rest.Request) {
 		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
 		return
 	}
-	req.BaseReqWithSignature = api.NewBaseReqWithSignature(req.MCUserAddress)
 	ua.SendToService(req)
 	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }

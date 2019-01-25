@@ -416,12 +416,9 @@ func (cs *CrossChainService) onMCPrepareLockout4Ethereum(event ethevents.Prepare
 		err = fmt.Errorf("amount does't match")
 		return
 	}
-	if lockoutInfo.MCExpiration != mcExpiration {
-		err = fmt.Errorf("scExpiration does't match")
-		return
-	}
 
 	// 4. 修改状态,等待后续调用
+	lockoutInfo.MCExpiration = mcExpiration // 这里由于自己本地块号和该笔MCPrepareLockout交易发起公证人的块号有些微差距,取合约上的值
 	lockoutInfo.MCLockStatus = models.LockStatusLock
 	lockoutInfo.MCUserAddressHex = event.Account.String()
 	err = cs.lockoutHandler.updateLockout(lockoutInfo)

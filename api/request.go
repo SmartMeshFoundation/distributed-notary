@@ -2,7 +2,6 @@ package api
 
 import (
 	"crypto/ecdsa"
-
 	"encoding/json"
 
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
