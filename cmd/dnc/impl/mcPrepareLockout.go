@@ -40,11 +40,12 @@ func mcPrepareLockout(ctx *cli.Context) (err error) {
 	}
 	url := globalConfig.NotaryHost + "/api/1/user/mcpreparelockout/" + scTokenInfo.SCToken.String()
 	req := &userapi.MCPrepareLockoutRequest{
-		BaseRequest:           api.NewBaseRequest(userapi.APIUserNameMCPrepareLockout),
-		BaseCrossChainRequest: api.NewBaseCrossChainRequest(scTokenInfo.SCToken),
-		SecretHash:            common.HexToHash(globalConfig.RunTime.SecretHash),
-		MCUserAddress:         common.HexToAddress(globalConfig.EthUserAddress),
-		SCUserAddress:         common.HexToAddress(globalConfig.SmcUserAddress),
+		BaseReq:             api.NewBaseReq(userapi.APIUserNameMCPrepareLockout),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
+		BaseReqWithSCToken:  api.NewBaseReqWithSCToken(scTokenInfo.SCToken),
+		SecretHash:          common.HexToHash(globalConfig.RunTime.SecretHash),
+		MCUserAddress:       common.HexToAddress(globalConfig.EthUserAddress),
+		SCUserAddress:       common.HexToAddress(globalConfig.SmcUserAddress),
 	}
 	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserPassword)
 	if err != nil {

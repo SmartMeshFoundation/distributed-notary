@@ -30,6 +30,7 @@ import (
 //Version version of this build
 var Version string
 
+// StartMain :
 func StartMain() {
 	app := cli.NewApp()
 	app.Commands = []cli.Command{

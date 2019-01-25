@@ -215,11 +215,12 @@ func getBenchmarkRequests(scTokenAddress common.Address, keys []*ecdsa.PrivateKe
 	for index, key := range keys {
 		address := crypto.PubkeyToAddress(key.PublicKey)
 		body := &userapi.SCPrepareLockinRequest{
-			BaseRequest:           api.NewBaseRequest(userapi.APIUserNameSCPrepareLockin),
-			BaseCrossChainRequest: api.NewBaseCrossChainRequest(scTokenAddress),
-			SecretHash:            secretHashs[index],
-			MCUserAddress:         address,
-			SCUserAddress:         address,
+			BaseReq:             api.NewBaseReq(userapi.APIUserNameSCPrepareLockin),
+			BaseReqWithResponse: api.NewBaseReqWithResponse(),
+			BaseReqWithSCToken:  api.NewBaseReqWithSCToken(scTokenAddress),
+			SecretHash:          secretHashs[index],
+			MCUserAddress:       address,
+			SCUserAddress:       address,
 		}
 		body.Sign(key)
 		requests = append(requests, &req{

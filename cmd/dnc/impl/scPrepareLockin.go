@@ -40,11 +40,12 @@ func scPrepareLockin(ctx *cli.Context) (err error) {
 	}
 	url := globalConfig.NotaryHost + "/api/1/user/scpreparelockin/" + scTokenInfo.SCToken.String()
 	req := &userapi.SCPrepareLockinRequest{
-		BaseRequest:           api.NewBaseRequest(userapi.APIUserNameSCPrepareLockin),
-		BaseCrossChainRequest: api.NewBaseCrossChainRequest(scTokenInfo.SCToken),
-		SecretHash:            common.HexToHash(globalConfig.RunTime.SecretHash),
-		MCUserAddress:         common.HexToAddress(globalConfig.EthUserAddress),
-		SCUserAddress:         common.HexToAddress(globalConfig.SmcUserAddress),
+		BaseReq:             api.NewBaseReq(userapi.APIUserNameSCPrepareLockin),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
+		BaseReqWithSCToken:  api.NewBaseReqWithSCToken(scTokenInfo.SCToken),
+		SecretHash:          common.HexToHash(globalConfig.RunTime.SecretHash),
+		MCUserAddress:       common.HexToAddress(globalConfig.EthUserAddress),
+		SCUserAddress:       common.HexToAddress(globalConfig.SmcUserAddress),
 	}
 	privateKey, err := getPrivateKey(globalConfig.SmcUserAddress, globalConfig.SmcUserPassword)
 	if err != nil {
