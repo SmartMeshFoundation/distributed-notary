@@ -99,7 +99,7 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 	// 3. init dispatch service
 	ds = &DispatchService{
 		userAPI:                      userapi.NewUserAPI(cfg.UserAPIListen),
-		notaryAPI:                    notaryapi.NewNotaryAPI(cfg.NotaryAPIListen, notaries),
+		notaryAPI:                    notaryapi.NewNotaryAPI(cfg.NotaryAPIListen, privateKey, notaries),
 		chainMap:                     make(map[string]chain.Chain),
 		db:                           db,
 		quitChan:                     make(chan struct{}),

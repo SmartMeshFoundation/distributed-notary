@@ -25,7 +25,7 @@ type NotaryInfo struct {
 	AddressStr string `json:"address"`
 }
 
-type notaryInfoSlice []NotaryInfo
+type notaryInfoSlice []*NotaryInfo
 
 func (c notaryInfoSlice) Len() int {
 	return len(c)
@@ -41,7 +41,7 @@ func (c notaryInfoSlice) Swap(i, j int) {
 SortNotaryInfoSlice :
 要求有先后顺序,影响消息发送顺序
 */
-func SortNotaryInfoSlice(chs []NotaryInfo) {
+func SortNotaryInfoSlice(chs []*NotaryInfo) {
 	sort.Stable(notaryInfoSlice(chs))
 }
 
@@ -51,7 +51,7 @@ func (ns *NotaryInfo) GetAddress() common.Address {
 }
 
 // GetNotaryInfo :
-func (db *DB) GetNotaryInfo() (notaries []NotaryInfo, err error) {
+func (db *DB) GetNotaryInfo() (notaries []*NotaryInfo, err error) {
 	err = db.Find(&notaries).Error
 	if err == gorm.ErrRecordNotFound {
 		err = nil
@@ -60,7 +60,7 @@ func (db *DB) GetNotaryInfo() (notaries []NotaryInfo, err error) {
 }
 
 // NewNotaryInfoFromConfFile :
-func (db *DB) NewNotaryInfoFromConfFile(confFilePath string) (notaries []NotaryInfo, err error) {
+func (db *DB) NewNotaryInfoFromConfFile(confFilePath string) (notaries []*NotaryInfo, err error) {
 	if !utils.Exists(confFilePath) {
 		err = fmt.Errorf("notary-conf-file does't exist")
 		return
@@ -94,7 +94,7 @@ func (db *DB) NewNotaryInfoFromConfFile(confFilePath string) (notaries []NotaryI
 		if err != nil {
 			return
 		}
-		notaries = append(notaries, notaryInfo)
+		notaries = append(notaries, &notaryInfo)
 	}
 	log.Trace("read notary list from notary-conf-file %s :\n%s", confFilePath, utils.ToJSONStringFormat(notaries))
 	return

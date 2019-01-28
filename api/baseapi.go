@@ -21,7 +21,7 @@ import (
 )
 
 // defaultAPITimeout : 默认api请求超时时间
-var defaultAPITimeout = 60 * time.Second
+var defaultAPITimeout = 1000 * time.Second
 
 /*
 BaseAPI : 提供一些公共方法

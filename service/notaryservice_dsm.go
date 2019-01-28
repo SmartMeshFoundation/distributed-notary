@@ -23,9 +23,9 @@ func (ns *NotaryService) startDSMAsk(notaryNumNeed int) (sessionID common.Hash, 
 	sessionID = utils.NewRandomHash()
 	log.Trace(SessionLogMsg(sessionID, "DSMAsk start..."))
 	notaryIDs = append(notaryIDs, ns.self.ID)
-	for _, notary := range ns.notaries {
+	for _, notary := range ns.otherNotaries {
 		// 这里怎么ask会公平一点
-		req := notaryapi.NewDSMAskRequest(sessionID, &ns.self)
+		req := notaryapi.NewDSMAskRequest(sessionID, ns.self)
 		_, err2 := ns.SendAndWaitResponse(req, notary.ID)
 		if err2 == nil {
 			notaryIDs = append(notaryIDs, notary.ID)
@@ -58,7 +58,7 @@ func (ns *NotaryService) startDSMNotifySelection(sessionID common.Hash, notaryID
 	}
 	ns.unlockSession(sessionID)
 	// 2. 通知其他参与的公正人
-	req := notaryapi.NewDSMNotifySelectionRequest(sessionID, &ns.self, notaryIDs, privateKeyID, msgToSign)
+	req := notaryapi.NewDSMNotifySelectionRequest(sessionID, ns.self, notaryIDs, privateKeyID, msgToSign)
 	ns.Broadcast(req, notaryIDs...)
 	log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection done..."))
 	return
@@ -121,7 +121,7 @@ func (ns *NotaryService) startDSMPhase1(sessionID, privateKeyID common.Hash) (er
 	}
 	ns.unlockSession(sessionID)
 	// 3. 广播
-	req := notaryapi.NewDSMPhase1BroadcastRequest(sessionID, &ns.self, privateKeyID, msg)
+	req := notaryapi.NewDSMPhase1BroadcastRequest(sessionID, ns.self, privateKeyID, msg)
 	ns.Broadcast(req, dsm.L.S...)
 	return
 }
@@ -188,7 +188,7 @@ func (ns *NotaryService) startDSMPhase2(sessionID, privateKeyID common.Hash) (fi
 			continue
 		}
 		var resp *api.BaseResponse
-		req := notaryapi.NewDSMPhase2MessageARequest(sessionID, &ns.self, privateKeyID, msg)
+		req := notaryapi.NewDSMPhase2MessageARequest(sessionID, ns.self, privateKeyID, msg)
 		resp, err = ns.SendAndWaitResponse(req, notaryID)
 		if err != nil {
 			ns.unlockSession(sessionID)
@@ -249,7 +249,7 @@ func (ns *NotaryService) startDSMPhase3(sessionID, privateKeyID common.Hash) (er
 	}
 	ns.unlockSession(sessionID)
 	// 3. 广播
-	req := notaryapi.NewDSMPhase3DeltaIRequest(sessionID, &ns.self, privateKeyID, msg)
+	req := notaryapi.NewDSMPhase3DeltaIRequest(sessionID, ns.self, privateKeyID, msg)
 	ns.Broadcast(req, dsm.L.S...)
 	return
 }
@@ -296,7 +296,7 @@ func (ns *NotaryService) startDSMPhase5A5B(sessionID, privateKeyID common.Hash) 
 	}
 	ns.unlockSession(sessionID)
 	// 3. 广播
-	req := notaryapi.NewDSMPhase5A5BProofRequest(sessionID, &ns.self, privateKeyID, msg)
+	req := notaryapi.NewDSMPhase5A5BProofRequest(sessionID, ns.self, privateKeyID, msg)
 	ns.Broadcast(req, dsm.L.S...)
 	return
 }
@@ -338,7 +338,7 @@ func (ns *NotaryService) startDSMPhase5C(sessionID, privateKeyID common.Hash) (e
 	}
 	ns.unlockSession(sessionID)
 	// 3. 广播
-	req := notaryapi.NewDSMPhase5CProofRequest(sessionID, &ns.self, privateKeyID, msg)
+	req := notaryapi.NewDSMPhase5CProofRequest(sessionID, ns.self, privateKeyID, msg)
 	ns.Broadcast(req, dsm.L.S...)
 	return
 }
@@ -380,7 +380,7 @@ func (ns *NotaryService) startDSMPhase6(sessionID, privateKeyID common.Hash) (er
 	}
 	ns.unlockSession(sessionID)
 	// 3. 广播
-	req := notaryapi.NewDSMPhase6ReceiveSIRequest(sessionID, &ns.self, privateKeyID, msg)
+	req := notaryapi.NewDSMPhase6ReceiveSIRequest(sessionID, ns.self, privateKeyID, msg)
 	ns.Broadcast(req, dsm.L.S...)
 	return
 }

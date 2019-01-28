@@ -44,7 +44,7 @@ func (ds *DispatchService) getSelfPrivateKey() *ecdsa.PrivateKey {
 }
 
 func (ds *DispatchService) getSelfNotaryInfo() *models.NotaryInfo {
-	return &ds.notaryService.self
+	return ds.notaryService.self
 }
 
 func (ds *DispatchService) getChainByName(chainName string) (c chain.Chain, err error) {

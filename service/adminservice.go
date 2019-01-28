@@ -185,34 +185,13 @@ func (as *AdminService) onCreatePrivateKeyRequest(req *userapi.CreatePrivateKeyR
 		return
 	}
 	// 1. 调用自己的notaryService,生成KeyGenerator,并开始协商过程
-	start := time.Now()
-	privateKeyID, err := as.dispatchService.getNotaryService().startNewPrivateKeyNegotiation()
+	privateKeyInfo, err := as.dispatchService.getNotaryService().startNewPrivateKeyNegotiation()
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 		return
 	}
-	// 2. 使用PrivateKeyID轮询数据库,直到该key协商并生成完成
-	times := 0
-	for {
-		time.Sleep(time.Second) // TODO 这里轮询周期设置为多少合适,是否需要设置超时
-		privateKey, err := as.db.LoadPrivateKeyInfo(privateKeyID)
-		if err != nil {
-			log.Error(err.Error())
-			req.WriteErrorResponse(api.ErrorCodeException, err.Error())
-			return
-		}
-		if privateKey.Status != models.PrivateKeyNegotiateStatusFinished {
-			if times%10 == 0 {
-				log.Trace(SessionLogMsg(privateKeyID, "waiting for PrivateKeyNegotiate..."))
-			}
-			times++
-			continue
-		}
-		timeUsed := time.Since(start)
-		log.Trace("PrivateKeyNegotiation end ,total use %f seconds", timeUsed.Seconds())
-		req.WriteSuccessResponse(newPrivateKeyInfoToResponse(privateKey))
-		return
-	}
+	req.WriteSuccessResponse(newPrivateKeyInfoToResponse(privateKeyInfo))
+	return
 }
 
 /*
@@ -273,7 +252,7 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	}
 	// 6. 通知其余公证人
 	newSCTokenReq := notaryapi.NewNotifySCTokenDeployedRequest(as.dispatchService.getSelfNotaryInfo(), &scTokenMetaInfo)
-	as.dispatchService.getNotaryService().Broadcast(newSCTokenReq)
+	as.dispatchService.getNotaryService().notaryClient.WSBroadcast(newSCTokenReq)
 	// 7. 返回
 	req.WriteSuccessResponse(scTokenMetaInfo)
 }

@@ -28,7 +28,7 @@ func TestWs(t *testing.T) {
 	time.Sleep(time.Second)
 	// 2. 启动客户端
 	go startClient(5)
-	time.Sleep(10 * time.Second)
+	time.Sleep(100000 * time.Second)
 	// 4. 回写
 	temp, _ := mClient.Load(0)
 	ws0 := temp.(*websocket.Conn)
@@ -127,5 +127,11 @@ func startClient(num int) {
 				log.Printf("Gorouting Client Received: %s at %p", msg[:n], ws)
 			}
 		}()
+	}
+	wsInterface, _ := mClient.Load(0)
+	ws0 := wsInterface.(*websocket.Conn)
+	for {
+		time.Sleep(time.Second)
+		ws0.Write([]byte("text"))
 	}
 }

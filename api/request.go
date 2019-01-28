@@ -87,7 +87,8 @@ type BaseReqWithSignature struct {
 // NewBaseReqWithSignature constructor
 func NewBaseReqWithSignature(signer common.Address) BaseReqWithSignature {
 	return BaseReqWithSignature{
-		Signer: signer,
+		Signer:    signer,
+		Signature: nil,
 	}
 }
 

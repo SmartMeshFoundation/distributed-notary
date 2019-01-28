@@ -8,6 +8,7 @@ import (
 
 	"sync"
 
+	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,4 +31,23 @@ func TestSyncMap(t *testing.T) {
 	fmt.Println(q, ok)
 	q, ok = m.Load(2)
 	fmt.Println(q, ok)
+
+	t1 := api.NewBaseReq("t1")
+	t2 := api.NewBaseReq("t2")
+	assert.NotEqual(t, t1, t2)
+	tt, loaded := m.LoadOrStore("1", t1)
+	assert.False(t, loaded)
+	assert.EqualValues(t, tt, t1)
+
+	tt, loaded = m.LoadOrStore("1", t2)
+	assert.True(t, loaded)
+	assert.EqualValues(t, tt, t1)
+	assert.NotEqual(t, tt, t2)
+
+	for i := 0; i < 10; i++ {
+		go func(data int) {
+			_, load := m.LoadOrStore("11", data)
+			fmt.Println(load)
+		}(i)
+	}
 }

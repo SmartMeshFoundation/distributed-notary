@@ -18,7 +18,7 @@ func (ns *NotaryService) Broadcast(req api.Req, notaryIDs ...int) {
 		}
 		return
 	}
-	for _, notary := range ns.notaries {
+	for _, notary := range ns.otherNotaries {
 		if notary.ID == ns.self.ID {
 			continue
 		}

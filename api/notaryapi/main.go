@@ -13,9 +13,14 @@ import (
 
 	"encoding/binary"
 
+	"crypto/ecdsa"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/nkbai/log"
 	"golang.org/x/net/websocket"
 )
@@ -49,15 +54,19 @@ NotaryAPI :
 */
 type NotaryAPI struct {
 	api.BaseAPI
-	notaries             []models.NotaryInfo
-	wsReqSendingQueueMap *sync.Map // 存储消息发送队列,每个与我通信过的公证人节点都会在里面有一对ID-chan的key-value,且对应存在一个常驻发送线程
-	dealingWSReqMap      *sync.Map // 暂存我发出去的,正在等待返回的请求
-	notaryWSConnMap      *sync.Map
-	notaryWSConnMapLock  sync.Mutex
+	notaries []*models.NotaryInfo
+
+	/*
+		new
+	*/
+	selfPrivateKey     *ecdsa.PrivateKey
+	wsConnMap          *sync.Map // 保存websocket连接,key为NotaryID
+	sendingChanMap     *sync.Map // 保存发送队列,key为NotaryID
+	waitingResponseMap *sync.Map // 保存已经发送出去并在等待连接的请求,key为requestID
 }
 
 // NewNotaryAPI :
-func NewNotaryAPI(host string, notaries []models.NotaryInfo) *NotaryAPI {
+func NewNotaryAPI(host string, selfPrivateKey *ecdsa.PrivateKey, notaries []*models.NotaryInfo) *NotaryAPI {
 	var notaryAPI NotaryAPI
 	wsHandler := websocket.Handler(notaryAPI.wsHandlerFunc)
 	router, err := rest.MakeRouter(
@@ -69,10 +78,20 @@ func NewNotaryAPI(host string, notaries []models.NotaryInfo) *NotaryAPI {
 		log.Crit(fmt.Sprintf("maker router :%s", err))
 	}
 	notaryAPI.BaseAPI = api.NewBaseAPI("NotaryAPI-WS-Server", host, router)
-	notaryAPI.wsReqSendingQueueMap = new(sync.Map)
-	notaryAPI.dealingWSReqMap = new(sync.Map)
-	notaryAPI.notaryWSConnMap = new(sync.Map)
 	notaryAPI.notaries = notaries
+	notaryAPI.selfPrivateKey = selfPrivateKey
+	notaryAPI.wsConnMap = new(sync.Map)
+	notaryAPI.sendingChanMap = new(sync.Map)
+	notaryAPI.waitingResponseMap = new(sync.Map)
+	// 直接在启动的时候初始化好队列以及发送线程,但不初始化连接,在给某个公证人发送/接收第一条消息的时候再初始化连接
+	for _, notary := range notaries {
+		if common.HexToAddress(notary.AddressStr) == crypto.PubkeyToAddress(selfPrivateKey.PublicKey) {
+			continue
+		}
+		sendingChan := make(chan api.Req, 10*params.ShareCount)
+		notaryAPI.sendingChanMap.Store(notary.ID, sendingChan)
+		go notaryAPI.notaryMsgSendLoop(notary.ID, sendingChan)
+	}
 	return &notaryAPI
 }
 
@@ -98,27 +117,21 @@ func (na *NotaryAPI) wsHandlerFunc(ws *websocket.Conn) {
 		return
 	}
 	senderID := reqWithSessionID.GetSenderNotaryID()
-	/*
-		2. 保存连接,如过这里已经存在连接,有两种可能:
-				a. 内存中保存的是之前对方找我创建的连接,如果对方找我再次创建,说明之前的连接已经断了,
-				   而如果老的连接断掉的话,我这边会删除掉,所以除非恶意攻击,不可能出现这种情况,如果出现了,直接使用老的连接即可
-				b. 内存中保存的是我给对方发的时候创建的连接,直接使用
-	*/
-	na.notaryWSConnMapLock.Lock()
-	if old, ok := na.notaryWSConnMap.Load(senderID); ok {
-		oldWS := old.(*websocket.Conn)
-		// 4. 使用老的连接处理消息,然后直接返回,关闭这次多余的连接
-		na.dealReq(oldWS, req)
-		na.notaryWSConnMapLock.Unlock()
-		log.Warn("got new websocket connection with notary[ID=%d], but already have one,use old and ignore new", senderID)
+
+	wsSavedInterface, loaded := na.wsConnMap.LoadOrStore(senderID, ws)
+	// 2. 保存连接,并使用存储下来的连接处理请求
+	wsSaved := wsSavedInterface.(*websocket.Conn)
+	na.dealReq(wsSaved, req)
+	if loaded {
+		// 重复创建,出现这个情况说明我在创建连接的过程中,另外一个线程也创建了连接并保存进去了,概率非常非常低
+		// 如果出现了,使用已经存进去的,抛弃现有连接
+		log.Warn("websocket connection with notary[ID=%d] repeat create,use old one and close new", senderID)
 		return
 	}
-	na.notaryWSConnMap.Store(senderID, ws)
-	// 4. 处理消息
-	na.dealReq(ws, req)
-	na.notaryWSConnMapLock.Unlock()
-	// 5. 启动消息接收线程,这里不能返回,返回这个ws连接就被框架回收了
-	na.notaryMsgReceiveLoop(ws, senderID)
+	// 第一次连接,此时连接已经保存到内存,保留当前线程不关闭作为该连接的消息接收线程
+	log.Info("new websocket connection with notary[ID=%d]", senderID)
+	// 启动消息接收线程,这里不能返回,返回这个ws连接就被框架回收了
+	na.notaryMsgReceiveLoop(wsSaved, senderID)
 }
 
 func (na *NotaryAPI) notaryMsgReceiveLoop(ws *websocket.Conn, senderID int) {
@@ -127,14 +140,14 @@ func (na *NotaryAPI) notaryMsgReceiveLoop(ws *websocket.Conn, senderID int) {
 		buf, err := readBytesFromWSConn(ws)
 		if err != nil {
 			// 这里直接删除内存中的连接并返回就行,不用close连接,交由上层回收
-			na.notaryWSConnMap.Delete(senderID)
+			na.wsConnMap.Delete(senderID)
 			log.Warn("notaryMsgReceiveLoop with notary[ID=%d] end because readBytesFromWSConn err : %s, maybe reconnect", senderID, err.Error())
 			return
 		}
 		req, err := na.parseNotaryRequest(buf)
 		if err != nil {
 			// 解析失败也断掉连接,交由上层回收
-			na.notaryWSConnMap.Delete(senderID)
+			na.wsConnMap.Delete(senderID)
 			log.Error("parseNotaryRequest from notary[ID=%d] err : %s", senderID, err.Error())
 			log.Error("request body : \n%s", string(buf))
 			api.WSWriteJSON(ws, api.NewFailResponse("", api.ErrorCodeParamsWrong, err.Error()))
@@ -148,19 +161,19 @@ func (na *NotaryAPI) dealReq(ws *websocket.Conn, req api.Req) {
 	// 1. ACK消息处理
 	if req.GetRequestName() == api.APINameResponse {
 		resp := req.(*api.BaseResponse)
-		oldReqInterface, ok := na.dealingWSReqMap.Load(resp.GetRequestID())
+		oldReqInterface, ok := na.waitingResponseMap.Load(resp.GetRequestID())
 		if !ok {
 			//log.Warn("get response of req[RequestID=%s], but can not found req in dealingWSReqMap,\n%s\nignore", resp.GetRequestID(), utils.ToJSONStringFormat(resp))
 			return
 		}
 		oldReq := oldReqInterface.(api.ReqWithResponse)
 		oldReq.WriteResponse(resp)
-		na.dealingWSReqMap.Delete(resp.GetRequestID())
+		na.waitingResponseMap.Delete(resp.GetRequestID())
 		return
 	}
 	// 2. 普通消息处理
 	na.SendToService(req)
-	// 如果是需要返回的请求,另起一个线程等待返回,并回写至ws
+	// 3. 如果是需要等待service层返回的请求,另起一个线程等待返回,并回写至ws
 	if reqWithResponse, needResponse := req.(api.ReqWithResponse); needResponse {
 		go func(ws *websocket.Conn, reqWithResponse api.ReqWithResponse) {
 			resp := na.WaitServiceResponse(reqWithResponse)
@@ -187,7 +200,6 @@ func (na *NotaryAPI) parseNotaryRequest(content []byte) (req api.Req, err error)
 	case api.APINameResponse:
 		req = &api.BaseResponse{}
 		err = json.Unmarshal(content, &req)
-		// TODO 新增dsmPhase2Response解析
 	/*
 		pkn
 	*/
@@ -234,11 +246,6 @@ func (na *NotaryAPI) parseNotaryRequest(content []byte) (req api.Req, err error)
 	if err != nil {
 		return
 	}
-	//if reqWithSignature, ok := req.(api.ReqWithSignature); ok {
-	//	if !reqWithSignature.VerifySign(reqWithSignature) {
-	//		err = errors.New(api.ErrorCode2MsgMap[api.ErrorCodePermissionDenied])
-	//	}
-	//}
 	return
 }
 
