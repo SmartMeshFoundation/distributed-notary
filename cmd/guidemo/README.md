@@ -9,7 +9,7 @@ It's also the subject of this [blog post](https://medium.com/@social_57971/how-t
 Run the following commands:
 
     $ go get -u github.com/asticode/go-astilectron-demo/...
-    $ rm $GOPATH/src/github.com/asticode/go-astilectron-demo/bind.go
+    $ mv bind.go ../
 
 # Step 2: install the bundler
 
@@ -27,7 +27,9 @@ Run the following commands:
 
     $ cd $GOPATH/src/github.com/asticode/go-astilectron-demo
     $ astilectron-bundler -v
-
+    $ rm bind_darwin_amd64.go  #删除/bind_darwin_amd64.go
+    $ mv ../bind.go .
+    
 # Step 4: test the app
 
 The result is in the `output/<your os>-<your arch>` folder and is waiting for you to test it!
