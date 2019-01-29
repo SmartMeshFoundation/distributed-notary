@@ -165,7 +165,7 @@ func WSWriteJSON(ws *websocket.Conn, data interface{}) {
 	}
 	n, err := ws.Write(totalBuf.Bytes())
 	if err != nil {
-		log.Error("send data to web socket err : %s", err.Error())
+		//log.Error("send data to web socket err : %s, data:\n%s", err.Error(), utils.ToJSONStringFormat(data))
 		return
 	}
 	if n != totalBuf.Len() {

@@ -14,7 +14,6 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
-	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
@@ -251,8 +250,12 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 		return
 	}
 	// 6. 通知其余公证人
+	var otherNotaryIDs []int
+	for _, notary := range as.dispatchService.getNotaryService().otherNotaries {
+		otherNotaryIDs = append(otherNotaryIDs, notary.ID)
+	}
 	newSCTokenReq := notaryapi.NewNotifySCTokenDeployedRequest(as.dispatchService.getSelfNotaryInfo(), &scTokenMetaInfo)
-	as.dispatchService.getNotaryService().notaryClient.WSBroadcast(newSCTokenReq)
+	as.dispatchService.getNotaryService().notaryClient.WSBroadcast(newSCTokenReq, otherNotaryIDs...)
 	// 7. 返回
 	req.WriteSuccessResponse(scTokenMetaInfo)
 }
@@ -280,7 +283,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 
 func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo, params ...string) (contractAddress common.Address, sessionID common.Hash, err error) {
 	// 1. 获取待签名的数据
-	var msgToSign mecdsa.MessageToSign
+	var msgToSign messagetosign.MessageToSign
 	msgToSign = messagetosign.NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress(), params...)
 	// 2. 签名
 	var signature []byte

@@ -71,7 +71,7 @@ func NewPKNHandler(db *models.DB, self *models.NotaryInfo, otherNotaryIDs []int,
 		phase2DoneChan: make(chan bool, 2),
 		phase3DoneChan: make(chan bool, 2),
 		phase4DoneChan: make(chan bool, 2),
-		quitChan:       make(chan error),
+		quitChan:       make(chan error, 2),
 		NotaryClient:   notaryClient,
 	}
 }
@@ -167,6 +167,11 @@ func (ph *PKNHandler) receiveLoop() {
 	for {
 		select {
 		case req = <-ph.receiveChan:
+		case err := <-ph.quitChan:
+			if err != nil {
+				log.Error(sessionLogMsg(ph.sessionID, "receiveLoop of PKNHandler quit with err %s", err.Error()))
+			}
+			return
 		}
 		switch r := req.(type) {
 		case *notaryapi.KeyGenerationPhase1MessageRequest:
@@ -429,13 +434,22 @@ func (ph *PKNHandler) waitPhaseDone(c chan bool) (err error) {
 	select {
 	case <-c:
 	case err = <-ph.quitChan:
+		if err != nil {
+			log.Error(sessionLogMsg(ph.sessionID, "waitPhaseDone of PKNHandler quit with err %s", err.Error()))
+		}
+		return
 	}
 	return
 }
 
 func (ph *PKNHandler) notify(c chan bool, err error) {
 	if err != nil {
-		//ph.quitChan <- err
+		// 这里写两遍.因为可能有两个线程
+		select {
+		case ph.quitChan <- err:
+		default:
+			// never block
+		}
 		select {
 		case ph.quitChan <- err:
 		default:

@@ -51,7 +51,7 @@ SendWSReqToNotary :
 */
 func (na *NotaryAPI) SendWSReqToNotary(req api.Req, targetNotaryID int) {
 	// 1. 如果是需要返回的消息,存储到内存
-	if reqWithResponse, ok2 := req.(api.ReqWithResponse); ok2 {
+	if reqWithResponse, ok2 := req.(api.ReqWithResponse); ok2 && req.GetRequestName() != api.APINameResponse {
 		na.waitingResponseMap.LoadOrStore(reqWithResponse.GetRequestID(), reqWithResponse)
 	}
 	sendingQueueInterface, ok := na.sendingChanMap.Load(targetNotaryID)

@@ -10,7 +10,6 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
-	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -78,7 +77,7 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	secretHash := localLockinInfo.SecretHash
 	amount := localLockinInfo.Amount
 	// 1. 构造MessageToSign
-	var msgToSign mecdsa.MessageToSign
+	var msgToSign messagetosign.MessageToSign
 	msgToSign = messagetosign.NewSpectrumPrepareLockinTxData(cs.scTokenProxy, req, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount)
 	// 2. 发起分布式签名
 	var signature []byte
@@ -130,7 +129,7 @@ func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutR
 	secretHash := localLockoutInfo.SecretHash
 	amount := localLockoutInfo.Amount
 	// 1. 构造MessageToSign
-	var msgToSign mecdsa.MessageToSign
+	var msgToSign messagetosign.MessageToSign
 	msgToSign = messagetosign.NewEthereumPrepareLockoutTxData(cs.mcProxy, req, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount)
 	// 2. 发起分布式签名
 	var signature []byte

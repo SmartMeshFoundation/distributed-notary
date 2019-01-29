@@ -3,8 +3,8 @@ package notaryapi
 import (
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
-	"github.com/SmartMeshFoundation/distributed-notary/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -39,7 +39,7 @@ type DSMNotifySelectionRequest struct {
 }
 
 // NewDSMNotifySelectionRequest :
-func NewDSMNotifySelectionRequest(sessionID common.Hash, self *models.NotaryInfo, notaryIDs []int, privateKeyID common.Hash, msgToSign mecdsa.MessageToSign) *DSMNotifySelectionRequest {
+func NewDSMNotifySelectionRequest(sessionID common.Hash, self *models.NotaryInfo, notaryIDs []int, privateKeyID common.Hash, msgToSign messagetosign.MessageToSign) *DSMNotifySelectionRequest {
 	return &DSMNotifySelectionRequest{
 		BaseReq:                 api.NewBaseReq(APINameDSMNotifySelection),
 		BaseReqWithSessionID:    api.NewBaseReqWithSessionID(sessionID, self.ID),

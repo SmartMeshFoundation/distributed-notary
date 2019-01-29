@@ -22,68 +22,38 @@ func init() {
 	params.ShareCount = 5
 }
 
-type notaryClientForLocalTest struct {
+type notaryClientForLocalPKNTest struct {
 	lock     sync.Mutex
 	handlers map[int]*PKNHandler
 }
 
-func (c *notaryClientForLocalTest) registerPKNHandlers(phs ...*PKNHandler) {
+func (c *notaryClientForLocalPKNTest) registerPKNHandlers(phs ...*PKNHandler) {
 	for _, pk := range phs {
 		c.handlers[pk.selfNotaryID] = pk
 	}
 	fmt.Printf("register %d notaries\n", len(phs))
 }
 
-func (c *notaryClientForLocalTest) WSBroadcast(req api.Req, targetNotaryIDs ...int) {
+func (c *notaryClientForLocalPKNTest) WSBroadcast(req api.Req, targetNotaryIDs ...int) {
 	for _, notaryID := range targetNotaryIDs {
 		c.SendWSReqToNotary(req, notaryID)
 	}
 }
-func (c *notaryClientForLocalTest) SendWSReqToNotary(req api.Req, targetNotaryID int) {
+func (c *notaryClientForLocalPKNTest) SendWSReqToNotary(req api.Req, targetNotaryID int) {
 	c.lock.Lock()
 	ph := c.handlers[targetNotaryID]
 	c.lock.Unlock()
 	go ph.OnRequest(req)
-	//switch r2 := req.(type) {
-	//case *notaryapi.KeyGenerationPhase1MessageRequest:
-	//	go ph.receivePhase1PubKeyProof(r2.Msg, r2.GetSenderNotaryID())
-	//	//go func() {
-	//	//	c.lock.Lock()
-	//	//	c.handlers[targetNotaryID].receivePhase1PubKeyProof(r2.Msg, r2.GetSenderNotaryID())
-	//	//	c.lock.Unlock()
-	//	//}()
-	//case *notaryapi.KeyGenerationPhase2MessageRequest:
-	//	go ph.receivePhase2PaillierPubKeyProof(r2.Msg, r2.GetSenderNotaryID())
-	//	//go func() {
-	//	//	c.lock.Lock()
-	//	//	c.handlers[targetNotaryID].receivePhase2PaillierPubKeyProof(r2.Msg, r2.GetSenderNotaryID())
-	//	//	c.lock.Unlock()
-	//	//}()
-	//case *notaryapi.KeyGenerationPhase3MessageRequest:
-	//	go ph.receivePhase3SecretShare(r2.Msg, r2.GetSenderNotaryID())
-	//	//go func() {
-	//	//	c.lock.Lock()
-	//	//	c.handlers[targetNotaryID].receivePhase3SecretShare(r2.Msg, r2.GetSenderNotaryID())
-	//	//	c.lock.Unlock()
-	//	//}()
-	//case *notaryapi.KeyGenerationPhase4MessageRequest:
-	//	go ph.receivePhase4VerifyTotalPubKey(r2.Msg, r2.GetSenderNotaryID())
-	//	//go func() {
-	//	//	c.lock.Lock()
-	//	//	c.handlers[targetNotaryID].receivePhase4VerifyTotalPubKey(r2.Msg, r2.GetSenderNotaryID())
-	//	//	c.lock.Unlock()
-	//	//}()
-	//}
 }
 
-func (c *notaryClientForLocalTest) WaitWSResponse(requestID string, timeout ...time.Duration) (resp *api.BaseResponse, err error) {
+func (c *notaryClientForLocalPKNTest) WaitWSResponse(requestID string, timeout ...time.Duration) (resp *api.BaseResponse, err error) {
 	// TODO
 	return
 }
 
 func newFivePKNHandler() (l0, l1, l2, l3, l4 *PKNHandler) {
 	sessionID := utils.NewRandomHash()
-	c := &notaryClientForLocalTest{handlers: make(map[int]*PKNHandler)}
+	c := &notaryClientForLocalPKNTest{handlers: make(map[int]*PKNHandler)}
 	l0 = NewPKNHandler(nil, &models.NotaryInfo{ID: 0}, []int{1, 2, 3, 4}, sessionID, c)
 	l1 = NewPKNHandler(nil, &models.NotaryInfo{ID: 1}, []int{0, 2, 3, 4}, sessionID, c)
 	l2 = NewPKNHandler(nil, &models.NotaryInfo{ID: 2}, []int{1, 0, 3, 4}, sessionID, c)
@@ -111,11 +81,11 @@ func TestPKN(t *testing.T) {
 	wg.Add(5)
 	//步骤1 -----------------------------------------------
 	l0, l1, l2, l3, l4 := newFivePKNHandler()
-	go start(t, l0, wg)
-	go start(t, l1, wg)
-	go start(t, l2, wg)
-	go start(t, l3, wg)
-	go start(t, l4, wg)
+	go startPKN(t, l0, wg)
+	go startPKN(t, l1, wg)
+	go startPKN(t, l2, wg)
+	go startPKN(t, l3, wg)
+	go startPKN(t, l4, wg)
 
 	/*================================= final ======================*/
 	wg.Wait()
@@ -138,7 +108,7 @@ func TestPKN(t *testing.T) {
 	xi = append(xi, p3.XI)
 	xi = append(xi, p4.XI)
 
-	//totalPrivKey := msg30[1].Vss.Reconstruct([]int{0, 1, 2}, xi[0:3])
+	//totalPrivKey := msg30[1].vss.Reconstruct([]int{0, 1, 2}, xi[0:3])
 	sum := share.PrivKeyZero.Clone()
 	share.ModAdd(sum, p0.UI)
 	share.ModAdd(sum, p1.UI)
@@ -155,7 +125,7 @@ func TestPKN(t *testing.T) {
 	}
 }
 
-func start(t *testing.T, ph *PKNHandler, wg *sync.WaitGroup) {
+func startPKN(t *testing.T, ph *PKNHandler, wg *sync.WaitGroup) {
 	_, err := ph.StartPKNAndWaitFinish(nil)
 	assert.Empty(t, err)
 	wg.Done()
