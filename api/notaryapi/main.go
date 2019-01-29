@@ -54,15 +54,19 @@ NotaryAPI :
 */
 type NotaryAPI struct {
 	api.BaseAPI
-	notaries []*models.NotaryInfo
+	notaries       []*models.NotaryInfo
+	selfPrivateKey *ecdsa.PrivateKey
 
 	/*
-		new
+		发送相关
 	*/
-	selfPrivateKey     *ecdsa.PrivateKey
-	wsConnMap          *sync.Map // 保存websocket连接,key为NotaryID
+	sendingWSConnMap   *sync.Map // 保存websocket连接,key为NotaryID,都为自己建立的
 	sendingChanMap     *sync.Map // 保存发送队列,key为NotaryID
 	waitingResponseMap *sync.Map // 保存已经发送出去并在等待连接的请求,key为requestID
+	/*
+		接收相关
+	*/
+	receivingWSConnMap *sync.Map // 保存对方找我建立的websocket连接
 }
 
 // NewNotaryAPI :
@@ -80,9 +84,10 @@ func NewNotaryAPI(host string, selfPrivateKey *ecdsa.PrivateKey, notaries []*mod
 	notaryAPI.BaseAPI = api.NewBaseAPI("NotaryAPI-WS-Server", host, router)
 	notaryAPI.notaries = notaries
 	notaryAPI.selfPrivateKey = selfPrivateKey
-	notaryAPI.wsConnMap = new(sync.Map)
+	notaryAPI.sendingWSConnMap = new(sync.Map)
 	notaryAPI.sendingChanMap = new(sync.Map)
 	notaryAPI.waitingResponseMap = new(sync.Map)
+	notaryAPI.receivingWSConnMap = new(sync.Map)
 	// 直接在启动的时候初始化好队列以及发送线程,但不初始化连接,在给某个公证人发送/接收第一条消息的时候再初始化连接
 	for _, notary := range notaries {
 		if common.HexToAddress(notary.AddressStr) == crypto.PubkeyToAddress(selfPrivateKey.PublicKey) {
@@ -118,12 +123,12 @@ func (na *NotaryAPI) wsHandlerFunc(ws *websocket.Conn) {
 	}
 	senderID := reqWithSessionID.GetSenderNotaryID()
 
-	wsSavedInterface, loaded := na.wsConnMap.LoadOrStore(senderID, ws)
+	wsSavedInterface, loaded := na.receivingWSConnMap.LoadOrStore(senderID, ws)
 	// 2. 保存连接,并使用存储下来的连接处理请求
 	wsSaved := wsSavedInterface.(*websocket.Conn)
 	na.dealReq(wsSaved, req)
 	if loaded {
-		// 重复创建,出现这个情况说明我在创建连接的过程中,另外一个线程也创建了连接并保存进去了,概率非常非常低
+		// 重复创建,出现这个情况说明我在创建连接的过程中,另外一个线程也创建了连接并保存进去了,概率低,且影响不大
 		// 如果出现了,使用已经存进去的,抛弃现有连接
 		log.Warn("websocket connection with notary[ID=%d] repeat create,use old one and close new", senderID)
 		return
@@ -140,14 +145,14 @@ func (na *NotaryAPI) notaryMsgReceiveLoop(ws *websocket.Conn, senderID int) {
 		buf, err := readBytesFromWSConn(ws)
 		if err != nil {
 			// 这里直接删除内存中的连接并返回就行,不用close连接,交由上层回收
-			na.wsConnMap.Delete(senderID)
+			na.receivingWSConnMap.Delete(senderID)
 			log.Warn("notaryMsgReceiveLoop with notary[ID=%d] end because readBytesFromWSConn err : %s, maybe reconnect", senderID, err.Error())
 			return
 		}
 		req, err := na.parseNotaryRequest(buf)
 		if err != nil {
 			// 解析失败也断掉连接,交由上层回收
-			na.wsConnMap.Delete(senderID)
+			na.receivingWSConnMap.Delete(senderID)
 			log.Error("parseNotaryRequest from notary[ID=%d] err : %s", senderID, err.Error())
 			log.Error("request body : \n%s", string(buf))
 			api.WSWriteJSON(ws, api.NewFailResponse("", api.ErrorCodeParamsWrong, err.Error()))

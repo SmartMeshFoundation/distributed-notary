@@ -30,7 +30,7 @@ package service
 //	}
 //	// 3. 如果是被动开始,即receivedMsg != nil,保存
 //	if receivedMsg != nil {
-//		finish, err = keyGenerator.ReceivePhase1PubKeyProof(receivedMsg, senderID)
+//		finish, err = keyGenerator.receivePhase1PubKeyProof(receivedMsg, senderID)
 //		if err != nil {
 //			ns.unlockSession(privateKeyID)
 //			return
@@ -44,7 +44,7 @@ package service
 //
 //func (ns *NotaryService) savePKNPhase1Msg(keyGenerator *mecdsa.ThresholdPrivKeyGenerator, msg *models.KeyGenBroadcastMessage1, senderID int) (finish bool, err error) {
 //	ns.lockSession(keyGenerator.PrivateKeyID)
-//	finish, err = keyGenerator.ReceivePhase1PubKeyProof(msg, senderID)
+//	finish, err = keyGenerator.receivePhase1PubKeyProof(msg, senderID)
 //	if finish {
 //		log.Trace(SessionLogMsg(keyGenerator.PrivateKeyID, "PKNPhase1 done..."))
 //	}
@@ -69,7 +69,7 @@ package service
 //
 //func (ns *NotaryService) savePKNPhase2Msg(keyGenerator *mecdsa.ThresholdPrivKeyGenerator, msg *models.KeyGenBroadcastMessage2, senderID int) (finish bool, err error) {
 //	ns.lockSession(keyGenerator.PrivateKeyID)
-//	finish, err = keyGenerator.ReceivePhase2PaillierPubKeyProof(msg, senderID)
+//	finish, err = keyGenerator.receivePhase2PaillierPubKeyProof(msg, senderID)
 //	if finish {
 //		log.Trace(SessionLogMsg(keyGenerator.PrivateKeyID, "PKNPhase2 done..."))
 //	}
@@ -99,7 +99,7 @@ package service
 //
 //func (ns *NotaryService) savePKNPhase3Msg(keyGenerator *mecdsa.ThresholdPrivKeyGenerator, msg *models.KeyGenBroadcastMessage3, senderID int) (finish bool, err error) {
 //	ns.lockSession(keyGenerator.PrivateKeyID)
-//	finish, err = keyGenerator.ReceivePhase3SecretShare(msg, senderID)
+//	finish, err = keyGenerator.receivePhase3SecretShare(msg, senderID)
 //	if finish {
 //		log.Trace(SessionLogMsg(keyGenerator.PrivateKeyID, "PKNPhase3 done..."))
 //	}
@@ -124,7 +124,7 @@ package service
 //
 //func (ns *NotaryService) savePKNPhase4Msg(keyGenerator *mecdsa.ThresholdPrivKeyGenerator, msg *models.KeyGenBroadcastMessage4, senderID int) (finish bool, err error) {
 //	ns.lockSession(keyGenerator.PrivateKeyID)
-//	finish, err = keyGenerator.ReceivePhase4VerifyTotalPubKey(msg, senderID)
+//	finish, err = keyGenerator.receivePhase4VerifyTotalPubKey(msg, senderID)
 //	if finish {
 //		log.Trace(SessionLogMsg(keyGenerator.PrivateKeyID, "PKNPhase4 done..."))
 //	}

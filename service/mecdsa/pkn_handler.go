@@ -3,15 +3,16 @@ package mecdsa
 import (
 	"fmt"
 	"math/big"
-	"sync"
 	"time"
 
+	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/feldman"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/proofs"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/nkbai/log"
 )
@@ -29,6 +30,10 @@ type PKNHandler struct {
 	notaryapi.NotaryClient
 
 	/*
+		消息接收chan
+	*/
+	receiveChan chan api.Req
+	/*
 		流程控制chan
 	*/
 	phase1DoneChan chan bool
@@ -36,13 +41,6 @@ type PKNHandler struct {
 	phase3DoneChan chan bool
 	phase4DoneChan chan bool
 	quitChan       chan error
-	/*
-		并发控制锁
-	*/
-	phase1MsgMapLock sync.Mutex
-	phase2MsgMapLock sync.Mutex
-	phase3MsgMapLock sync.Mutex
-	phase4MsgMapLock sync.Mutex
 }
 
 /*
@@ -68,6 +66,7 @@ func NewPKNHandler(db *models.DB, self *models.NotaryInfo, otherNotaryIDs []int,
 		selfNotaryID:   self.ID,
 		otherNotaryIDs: otherNotaryIDs,
 		privateKeyInfo: privateKeyInfo,
+		receiveChan:    make(chan api.Req, 10*params.ShareCount),
 		phase1DoneChan: make(chan bool, 2),
 		phase2DoneChan: make(chan bool, 2),
 		phase3DoneChan: make(chan bool, 2),
@@ -82,15 +81,11 @@ StartPKNAndWaitFinish 开始一次私钥协商
 主动发起时,参数req传空
 */
 func (ph *PKNHandler) StartPKNAndWaitFinish(req *notaryapi.KeyGenerationPhase1MessageRequest) (privateKeyInfo *models.PrivateKeyInfo, err error) {
-	/*
-		phase1 Start
-	*/
-	//err = l.db.NewPrivateKeyInfo(p)
-	//if err != nil {
-	//	return
-	//}
+	// 0. 启动消息处理线程
+	go ph.receiveLoop()
+	// 0.5 投递
 	if req != nil {
-		ph.ReceivePhase1PubKeyProof(req.Msg, req.GetSenderNotaryID())
+		ph.OnRequest(req)
 	}
 	// ======> 1. 开始phase1
 	log.Info(sessionLogMsg(ph.sessionID, "phase 1 start..."))
@@ -155,6 +150,40 @@ func (ph *PKNHandler) StartPKNAndWaitFinish(req *notaryapi.KeyGenerationPhase1Me
 	return
 }
 
+// OnRequest 消息入口
+func (ph *PKNHandler) OnRequest(req api.Req) {
+	select {
+	case ph.receiveChan <- req:
+	default:
+		// never block
+	}
+}
+
+/*
+消息接收线程,该会话的所有消息都在这里面处理
+*/
+func (ph *PKNHandler) receiveLoop() {
+	var req api.Req
+	for {
+		select {
+		case req = <-ph.receiveChan:
+		}
+		switch r := req.(type) {
+		case *notaryapi.KeyGenerationPhase1MessageRequest:
+			ph.receivePhase1PubKeyProof(r.Msg, r.GetSenderNotaryID())
+		case *notaryapi.KeyGenerationPhase2MessageRequest:
+			ph.receivePhase2PaillierPubKeyProof(r.Msg, r.GetSenderNotaryID())
+		case *notaryapi.KeyGenerationPhase3MessageRequest:
+			ph.receivePhase3SecretShare(r.Msg, r.GetSenderNotaryID())
+		case *notaryapi.KeyGenerationPhase4MessageRequest:
+			ph.receivePhase4VerifyTotalPubKey(r.Msg, r.GetSenderNotaryID())
+		default:
+			log.Error(sessionLogMsg(ph.sessionID, "unknown msg for PKNHandler :\n%s", utils.ToJSONStringFormat(req)))
+		}
+		// TODO 在这里可以更精确的判断当前状态,来通知主线程
+	}
+}
+
 /*
 generatePhase1PubKeyProof phase1.1 生成自己的随机数,这是后续feldman vss的种子
 同时也生成了第二步所需的同态加密公钥私钥.
@@ -169,29 +198,23 @@ func (ph *PKNHandler) generatePhase1PubKeyProof() (msg *models.KeyGenBroadcastMe
 }
 
 /*
-ReceivePhase1PubKeyProof phase 1.2 接受其他公证人传递过来的公钥片证明信息,
+receivePhase1PubKeyProof phase 1.2 接受其他公证人传递过来的公钥片证明信息,
 如果凑齐了所有公证人(params.ShareCount)的公钥片信息,那么就可以组合出来此次协商最终的公钥.
 但是到目前为止没有一个公证人知道最终公钥对应的私钥片
 */
-func (ph *PKNHandler) ReceivePhase1PubKeyProof(m *models.KeyGenBroadcastMessage1, index int) {
+func (ph *PKNHandler) receivePhase1PubKeyProof(m *models.KeyGenBroadcastMessage1, index int) {
 	//fmt.Printf("notary[ID=%d] receive phase 1 msg from notary[ID=%d]\n", ph.selfNotaryID, index)
 	p := ph.privateKeyInfo
 	if !proofs.Verify(m.Proof) {
 		ph.notify(nil, fmt.Errorf("pubkey roof for notary[ID=%d] verify not pass", index))
 		return
 	}
-	ph.phase1MsgMapLock.Lock()
-	defer ph.phase1MsgMapLock.Unlock()
 	_, ok := p.PubKeysProof1[index]
 	if ok {
 		ph.notify(nil, fmt.Errorf("pubkey roof for notary[ID=%d] already exist", index))
 		return
 	}
 	p.PubKeysProof1[index] = m
-	//err = l.db.KGUpdatePubKeysProof1(p)
-	//if err != nil {
-	//	return
-	//}
 	ph.checkPhase1Done()
 	return
 }
@@ -227,17 +250,13 @@ func (ph *PKNHandler) generatePhase2PaillierKeyProof() (msg *models.KeyGenBroadc
 		CorrectKeyProof: correctKeyProof,
 		BlindFactor:     blindFactor,
 	}
-	ph.phase2MsgMapLock.Lock()
-	defer ph.phase2MsgMapLock.Unlock()
 	p.PaillierKeysProof2[ph.selfNotaryID] = msg
-	//保存自己的信息到数据库中,方便后续计算使用
-	//err = l.db.KGUpdatePaillierKeysProof2(p)
 	ph.checkPhase2Done()
 	return
 }
 
-//ReceivePhase2PaillierPubKeyProof phase 2.2 收到其他公证人的同态加密公钥信息
-func (ph *PKNHandler) ReceivePhase2PaillierPubKeyProof(m *models.KeyGenBroadcastMessage2, index int) {
+//receivePhase2PaillierPubKeyProof phase 2.2 收到其他公证人的同态加密公钥信息
+func (ph *PKNHandler) receivePhase2PaillierPubKeyProof(m *models.KeyGenBroadcastMessage2, index int) {
 	//fmt.Printf("notary[ID=%d] receive phase 2 msg from notary[ID=%d]\n", ph.selfNotaryID, index)
 	//对方证明私钥我确实知道,虽然没有告诉我
 	if !m.CorrectKeyProof.Verify(m.PaillierPubkey) {
@@ -245,8 +264,6 @@ func (ph *PKNHandler) ReceivePhase2PaillierPubKeyProof(m *models.KeyGenBroadcast
 		return
 	}
 	p := ph.privateKeyInfo
-	ph.phase2MsgMapLock.Lock()
-	defer ph.phase2MsgMapLock.Unlock()
 	//不接受重复的消息
 	_, ok := p.PaillierKeysProof2[index]
 	if ok {
@@ -254,10 +271,6 @@ func (ph *PKNHandler) ReceivePhase2PaillierPubKeyProof(m *models.KeyGenBroadcast
 		return
 	}
 	p.PaillierKeysProof2[index] = m
-	//err = l.db.KGUpdatePaillierKeysProof2(p)
-	//if err != nil {
-	//	return
-	//}
 	ph.checkPhase2Done()
 	return
 }
@@ -288,21 +301,16 @@ generatePhase3SecretShare phase 3.1基于第一步的随机数生成SecretShares
 */
 func (ph *PKNHandler) generatePhase3SecretShare() (msgs map[int]*models.KeyGenBroadcastMessage3) {
 	p := ph.privateKeyInfo
-	ph.phase2MsgMapLock.Lock()
 	for i := 0; i < len(p.PubKeysProof1); i++ {
 		if i == ph.selfNotaryID {
 			continue
 		}
 		m := p.PaillierKeysProof2[i]
 		if createCommitmentWithUserDefinedRandomNess(p.PubKeysProof1[i].Proof.PK.X, m.BlindFactor).Cmp(m.Com) != 0 {
-			ph.phase2MsgMapLock.Unlock()
 			ph.notify(nil, fmt.Errorf("blind factor error for notary[ID=%d]", i))
 			return
 		}
 	}
-	ph.phase2MsgMapLock.Unlock()
-	ph.phase3MsgMapLock.Lock()
-	defer ph.phase3MsgMapLock.Unlock()
 	vss, secretShares := feldman.Share(params.ThresholdCount, params.ShareCount, p.UI)
 	msg := &models.KeyGenBroadcastMessage3{
 		Vss:         vss,
@@ -310,10 +318,6 @@ func (ph *PKNHandler) generatePhase3SecretShare() (msgs map[int]*models.KeyGenBr
 		Index:       ph.selfNotaryID,
 	}
 	p.SecretShareMessage3[ph.selfNotaryID] = msg
-	//err = l.db.KGUpdateSecretShareMessage3(p)
-	//if err != nil {
-	//	return
-	//}
 	msgs = make(map[int]*models.KeyGenBroadcastMessage3)
 	for i := 0; i < params.ShareCount; i++ {
 		if i == ph.selfNotaryID {
@@ -330,20 +334,15 @@ func (ph *PKNHandler) generatePhase3SecretShare() (msgs map[int]*models.KeyGenBr
 	return
 }
 
-//ReceivePhase3SecretShare 接收来自其他公证人定向分发给我的secret share.
-func (ph *PKNHandler) ReceivePhase3SecretShare(msg *models.KeyGenBroadcastMessage3, index int) {
-	fmt.Printf("notary[ID=%d] receive phase 3 msg from notary[ID=%d]\n", ph.selfNotaryID, index)
+//receivePhase3SecretShare 接收来自其他公证人定向分发给我的secret share.
+func (ph *PKNHandler) receivePhase3SecretShare(msg *models.KeyGenBroadcastMessage3, index int) {
+	//fmt.Printf("notary[ID=%d] receive phase 3 msg from notary[ID=%d]\n", ph.selfNotaryID, index)
 	p := ph.privateKeyInfo
 	//vss的第0号证据对应的就是第一步随机数对应的公钥片,必须用的是那一个
-	ph.phase1MsgMapLock.Lock()
 	if !equalGE(p.PubKeysProof1[index].Proof.PK, msg.Vss.Commitments[0]) {
-		ph.phase1MsgMapLock.Unlock()
 		ph.notify(nil, fmt.Errorf("pubkey not match for notary[ID=%d]", index))
 		return
 	}
-	ph.phase1MsgMapLock.Unlock()
-	ph.phase3MsgMapLock.Lock()
-	defer ph.phase3MsgMapLock.Unlock()
 	_, ok := p.SecretShareMessage3[index]
 	if ok {
 		ph.notify(nil, fmt.Errorf("secret shares for notary[ID=%d] already received", index))
@@ -355,10 +354,6 @@ func (ph *PKNHandler) ReceivePhase3SecretShare(msg *models.KeyGenBroadcastMessag
 		return
 	}
 	p.SecretShareMessage3[index] = msg
-	//err = l.db.KGUpdateSecretShareMessage3(p)
-	//if err != nil {
-	//	return
-	//}
 	ph.checkPhase3Done()
 	return
 }
@@ -388,8 +383,6 @@ func (ph *PKNHandler) generatePhase4PubKeyProof() (msg *models.KeyGenBroadcastMe
 	proof := proofs.Prove(p.XI)
 	msg = &models.KeyGenBroadcastMessage4{Proof: proof}
 	// 保存
-	ph.phase4MsgMapLock.Lock()
-	defer ph.phase4MsgMapLock.Unlock()
 	p.LastPubkeyProof4[ph.selfNotaryID] = msg
 
 	ph.checkPhase4Done()
@@ -397,26 +390,20 @@ func (ph *PKNHandler) generatePhase4PubKeyProof() (msg *models.KeyGenBroadcastMe
 }
 
 /*
-ReceivePhase4VerifyTotalPubKey phase4.2 接收对方持有的Xi的证明,并验证其有效性. 但是我怎么知道他是有效的呢? 目前为止是没有办法的.
+receivePhase4VerifyTotalPubKey phase4.2 接收对方持有的Xi的证明,并验证其有效性. 但是我怎么知道他是有效的呢? 目前为止是没有办法的.
 */
-func (ph *PKNHandler) ReceivePhase4VerifyTotalPubKey(msg *models.KeyGenBroadcastMessage4, index int) {
+func (ph *PKNHandler) receivePhase4VerifyTotalPubKey(msg *models.KeyGenBroadcastMessage4, index int) {
 	p := ph.privateKeyInfo
 	if !proofs.Verify(msg.Proof) {
 		ph.notify(nil, fmt.Errorf("last pubkey verify error for notary[ID=%d]", index))
 		return
 	}
-	ph.phase4MsgMapLock.Lock()
-	defer ph.phase4MsgMapLock.Unlock()
 	_, ok := p.LastPubkeyProof4[index]
 	if ok {
 		ph.notify(nil, fmt.Errorf("last pubkey for notary[ID=%d] already exist", index))
 		return
 	}
 	p.LastPubkeyProof4[index] = msg
-	//err = l.db.KGUpdateLastPubKeyProof4(p)
-	//if err != nil {
-	//	return
-	//}
 	ph.checkPhase4Done()
 	return
 }
@@ -455,11 +442,11 @@ func (ph *PKNHandler) notify(c chan bool, err error) {
 			// never block
 		}
 	} else {
-		c <- true
-		//select {
-		//case c <- true:
-		//default:
-		//	// never block
-		//}
+		//c <- true
+		select {
+		case c <- true:
+		default:
+			// never block
+		}
 	}
 }

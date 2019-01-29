@@ -65,13 +65,13 @@ func (ns *NotaryService) OnEvent(e chain.Event) {
 func (ns *NotaryService) OnRequest(req api.Req) {
 	switch r := req.(type) {
 	case *notaryapi.KeyGenerationPhase1MessageRequest:
-		ns.onKeyGenerationPhase1MessageRequest(r)
+		ns.onPKNRequest(r)
 	case *notaryapi.KeyGenerationPhase2MessageRequest:
-		ns.onKeyGenerationPhase2MessageRequest(r)
+		ns.onPKNRequest(r)
 	case *notaryapi.KeyGenerationPhase3MessageRequest:
-		ns.onKeyGenerationPhase3MessageRequest(r)
+		ns.onPKNRequest(r)
 	case *notaryapi.KeyGenerationPhase4MessageRequest:
-		ns.onKeyGenerationPhase4MessageRequest(r)
+		ns.onPKNRequest(r)
 	case *notaryapi.DSMAskRequest:
 		ns.onDSMAskRequest(r)
 	case *notaryapi.DSMNotifySelectionRequest:
@@ -116,108 +116,60 @@ func (ns *NotaryService) startNewPrivateKeyNegotiation() (privateKeyInfo *models
 	return ph.StartPKNAndWaitFinish(nil)
 }
 
-/*
-收到KeyGenerationPhase1MessageRequest, 被动开始一次私钥协商
-*/
-func (ns *NotaryService) onKeyGenerationPhase1MessageRequest(req *notaryapi.KeyGenerationPhase1MessageRequest) {
-	sessionID := req.GetSessionID()
-	// 1. 校验sender
-	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-	if !ok || senderNotaryInfo.ID != req.GetSenderNotaryID() {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
+func (ns *NotaryService) onPKNRequest(req api.Req) {
+	reqWithResponse, needResponse := req.(api.ReqWithResponse)
+	// 0. 获取sessionID
+	reqWithSessionID, ok := req.(api.ReqWithSessionID)
+	if !ok {
+		log.Error("unknown msg for PKNHandler :\n%s", utils.ToJSONStringFormat(req))
+		if needResponse {
+			reqWithResponse.WriteErrorResponse(api.ErrorCodePermissionDenied, "unknown msg for PKNHandler ")
+		}
 		return
 	}
-	// 2. 获取pknHandler
-	var otherNotaryIDs []int
-	for _, notary := range ns.otherNotaries {
-		otherNotaryIDs = append(otherNotaryIDs, notary.ID)
+	sessionID := reqWithSessionID.GetSessionID()
+	// 1. 获取pkn
+	var phSavedInterface interface{}
+	var loaded bool
+	var phase1Req *notaryapi.KeyGenerationPhase1MessageRequest
+	phSavedInterface, loaded = ns.pknHandlerMap.Load(sessionID)
+	if !loaded {
+		var ok bool
+		phase1Req, ok = req.(*notaryapi.KeyGenerationPhase1MessageRequest)
+		/*
+			不是phase1请求且找不到PKNHandler,拒绝
+		*/
+		if !ok {
+			if needResponse {
+				errMsg := SessionLogMsg(sessionID, "can not find PKNHandler with this sessionID")
+				reqWithResponse.WriteErrorResponse(api.ErrorCodeException, errMsg)
+			}
+			return
+		}
+		/*
+			被动开始,新建pkn
+		*/
+		var otherNotaryIDs []int
+		for _, notary := range ns.otherNotaries {
+			otherNotaryIDs = append(otherNotaryIDs, notary.ID)
+		}
+		phSavedInterface, loaded = ns.pknHandlerMap.LoadOrStore(sessionID, mecdsa2.NewPKNHandler(ns.db, ns.self, otherNotaryIDs, sessionID, ns.notaryClient))
 	}
-	phInterface, loaded := ns.pknHandlerMap.LoadOrStore(sessionID, mecdsa2.NewPKNHandler(ns.db, ns.self, otherNotaryIDs, sessionID, ns.notaryClient))
-	ph := phInterface.(*mecdsa2.PKNHandler)
+	/*
+		投递到ph,如果是被动开始的,启动协商线程
+	*/
+	ph := phSavedInterface.(*mecdsa2.PKNHandler)
 	if loaded {
-		// 已经存在,直接保存
-		ph.ReceivePhase1PubKeyProof(req.Msg, req.GetSenderNotaryID())
+		// 已经存在,直接投递
+		ph.OnRequest(req)
+		//ph.receivePhase1PubKeyProof(req.Msg, req.GetSenderNotaryID())
 	} else {
 		// 不存在,启动协商线程
-		go ph.StartPKNAndWaitFinish(req)
+		go ph.StartPKNAndWaitFinish(phase1Req)
 	}
-	req.WriteSuccessResponse(nil)
-	return
-}
-
-/*
-收到KeyGenerationPhase2MessageRequest
-*/
-func (ns *NotaryService) onKeyGenerationPhase2MessageRequest(req *notaryapi.KeyGenerationPhase2MessageRequest) {
-	sessionID := req.GetSessionID()
-	// 1. 校验sender
-	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-	if !ok || senderNotaryInfo.ID != req.GetSenderNotaryID() {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
-		return
+	if needResponse {
+		reqWithResponse.WriteSuccessResponse(nil)
 	}
-	// 2. 获取pkn
-	phInterface, ok := ns.pknHandlerMap.Load(sessionID)
-	if !ok {
-		errMsg := SessionLogMsg(sessionID, "can not find PKNHandler with this sessionID")
-		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-		return
-	}
-	// 3. 保存信息并返回
-	phInterface.(*mecdsa2.PKNHandler).ReceivePhase2PaillierPubKeyProof(req.Msg, req.GetSenderNotaryID())
-	req.WriteSuccessResponse(nil)
-	return
-}
-
-/*
-收到KeyGenerationPhase3MessageRequest
-*/
-func (ns *NotaryService) onKeyGenerationPhase3MessageRequest(req *notaryapi.KeyGenerationPhase3MessageRequest) {
-	sessionID := req.GetSessionID()
-	// 1. 校验sender
-	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-	if !ok || senderNotaryInfo.ID != req.GetSenderNotaryID() {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
-		return
-	}
-	// 2. 获取pkn
-	phInterface, ok := ns.pknHandlerMap.Load(sessionID)
-	if !ok {
-		errMsg := SessionLogMsg(sessionID, "can not find PKNHandler with this sessionID")
-		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-		return
-	}
-	// 3. 保存信息并返回
-	phInterface.(*mecdsa2.PKNHandler).ReceivePhase3SecretShare(req.Msg, req.GetSenderNotaryID())
-	req.WriteSuccessResponse(nil)
-	return
-}
-
-/*
-收到KeyGenerationPhase4MessageRequest
-*/
-func (ns *NotaryService) onKeyGenerationPhase4MessageRequest(req *notaryapi.KeyGenerationPhase4MessageRequest) {
-	sessionID := req.GetSessionID()
-	// 1. 校验sender
-	senderNotaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-	if !ok || senderNotaryInfo.ID != req.GetSenderNotaryID() {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
-		return
-	}
-	// 2. 获取pkn
-	phInterface, ok := ns.pknHandlerMap.Load(sessionID)
-	if !ok {
-		errMsg := SessionLogMsg(sessionID, "can not find PKNHandler with this sessionID")
-		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-		return
-	}
-	// 3. 保存信息并返回
-	phInterface.(*mecdsa2.PKNHandler).ReceivePhase4VerifyTotalPubKey(req.Msg, req.GetSenderNotaryID())
-	req.WriteSuccessResponse(nil)
 	return
 }
 

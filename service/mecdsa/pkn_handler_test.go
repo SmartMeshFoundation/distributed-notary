@@ -11,7 +11,6 @@ import (
 
 	"github.com/SmartMeshFoundation/Photon/utils"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
-	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
@@ -44,36 +43,37 @@ func (c *notaryClientForLocalTest) SendWSReqToNotary(req api.Req, targetNotaryID
 	c.lock.Lock()
 	ph := c.handlers[targetNotaryID]
 	c.lock.Unlock()
-	switch r2 := req.(type) {
-	case *notaryapi.KeyGenerationPhase1MessageRequest:
-		go ph.ReceivePhase1PubKeyProof(r2.Msg, r2.GetSenderNotaryID())
-		//go func() {
-		//	c.lock.Lock()
-		//	c.handlers[targetNotaryID].ReceivePhase1PubKeyProof(r2.Msg, r2.GetSenderNotaryID())
-		//	c.lock.Unlock()
-		//}()
-	case *notaryapi.KeyGenerationPhase2MessageRequest:
-		go ph.ReceivePhase2PaillierPubKeyProof(r2.Msg, r2.GetSenderNotaryID())
-		//go func() {
-		//	c.lock.Lock()
-		//	c.handlers[targetNotaryID].ReceivePhase2PaillierPubKeyProof(r2.Msg, r2.GetSenderNotaryID())
-		//	c.lock.Unlock()
-		//}()
-	case *notaryapi.KeyGenerationPhase3MessageRequest:
-		go ph.ReceivePhase3SecretShare(r2.Msg, r2.GetSenderNotaryID())
-		//go func() {
-		//	c.lock.Lock()
-		//	c.handlers[targetNotaryID].ReceivePhase3SecretShare(r2.Msg, r2.GetSenderNotaryID())
-		//	c.lock.Unlock()
-		//}()
-	case *notaryapi.KeyGenerationPhase4MessageRequest:
-		go ph.ReceivePhase4VerifyTotalPubKey(r2.Msg, r2.GetSenderNotaryID())
-		//go func() {
-		//	c.lock.Lock()
-		//	c.handlers[targetNotaryID].ReceivePhase4VerifyTotalPubKey(r2.Msg, r2.GetSenderNotaryID())
-		//	c.lock.Unlock()
-		//}()
-	}
+	go ph.OnRequest(req)
+	//switch r2 := req.(type) {
+	//case *notaryapi.KeyGenerationPhase1MessageRequest:
+	//	go ph.receivePhase1PubKeyProof(r2.Msg, r2.GetSenderNotaryID())
+	//	//go func() {
+	//	//	c.lock.Lock()
+	//	//	c.handlers[targetNotaryID].receivePhase1PubKeyProof(r2.Msg, r2.GetSenderNotaryID())
+	//	//	c.lock.Unlock()
+	//	//}()
+	//case *notaryapi.KeyGenerationPhase2MessageRequest:
+	//	go ph.receivePhase2PaillierPubKeyProof(r2.Msg, r2.GetSenderNotaryID())
+	//	//go func() {
+	//	//	c.lock.Lock()
+	//	//	c.handlers[targetNotaryID].receivePhase2PaillierPubKeyProof(r2.Msg, r2.GetSenderNotaryID())
+	//	//	c.lock.Unlock()
+	//	//}()
+	//case *notaryapi.KeyGenerationPhase3MessageRequest:
+	//	go ph.receivePhase3SecretShare(r2.Msg, r2.GetSenderNotaryID())
+	//	//go func() {
+	//	//	c.lock.Lock()
+	//	//	c.handlers[targetNotaryID].receivePhase3SecretShare(r2.Msg, r2.GetSenderNotaryID())
+	//	//	c.lock.Unlock()
+	//	//}()
+	//case *notaryapi.KeyGenerationPhase4MessageRequest:
+	//	go ph.receivePhase4VerifyTotalPubKey(r2.Msg, r2.GetSenderNotaryID())
+	//	//go func() {
+	//	//	c.lock.Lock()
+	//	//	c.handlers[targetNotaryID].receivePhase4VerifyTotalPubKey(r2.Msg, r2.GetSenderNotaryID())
+	//	//	c.lock.Unlock()
+	//	//}()
+	//}
 }
 
 func (c *notaryClientForLocalTest) WaitWSResponse(requestID string, timeout ...time.Duration) (resp *api.BaseResponse, err error) {

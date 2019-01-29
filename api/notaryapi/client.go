@@ -135,7 +135,7 @@ func (na *NotaryAPI) notaryMsgSendLoop(targetNotaryID int, sendingQueueChan chan
 			}
 			for {
 				// 2. 获取连接
-				wsInterface, ok := na.wsConnMap.Load(targetNotaryID)
+				wsInterface, ok := na.sendingWSConnMap.Load(targetNotaryID)
 				if ok {
 					//已有连接,直接使用
 					api.WSWriteJSON(wsInterface.(*websocket.Conn), req)
@@ -155,7 +155,7 @@ func (na *NotaryAPI) notaryMsgSendLoop(targetNotaryID int, sendingQueueChan chan
 					continue
 				}
 				// 5.保存连接,这里存在其他线程创建成功的情况,概率较低,如果出现,使用保存成功的连接,并关闭新创建的
-				wsSavedInterface, loaded := na.wsConnMap.LoadOrStore(targetNotaryID, ws)
+				wsSavedInterface, loaded := na.sendingWSConnMap.LoadOrStore(targetNotaryID, ws)
 				wsSaved := wsSavedInterface.(*websocket.Conn)
 				if loaded {
 					log.Warn("websocket connection with notary[ID=%d] repeat create,use old one and close new", targetNotaryID)
@@ -163,9 +163,6 @@ func (na *NotaryAPI) notaryMsgSendLoop(targetNotaryID int, sendingQueueChan chan
 					if err != nil {
 						log.Error("close err : %s", err.Error())
 					}
-				} else {
-					// 新建成功,启动消息处理线程
-					go na.notaryMsgReceiveLoop(wsSaved, targetNotaryID)
 				}
 				// 6.使用保存成功的连接处理消息
 				api.WSWriteJSON(wsSaved, req)
