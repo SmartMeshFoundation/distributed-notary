@@ -16,7 +16,7 @@
         #mainContent {
             height: auto;
             min-height: 100%;
-            padding: 40px 0 100px 0;
+            padding: 0px 0 100px 0;
         }
 
         .nav-tabs li {
@@ -114,19 +114,20 @@
         <div class="panel-body">
             <form>
                 <div class="form-group">
-                    <label > Ethereum </label> <span id="mainChainContract"> </span>
+                    <label > Ethereum </label> <span id="mainChainContract" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
                     <br/>
-                    <label > Balance </label> <span id="mainChainContractBalance"> </span> Ether
+                    <label > Balance: </label> <span id="mainChainContractBalance"  style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
+                    <span   style="color:#31708f; margin-left: 0px; font-size:16px;">Ether </span>
 
                     <br/><br/>
-                    <label > EthereumToken </label> <span id="sideChainContract"> </span>
-                    <br/> <label > Balance </label><span id="sideChainContractBalance"> </span> EtherToken
+                    <label > EthereumToken </label> <span id="sideChainContract" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
+                    <br/> <label > Balance: </label> <span id="sideChainContractBalance"  style="color:#31708f; margin-left: 0px; font-size:16px;"> </span> <span   style="color:#31708f; margin-left: 0px; font-size:16px;">EtherToken </span>
 
                     <br/>
                     <br/>
-                    <label >Etherum TestNet block number:</label>  <span id="MainChainBlockNumber" style="color:#31708f; margin-left: 40px; font-size:16px;"> </span>
+                    <label >Etherum TestNet block number:</label>  <span id="MainChainBlockNumber" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
                     <br/>
-                    <label >Spectrum TestNet block number:</label>  <span id="SideChainBlockNumber" style="color:#31708f; margin-left: 40px; font-size:16px;"> </span>
+                    <label >Spectrum TestNet block number:</label>  <span id="SideChainBlockNumber" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
                     <div class="form-group  form-inline">
                     <button  type="button" class="btn btn-primary" onclick="queryStatus(this)" style="display:none ">
                         Refresh
@@ -145,13 +146,17 @@
         <div class="panel-body">
             <form>
                 <div class="form-group">
-                    <label >Account Address:</label><span id="address" style="color:#31708f; margin-left: 40px; font-size:16px;"></span>
+                    <label >Account Address: </label>  <span id="address" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
                     <br/>
-                    <label >Ethereum TestNet balance:</label>  <span id="MainChainBalance" style="color:#31708f; margin-left: 40px; font-size:16px;">  </span>Ether
+                    <label >Ethereum TestNet balance: </label>  <span id="MainChainBalance" style="color:#31708f; margin-left: 0px; font-size:16px;">  </span>
+                    <span   style="color:#31708f; margin-left: 0px; font-size:16px;">Ether </span>
                     <br/>
-                    <label >Spectrum TestNet balance:</label>  <span id="SideChainBalance" style="color:#31708f; margin-left: 40px; font-size:16px;"> </span>SMT
+                    <label >Spectrum TestNet balance: </label>  <span id="SideChainBalance" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
+                    <span   style="color:#31708f; margin-left: 0px; font-size:16px;">SMT </span>
                     <br/>
-                    <label >Spectrum TestNet ethereum token balance:</label>  <span id="SideChainTokenBalance" style="color:#31708f; margin-left: 40px; font-size:16px;"> </span>EtherToken
+                    <label >Spectrum TestNet ethereum token balance: </label>  <span id="SideChainTokenBalance" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
+                    <span   style="color:#31708f; margin-left: 0px; font-size:16px;">EtherToken </span>
+
                     <br/>
                     <div class="form-group  form-inline">
                         <button  type="button" class="btn btn-primary" onclick="queryStatus(this)">

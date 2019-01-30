@@ -1,8 +1,7 @@
 //保证每次载入都清除所有数据
 clearData();
 var helpService = "/api"
-// var runhost="transport01.smartmesh.cn"
-var runhost="127.0.0.1"
+ var runhost=document.domain 
 var mainChainEndpoint = "http://"+runhost+":19888"
 var sideChainEndpoint = "http://"+runhost+":17888"
 var pagetimer;
@@ -441,8 +440,13 @@ function queryStatus() {
         $("#MainChainBalance").html(getMainChainWeb3().fromWei(r.MainChainBalance, "ether"))
         $("#SideChainBalance").html(getMainChainWeb3().fromWei(r.SideChainBalance, "ether"))
         $("#SideChainTokenBalance").html(getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether"))
+        if (myaccount){
+            $("#btnTransferEther").attr("disabled", false);
+        } else{
+            $("#btnTransferEther").attr("disabled", true);
+        }
         if (r.MainChainBalance>0) {
-            $("#btnTransferEther").attr("disabled", "disabled");
+            $("#btnTransferEther").attr("disabled", true);
         }
         //判断一下是lockin还是lockout
         if (localStorage["currentLockinSecret"]){
@@ -499,6 +503,7 @@ $(function () {
         $("#address").html(myaccount)
         $('#tab_content').show();
     }
+    queryStatus()
 
 })
 var mainWeb3;
