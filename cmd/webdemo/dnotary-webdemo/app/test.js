@@ -21,25 +21,25 @@ $(function () {
     $("#cointype").hide()
     nodes_Ip = [{
         name: 'Notary0',
-        value: '127.0.0.1:3330'
+        value: '127.0.0.1:8030'
     }, {
         name: 'Notary1',
-        value: '127.0.0.1:3331'
+        value: '127.0.0.1:8031'
     }, {
         name: 'Notary2',
-        value: '127.0.0.1:3332'
+        value: '127.0.0.1:8032'
     }, {
         name: 'Notary3',
-        value: '127.0.0.1:3333'
+        value: '127.0.0.1:8033'
     }, {
         name: 'Notary4',
-        value: '127.0.0.1:3334'
+        value: '127.0.0.1:8034'
     }, {
         name: 'Notary5',
-        value: '127.0.0.1:3335'
+        value: '127.0.0.1:8035'
     }, {
         name: 'Notary6',
-        value: '127.0.0.1:3336'
+        value: '127.0.0.1:8036'
     },];
 
     $('#selNode').html();
@@ -193,7 +193,7 @@ function prePareLockin(obj) {
         error: function (e) {
             hideMaskLayer();
             console.log("error", e);
-            showTip("Error:" + JSON.stringify(e) + '<br/><br/>Please Retry!');
+            showTip("generate Secret Error, Please Retry!");
         }
     })
 }
