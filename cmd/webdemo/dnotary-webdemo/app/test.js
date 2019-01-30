@@ -1,6 +1,7 @@
 var helpService = "/api"
-var mainChainEndpoint = "http://127.0.0.1:19888"
-var sideChainEndpoint = "http://127.0.0.1:17888"
+var runhost="127.0.0.1"
+var mainChainEndpoint = "http://"+runhost+":19888"
+var sideChainEndpoint = "http://"+runhost+":17888"
 var pagetimer;
 var key = localStorage["mykey"]; //秘钥
 var nodes_Ip; //公证人列表
@@ -21,25 +22,25 @@ $(function () {
     $("#cointype").hide()
     nodes_Ip = [{
         name: 'Notary0',
-        value: '127.0.0.1:8030'
+        value: runhost+':8030'
     }, {
         name: 'Notary1',
-        value: '127.0.0.1:8031'
+        value: runhost+':8031'
     }, {
         name: 'Notary2',
-        value: '127.0.0.1:8032'
+        value: runhost+':8032'
     }, {
         name: 'Notary3',
-        value: '127.0.0.1:8033'
+        value: runhost+':8033'
     }, {
         name: 'Notary4',
-        value: '127.0.0.1:8034'
+        value: runhost+':8034'
     }, {
         name: 'Notary5',
-        value: '127.0.0.1:8035'
+        value: runhost+':8035'
     }, {
         name: 'Notary6',
-        value: '127.0.0.1:8036'
+        value: runhost+':8036'
     },];
 
     $('#selNode').html();
