@@ -76,13 +76,15 @@
             width: 30px;
             margin: 25px 0 0 10px;
         }
-
+        .btn-primary{
+            background-color: #38C9AF;border-color: #38C9AF;
+        }
     </style>
 </head>
 <body>
 
 <div id="mainContent" class="container">
-    <button  type="button" class="btn btn-primary" onclick="clearData(this)">
+    <button  type="button" class="btn btn-primary" onclick="clearData(this)" style="display: none;">
         clear Data
     </button>
     <div class="clearfix" style="margin-bottom: 10px;">
@@ -106,21 +108,51 @@
         <div class="panel-body">
             <form>
                 <div class="form-group">
-                    <label > Ethereum </label> <span id="mainChainContract"> </span> <label > Balance </label> <span id="mainChainContractBalance"> </span> Ether
+                    <label > Ethereum </label> <span id="mainChainContract"> </span>
+                    <br/>
+                    <label > Balance </label> <span id="mainChainContractBalance"> </span> Ether
+
+                    <br/><br/>
+                    <label > EthereumToken </label> <span id="sideChainContract"> </span>
+                    <br/> <label > Balance </label><span id="sideChainContractBalance"> </span> Ether
 
                     <br/>
-                    <label > EthereumToken </label> <span id="sideChainContract"> </span> <label > Balance </label><span id="sideChainContractBalance"> </span> Ether
-
                     <br/>
                     <label >Etherum TestNet block number:</label>  <span id="MainChainBlockNumber" style="color:#31708f; margin-left: 40px; font-size:16px;"> </span>
+                    <br/>
                     <label >Spectrum TestNet block number:</label>  <span id="SideChainBlockNumber" style="color:#31708f; margin-left: 40px; font-size:16px;"> </span>
                     <div class="form-group  form-inline">
-                    <button  type="button" class="btn btn-primary" onclick="queryStatus(this)">
+                    <button  type="button" class="btn btn-primary" onclick="queryStatus(this)" style="display:none ">
                         Refresh
                     </button>
                     </div>
                 </div>
 
+            </form>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                Account Status</h3>
+        </div>
+        <div class="panel-body">
+            <form>
+                <div class="form-group">
+                    <label >Account Address:</label><span id="address" style="color:#31708f; margin-left: 40px; font-size:16px;"></span>
+                    <br/>
+                    <label >Ethereum TestNet balance:</label>  <span id="MainChainBalance" style="color:#31708f; margin-left: 40px; font-size:16px;">30994 </span>ether
+                    <br/>
+                    <label >Spectrum TestNet balance:</label>  <span id="SideChainBalance" style="color:#31708f; margin-left: 40px; font-size:16px;">30994</span>ether
+                    <br/>
+                    <label >Spectrum TestNet ethereum token balance:</label>  <span id="SideChainTokenBalance" style="color:#31708f; margin-left: 40px; font-size:16px;">30994</span>ether
+                    <br/>
+                    <div class="form-group  form-inline">
+                        <button  type="button" class="btn btn-primary" onclick="queryStatus(this)">
+                            Refresh
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -141,10 +173,8 @@
                     Generate Private Key
                 </button>
                 <button id="btnTransferEther" type="button" class="btn btn-primary" onclick="transfer10Ether(this)">
-                    Transfer 10 Ether to This Account
+                    Transfer A few Ether to This Account
                 </button>
-                <span id="address" style="color:#31708f; margin-left: 40px; font-size:16px;"></span>
-                <span id="priv_warn" style="display: none;color:#31708f; margin-left: 40px; font-size:16px;">Please save the privatekey (for testing only).</span>
                 <div id="newAccount">
                 </div>
             </form>
@@ -291,7 +321,7 @@
             </div>
         </div>
     </div>
-    <div class="panel panel-default">
+    <div class="panel panel-default" style="display:none">
         <div class="panel-heading">
             <h3 class="panel-title">
                 DCRM Signed Transaction</h3>
@@ -303,9 +333,6 @@
                         DCRM Signed Transaction</label>
                     <textarea id="signTransaction" class="form-control" cols="20" rows="8"></textarea>
                 </div>
-                <button type="button" class="btn btn-primary" onclick="sendTransaction()">
-                    Send Transaction
-                </button>
                 <div style="float:right;display: none;" id="lookurl"><a
                             href="https://rinkeby.etherscan.io/tx/" target="_blank">Lock out crosschain
                         transaction success, please check the TX status: <br/><span
@@ -314,37 +341,15 @@
             </form>
         </div>
     </div>
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">
-               Account Status</h3>
-        </div>
-        <div class="panel-body">
-            <form>
-                <div class="form-group">
-                    <br/>
-                    <label >Ethereum TestNet balance:</label>  <span id="MainChainBalance" style="color:#31708f; margin-left: 40px; font-size:16px;">30994 </span>milli
-                    <label >Spectrum TestNet balance:</label>  <span id="SideChainBalance" style="color:#31708f; margin-left: 40px; font-size:16px;">30994</span>milli
-                    <br/>
-                    <label >Spectrum TestNet ethereum token balance:</label>  <span id="SideChainTokenBalance" style="color:#31708f; margin-left: 40px; font-size:16px;">30994</span>milli
-                    <br/>
-                    <div class="form-group  form-inline">
-                        <button  type="button" class="btn btn-primary" onclick="queryStatus(this)">
-                            Refresh
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+
 
 </div>
 <div id="footer">
     <div class='footer container'>
-        <a href="https://www.fusion.org" target="_blank" class='logo'><img src="images/fusion.png"/></a>
-        <span class="copyright">© 2018 FUSION Foundation. All rights reserved.</span>
+        <a href="https://www.smartmesh.io" target="_blank" class='logo'><img src="images/logo.png"/></a>
+        <span class="copyright">© 2018 SmartMesh Foundation. All rights reserved.</span>
         <a href="https://gitter.im/FUSIONDC/" target="_blank" class='smicon'><img src="images/gitter.png"/></a>
-        <a href="https://github.com/FUSIONFoundation/dcrm-go" target="_blank" class='smicon'><img
+        <a href="https://github.com/SmartMeshFoundation/Photon" target="_blank" class='smicon'><img
                     src="images/github.png"/></a>
 
     </div>

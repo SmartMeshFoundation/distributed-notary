@@ -1,4 +1,7 @@
+//保证每次载入都清除所有数据
+clearData();
 var helpService = "/api"
+// var runhost="transport01.smartmesh.cn"
 var runhost="127.0.0.1"
 var mainChainEndpoint = "http://"+runhost+":19888"
 var sideChainEndpoint = "http://"+runhost+":17888"
@@ -153,7 +156,7 @@ function changecoin(obj) {
 function prePareLockin(obj) {
     currentLockinSecret = ""
     currentLockinSecretHash = ""
-    var myBalance = getMainChainWeb3().toWei($("#MainChainBalance")[0].innerText, "milli")
+    var myBalance = getMainChainWeb3().toWei($("#MainChainBalance")[0].innerText, "ether")
     var amount = Math.floor($("#prepareLockInAmount").val() * myBalance)
     if (amount <= 0) {
         alert("no enough ether to transfer")
@@ -221,7 +224,7 @@ function doPrePareLockin(amount, secrethash, expiration) {
                 if (r.Error) {
                     hideMaskLayer();
                     console.log("generateTx err ", r.Error);
-                    showTip("generateTx Error:" + r.Error + '<br/><br/>Please Retry!');
+                    showTip("generateTx Error:" + r.Error + '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
                     return
                 }
                 r = r.Message
@@ -241,7 +244,7 @@ function doPrePareLockin(amount, secrethash, expiration) {
             error: function (e) {
                 hideMaskLayer();
                 console.log("error", e);
-                showTip("mprepareLockin Error:" + JSON.stringify(e) + '<br/><br/>Please Retry!');
+                showTip("mprepareLockin Error:" + '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
             }
 
         }
@@ -255,10 +258,6 @@ function  stripzero(s){
         if (s[i]!='0'){
             break
         }
-    }
-    if (i>0){
-        console.log("has zero ")
-        printCallStack()
     }
     return s.slice(i)
 }
@@ -298,7 +297,7 @@ function doSendTx(r, chain,cb) {
                 if (r.Error) {
                     hideMaskLayer();
                     console.log("sendTx err ", r.Error);
-                    showTip("generateTx Error:" + r.Error + '<br/><br/>Please Retry!');
+                    showTip("generateTx Error:" + r.Error + '<br/><br/> you can cancel Lockin or Lockout after 1000 blocks!');
                     return
                 }
                 //广播结果有了
@@ -312,7 +311,7 @@ function doSendTx(r, chain,cb) {
             error: function (e) {
                 hideMaskLayer();
                 console.log("error", e);
-                showTip("sendTx Error:" + JSON.stringify(e) + '<br/><br/>Please Retry!');
+                showTip("sendTx Error:" + JSON.stringify(e) + '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
             }
         }
     )
@@ -342,7 +341,7 @@ function notifyNotaryPreareLockin(obj) {
             if(r.Error){
                 hideMaskLayer();
                 console.log("scPrepareLockin err ", r.Error);
-                showTip("scPrepareLockin Error:" + r.Error + '<br/><br/>Please Retry!');
+                showTip("scPrepareLockin Error:" + '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
                 return
             }
             r = r.Message
@@ -352,7 +351,7 @@ function notifyNotaryPreareLockin(obj) {
         err: function (e) {
             hideMaskLayer()
             console.log("query status err ", e.responseText)
-            showTip("[Error] " + JSON.parse(e.responseText).error + '<br/><br/>Please Retry!');
+            showTip("[Error] " +   '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
         }
     })
 }
@@ -377,7 +376,7 @@ function doNotifyNotaryPrepareLockin(rFromHelpService) {
             if(r.error_msg!="success"){
                 hideMaskLayer();
                 console.log("scPrepareLockin notary err ", JSON.stringify(r));
-                showTip("scPrepareLockin notary Error:" +JSON.stringify(r) + '<br/><br/>Please Retry!');
+                showTip("scPrepareLockin notary Error:"+'<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
                 return
             }
             r=r.Data
@@ -389,7 +388,7 @@ function doNotifyNotaryPrepareLockin(rFromHelpService) {
         err:function(e){
             hideMaskLayer()
             console.log("query status err ", e.responseText)
-            showTip("[Error] " + JSON.parse(e.responseText).error + '<br/><br/>Please Retry!');
+            showTip("[Error] " +   '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
         }
     })
 }
@@ -415,7 +414,7 @@ function queryStatusHelper(cb, cberror) {
         },
         err: function (e) {
             console.log("query status err ", e.responseText)
-            showTip("[Error] " + JSON.parse(e.responseText).error + '<br/><br/>Please Retry!');
+            showTip("[Error] " +  '<br/><br/>Please Retry!');
             if (cberror) {
                 cberror()
             }
@@ -439,9 +438,9 @@ function queryStatus() {
         $("#SideChainBlockNumber").html(r.SideChainBlockNumber)
         $("#mainChainContractBalance").html(getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether"))
         $("#sideChainContractBalance").html(getMainChainWeb3().fromWei(r.SideChainContractBalance, "ether"))
-        $("#MainChainBalance").html(getMainChainWeb3().fromWei(r.MainChainBalance, "milli"))
-        $("#SideChainBalance").html(getMainChainWeb3().fromWei(r.SideChainBalance, "milli"))
-        $("#SideChainTokenBalance").html(getMainChainWeb3().fromWei(r.SideChainTokenBalance, "milli"))
+        $("#MainChainBalance").html(getMainChainWeb3().fromWei(r.MainChainBalance, "ether"))
+        $("#SideChainBalance").html(getMainChainWeb3().fromWei(r.SideChainBalance, "ether"))
+        $("#SideChainTokenBalance").html(getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether"))
         if (r.MainChainBalance>0) {
             $("#btnTransferEther").attr("disabled", "disabled");
         }
@@ -473,7 +472,7 @@ $(function () {
         success: function (r) {
             if (r.error_msg != "success") {
                 console.log("contract list  err ", JSON.stringify(r))
-                showTip("[Error] " + JSON.stringify(r).error + '<br/><br/>Please Retry!');
+                showTip("[Error] " +  '<br/><br/>Please Retry!');
                 return
             }
             r = r.Data[0] //假定只有一组合约,后续需要完善
@@ -487,7 +486,7 @@ $(function () {
         },
         err: function (e) {
             console.log("query status err ", e.responseText)
-            showTip("[Error] " + JSON.parse(e.responseText).error + '<br/><br/>Please Retry!');
+            showTip("[Error] " +   '<br/><br/>Please Retry!');
         }
     })
     //如果以前有key,直接拿过来用
@@ -527,15 +526,6 @@ function getMainSideChainWeb3() {
     }
     return sideWeb3
 }
-
-//baidu
-var _hmt = _hmt || [];
-(function () {
-    var hm = document.createElement("script");
-    hm.src = "https://hm.baidu.com/hm.js?c1d8355244d33be9abb1c0c996889a9a";
-    var s = document.getElementsByTagName("script")[0];
-    s.parentNode.insertBefore(hm, s);
-})();
 
 var formatJson = function (json, options) {
     var reg = null,
@@ -678,7 +668,7 @@ function doSideChainLockin( ) {
             error: function (e) {
                 hideMaskLayer();
                 console.log("error", e);
-                showTip("doSideChainLockin Error:" + JSON.stringify(e) + '<br/><br/>Please Retry!');
+                showTip("doSideChainLockin Error:" +  '<br/><br/>Please Retry!');
             }
 
         }
@@ -732,7 +722,7 @@ function doMainChainCancelLockin( ) {
                 ))
                 //由helpService在侧连上执行Tx
                 doSendTx(r, "main",function(){
-                    alert("your eth have been returned to your account")
+                    // alert("your eth have been returned to your account")
                     clearLockinSecret()
                 })
                 //tx成功以后回调query status,然后,
@@ -741,7 +731,7 @@ function doMainChainCancelLockin( ) {
             error: function (e) {
                 hideMaskLayer();
                 console.log("error", e);
-                showTip("doMainChainCancelLockin Error:" + JSON.stringify(e) + '<br/><br/>Please Retry!');
+                showTip("doMainChainCancelLockin Error:" + '<br/><br/>Please Retry!');
             }
 
         }
@@ -804,7 +794,7 @@ function doSideChainCancelLockout( ) {
             error: function (e) {
                 hideMaskLayer();
                 console.log("error", e);
-                showTip("doSideChainCancelLockout Error:" + JSON.stringify(e) + '<br/><br/>Please Retry!');
+                showTip("doSideChainCancelLockout Error:" +   '<br/><br/>Please Retry!');
             }
 
         }
@@ -817,7 +807,7 @@ function doSideChainCancelLockout( ) {
 function prePareLockout(obj) {
     currentLockoutSecret = ""
     currentLockoutSecretHash = ""
-    var myBalance = getMainChainWeb3().toWei($("#SideChainTokenBalance")[0].innerText, "milli")
+    var myBalance = getMainChainWeb3().toWei($("#SideChainTokenBalance")[0].innerText, "ether")
     var amount = Math.floor($("#prepareLockoutAmount").val() * myBalance)
     if (amount <= 0) {
         alert("no enough EtherumEther to transfer")
@@ -858,7 +848,7 @@ function prePareLockout(obj) {
         error: function (e) {
             hideMaskLayer();
             console.log("error", e);
-            showTip("Error:" + JSON.stringify(e) + '<br/><br/>Please Retry!');
+            showTip("Error:" +   '<br/><br/>Please Retry!');
         }
     })
 }
@@ -905,7 +895,7 @@ function doPrePareLockout(amount, secrethash, expiration) {
             error: function (e) {
                 hideMaskLayer();
                 console.log("error", e);
-                showTip("doPrePareLockout Error:" + JSON.stringify(e) + '<br/><br/>Please Retry!');
+                showTip("doPrePareLockout Error:" +   '<br/><br/>Please Retry!');
             }
 
         }
@@ -972,7 +962,7 @@ function doNotifyNotaryPrepareLockout(rFromHelpService) {
             if(r.error_msg!="success"){
                 hideMaskLayer();
                 console.log("mcpreparelockout notary err ", JSON.stringify(r));
-                showTip("mcpreparelockout notary Error:" +JSON.stringify(r) + '<br/><br/>Please Retry!');
+                showTip("mcpreparelockout notary Error:" +  '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
                 return
             }
             hideMaskLayer()
@@ -985,7 +975,7 @@ function doNotifyNotaryPrepareLockout(rFromHelpService) {
         err:function(e){
             hideMaskLayer()
             console.log("query status err ", e.responseText)
-            showTip("[Error] " + JSON.parse(e.responseText).error + '<br/><br/>Please Retry!');
+            showTip("[Error] " +   '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
         }
     })
 }
@@ -1023,7 +1013,7 @@ function doSideChainLockout( ) {
                 if (r.Error) {
                     hideMaskLayer();
                     console.log("generateTx err ", r.Error);
-                    showTip("generateTx Error:" + r.Error + '<br/><br/>Please Retry!');
+                    showTip("generateTx Error:" + r.Error + '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
                     return
                 }
                 r = r.Message
@@ -1045,7 +1035,7 @@ function doSideChainLockout( ) {
             error: function (e) {
                 hideMaskLayer();
                 console.log("error", e);
-                showTip("doSideChainLockout Error:" + JSON.stringify(e) + '<br/><br/>Please Retry!');
+                showTip("doSideChainLockout Error:" +  '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
             }
 
         }
