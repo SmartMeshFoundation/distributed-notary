@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -12,6 +13,9 @@ var MainChainEndpoint = "http://127.0.0.1:8545"
 
 //侧链接入点
 var SideChainEndpoint = "http://127.0.0.1:8545"
+
+//default port
+var Port = 8080
 
 func RestMain() {
 	api := rest.NewApi()
@@ -34,6 +38,6 @@ func RestMain() {
 	http.Handle("/api/", http.StripPrefix("/api", api.MakeHandler()))
 
 	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("./app"))))
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("port=%d,mainchain=%s,sidechain=%s", Port, MainChainEndpoint, SideChainEndpoint)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", Port), nil))
 }
