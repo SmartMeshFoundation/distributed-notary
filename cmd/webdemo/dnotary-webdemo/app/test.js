@@ -18,6 +18,8 @@ var currentLockoutSecretHash=localStorage["currentLockoutSecretHash"]
 var notaryPrivateKeyId; //公证人操作合约使用的私钥编号
 var currentMainChainBlockNumber;
 var currentSideChainBlockNuber
+var mainChainBalance; //account balance on mainchain
+var sideChainBalance; //account token balance on sidechain
 // localStorage.removeItem("myaccount")
 $(function () {
     $(".btcpanel").hide();
@@ -83,7 +85,7 @@ function createKey(obj) {
                     showTip("Error:" + JSON.stringify(data) + '<br/><br/>Please Retry!');
                     return
                 }
-                // $("#address").html('<a href="https://ropsten.etherscan.io/address/'+data.Message+'">'+data.Message+'</a>')
+                // $("#address").html('<a target="_blank" href="https://ropsten.etherscan.io/address/'+data.Message+'">'+data.Message+'</a>')
                 $("#address").html(data.Message)
                 myaccount = data.Message
                 localStorage["myaccount"] = myaccount
@@ -162,7 +164,7 @@ function changecoin(obj) {
 function prePareLockin(obj) {
     currentLockinSecret = ""
     currentLockinSecretHash = ""
-    var myBalance = getMainChainWeb3().toWei($("#MainChainBalance")[0].innerText, "ether")
+    var myBalance = mainChainBalance
     var amount = Math.floor($("#prepareLockInAmount").val() * myBalance)
     if (amount <= 0) {
         alert("no enough ether to transfer")
@@ -292,7 +294,12 @@ function doSendTx(r, chain,cb) {
     req.Tx.r = "0x" + stripzero(obj.r)
     req.Tx.s = "0x" + stripzero(obj.s)
     req.Tx.v = "0x0"
-    updateMaskLayer("send tx to " + chain + "...")
+    if(chain=="main") {
+        updateMaskLayer("send tx to " + mainChainContract + " on Ethereum Ropsten...")
+    }else{
+        updateMaskLayer("send tx to " + sideChainContract + " on Spectrum Testnet...")
+    }
+
     $.ajax(
         {
             url: helpService + "/sendTx",
@@ -441,20 +448,19 @@ function queryStatus(obj) {
         }
         currentMainChainBlockNumber = r.MainChainBlockNumber
         currentSideChainBlockNuber = r.SideChainBlockNumber
+        mainChainBalance=r.MainChainBalance
+        sideChainBalance=r.SideChainTokenBalance
+
         $("#MainChainBlockNumber").html(r.MainChainBlockNumber)
         $("#SideChainBlockNumber").html(r.SideChainBlockNumber)
 
-        $("#mainChainContractBalance").html('<a href="https://ropsten.etherscan.io/address/'+mainChainContract+'">'+  getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether")+" Ether</a>")   //(getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether"))
+        $("#mainChainContractBalance").html('<a target="_blank" href="https://ropsten.etherscan.io/address/'+mainChainContract+'">'+  getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether")+" Ether</a>")   //(getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether"))
         $("#sideChainContractBalance").html(getMainChainWeb3().fromWei(r.SideChainContractBalance, "ether"))
-
-        if(r.MainChainBalance>0) {
-            $("#MainChainBalance").html('<a href="https://ropsten.etherscan.io/address/'+myaccount+'">'+  getMainChainWeb3().fromWei(r.MainChainBalance, "ether")+" Ether</a>")
-            $("#SideChainBalance").html ('<a href="https://chain.smartmesh.io/address.html?address='+myaccount+'">'+getMainChainWeb3().fromWei(r.SideChainBalance, "ether") +' SMT</a>')
+        if(myaccount) {
+            $("#MainChainBalance").html('<a  target="_blank" href="https://ropsten.etherscan.io/address/'+myaccount+'">'+  getMainChainWeb3().fromWei(r.MainChainBalance, "ether")+" Ether</a>")
+            $("#SideChainBalance").html ('<a target="_blank" href="https://chain.smartmesh.io/address.html?address='+myaccount+'">'+getMainChainWeb3().fromWei(r.SideChainBalance, "ether") +' SMT</a>')
             $("#SideChainTokenBalance").html(getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether")+ " EtherToken")
-        } else{
-            $("#MainChainBalance").html(getMainChainWeb3().fromWei(r.MainChainBalance, "ether")+ " Ether")
-            $("#SideChainBalance").html(getMainChainWeb3().fromWei(r.SideChainBalance, "ether")+ " SMT")
-            $("#SideChainTokenBalance").html(getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether")+" EtherToken")
+
         }
         if (myaccount){
             $("#btnTransferEther").attr("disabled", false);
@@ -519,7 +525,7 @@ $(function () {
         $("#privateKey").attr("readonly", "readonly");
         key = new Bitcoin.ECKey(localStorage["mykey"])
         $("#privateKey").val(key.getBitcoinHexFormat())
-        // $("#address").html('<a href="https://ropsten.etherscan.io/address/'+myaccount+'">'+myaccount+'</a>')
+        // $("#address").html('<a target="_blank" href="https://ropsten.etherscan.io/address/'+myaccount+'">'+myaccount+'</a>')
         $('#tab_content').show();
     }
     queryStatus()
@@ -732,7 +738,7 @@ function doMainChainCancelLockin( ) {
                 if (r.Error) {
                     hideMaskLayer();
                     console.log("generateTx err ", r.Error);
-                    showTip("generateTx Error:" + r.Error + '<br/><br/>Please Retry!');
+                    showTip('You must wait at least 1000 blocks! <br/><br/>Please Retry Later!');
                     return
                 }
                 r = r.Message
@@ -795,7 +801,7 @@ function doSideChainCancelLockout( ) {
                 if (r.Error) {
                     hideMaskLayer();
                     console.log("generateTx err ", r.Error);
-                    showTip("generateTx Error:" + r.Error + '<br/><br/>Please Retry!');
+                    showTip('You must wait at least 1000 blocks , Please Retry Later!');
                     return
                 }
                 r = r.Message
@@ -831,7 +837,7 @@ function doSideChainCancelLockout( ) {
 function prePareLockout(obj) {
     currentLockoutSecret = ""
     currentLockoutSecretHash = ""
-    var myBalance = getMainChainWeb3().toWei($("#SideChainTokenBalance")[0].innerText, "ether")
+    var myBalance =sideChainBalance
     var amount = Math.floor($("#prepareLockoutAmount").val() * myBalance)
     if (amount <= 0) {
         alert("no enough EtherumEther to transfer")
