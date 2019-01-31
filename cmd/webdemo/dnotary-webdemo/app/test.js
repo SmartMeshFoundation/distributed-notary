@@ -2,6 +2,7 @@
 clearData();
 var helpService = "/api"
  var runhost=document.domain
+// var runhost="193.112.248.133"
 var mainChainEndpoint = "http://"+runhost+":19888"
 var sideChainEndpoint = "http://"+runhost+":17888"
 var pagetimer;
@@ -82,6 +83,7 @@ function createKey(obj) {
                     showTip("Error:" + JSON.stringify(data) + '<br/><br/>Please Retry!');
                     return
                 }
+                // $("#address").html('<a href="https://ropsten.etherscan.io/address/'+data.Message+'">'+data.Message+'</a>')
                 $("#address").html(data.Message)
                 myaccount = data.Message
                 localStorage["myaccount"] = myaccount
@@ -387,7 +389,8 @@ function doNotifyNotaryPrepareLockin(rFromHelpService) {
             console.log("scPrepareLockin help service:  " + JSON.stringify(r))
             queryStatus()
             //lockin for side chain
-            sideChainLockin()
+            //等待5秒钟
+            setTimeout(sideChainLockin,5000)
         },
         err:function(e){
             hideMaskLayer()
@@ -427,7 +430,7 @@ function queryStatusHelper(cb, cberror) {
     })
 }
 
-function queryStatus() {
+function queryStatus(obj) {
     queryStatusHelper(function (r) {
         if (r.Error) {
             console.log("query status err ", r.Error)
@@ -440,11 +443,19 @@ function queryStatus() {
         currentSideChainBlockNuber = r.SideChainBlockNumber
         $("#MainChainBlockNumber").html(r.MainChainBlockNumber)
         $("#SideChainBlockNumber").html(r.SideChainBlockNumber)
-        $("#mainChainContractBalance").html(getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether"))
+
+        $("#mainChainContractBalance").html('<a href="https://ropsten.etherscan.io/address/'+mainChainContract+'">'+  getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether")+" Ether</a>")   //(getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether"))
         $("#sideChainContractBalance").html(getMainChainWeb3().fromWei(r.SideChainContractBalance, "ether"))
-        $("#MainChainBalance").html(getMainChainWeb3().fromWei(r.MainChainBalance, "ether"))
-        $("#SideChainBalance").html(getMainChainWeb3().fromWei(r.SideChainBalance, "ether"))
-        $("#SideChainTokenBalance").html(getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether"))
+
+        if(r.MainChainBalance>0) {
+            $("#MainChainBalance").html('<a href="https://ropsten.etherscan.io/address/'+myaccount+'">'+  getMainChainWeb3().fromWei(r.MainChainBalance, "ether")+" Ether</a>")
+            $("#SideChainBalance").html ('<a href="https://chain.smartmesh.io/address.html?address='+myaccount+'">'+getMainChainWeb3().fromWei(r.SideChainBalance, "ether") +' SMT</a>')
+            $("#SideChainTokenBalance").html(getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether")+ " EtherToken")
+        } else{
+            $("#MainChainBalance").html(getMainChainWeb3().fromWei(r.MainChainBalance, "ether")+ " Ether")
+            $("#SideChainBalance").html(getMainChainWeb3().fromWei(r.SideChainBalance, "ether")+ " SMT")
+            $("#SideChainTokenBalance").html(getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether")+" EtherToken")
+        }
         if (myaccount){
             $("#btnTransferEther").attr("disabled", false);
         } else{
@@ -468,6 +479,9 @@ function queryStatus() {
             $("#btnPrepareLockout").attr("disabled",false)
             $("#btnSideChainCancelLockout").attr("disabled",true)
         }
+        if(obj){
+            $("#address").focus()
+        }
     })
 }
 
@@ -488,8 +502,8 @@ $(function () {
             mainChainContract = r.mc_locked_contract_address
             sideChainContract = r.sc_token
             notaryPrivateKeyId = r.sc_token_owner_key
-            $("#mainChainContract").html(mainChainContract)
-            $("#sideChainContract").html(sideChainContract)
+            $("#mainChainContract").html( mainChainContract)
+            $("#sideChainContract").html( sideChainContract)
             //合约地址有了,更新状态吧.
             queryStatus()
         },
@@ -505,7 +519,7 @@ $(function () {
         $("#privateKey").attr("readonly", "readonly");
         key = new Bitcoin.ECKey(localStorage["mykey"])
         $("#privateKey").val(key.getBitcoinHexFormat())
-        $("#address").html(myaccount)
+        // $("#address").html('<a href="https://ropsten.etherscan.io/address/'+myaccount+'">'+myaccount+'</a>')
         $('#tab_content').show();
     }
     queryStatus()
@@ -975,11 +989,10 @@ function doNotifyNotaryPrepareLockout(rFromHelpService) {
                 showTip("mcpreparelockout notary Error:" +  '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
                 return
             }
-            hideMaskLayer()
             r=r.Data
             console.log("mcpreparelockout help service:  " + JSON.stringify(r))
             queryStatus()
-            sideChainLockout()
+            setTimeout(mainChainLockout,5000)
 
         },
         err:function(e){
@@ -992,18 +1005,18 @@ function doNotifyNotaryPrepareLockout(rFromHelpService) {
 
 
 //-------------------------- tx  lockin
-function sideChainLockout(obj) {
+function mainChainLockout(obj) {
     if(!currentLockinSecret || !currentLockinSecretHash) {
         alert("must prepare lockout and notify notary first")
         return
     }
     updateMaskLayer("get ETH Token on Ethereum,please wait ...")
     $("#signTransaction").text('');
-    doSideChainLockout()
+    doMainChainLockout()
 }
 
 //secret,secrethash已经生成好了,直接用吧.
-function doSideChainLockout( ) {
+function doMainChainLockout( ) {
     var req = {}
     req.From = myaccount
     req.ContractAddress = sideChainContract
@@ -1037,15 +1050,15 @@ function doSideChainLockout( ) {
                 ))
                 //由helpService在侧连上执行Tx
                 doSendTx(r, "main",function(){
-                    alert("your EthereumToken have been moved to ethereum as eth")
-                    clearLockoutSecret()
                     hideMaskLayer()
+                    clearLockoutSecret()
+                    alert("your EthereumToken have been moved to ethereum as eth")
                 })
             },
             error: function (e) {
                 hideMaskLayer();
                 console.log("error", e);
-                showTip("doSideChainLockout Error:" +  '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
+                showTip("doMainChainLockout Error:" +  '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
             }
 
         }
