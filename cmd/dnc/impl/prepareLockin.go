@@ -51,7 +51,7 @@ func prepareLockin(ctx *cli.Context) error {
 
 	// 1. init connect
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
-	c, err := ethclient.DialContext(ctx2, globalConfig.EthRPCEndpoint)
+	c, err := ethclient.DialContext(ctx2, GlobalConfig.EthRPCEndpoint)
 	cancelFunc()
 	if err != nil {
 		fmt.Println("connect to eth fail : ", err)
@@ -66,7 +66,7 @@ func prepareLockin(ctx *cli.Context) error {
 		os.Exit(-1)
 	}
 	// 3. get auth
-	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserPassword)
+	privateKey, err := getPrivateKey(GlobalConfig.EthUserAddress, GlobalConfig.EthUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -77,7 +77,7 @@ func prepareLockin(ctx *cli.Context) error {
 	secretHash := utils.ShaSecret(secret[:])
 	expiration2 := getEthLastBlockNumber(conn) + expiration
 	fmt.Printf(" ======> [secret=%s, secretHash=%s]\n", secret.String(), secretHash.String())
-	globalConfig.RunTime = &runTime{
+	GlobalConfig.RunTime = &runTime{
 		Secret:     secret.String(),
 		SecretHash: secretHash.String(),
 	}

@@ -67,7 +67,7 @@ func StartMain() {
 }
 
 func getPrivateKey(addressHex, password string) (privateKey *ecdsa.PrivateKey, err error) {
-	am := accounts.NewAccountManager(globalConfig.Keystore)
+	am := accounts.NewAccountManager(GlobalConfig.Keystore)
 	privateKeyBin, err := am.GetPrivateKey(common.HexToAddress(addressHex), password)
 	if err != nil {
 		log.Error("load private key err : %s", err.Error())
@@ -98,7 +98,7 @@ func getSmcLastBlockNumber(c *smcclient.SafeEthClient) uint64 {
 }
 
 func getSCTokenByMCName(mcName string) *service.ScTokenInfoToResponse {
-	for _, sctoken := range globalConfig.SCTokenList {
+	for _, sctoken := range GlobalConfig.SCTokenList {
 		if sctoken.MCName == mcName {
 			return &sctoken
 		}
@@ -107,11 +107,11 @@ func getSCTokenByMCName(mcName string) *service.ScTokenInfoToResponse {
 }
 
 func getMCContractAddressByMCName(mcName string) common.Address {
-	if globalConfig.SCTokenList == nil || len(globalConfig.SCTokenList) == 0 {
+	if GlobalConfig.SCTokenList == nil || len(GlobalConfig.SCTokenList) == 0 {
 		fmt.Println("must run dnc config refresh first")
 		os.Exit(-1)
 	}
-	for _, sctoken := range globalConfig.SCTokenList {
+	for _, sctoken := range GlobalConfig.SCTokenList {
 		if sctoken.MCName == mcName {
 			return sctoken.MCLockedContractAddress
 		}
@@ -122,11 +122,11 @@ func getMCContractAddressByMCName(mcName string) common.Address {
 }
 
 func getSCContractAddressByMCName(mcName string) common.Address {
-	if globalConfig.SCTokenList == nil || len(globalConfig.SCTokenList) == 0 {
+	if GlobalConfig.SCTokenList == nil || len(GlobalConfig.SCTokenList) == 0 {
 		fmt.Println("must run dnc config refresh first")
 		os.Exit(-1)
 	}
-	for _, sctoken := range globalConfig.SCTokenList {
+	for _, sctoken := range GlobalConfig.SCTokenList {
 		if sctoken.MCName == mcName {
 			return sctoken.SCToken
 		}
@@ -137,16 +137,16 @@ func getSCContractAddressByMCName(mcName string) common.Address {
 }
 
 func eth2Wei(ethAmount int64) *big.Int {
-	return new(big.Int).Mul(big.NewInt(int64(params.Ether)), big.NewInt(ethAmount))
+	return new(big.Int).Mul(big.NewInt(int64(params.Shannon)), big.NewInt(ethAmount))
 }
 
 func wei2Eth(weiAmount *big.Int) *big.Int {
-	return new(big.Int).Div(weiAmount, big.NewInt(int64(params.Ether)))
+	return new(big.Int).Div(weiAmount, big.NewInt(int64(params.Shannon)))
 }
 
 func getEthConn() *etclient.SafeEthClient {
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
-	c, err := ethclient.DialContext(ctx2, globalConfig.EthRPCEndpoint)
+	c, err := ethclient.DialContext(ctx2, GlobalConfig.EthRPCEndpoint)
 	cancelFunc()
 	if err != nil {
 		fmt.Println("connect to eth fail : ", err)
@@ -156,7 +156,7 @@ func getEthConn() *etclient.SafeEthClient {
 }
 func getSmcConn() *smcclient.SafeEthClient {
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
-	c, err := ethclient.DialContext(ctx2, globalConfig.SmcRPCEndpoint)
+	c, err := ethclient.DialContext(ctx2, GlobalConfig.SmcRPCEndpoint)
 	cancelFunc()
 	if err != nil {
 		fmt.Println("connect to eth fail : ", err)
@@ -166,13 +166,13 @@ func getSmcConn() *smcclient.SafeEthClient {
 }
 
 func getSCContractProxy(mcName string) (*smcclient.SafeEthClient, *smcproxy.SideChainErc20TokenProxy) {
-	if globalConfig.SCTokenList == nil {
+	if GlobalConfig.SCTokenList == nil {
 		fmt.Println("must run dnc config refresh first")
 		os.Exit(-1)
 	}
 	// 1. init connect
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
-	c, err := ethclient.DialContext(ctx2, globalConfig.SmcRPCEndpoint)
+	c, err := ethclient.DialContext(ctx2, GlobalConfig.SmcRPCEndpoint)
 	cancelFunc()
 	if err != nil {
 		fmt.Println("connect to eth fail : ", err)
@@ -197,13 +197,13 @@ func getSCContractProxy(mcName string) (*smcclient.SafeEthClient, *smcproxy.Side
 }
 
 func getMCContractProxy(mcName string) (*etclient.SafeEthClient, *ethproxy.LockedEthereumProxy) {
-	if globalConfig.SCTokenList == nil {
+	if GlobalConfig.SCTokenList == nil {
 		fmt.Println("must run dnc config refresh first")
 		os.Exit(-1)
 	}
 	// 1. init connect
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
-	c, err := ethclient.DialContext(ctx2, globalConfig.EthRPCEndpoint)
+	c, err := ethclient.DialContext(ctx2, GlobalConfig.EthRPCEndpoint)
 	cancelFunc()
 	if err != nil {
 		fmt.Println("connect to eth fail : ", err)
