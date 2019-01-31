@@ -144,6 +144,15 @@ func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
 		panic(err)
 	}
 	req.SetSignature(sig)
+	if signer == r.GetSigner() {
+		return true
+	}
+	sig[64] = 1
+	signer, err = utils.Ecrecover(dataHash, sig)
+	if err != nil {
+		panic(err)
+	}
+	req.SetSignature(sig)
 	return signer == r.GetSigner()
 }
 

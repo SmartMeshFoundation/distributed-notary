@@ -11,7 +11,7 @@ import (
 )
 
 func (as *AdminService) onDebugTransferToAccountRequest(req *userapi.DebugTransferToAccountRequest) {
-	amount := new(big.Int).Mul(big.NewInt(ethparams.Ether), big.NewInt(10))
+	amount := new(big.Int).Mul(big.NewInt(ethparams.Finney), big.NewInt(1000))
 	namespace := []string{smcevents.ChainName, ethevents.ChainName}
 	for _, name := range namespace {
 		c, err := as.dispatchService.getChainByName(name)

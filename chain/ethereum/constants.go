@@ -3,12 +3,11 @@ package ethereum
 import "time"
 
 // 事件/交易确认块数
-var confirmBlockNumber uint64
+var confirmBlockNumber uint64 = 0
 
 // 轮询间隔
-var pollPeriod = 7500 * time.Millisecond
-
-//var pollPeriod = 500 * time.Millisecond
+//var pollPeriod = 7500 * time.Millisecond
+var pollPeriod = 500 * time.Millisecond
 
 // NewBlockNumber日志间隔
 var logPeriod = uint64(20)

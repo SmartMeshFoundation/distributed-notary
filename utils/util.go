@@ -87,6 +87,32 @@ func Ecrecover(hash common.Hash, signature []byte) (addr common.Address, err err
 		err = fmt.Errorf("signature errr, len=%d,signature=%s", len(signature), hex.EncodeToString(signature))
 		return
 	}
+	sig := make([]byte, len(signature))
+	copy(sig, signature)
+
+	if sig[len(sig)-1] >= 27 {
+		sig[len(sig)-1] -= 27 //why?
+	}
+	//todo 为了适应js签名格式,他的v总是0,如果失败,就再试一次v=1 js签名完善以后可以移除.
+	pubkey, err := crypto.Ecrecover(hash[:], sig)
+	if err != nil {
+		fmt.Println("0 error")
+		sig[64] = 1
+		pubkey, err = crypto.Ecrecover(hash[:], sig)
+		if err != nil {
+			return
+		}
+	}
+	addr = PublicKeyToAddress(pubkey)
+	return
+}
+
+//EcrecoverOnce is a wrapper for crypto.Ecrecover
+func EcrecoverOnce(hash common.Hash, signature []byte) (addr common.Address, err error) {
+	if len(signature) != 65 {
+		err = fmt.Errorf("signature errr, len=%d,signature=%s", len(signature), hex.EncodeToString(signature))
+		return
+	}
 	var needAdd bool
 	if signature[len(signature)-1] >= 27 {
 		needAdd = true
