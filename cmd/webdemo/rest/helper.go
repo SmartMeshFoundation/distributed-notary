@@ -88,10 +88,10 @@ func bytes2Address(pubkey []byte) common.Address {
 }
 
 type statusReq struct {
-	MainChainContract common.Address
-	SideChainContract common.Address
-	Account           common.Address
-	LockSecretHash    common.Hash
+	MainChainContract common.Address `json:",omitempty"`
+	SideChainContract common.Address `json:",omitempty"`
+	Account           common.Address `json:",omitempty"`
+	LockSecretHash    string         `json:",omitempty"`
 }
 type lockStruct struct {
 	SecretHash common.Hash
@@ -127,6 +127,7 @@ func queryStatus(w rest.ResponseWriter, r *rest.Request) {
 	var req statusReq
 	err = r.DecodeJsonPayload(&req)
 	if err != nil {
+		log.Trace(fmt.Sprintf("decode req err %s", err))
 		return
 	}
 	mclient, err := ethclient.Dial(MainChainEndpoint)
