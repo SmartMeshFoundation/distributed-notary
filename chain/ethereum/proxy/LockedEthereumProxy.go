@@ -7,9 +7,11 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/nkbai/log"
 )
 
 // LockedEthereumProxy :
@@ -70,7 +72,12 @@ func (p *LockedEthereumProxy) PrepareLockin(opts *bind.TransactOpts, accountHex 
 		return
 	}
 	ctx := context.Background()
-	_, err = bind.WaitMined(ctx, p.conn, tx)
+	r, err := bind.WaitMined(ctx, p.conn, tx)
+	if r.Status != types.ReceiptStatusSuccessful {
+		err = fmt.Errorf("call contract PrepareLockin success but tx %s failed", r.TxHash.String())
+		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
+		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
+	}
 	return
 }
 
@@ -83,7 +90,12 @@ func (p *LockedEthereumProxy) Lockin(opts *bind.TransactOpts, accountHex string,
 		return
 	}
 	ctx := context.Background()
-	_, err = bind.WaitMined(ctx, p.conn, tx)
+	r, err := bind.WaitMined(ctx, p.conn, tx)
+	if r.Status != types.ReceiptStatusSuccessful {
+		err = fmt.Errorf("call contract Lockin success but tx %s failed", r.TxHash.String())
+		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
+		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
+	}
 	return
 }
 
@@ -96,7 +108,12 @@ func (p *LockedEthereumProxy) CancelLockin(opts *bind.TransactOpts, accountHex s
 		return
 	}
 	ctx := context.Background()
-	_, err = bind.WaitMined(ctx, p.conn, tx)
+	r, err := bind.WaitMined(ctx, p.conn, tx)
+	if r.Status != types.ReceiptStatusSuccessful {
+		err = fmt.Errorf("call contract CancelLockin success but tx %s failed", r.TxHash.String())
+		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
+		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
+	}
 	return
 }
 
@@ -110,7 +127,12 @@ func (p *LockedEthereumProxy) PrepareLockout(opts *bind.TransactOpts, accountHex
 		return
 	}
 	ctx := context.Background()
-	_, err = bind.WaitMined(ctx, p.conn, tx)
+	r, err := bind.WaitMined(ctx, p.conn, tx)
+	if r.Status != types.ReceiptStatusSuccessful {
+		err = fmt.Errorf("call contract PrepareLockout success but tx %s failed", r.TxHash.String())
+		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
+		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
+	}
 	return
 }
 
@@ -123,7 +145,12 @@ func (p *LockedEthereumProxy) Lockout(opts *bind.TransactOpts, accountHex string
 		return
 	}
 	ctx := context.Background()
-	_, err = bind.WaitMined(ctx, p.conn, tx)
+	r, err := bind.WaitMined(ctx, p.conn, tx)
+	if r.Status != types.ReceiptStatusSuccessful {
+		err = fmt.Errorf("call contract Lockout success but tx %s failed", r.TxHash.String())
+		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
+		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
+	}
 	return
 }
 
@@ -136,6 +163,11 @@ func (p *LockedEthereumProxy) CancelLockout(opts *bind.TransactOpts, accountHex 
 		return
 	}
 	ctx := context.Background()
-	_, err = bind.WaitMined(ctx, p.conn, tx)
+	r, err := bind.WaitMined(ctx, p.conn, tx)
+	if r.Status != types.ReceiptStatusSuccessful {
+		err = fmt.Errorf("call contract CancelLockout success but tx %s failed", r.TxHash.String())
+		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
+		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
+	}
 	return
 }
