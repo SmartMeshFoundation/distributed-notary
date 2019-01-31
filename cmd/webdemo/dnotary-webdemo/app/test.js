@@ -1,7 +1,7 @@
 //保证每次载入都清除所有数据
 clearData();
 var helpService = "/api"
- var runhost=document.domain 
+ var runhost=document.domain
 var mainChainEndpoint = "http://"+runhost+":19888"
 var sideChainEndpoint = "http://"+runhost+":17888"
 var pagetimer;
@@ -106,7 +106,12 @@ function transfer10Ether(obj) {
         {
             url: $("#selNode").val() + "/api/1/debug/transfer-to-account/" + myaccount,
             type: "get",
-            success: function (data) {
+            success: function (r) {
+                if(r.error_msg!="success"){
+                    hideMaskLayer();
+                    showTip("transfer test ether and smt error "+'<br/><br/>Please Retry!');
+                    return
+                }
                 hideMaskLayer()
                 queryStatus()
                 alert("your account already have test token.")
