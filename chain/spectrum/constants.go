@@ -3,7 +3,7 @@ package spectrum
 import "time"
 
 // 事件/交易确认块数
-var confirmBlockNumber uint64 = 0
+var confirmBlockNumber uint64
 
 // 轮询间隔
 var pollPeriod = 500 * time.Millisecond
