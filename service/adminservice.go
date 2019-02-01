@@ -15,7 +15,6 @@ import (
 	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -277,7 +276,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 	if err != nil {
 		return
 	}
-	tokenName := c.GetChainName() + params.SCTokenNameSuffix
+	tokenName := "EtherToken"
 	return as.distributedDeployOnSpectrum(c, privateKeyInfo, tokenName)
 }
 
