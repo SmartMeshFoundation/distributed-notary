@@ -115,7 +115,7 @@
                     <label > Balance: </label> <span id="mainChainContractBalance"  style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
 
                     <br/><br/>
-                    <label > EthereumToken: </label> <span id="sideChainContract" style="color:#151515; margin-left: 0px; font-size:16px;"> </span>
+                    <label > Spectrum Testnet EtherToken: </label> <span id="sideChainContract" style="color:#151515; margin-left: 0px; font-size:16px;"> </span>
                     <br/> <label > Balance: </label> <span id="sideChainContractBalance"  style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
 
                     <br/>
@@ -143,11 +143,11 @@
                 <div class="form-group">
                     <label >Account Address: </label>  <span id="address" style="color:#151515; margin-left: 0px; font-size:16px;"> </span>
                     <br/>
-                    <label >Ethereum Ropsten balance: </label>  <span id="MainChainBalance" style="color:#31708f; margin-left: 0px; font-size:16px;">  </span>
+                    <label >Ethereum Ropsten Balance: </label>  <span id="MainChainBalance" style="color:#31708f; margin-left: 0px; font-size:16px;">  </span>
                     <br/>
-                    <label >Spectrum TestNet balance: </label>  <span id="SideChainBalance" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
+                    <label >Spectrum TestNet Balance: </label>  <span id="SideChainBalance" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
                     <br/>
-                    <label >Spectrum TestNet ethereum token balance: </label>  <span id="SideChainTokenBalance" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
+                    <label >Spectrum TestNet EtherToken Balance: </label>  <span id="SideChainTokenBalance" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
                     <br/>
                     <div class="form-group  form-inline">
                         <button  type="button" class="btn btn-primary" onclick="queryStatus(this)">
@@ -175,7 +175,7 @@
                     Generate Private Key
                 </button>
                 <button id="btnTransferEther" type="button" class="btn btn-primary" onclick="transfer10Ether(this)">
-                    Transfer A few Ether to This Account
+                    Transfer some Coins to These Accounts
                 </button>
                 <div id="newAccount">
                 </div>
@@ -217,7 +217,7 @@
                                  </select>
                                 <button id="btnPrepareLockin" type="button" class="btn btn-primary  "
                                         onclick="prePareLockin(this)">
-                                   transfer eth to Spectrum
+                                   Transfer ETH to Spectrum
                                 </button>
                                 <button id="btnMainChainCancelLockin" type="button" class="btn btn-primary "
                                         onclick="mainChainCancelLockin(this)">
@@ -262,7 +262,7 @@
                                 </select>
                                 <button id="btnPrepareLockout" type="button" class="btn btn-primary  "
                                         onclick="prePareLockout(this)">
-                                    transfer EthereumToken to etherum
+                                    Transfer EthereumToken to etherum
                                 </button>
                                 <button id="btnSideChainCancelLockout" type="button" class="btn btn-primary "
                                         onclick="sideChainCancelLockout(this)">
