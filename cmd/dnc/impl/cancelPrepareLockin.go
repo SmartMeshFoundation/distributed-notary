@@ -29,11 +29,11 @@ var cpliCmd = cli.Command{
 
 func cancelPrepareLockin(ctx *cli.Context) error {
 	contract := getMCContractAddressByMCName(ctx.String("mcname"))
-	fmt.Printf("start to cancel prepare lockin :\n ======> [contract=%s account=%s]\n", contract.String(), globalConfig.EthUserAddress)
+	fmt.Printf("start to cancel prepare lockin :\n ======> [contract=%s account=%s]\n", contract.String(), GlobalConfig.EthUserAddress)
 
 	// 1. init connect
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
-	c, err := ethclient.DialContext(ctx2, globalConfig.EthRPCEndpoint)
+	c, err := ethclient.DialContext(ctx2, GlobalConfig.EthRPCEndpoint)
 	cancelFunc()
 	if err != nil {
 		fmt.Println("connect to eth fail : ", err)
@@ -48,14 +48,14 @@ func cancelPrepareLockin(ctx *cli.Context) error {
 		os.Exit(-1)
 	}
 	// 3. get auth
-	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserPassword)
+	privateKey, err := getPrivateKey(GlobalConfig.EthUserAddress, GlobalConfig.EthUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
 	// 4. call pli
 	auth := bind.NewKeyedTransactor(privateKey)
-	err = cp.CancelLockin(auth, globalConfig.EthUserAddress)
+	err = cp.CancelLockin(auth, GlobalConfig.EthUserAddress)
 	if err != nil {
 		fmt.Println("cancel prepare lockin err : ", err.Error())
 		os.Exit(-1)

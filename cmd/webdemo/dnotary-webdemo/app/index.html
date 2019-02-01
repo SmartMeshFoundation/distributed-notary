@@ -79,12 +79,6 @@
         .btn-primary{
             background-color: #5176ED;border-color: #5176ED;
         }
-        .btn-primary:hover {
-            background: #405EBD;
-        }
-        .btn-primary:focus {
-            background: #405EBD;
-        }
     </style>
 </head>
 <body>
@@ -114,20 +108,19 @@
         <div class="panel-body">
             <form>
                 <div class="form-group">
-                    <label > Ethereum </label> <span id="mainChainContract" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
+                    <label > Ethereum Ropsten: </label> <span id="mainChainContract" style="color:#151515; margin-left: 0px; font-size:16px;"> </span>
                     <br/>
                     <label > Balance: </label> <span id="mainChainContractBalance"  style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
-                    <span   style="color:#31708f; margin-left: 0px; font-size:16px;">Ether </span>
 
                     <br/><br/>
-                    <label > EthereumToken </label> <span id="sideChainContract" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
-                    <br/> <label > Balance: </label> <span id="sideChainContractBalance"  style="color:#31708f; margin-left: 0px; font-size:16px;"> </span> <span   style="color:#31708f; margin-left: 0px; font-size:16px;">EtherToken </span>
+                    <label > EthereumToken: </label> <span id="sideChainContract" style="color:#151515; margin-left: 0px; font-size:16px;"> </span>
+                    <br/> <label > Balance: </label> <span id="sideChainContractBalance"  style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
 
                     <br/>
                     <br/>
-                    <label >Etherum TestNet block number:</label>  <span id="MainChainBlockNumber" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
+                    <label >Etherum Ropsten block number:</label>  <span id="MainChainBlockNumber" style="color:#151515; margin-left: 0px; font-size:16px;"> </span>
                     <br/>
-                    <label >Spectrum TestNet block number:</label>  <span id="SideChainBlockNumber" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
+                    <label >Spectrum TestNet block number:</label>  <span id="SideChainBlockNumber" style="color:#151515; margin-left: 0px; font-size:16px;"> </span>
                     <div class="form-group  form-inline">
                     <button  type="button" class="btn btn-primary" onclick="queryStatus(this)" style="display:none ">
                         Refresh
@@ -146,17 +139,13 @@
         <div class="panel-body">
             <form>
                 <div class="form-group">
-                    <label >Account Address: </label>  <span id="address" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
+                    <label >Account Address: </label>  <span id="address" style="color:#151515; margin-left: 0px; font-size:16px;"> </span>
                     <br/>
-                    <label >Ethereum TestNet balance: </label>  <span id="MainChainBalance" style="color:#31708f; margin-left: 0px; font-size:16px;">  </span>
-                    <span   style="color:#31708f; margin-left: 0px; font-size:16px;">Ether </span>
+                    <label >Ethereum Ropsten balance: </label>  <span id="MainChainBalance" style="color:#31708f; margin-left: 0px; font-size:16px;">  </span>
                     <br/>
                     <label >Spectrum TestNet balance: </label>  <span id="SideChainBalance" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
-                    <span   style="color:#31708f; margin-left: 0px; font-size:16px;">SMT </span>
                     <br/>
                     <label >Spectrum TestNet ethereum token balance: </label>  <span id="SideChainTokenBalance" style="color:#31708f; margin-left: 0px; font-size:16px;"> </span>
-                    <span   style="color:#31708f; margin-left: 0px; font-size:16px;">EtherToken </span>
-
                     <br/>
                     <div class="form-group  form-inline">
                         <button  type="button" class="btn btn-primary" onclick="queryStatus(this)">
@@ -364,8 +353,8 @@
 <div class="modal fade" id="maskLayerModal">
     <div class="modal-dialog" style="text-align: center; margin-top: 100px;">
         <div id="pagetimer" style="color:#fff;font-size:40px;font-weight: bolder;"></div>
-        <img style='width:60px;height: 60px;margin:10px 0 20px 0;' alt=""
-             src="data:image/gif;base64,R0lGODlhGQAZAJECAK7PTQBjpv///wAAACH/C05FVFNDQVBFMi4wAwEAAAAh/wtYTVAgRGF0YVhNUDw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNS1jMDE0IDc5LjE1MTQ4MSwgMjAxMy8wMy8xMy0xMjowOToxNSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo5OTYyNTQ4Ni02ZGVkLTI2NDUtODEwMy1kN2M4ODE4OWMxMTQiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6RUNGNUFGRUFGREFCMTFFM0FCNzVDRjQ1QzI4QjFBNjgiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6RUNGNUFGRTlGREFCMTFFM0FCNzVDRjQ1QzI4QjFBNjgiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIChXaW5kb3dzKSI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOjk5NjI1NDg2LTZkZWQtMjY0NS04MTAzLWQ3Yzg4MTg5YzExNCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo5OTYyNTQ4Ni02ZGVkLTI2NDUtODEwMy1kN2M4ODE4OWMxMTQiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz4B//79/Pv6+fj39vX08/Lx8O/u7ezr6uno5+bl5OPi4eDf3t3c29rZ2NfW1dTT0tHQz87NzMvKycjHxsXEw8LBwL++vby7urm4t7a1tLOysbCvrq2sq6qpqKempaSjoqGgn56dnJuamZiXlpWUk5KRkI+OjYyLiomIh4aFhIOCgYB/fn18e3p5eHd2dXRzcnFwb25tbGtqaWhnZmVkY2JhYF9eXVxbWllYV1ZVVFNSUVBPTk1MS0pJSEdGRURDQkFAPz49PDs6OTg3NjU0MzIxMC8uLSwrKikoJyYlJCMiISAfHh0cGxoZGBcWFRQTEhEQDw4NDAsKCQgHBgUEAwIBAAAh+QQFCgACACwAAAAAGQAZAAACTpSPqcu9AKMUodqLpAb0+rxFnWeBIUdixwmNqRm6JLzJ38raqsGiaUXT6EqO4uIHRAYQyiHw0GxCkc7l9FdlUqWGKPX64mbFXqzxjDYWAAAh+QQFCgACACwCAAIAFQAKAAACHYyPAsuNH1SbME1ajbwra854Edh5GyeeV0oCLFkAACH5BAUKAAIALA0AAgAKABUAAAIUjI+py+0PYxO0WoCz3rz7D4bi+BUAIfkEBQoAAgAsAgANABUACgAAAh2EjxLLjQ9UmzBNWo28K2vOeBHYeRsnnldKBixZAAA7"/>
+        <img style='width:153px;height: 16px;margin:10px 0 20px 0;' alt=""
+             src="data:image/gif;base64,R0lGODlhmQAQAJECAP///1F27f///wAAACH/C05FVFNDQVBFMi4wAwEAAAAh/wtYTVAgRGF0YVhNUDw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMTM4IDc5LjE1OTgyNCwgMjAxNi8wOS8xNC0wMTowOTowMSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTcgKE1hY2ludG9zaCkiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6NUM0Q0Q5NzkxRDQ1MTFFOTk5QzVGRTE1QjExMkY2OTkiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6NUM0Q0Q5N0ExRDQ1MTFFOTk5QzVGRTE1QjExMkY2OTkiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo1QzRDRDk3NzFENDUxMUU5OTlDNUZFMTVCMTEyRjY5OSIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo1QzRDRDk3ODFENDUxMUU5OTlDNUZFMTVCMTEyRjY5OSIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PgH//v38+/r5+Pf29fTz8vHw7+7t7Ovq6ejn5uXk4+Lh4N/e3dzb2tnY19bV1NPS0dDPzs3My8rJyMfGxcTDwsHAv769vLu6ubi3trW0s7KxsK+urayrqqmop6alpKOioaCfnp2cm5qZmJeWlZSTkpGQj46NjIuKiYiHhoWEg4KBgH9+fXx7enl4d3Z1dHNycXBvbm1sa2ppaGdmZWRjYmFgX15dXFtaWVhXVlVUU1JRUE9OTUxLSklIR0ZFRENCQUA/Pj08Ozo5ODc2NTQzMjEwLy4tLCsqKSgnJiUkIyIhIB8eHRwbGhkYFxYVFBMSERAPDg0MCwoJCAcGBQQDAgEAACH5BAUyAAIALAAAAACZABAAAAJ1jI+py+0Po5y0BoCz3rz7D4biSJZmaQCNyrDLCcfyTGvpirf1zvf03cq9fMSikQN8CRXHppOXZC4Tz6rVFKVOEdeut5Plbg/f8jdMHqfM7Cr6fVm150e4S6qj63t29WUPWNMXlBdoeLJ2qNhm0ej4CBkpuVAAACH5BAUyAAIALCAAAgAdAAwAAAIijH+Cq+veXnx0MoqDRTub/nkSBmZlSabiVa3s6CZqrM1OAQAh+QQFMgACACw+AAIAHQAMAAACIox/gqvr3l58dDKKg0U7m/55EgZmZUmm4lWt7OgmaqzNTgEAIfkEBTIAAgAsXAACAB0ADAAAAiKMf4Kr695efHQyioNFO5v+eRIGZmVJpuJVrezoJmqszU4BACH5BAUyAAIALHoAAgAdAAwAAAIijH+Cq+veXnx0MoqDRTub/nkSBmZlSabiVa3s6CZqrM1OAQA7"/>
         <div class="masktext"></div>
     </div>
 </div>

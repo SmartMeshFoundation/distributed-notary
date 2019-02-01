@@ -34,21 +34,21 @@ func scPrepareLockin(ctx *cli.Context) (err error) {
 		fmt.Println("wrong mcname")
 		os.Exit(-1)
 	}
-	if globalConfig.RunTime == nil {
+	if GlobalConfig.RunTime == nil {
 		fmt.Println("must call pli first")
 		os.Exit(-1)
 	}
-	url := globalConfig.NotaryHost + "/api/1/user/scpreparelockin/" + scTokenInfo.SCToken.String()
+	url := GlobalConfig.NotaryHost + "/api/1/user/scpreparelockin/" + scTokenInfo.SCToken.String()
 	req := &userapi.SCPrepareLockinRequest{
 		BaseReq:              api.NewBaseReq(userapi.APIUserNameSCPrepareLockin),
 		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenInfo.SCToken),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(common.HexToAddress(globalConfig.SmcUserAddress)),
-		SecretHash:           common.HexToHash(globalConfig.RunTime.SecretHash),
-		MCUserAddress:        common.HexToAddress(globalConfig.EthUserAddress),
-		SCUserAddress:        common.HexToAddress(globalConfig.SmcUserAddress),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(common.HexToAddress(GlobalConfig.SmcUserAddress)),
+		SecretHash:           common.HexToHash(GlobalConfig.RunTime.SecretHash),
+		MCUserAddress:        common.HexToAddress(GlobalConfig.EthUserAddress),
+		SCUserAddress:        common.HexToAddress(GlobalConfig.SmcUserAddress),
 	}
-	privateKey, err := getPrivateKey(globalConfig.SmcUserAddress, globalConfig.SmcUserPassword)
+	privateKey, err := getPrivateKey(GlobalConfig.SmcUserAddress, GlobalConfig.SmcUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

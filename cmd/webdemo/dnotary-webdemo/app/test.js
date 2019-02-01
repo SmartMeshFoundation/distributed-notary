@@ -1,7 +1,8 @@
 //保证每次载入都清除所有数据
 clearData();
 var helpService = "/api"
- var runhost=document.domain 
+ var runhost=document.domain
+// var runhost="193.112.248.133"
 var mainChainEndpoint = "http://"+runhost+":19888"
 var sideChainEndpoint = "http://"+runhost+":17888"
 var pagetimer;
@@ -17,6 +18,8 @@ var currentLockoutSecretHash=localStorage["currentLockoutSecretHash"]
 var notaryPrivateKeyId; //公证人操作合约使用的私钥编号
 var currentMainChainBlockNumber;
 var currentSideChainBlockNuber
+var mainChainBalance; //account balance on mainchain
+var sideChainBalance; //account token balance on sidechain
 // localStorage.removeItem("myaccount")
 $(function () {
     $(".btcpanel").hide();
@@ -82,6 +85,7 @@ function createKey(obj) {
                     showTip("Error:" + JSON.stringify(data) + '<br/><br/>Please Retry!');
                     return
                 }
+                // $("#address").html('<a target="_blank" href="https://ropsten.etherscan.io/address/'+data.Message+'">'+data.Message+'</a>')
                 $("#address").html(data.Message)
                 myaccount = data.Message
                 localStorage["myaccount"] = myaccount
@@ -106,7 +110,12 @@ function transfer10Ether(obj) {
         {
             url: $("#selNode").val() + "/api/1/debug/transfer-to-account/" + myaccount,
             type: "get",
-            success: function (data) {
+            success: function (r) {
+                if(r.error_msg!="success"){
+                    hideMaskLayer();
+                    showTip("transfer test ether and smt error "+'<br/><br/>Please Retry!');
+                    return
+                }
                 hideMaskLayer()
                 queryStatus()
                 alert("your account already have test token.")
@@ -155,7 +164,7 @@ function changecoin(obj) {
 function prePareLockin(obj) {
     currentLockinSecret = ""
     currentLockinSecretHash = ""
-    var myBalance = getMainChainWeb3().toWei($("#MainChainBalance")[0].innerText, "ether")
+    var myBalance = mainChainBalance
     var amount = Math.floor($("#prepareLockInAmount").val() * myBalance)
     if (amount <= 0) {
         alert("no enough ether to transfer")
@@ -285,7 +294,12 @@ function doSendTx(r, chain,cb) {
     req.Tx.r = "0x" + stripzero(obj.r)
     req.Tx.s = "0x" + stripzero(obj.s)
     req.Tx.v = "0x0"
-    updateMaskLayer("send tx to " + chain + "...")
+    if(chain=="main") {
+        updateMaskLayer("send tx to " + mainChainContract + " on Ethereum Ropsten...")
+    }else{
+        updateMaskLayer("send tx to " + sideChainContract + " on Spectrum Testnet...")
+    }
+
     $.ajax(
         {
             url: helpService + "/sendTx",
@@ -382,7 +396,8 @@ function doNotifyNotaryPrepareLockin(rFromHelpService) {
             console.log("scPrepareLockin help service:  " + JSON.stringify(r))
             queryStatus()
             //lockin for side chain
-            sideChainLockin()
+            //等待5秒钟
+            setTimeout(sideChainLockin,5000)
         },
         err:function(e){
             hideMaskLayer()
@@ -422,7 +437,7 @@ function queryStatusHelper(cb, cberror) {
     })
 }
 
-function queryStatus() {
+function queryStatus(obj) {
     queryStatusHelper(function (r) {
         if (r.Error) {
             console.log("query status err ", r.Error)
@@ -433,13 +448,22 @@ function queryStatus() {
         }
         currentMainChainBlockNumber = r.MainChainBlockNumber
         currentSideChainBlockNuber = r.SideChainBlockNumber
+        mainChainBalance=r.MainChainBalance
+        sideChainBalance=r.SideChainTokenBalance
+
         $("#MainChainBlockNumber").html(r.MainChainBlockNumber)
         $("#SideChainBlockNumber").html(r.SideChainBlockNumber)
-        $("#mainChainContractBalance").html(getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether"))
-        $("#sideChainContractBalance").html(getMainChainWeb3().fromWei(r.SideChainContractBalance, "ether"))
-        $("#MainChainBalance").html(getMainChainWeb3().fromWei(r.MainChainBalance, "ether"))
-        $("#SideChainBalance").html(getMainChainWeb3().fromWei(r.SideChainBalance, "ether"))
-        $("#SideChainTokenBalance").html(getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether"))
+
+        $("#mainChainContractBalance").html('<a target="_blank" href="https://ropsten.etherscan.io/address/'+mainChainContract+'">'+  getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether")+" Ether</a>")   //(getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether"))
+        $("#sideChainContractBalance").html('<a target="_blank" href="https://chain.smartmesh.io/token.html?source=commonts&tokenF='+sideChainContract+'">'+getMainChainWeb3().fromWei(r.SideChainContractBalance, "ether") +' EtherToken</a>')
+        //https://chain.smartmesh.io/token.html?source=commonts&tokenF=0x4931ada8fc103e81dbeb35ed04abf58686c1a9b4
+        if(myaccount) {
+            $("#MainChainBalance").html('<a  target="_blank" href="https://ropsten.etherscan.io/address/'+myaccount+'">'+  getMainChainWeb3().fromWei(r.MainChainBalance, "ether")+" Ether</a>")
+            $("#SideChainBalance").html ('<a target="_blank" href="https://chain.smartmesh.io/address.html?address='+myaccount+'">'+getMainChainWeb3().fromWei(r.SideChainBalance, "ether") +' SMT</a>')
+            $("#SideChainTokenBalance").html('<a target="_blank" href="https://chain.smartmesh.io/token.html?tokenF='+sideChainContract+'&tokenT=' +myaccount+'">'+getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether") +' EtherToken</a>')
+            //https://chain.smartmesh.io/token.html?tokenF=0xbb4b3fa1448060e718540fbf7b74ed3d9f37d70e&tokenT=0x95af380b52d2e453b44a985682746f6600700d20
+
+        }
         if (myaccount){
             $("#btnTransferEther").attr("disabled", false);
         } else{
@@ -463,6 +487,9 @@ function queryStatus() {
             $("#btnPrepareLockout").attr("disabled",false)
             $("#btnSideChainCancelLockout").attr("disabled",true)
         }
+        if(obj){
+            $("#address").focus()
+        }
     })
 }
 
@@ -483,8 +510,8 @@ $(function () {
             mainChainContract = r.mc_locked_contract_address
             sideChainContract = r.sc_token
             notaryPrivateKeyId = r.sc_token_owner_key
-            $("#mainChainContract").html(mainChainContract)
-            $("#sideChainContract").html(sideChainContract)
+            $("#mainChainContract").html( mainChainContract)
+            $("#sideChainContract").html( sideChainContract)
             //合约地址有了,更新状态吧.
             queryStatus()
         },
@@ -500,7 +527,7 @@ $(function () {
         $("#privateKey").attr("readonly", "readonly");
         key = new Bitcoin.ECKey(localStorage["mykey"])
         $("#privateKey").val(key.getBitcoinHexFormat())
-        $("#address").html(myaccount)
+        // $("#address").html('<a target="_blank" href="https://ropsten.etherscan.io/address/'+myaccount+'">'+myaccount+'</a>')
         $('#tab_content').show();
     }
     queryStatus()
@@ -713,7 +740,7 @@ function doMainChainCancelLockin( ) {
                 if (r.Error) {
                     hideMaskLayer();
                     console.log("generateTx err ", r.Error);
-                    showTip("generateTx Error:" + r.Error + '<br/><br/>Please Retry!');
+                    showTip('You must wait at least 1000 blocks! <br/><br/>Please Retry Later!');
                     return
                 }
                 r = r.Message
@@ -776,7 +803,7 @@ function doSideChainCancelLockout( ) {
                 if (r.Error) {
                     hideMaskLayer();
                     console.log("generateTx err ", r.Error);
-                    showTip("generateTx Error:" + r.Error + '<br/><br/>Please Retry!');
+                    showTip('You must wait at least 1000 blocks , Please Retry Later!');
                     return
                 }
                 r = r.Message
@@ -812,7 +839,7 @@ function doSideChainCancelLockout( ) {
 function prePareLockout(obj) {
     currentLockoutSecret = ""
     currentLockoutSecretHash = ""
-    var myBalance = getMainChainWeb3().toWei($("#SideChainTokenBalance")[0].innerText, "ether")
+    var myBalance =sideChainBalance
     var amount = Math.floor($("#prepareLockoutAmount").val() * myBalance)
     if (amount <= 0) {
         alert("no enough EtherumEther to transfer")
@@ -970,11 +997,10 @@ function doNotifyNotaryPrepareLockout(rFromHelpService) {
                 showTip("mcpreparelockout notary Error:" +  '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
                 return
             }
-            hideMaskLayer()
             r=r.Data
             console.log("mcpreparelockout help service:  " + JSON.stringify(r))
             queryStatus()
-            sideChainLockout()
+            setTimeout(mainChainLockout,5000)
 
         },
         err:function(e){
@@ -987,18 +1013,18 @@ function doNotifyNotaryPrepareLockout(rFromHelpService) {
 
 
 //-------------------------- tx  lockin
-function sideChainLockout(obj) {
+function mainChainLockout(obj) {
     if(!currentLockinSecret || !currentLockinSecretHash) {
         alert("must prepare lockout and notify notary first")
         return
     }
     updateMaskLayer("get ETH Token on Ethereum,please wait ...")
     $("#signTransaction").text('');
-    doSideChainLockout()
+    doMainChainLockout()
 }
 
 //secret,secrethash已经生成好了,直接用吧.
-function doSideChainLockout( ) {
+function doMainChainLockout( ) {
     var req = {}
     req.From = myaccount
     req.ContractAddress = sideChainContract
@@ -1032,15 +1058,15 @@ function doSideChainLockout( ) {
                 ))
                 //由helpService在侧连上执行Tx
                 doSendTx(r, "main",function(){
-                    alert("your EthereumToken have been moved to ethereum as eth")
-                    clearLockoutSecret()
                     hideMaskLayer()
+                    clearLockoutSecret()
+                    alert("your EthereumToken have been moved to ethereum as eth")
                 })
             },
             error: function (e) {
                 hideMaskLayer();
                 console.log("error", e);
-                showTip("doSideChainLockout Error:" +  '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
+                showTip("doMainChainLockout Error:" +  '<br/><br/>you can cancel Lockin or Lockout after 1000 blocks!');
             }
 
         }

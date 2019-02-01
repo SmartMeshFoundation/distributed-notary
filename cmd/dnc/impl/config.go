@@ -44,9 +44,9 @@ type dncConfig struct {
 	RunTime *runTime `json:"run_time"`
 }
 
-var globalConfig *dncConfig
+var GlobalConfig *dncConfig
 
-var defaultConfig = &dncConfig{
+var DefaultConfig = &dncConfig{
 	NotaryHost: "http://127.0.0.1:3330",
 	Keystore:   "../../testdata/keystore",
 
@@ -77,15 +77,15 @@ func init() {
 	// #nosec
 	contents, err = ioutil.ReadFile(configFile)
 	if err != nil || len(contents) == 0 {
-		globalConfig = defaultConfig
+		GlobalConfig = DefaultConfig
 		updateConfigFile()
 		return
 	}
-	globalConfig = new(dncConfig)
-	err = json.Unmarshal(contents, globalConfig)
+	GlobalConfig = new(dncConfig)
+	err = json.Unmarshal(contents, GlobalConfig)
 	if err != nil {
 		fmt.Printf("use default config instead of wrong dnc_config in file : %s\n", configFile)
-		globalConfig = defaultConfig
+		GlobalConfig = DefaultConfig
 		return
 	}
 }
@@ -124,75 +124,77 @@ func configManage(ctx *cli.Context) error {
 		}
 		switch s[0] {
 		case "nh", "notary-host":
-			globalConfig.NotaryHost = s[1]
+			GlobalConfig.NotaryHost = s[1]
 		case "keystore":
-			globalConfig.Keystore = s[1]
+			GlobalConfig.Keystore = s[1]
 
 		case "eua", "eth-user-address":
-			globalConfig.EthUserAddress = s[1]
+			GlobalConfig.EthUserAddress = s[1]
 		case "eup", "eth-user-password":
-			globalConfig.EthUserPassword = s[1]
+			GlobalConfig.EthUserPassword = s[1]
 		case "eth", "eth-rpc-endpoint":
-			globalConfig.EthRPCEndpoint = s[1]
+			GlobalConfig.EthRPCEndpoint = s[1]
 
 		case "sua", "smc-user-address":
-			globalConfig.SmcUserAddress = s[1]
+			GlobalConfig.SmcUserAddress = s[1]
 		case "sup", "smc-user-password":
-			globalConfig.SmcUserPassword = s[1]
+			GlobalConfig.SmcUserPassword = s[1]
 		case "smc", "smc-rpc-endpoint":
-			globalConfig.SmcRPCEndpoint = s[1]
+			GlobalConfig.SmcRPCEndpoint = s[1]
 		default:
 			fmt.Printf("wrong param : %s\n", param)
 			os.Exit(-1)
 		}
 	}
 	updateConfigFile()
-	fmt.Println(utils.ToJSONStringFormat(globalConfig))
+	fmt.Println(utils.ToJSONStringFormat(GlobalConfig))
 	return nil
 }
 
 func listAllConfig(ctx *cli.Context) error {
-	fmt.Println(utils.ToJSONStringFormat(globalConfig))
+	fmt.Println(utils.ToJSONStringFormat(GlobalConfig))
 	return nil
 }
 
 //ListAllConfig :
 func ListAllConfig() string {
-	return utils.ToJSONStringFormat(globalConfig)
+	return utils.ToJSONStringFormat(GlobalConfig)
 }
 func resetAllConfig(ctx *cli.Context) error {
-	globalConfig = defaultConfig
+	GlobalConfig = DefaultConfig
 	updateConfigFile()
 	return nil
 }
 
 func refreshSCTokenList(ctx *cli.Context) (err error) {
-	if globalConfig.NotaryHost == "" {
+	return RefreshSCTokenList()
+}
+func RefreshSCTokenList() (err error) {
+	if GlobalConfig.NotaryHost == "" {
 		err = fmt.Errorf("must set globalConfig.NotaryHost first")
 		fmt.Println(err)
 		return
 	}
 	var resp api.BaseResponse
-	url := globalConfig.NotaryHost + userapi.APIName2URLMap[userapi.APIUserNameGetSCTokenList]
+	url := GlobalConfig.NotaryHost + userapi.APIName2URLMap[userapi.APIUserNameGetSCTokenList]
 	err = call(http.MethodGet, url, "", &resp)
 	if err != nil {
 		err = fmt.Errorf("call %s err : %s", url, err.Error())
 		fmt.Println(err)
 		return
 	}
-	globalConfig.SCTokenList = []service.ScTokenInfoToResponse{}
-	err = resp.ParseData(&globalConfig.SCTokenList)
+	GlobalConfig.SCTokenList = []service.ScTokenInfoToResponse{}
+	err = resp.ParseData(&GlobalConfig.SCTokenList)
 	if err != nil {
 		err = fmt.Errorf("parse data err : %s", err.Error())
 		fmt.Println(err)
 	}
 	updateConfigFile()
-	fmt.Println(utils.ToJSONStringFormat(globalConfig))
+	fmt.Println(utils.ToJSONStringFormat(GlobalConfig))
 	return
 }
-
 func updateConfigFile() {
-	err := ioutil.WriteFile(configFile, []byte(utils.ToJSONString(globalConfig)), 0777)
+	err := ioutil.WriteFile(configFile, []byte(utils.ToJSONString(GlobalConfig)), 0777)
 	if err != nil {
 		panic(err)
 	}

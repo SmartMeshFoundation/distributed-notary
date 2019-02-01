@@ -34,21 +34,21 @@ func mcPrepareLockout(ctx *cli.Context) (err error) {
 		fmt.Println("wrong mcname")
 		os.Exit(-1)
 	}
-	if globalConfig.RunTime == nil {
+	if GlobalConfig.RunTime == nil {
 		fmt.Println("must call pli first")
 		os.Exit(-1)
 	}
-	url := globalConfig.NotaryHost + "/api/1/user/mcpreparelockout/" + scTokenInfo.SCToken.String()
+	url := GlobalConfig.NotaryHost + "/api/1/user/mcpreparelockout/" + scTokenInfo.SCToken.String()
 	req := &userapi.MCPrepareLockoutRequest{
 		BaseReq:              api.NewBaseReq(userapi.APIUserNameMCPrepareLockout),
 		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenInfo.SCToken),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(common.HexToAddress(globalConfig.EthUserAddress)),
-		SecretHash:           common.HexToHash(globalConfig.RunTime.SecretHash),
-		MCUserAddress:        common.HexToAddress(globalConfig.EthUserAddress),
-		SCUserAddress:        common.HexToAddress(globalConfig.SmcUserAddress),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(common.HexToAddress(GlobalConfig.EthUserAddress)),
+		SecretHash:           common.HexToHash(GlobalConfig.RunTime.SecretHash),
+		MCUserAddress:        common.HexToAddress(GlobalConfig.EthUserAddress),
+		SCUserAddress:        common.HexToAddress(GlobalConfig.SmcUserAddress),
 	}
-	privateKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserPassword)
+	privateKey, err := getPrivateKey(GlobalConfig.EthUserAddress, GlobalConfig.EthUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

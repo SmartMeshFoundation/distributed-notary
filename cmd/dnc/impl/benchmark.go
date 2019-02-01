@@ -127,19 +127,19 @@ func benchmarkPKN(mcName string, num int) {
 }
 
 func benchmarkDSM(mcName string, num int) {
-	if globalConfig.SCTokenList == nil {
+	if GlobalConfig.SCTokenList == nil {
 		fmt.Println("must run dnc config refresh first")
 		os.Exit(-1)
 	}
 	fmt.Printf("==> DSM Benchmark prepare start mcName=%s num=%d\n", mcName, num)
-	mcKey, err := getPrivateKey(globalConfig.EthUserAddress, globalConfig.EthUserPassword)
+	mcKey, err := getPrivateKey(GlobalConfig.EthUserAddress, GlobalConfig.EthUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
 	scToken := getSCTokenByMCName(mcName)
 	_, mcp := getMCContractProxy(mcName)
-	es, err := ethereum.NewETHService(globalConfig.EthRPCEndpoint)
+	es, err := ethereum.NewETHService(GlobalConfig.EthRPCEndpoint)
 	if err != nil {
 		fmt.Println("connect to eth fail : ", err)
 		os.Exit(-1)
