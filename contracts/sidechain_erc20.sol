@@ -127,6 +127,7 @@ contract AtmosphereToken is StandardToken {
     string public name;                   //fancy name
     uint8 public decimals = 18;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public version = 'v0.1';
+    string public symbol ;
 
     struct LockinInfo  {
      bytes32 SecretHash; //这是lockin发起人提供的hash
@@ -150,6 +151,7 @@ contract AtmosphereToken is StandardToken {
     constructor(string tokenName) public {
         totalSupply=1; //保证total supply大于等于0,符合ERC20规范
         name = tokenName;
+        symbol = tokenName;
     }
     //ze:主链expiration
     //ce:侧链expiration
