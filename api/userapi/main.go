@@ -3,6 +3,8 @@ package userapi
 import (
 	"fmt"
 
+	"time"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/nkbai/log"
@@ -62,6 +64,9 @@ func init() {
 	APIName2URLMap[APIDebugNameTransferToAccount] = "/api/1/debug/transfer-to-account/:account"
 }
 
+// defaultAPITimeout : 默认api请求超时时间
+var defaultAPITimeout = 120 * time.Second
+
 /*
 UserAPI :
 提供给用户的API
@@ -118,5 +123,6 @@ func NewUserAPI(host string) *UserAPI {
 		AccessControlMaxAge:           3600,
 	}
 	userAPI.BaseAPI = api.NewBaseAPI("UserAPI-Server", host, router, corsMiddleware)
+	userAPI.Timeout = defaultAPITimeout
 	return &userAPI
 }
