@@ -276,7 +276,7 @@ func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int) (sessionID com
 			if err2 == nil {
 				m.Store(notary.ID, true)
 			} else {
-				log.Warn(SessionLogMsg(sessionID, "notary[%d] refuse DSMAsk : %s", err2.Error()))
+				log.Warn(SessionLogMsg(sessionID, "notary[%d] refuse DSMAsk : %s", notary.ID, err2.Error()))
 			}
 			wg.Done()
 		}(notary)
