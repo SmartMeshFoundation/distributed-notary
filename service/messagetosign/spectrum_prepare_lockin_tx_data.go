@@ -22,18 +22,21 @@ const SpectrumPrepareLockinTxDataName = "SpectrumPrepareLockinTxData"
 // SpectrumPrepareLockinTxData :
 type SpectrumPrepareLockinTxData struct {
 	BytesToSign  []byte                          `json:"bytes_to_sign"`
+	Nonce        uint64                          `json:"nonce"`
 	UserRequest  *userapi.SCPrepareLockinRequest `json:"user_request"`  // 用户原始请求,验证用户签名
 	SCExpiration uint64                          `json:"sc_expiration"` // 侧链超时块,由于公证人之间可能存在当前块误差,导致计算出来的侧链超时块不一致,所以在协商时传递
 }
 
 // NewSpectrumPrepareLockinTxData :
-func NewSpectrumPrepareLockinTxData(scTokenProxy chain.ContractProxy, req *userapi.SCPrepareLockinRequest, callerAddress common.Address, scUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (data *SpectrumPrepareLockinTxData) {
+func NewSpectrumPrepareLockinTxData(scTokenProxy chain.ContractProxy, req *userapi.SCPrepareLockinRequest, callerAddress common.Address, scUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int, nonce uint64) (data *SpectrumPrepareLockinTxData) {
 	data = &SpectrumPrepareLockinTxData{
+		Nonce:        nonce,
 		UserRequest:  req,
 		SCExpiration: expiration,
 	}
 	transactor := &bind.TransactOpts{
-		From: callerAddress,
+		From:  callerAddress,
+		Nonce: big.NewInt(int64(nonce)),
 		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
 			if address != callerAddress {
 				return nil, errors.New("not authorized to sign this account")
@@ -108,7 +111,7 @@ func (d *SpectrumPrepareLockinTxData) VerifySignData(scTokenProxy chain.Contract
 	secretHash := localLockinInfo.SecretHash
 	amount := localLockinInfo.Amount
 	var local *SpectrumPrepareLockinTxData
-	local = NewSpectrumPrepareLockinTxData(scTokenProxy, d.UserRequest, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount)
+	local = NewSpectrumPrepareLockinTxData(scTokenProxy, d.UserRequest, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, d.Nonce)
 	if bytes.Compare(local.GetSignBytes(), d.GetSignBytes()) != 0 {
 		err = fmt.Errorf("SpectrumPrepareLockinTxData.VerifySignBytes() fail,maybe attack")
 	}

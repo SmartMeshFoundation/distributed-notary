@@ -13,4 +13,5 @@ type Config struct {
 	EthRPCEndPoint     string
 	UserAPIListen      string
 	NotaryAPIListen    string
+	NonceServerHost    string
 }

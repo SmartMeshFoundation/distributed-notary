@@ -7,6 +7,8 @@ import (
 
 	"errors"
 
+	"math/big"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
@@ -76,9 +78,14 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	scExpiration := localLockinInfo.SCExpiration
 	secretHash := localLockinInfo.SecretHash
 	amount := localLockinInfo.Amount
+	// 0. 获取nonce
+	nonce, err := cs.dispatchService.applyNonceFromNonceServer(cs.meta.MCName, privateKeyInfo.Address)
+	if err != nil {
+		return
+	}
 	// 1. 构造MessageToSign
 	var msgToSign messagetosign.MessageToSign
-	msgToSign = messagetosign.NewSpectrumPrepareLockinTxData(cs.scTokenProxy, req, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount)
+	msgToSign = messagetosign.NewSpectrumPrepareLockinTxData(cs.scTokenProxy, req, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, nonce)
 	// 2. 发起分布式签名
 	var signature []byte
 	var _ common.Hash
@@ -89,12 +96,14 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	log.Info("call PrepareLockin on spectrum with account=%s, signature=%s", privateKeyInfo.ToAddress().String(), common.Bytes2Hex(signature))
 	// 3. 调用合约
 	transactor := &bind.TransactOpts{
-		From: privateKeyInfo.ToAddress(),
+		From:  privateKeyInfo.ToAddress(),
+		Nonce: big.NewInt(int64(nonce)),
 		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
 			if address != privateKeyInfo.ToAddress() {
 				return nil, errors.New("not authorized to sign this account")
 			}
 			msgToSign2 := signer.Hash(tx).Bytes()
+			fmt.Printf("======================from=%s nonce=%d\n", address.String(), tx.Nonce())
 			if bytes.Compare(msgToSign.GetSignBytes(), msgToSign2) != 0 {
 				err = fmt.Errorf("txbytes when deploy contract step1 and step2 does't match")
 				return nil, err
@@ -128,9 +137,14 @@ func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutR
 	mcExpiration := localLockoutInfo.MCExpiration
 	secretHash := localLockoutInfo.SecretHash
 	amount := localLockoutInfo.Amount
+	// 0. 获取nonce
+	nonce, err := cs.dispatchService.applyNonceFromNonceServer(cs.meta.MCName, privateKeyInfo.Address)
+	if err != nil {
+		return
+	}
 	// 1. 构造MessageToSign
 	var msgToSign messagetosign.MessageToSign
-	msgToSign = messagetosign.NewEthereumPrepareLockoutTxData(cs.mcProxy, req, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount)
+	msgToSign = messagetosign.NewEthereumPrepareLockoutTxData(cs.mcProxy, req, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, nonce)
 	// 2. 发起分布式签名
 	var signature []byte
 	var _ common.Hash
@@ -141,7 +155,8 @@ func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutR
 	log.Info("call PrepareLockout on ethereum with account=%s, signature=%s", privateKeyInfo.ToAddress().String(), common.Bytes2Hex(signature))
 	// 3. 调用合约
 	transactor := &bind.TransactOpts{
-		From: privateKeyInfo.ToAddress(),
+		From:  privateKeyInfo.ToAddress(),
+		Nonce: big.NewInt(int64(nonce)),
 		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
 			if address != privateKeyInfo.ToAddress() {
 				return nil, errors.New("not authorized to sign this account")

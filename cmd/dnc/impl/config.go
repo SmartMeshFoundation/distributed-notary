@@ -44,10 +44,12 @@ type dncConfig struct {
 	RunTime *runTime `json:"run_time"`
 }
 
+// GlobalConfig :
 var GlobalConfig *dncConfig
 
+// DefaultConfig :
 var DefaultConfig = &dncConfig{
-	NotaryHost: "http://127.0.0.1:3330",
+	NotaryHost: "http://127.0.0.1:8030",
 	Keystore:   "../../testdata/keystore",
 
 	EthUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
@@ -169,6 +171,8 @@ func resetAllConfig(ctx *cli.Context) error {
 func refreshSCTokenList(ctx *cli.Context) (err error) {
 	return RefreshSCTokenList()
 }
+
+// RefreshSCTokenList :
 func RefreshSCTokenList() (err error) {
 	if GlobalConfig.NotaryHost == "" {
 		err = fmt.Errorf("must set globalConfig.NotaryHost first")

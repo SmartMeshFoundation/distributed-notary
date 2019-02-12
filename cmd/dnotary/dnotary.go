@@ -65,6 +65,11 @@ func main() {
 			Usage: "host:port of notary api listen",
 			Value: "127.0.0.1:33300",
 		},
+		cli.StringFlag{
+			Name:  "nonce-server",
+			Usage: "http://host:port of nonce server",
+			Value: "http://127.0.0.1:8020",
+		},
 	}
 	app.Action = startMain
 	app.Name = "distributed-notary"
@@ -150,7 +155,9 @@ func config(ctx *cli.Context) (cfg *params.Config, err error) {
 	cfg.EthRPCEndPoint = ctx.String("eth-rpc-point")
 	// 8. user-listen
 	cfg.UserAPIListen = ctx.String("user-listen")
-	// 7. notary-listen
+	// 9. notary-listen
 	cfg.NotaryAPIListen = ctx.String("notary-listen")
+	// 10. nonce-server
+	cfg.NonceServerHost = ctx.String("nonce-server")
 	return
 }

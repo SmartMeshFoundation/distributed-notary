@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 
+	"math/big"
+
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -25,15 +27,17 @@ const SpectrumContractDeployTXDataName = "SpectrumContractDeployTXData"
 // SpectrumContractDeployTXData :
 type SpectrumContractDeployTXData struct {
 	BytesToSign     []byte `json:"bytes_to_sign"`
+	Nonce           uint64 `json:"nonce"`
 	DeployChainName string `json:"deploy_chain_name"`
 	TokenName       string `json:"token_name"` // 如果为侧链token,需要token名
 }
 
 // NewSpectrumContractDeployTX :
-func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address, params ...string) (tx *SpectrumContractDeployTXData) {
+func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address, nonce uint64, params ...string) (tx *SpectrumContractDeployTXData) {
 	var txBytes []byte
 	transactor := &bind.TransactOpts{
-		From: callerAddress,
+		From:  callerAddress,
+		Nonce: big.NewInt(int64(nonce)),
 		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
 			if address != callerAddress {
 				return nil, errors.New("not authorized to sign this account")
@@ -48,6 +52,7 @@ func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address, pa
 		panic(err)
 	}
 	tx = &SpectrumContractDeployTXData{
+		Nonce:           nonce,
 		BytesToSign:     txBytes,
 		DeployChainName: c.GetChainName(),
 	}
@@ -88,9 +93,9 @@ func (s *SpectrumContractDeployTXData) Parse(buf []byte) error {
 func (s *SpectrumContractDeployTXData) VerifySignBytes(c chain.Chain, callerAddress common.Address) (err error) {
 	var local *SpectrumContractDeployTXData
 	if s.DeployChainName == smcevents.ChainName {
-		local = NewSpectrumContractDeployTX(c, callerAddress, s.TokenName)
+		local = NewSpectrumContractDeployTX(c, callerAddress, s.Nonce, s.TokenName)
 	} else {
-		local = NewSpectrumContractDeployTX(c, callerAddress)
+		local = NewSpectrumContractDeployTX(c, callerAddress, s.Nonce)
 	}
 	if bytes.Compare(local.GetSignBytes(), s.GetSignBytes()) != 0 {
 		err = fmt.Errorf("SpectrumContractDeployTXData.VerifySignBytes() fail,maybe attack")

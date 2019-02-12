@@ -5,8 +5,16 @@ import (
 
 	"crypto/ecdsa"
 
+	"net/http"
+
+	"encoding/json"
+
+	"bytes"
+
+	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	spectrumevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
+	"github.com/SmartMeshFoundation/distributed-notary/cmd/nonce_server/nonceapi"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/nkbai/log"
@@ -23,6 +31,10 @@ type dispatchServiceBackend interface {
 	getLockoutInfo(scTokenAddress common.Address, secretHash common.Hash) (lockoutInfo *models.LockoutInfo, err error)
 	getNotaryService() *NotaryService
 	getSCTokenMetaInfoBySCTokenAddress(scTokenAddress common.Address) (scToken *models.SideChainTokenMetaInfo)
+	/*
+		发送http请求给nonce-sever,调用/api/1/apply-nonce接口申请可用某个账号的可用nonce,合约调用之前使用
+	*/
+	applyNonceFromNonceServer(chainName string, account common.Address) (nonce uint64, err error)
 
 	/*
 		notaryService在部署合约之后调用,原则上除此和启动时,其余地方不能调用
@@ -138,4 +150,31 @@ func (ds *DispatchService) updateLockoutInfoNotaryIDInChargeID(scTokenAddress co
 	}
 	lockinInfo.NotaryIDInCharge = notaryID
 	return lh.updateLockout(lockinInfo)
+}
+
+func (ds *DispatchService) applyNonceFromNonceServer(chainName string, account common.Address) (nonce uint64, err error) {
+	url := ds.nonceServerHost + nonceapi.APIName2URLMap[nonceapi.APINameApplyNonce]
+	req := nonceapi.NewApplyNonceReq(chainName, account, ds.notaryService.self.Host+userapi.APIName2URLMap[userapi.APIAdminNameCancelNonce])
+	payload, err := json.Marshal(req)
+	if err != nil {
+		return
+	}
+	/* #nosec */
+	resp, err := http.Post(url, "application/json", bytes.NewReader(payload))
+	if err != nil {
+		return
+	}
+	var buf [4096 * 1024]byte
+	n := 0
+	n, err = resp.Body.Read(buf[:])
+	if err != nil && err.Error() == "EOF" {
+		err = nil
+	}
+	var applyNonceResponse nonceapi.ApplyNonceResponse
+	err = json.Unmarshal(buf[:n], &applyNonceResponse)
+	if err != nil {
+		return
+	}
+	nonce = applyNonceResponse.Nonce
+	return
 }

@@ -139,6 +139,7 @@ func (ph *PKNHandler) StartPKNAndWaitFinish(req *notaryapi.KeyGenerationPhase1Me
 	}
 	log.Info(sessionLogMsg(ph.sessionID, "phase 4 done and private key for %s ready", ph.privateKeyInfo.ToAddress().String()))
 	// 5.完成状态校验, 保存到DB并返回
+	ph.privateKeyInfo.Address = ph.privateKeyInfo.ToAddress()
 	if ph.db != nil {
 		err = ph.db.NewPrivateKeyInfo(ph.privateKeyInfo)
 		if err != nil {

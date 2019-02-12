@@ -292,6 +292,11 @@ func (ss *SMCService) GetContractProxy(contractAddress common.Address) (proxy ch
 	return
 }
 
+// GetConn : impl chain.Chain
+func (ss *SMCService) GetConn() *ethclient.Client {
+	return ss.c.Client
+}
+
 func (ss *SMCService) checkConnectStatus() (err error) {
 	if ss.c == nil || ss.c.Client == nil {
 		return client.ErrNotConnected

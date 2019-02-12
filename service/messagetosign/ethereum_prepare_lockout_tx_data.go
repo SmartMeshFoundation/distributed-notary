@@ -22,18 +22,21 @@ const EthereumPrepareLockoutTxDataName = "EthereumPrepareLockoutTxData"
 // EthereumPrepareLockoutTxData :
 type EthereumPrepareLockoutTxData struct {
 	BytesToSign  []byte                           `json:"bytes_to_sign"`
+	Nonce        uint64                           `json:"nonce"`
 	UserRequest  *userapi.MCPrepareLockoutRequest `json:"user_request"`  // 用户原始请求,验证用户签名
 	MCExpiration uint64                           `json:"mc_expiration"` // 主链超时块,由于公证人之间可能存在当前块误差,导致计算出来的主链超时块不一致,所以在协商时传递
 }
 
 // NewEthereumPrepareLockoutTxData :
-func NewEthereumPrepareLockoutTxData(mcProxy chain.ContractProxy, req *userapi.MCPrepareLockoutRequest, callerAddress common.Address, mcUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (data *EthereumPrepareLockoutTxData) {
+func NewEthereumPrepareLockoutTxData(mcProxy chain.ContractProxy, req *userapi.MCPrepareLockoutRequest, callerAddress common.Address, mcUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int, nonce uint64) (data *EthereumPrepareLockoutTxData) {
 	data = &EthereumPrepareLockoutTxData{
 		UserRequest:  req,
+		Nonce:        nonce,
 		MCExpiration: expiration,
 	}
 	transactor := &bind.TransactOpts{
-		From: callerAddress,
+		From:  callerAddress,
+		Nonce: big.NewInt(int64(nonce)),
 		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
 			if address != callerAddress {
 				return nil, errors.New("not authorized to sign this account")
@@ -108,7 +111,7 @@ func (d *EthereumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProx
 	secretHash := localLockoutInfo.SecretHash
 	amount := localLockoutInfo.Amount
 	var local *EthereumPrepareLockoutTxData
-	local = NewEthereumPrepareLockoutTxData(mcProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount)
+	local = NewEthereumPrepareLockoutTxData(mcProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, d.Nonce)
 	if bytes.Compare(local.GetSignBytes(), d.GetSignBytes()) != 0 {
 		err = fmt.Errorf("EthereumPrepareLockoutTxData.VerifySignBytes() fail,maybe attack")
 	}

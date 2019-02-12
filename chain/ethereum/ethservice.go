@@ -274,6 +274,11 @@ func (ss *ETHService) GetContractProxy(contractAddress common.Address) (proxy ch
 	return
 }
 
+// GetConn : impl chain.Chain
+func (ss *ETHService) GetConn() *ethclient.Client {
+	return ss.c.Client
+}
+
 func (ss *ETHService) changeStatus(newStatus commons.ConnectStatus) {
 	sc := &commons.ConnectStatusChange{
 		OldStatus:  ss.connectStatus,

@@ -8,6 +8,8 @@ import (
 
 	"bytes"
 
+	"context"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
@@ -60,6 +62,8 @@ func (as *AdminService) OnRequest(req api.Req) {
 		as.onCreatePrivateKeyRequest(r)
 	case *userapi.RegisterSCTokenRequest:
 		as.onRegisterSCTokenRequest(r)
+	case *userapi.CancelNonceRequest:
+		as.onCancelNonceRequest(r)
 	/*
 		debug api
 	*/
@@ -281,9 +285,14 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 }
 
 func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo, params ...string) (contractAddress common.Address, sessionID common.Hash, err error) {
+	// 0. 获取nonce
+	nonce, err := as.dispatchService.applyNonceFromNonceServer(smcevents.ChainName, privateKeyInfo.Address)
+	if err != nil {
+		return
+	}
 	// 1. 获取待签名的数据
 	var msgToSign messagetosign.MessageToSign
-	msgToSign = messagetosign.NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress(), params...)
+	msgToSign = messagetosign.NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress(), nonce, params...)
 	// 2. 签名
 	var signature []byte
 	signature, sessionID, err = as.dispatchService.getNotaryService().startDistributedSignAndWait(msgToSign, privateKeyInfo)
@@ -308,4 +317,71 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 	}
 	contractAddress, err = c.DeployContract(transactor, params...)
 	return
+}
+
+/*
+发起一笔自己给自己的转账,来消耗掉一个nonce
+*/
+func (as *AdminService) onCancelNonceRequest(req *userapi.CancelNonceRequest) {
+	chain, err := as.dispatchService.getChainByName(req.ChainName)
+	if err != nil {
+		log.Error("unknown chain name : %s", req.ChainName)
+		req.WriteErrorResponse(api.ErrorCodeDataNotFound, err.Error())
+		return
+	}
+	account := common.HexToAddress(req.Account)
+	privateKeyInfo, err := as.db.LoadPrivateKeyInfoByAccountAddress(account)
+	if err != nil {
+		log.Error("unknown accou: %s", req.Account)
+		req.WriteErrorResponse(api.ErrorCodeDataNotFound, err.Error())
+		return
+	}
+	// 1. 获取待签名的数据
+	var msgToSign messagetosign.MessageToSign
+	msgToSign, chainID, rawTx, err := messagetosign.NewEthereumCancelNonceTxData(chain, account, req.Nonce)
+	if err != nil {
+		log.Error("err when NewEthereumCancelNonceTxData : %s", req.ChainName)
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
+	}
+	// 2. 签名
+	var signature []byte
+	signature, _, err = as.dispatchService.getNotaryService().startDistributedSignAndWait(msgToSign, privateKeyInfo)
+	if err != nil {
+		log.Error("err when startDistributedSignAndWait : %s", req.ChainName)
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
+	}
+	log.Info("cancel nonce %d on %s with account=%s, signature=%s", req.Nonce, chain.GetChainName(), privateKeyInfo.ToAddress().String(), common.Bytes2Hex(signature))
+	// 3. 发送交易
+	signer := func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
+		if address != privateKeyInfo.ToAddress() {
+			return nil, errors.New("not authorized to sign this account")
+		}
+		msgToSign2 := signer.Hash(tx).Bytes()
+		if bytes.Compare(msgToSign.GetSignBytes(), msgToSign2) != 0 {
+			err = fmt.Errorf("txbytes when deploy contract step1 and step2 does't match")
+			return nil, err
+		}
+		return tx.WithSignature(signer, signature)
+	}
+	ctx := context.Background()
+	signedTx, err := signer(types.NewEIP155Signer(chainID), account, rawTx)
+	if err != nil {
+		log.Error("err when sign2 : %s", req.ChainName)
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
+	}
+	if err = chain.GetConn().SendTransaction(ctx, signedTx); err != nil {
+		log.Error("err when SendTransaction : %s", req.ChainName)
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
+	}
+	_, err = bind.WaitMined(ctx, chain.GetConn(), signedTx)
+	if err != nil {
+		log.Error("err when WaitMined : %s", req.ChainName)
+		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
+		return
+	}
+	req.WriteSuccessResponse(nil)
 }

@@ -3,6 +3,7 @@ package userapi
 import (
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // GetPrivateKeyListRequest :
@@ -71,6 +72,44 @@ func (ua *UserAPI) registerNewSCToken(w rest.ResponseWriter, r *rest.Request) {
 	}
 	if req.PrivateKeyID == "" {
 		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "private_key_id can not be null"))
+		return
+	}
+	ua.SendToService(req)
+	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
+}
+
+// CancelNonceRequest :
+type CancelNonceRequest struct {
+	api.BaseReq
+	api.BaseReqWithResponse
+	ChainName string `json:"chain_name"`
+	Account   string `json:"account"`
+	Nonce     uint64 `json:"nonce"`
+}
+
+// NewCancelNonceRequest :
+func NewCancelNonceRequest(chainName string, account common.Address, nonce uint64) *CancelNonceRequest {
+	return &CancelNonceRequest{
+		BaseReq:             api.NewBaseReq(APIAdminNameRegisterNewSCToken),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
+		ChainName:           chainName,
+		Account:             account.String(),
+		Nonce:               nonce,
+	}
+}
+
+/*
+cancelNonce :
+	用一笔小额交易或无效交易消耗掉nonce
+*/
+func (ua *UserAPI) cancelNonce(w rest.ResponseWriter, r *rest.Request) {
+	req := &CancelNonceRequest{
+		BaseReq:             api.NewBaseReq(APIAdminNameCancelNonce),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
+	}
+	err := r.DecodeJsonPayload(req)
+	if err != nil {
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
 		return
 	}
 	ua.SendToService(req)

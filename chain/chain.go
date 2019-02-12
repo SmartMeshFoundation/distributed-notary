@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 // ErrorCallWrongChain : 调用错误
@@ -27,6 +28,7 @@ type Chain interface {
 	DeployContract(opts *bind.TransactOpts, params ...string) (contractAddress common.Address, err error)
 	SetLastBlockNumber(lastBlockNumber uint64)
 	GetContractProxy(contractAddress common.Address) ContractProxy
+	GetConn() *ethclient.Client
 
 	Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int) (err error) // for debug
 }

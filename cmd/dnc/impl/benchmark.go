@@ -164,8 +164,8 @@ func benchmarkDSM(mcName string, num int) {
 	for index, key := range keys {
 		account := crypto.PubkeyToAddress(key.PublicKey)
 		secretHash := secretHashs[index]
-		//2. 主链转账10eth
-		err := es.Transfer10ToAccount(mcKey, account, eth2Wei(10))
+		//2. 主链转账1eth
+		err := es.Transfer10ToAccount(mcKey, account, eth2Wei(10*1000000000))
 		if err != nil {
 			fmt.Println("transfer eth to account fail : ", err)
 			os.Exit(-1)
@@ -215,16 +215,17 @@ func getBenchmarkRequests(scTokenAddress common.Address, keys []*ecdsa.PrivateKe
 	for index, key := range keys {
 		address := crypto.PubkeyToAddress(key.PublicKey)
 		body := &userapi.SCPrepareLockinRequest{
-			BaseReq:             api.NewBaseReq(userapi.APIUserNameSCPrepareLockin),
-			BaseReqWithResponse: api.NewBaseReqWithResponse(),
-			BaseReqWithSCToken:  api.NewBaseReqWithSCToken(scTokenAddress),
-			SecretHash:          secretHashs[index],
-			MCUserAddress:       address,
-			SCUserAddress:       address,
+			BaseReq:              api.NewBaseReq(userapi.APIUserNameSCPrepareLockin),
+			BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+			BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenAddress),
+			BaseReqWithSignature: api.NewBaseReqWithSignature(address),
+			SecretHash:           secretHashs[index],
+			MCUserAddress:        address,
+			SCUserAddress:        address,
 		}
 		body.Sign(body, key)
 		requests = append(requests, &req{
-			url:     fmt.Sprintf("http://127.0.0.1:333%d%s", 0, "/api/1/user/scpreparelockin/"+scTokenAddress.String()),
+			url:     fmt.Sprintf("http://127.0.0.1:803%d%s", 0, "/api/1/user/scpreparelockin/"+scTokenAddress.String()),
 			payload: utils.ToJSONString(body),
 		})
 	}

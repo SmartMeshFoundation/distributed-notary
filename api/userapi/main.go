@@ -19,6 +19,7 @@ const (
 	APIAdminNameCreatePrivateKey   = APIAdminNamePrefix + "CreatePrivateKey"   // 发起一次私钥协商
 	APIAdminNameGetPrivateKeyList  = APIAdminNamePrefix + "GetPrivateKeyList"  // 私钥片列表查询
 	APIAdminNameRegisterNewSCToken = APIAdminNamePrefix + "RegisterNewSCToken" // 注册一个新的侧链token
+	APIAdminNameCancelNonce        = APIAdminNamePrefix + "CancelNonce"        // 用一笔小额交易销毁一个nonce
 
 	APIUserNamePrefix           = "User-"
 	APIUserNameGetNotaryList    = APIUserNamePrefix + "GetNotaryList"  // 公证人列表查询
@@ -45,6 +46,7 @@ func init() {
 	APIName2URLMap[APIAdminNameCreatePrivateKey] = "/api/1/admin/private-key"
 	APIName2URLMap[APIAdminNameGetPrivateKeyList] = "/api/1/admin/private-keys"
 	APIName2URLMap[APIAdminNameRegisterNewSCToken] = "/api/1/admin/sctoken"
+	APIName2URLMap[APIAdminNameCancelNonce] = "/api/1/admin/cancel-nonce/:nonce"
 	/*
 		user
 	*/
@@ -100,6 +102,7 @@ func NewUserAPI(host string) *UserAPI {
 		*/
 		rest.Get(APIName2URLMap[APIAdminNameGetPrivateKeyList], userAPI.getPrivateKeyList),
 		rest.Put(APIName2URLMap[APIAdminNameRegisterNewSCToken], userAPI.registerNewSCToken),
+		rest.Get(APIName2URLMap[APIAdminNameCancelNonce], userAPI.cancelNonce),
 		/*
 			debug api
 		*/

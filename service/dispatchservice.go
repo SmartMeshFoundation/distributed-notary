@@ -43,6 +43,8 @@ type DispatchService struct {
 	// 数据库
 	db *models.DB
 
+	// NonceServer
+	nonceServerHost string
 	// 杂项
 	quitChan chan struct{}
 
@@ -104,6 +106,12 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		db:                           db,
 		quitChan:                     make(chan struct{}),
 		scToken2CrossChainServiceMap: make(map[common.Address]*CrossChainService),
+	}
+	// 3.5 初始化nonce-server-host
+	ds.nonceServerHost = cfg.NonceServerHost
+	if ds.nonceServerHost == "" {
+		log.Error("param nonce-server can not be empty", err.Error())
+		return
 	}
 	// 4. 初始化侧链事件监听
 	chainName := spectrumevents.ChainName

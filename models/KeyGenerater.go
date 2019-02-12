@@ -87,6 +87,7 @@ PrivateKeyInfo lockedin 过程中互相之间协商的结果
 */
 type PrivateKeyInfo struct {
 	Key                 common.Hash
+	Address             common.Address
 	PublicKeyY          *big.Int
 	PublicKeyX          *big.Int                         // 此次协商生成的私钥对应的公钥 X,Y *big.Int
 	UI                  share.SPrivKey                   //原始随机数,用于协商私钥片
@@ -117,6 +118,7 @@ func (pi *PrivateKeyInfo) ToAddress() common.Address {
 // PrivateKeyInfoModel :
 type PrivateKeyInfoModel struct {
 	Key                 []byte `gorm:"primary_key"` //a random hash
+	Address             []byte `gorm:"type varchar(128)"`
 	PublicKeyX          string // 此次协商生成的私钥对应的公钥 X,Y *big.Int
 	PublicKeyY          string
 	UI                  []byte `gorm:"type:varchar(128);"`  //原始随机数,用于协商私钥片
@@ -247,11 +249,13 @@ func fromPrivateKeyInfoModel(p *PrivateKeyInfoModel) *PrivateKeyInfo {
 		CreateTime:          p.CreateTime,
 	}
 	p2.Key.SetBytes(p.Key)
+	p2.Address.SetBytes(p.Address)
 	return p2
 }
 func toPrivateKeyInfoModel(p *PrivateKeyInfo) *PrivateKeyInfoModel {
 	p2 := &PrivateKeyInfoModel{
 		Key:                 p.Key[:],
+		Address:             p.Address[:],
 		PublicKeyX:          bigIntToStr(p.PublicKeyX),
 		PublicKeyY:          bigIntToStr(p.PublicKeyY),
 		UI:                  interface2Byte(p.UI, false),
@@ -293,6 +297,18 @@ func (db *DB) LoadPrivateKeyInfo(key common.Hash) (*PrivateKeyInfo, error) {
 	var pi PrivateKeyInfoModel
 	err := db.Where(&PrivateKeyInfoModel{
 		Key: key[:],
+	}).First(&pi).Error
+	if err != nil {
+		return nil, err
+	}
+	return fromPrivateKeyInfoModel(&pi), nil
+}
+
+// LoadPrivateKeyInfoByAccountAddress : 根据地址查找
+func (db *DB) LoadPrivateKeyInfoByAccountAddress(account common.Address) (*PrivateKeyInfo, error) {
+	var pi PrivateKeyInfoModel
+	err := db.Where(&PrivateKeyInfoModel{
+		Address: account[:],
 	}).First(&pi).Error
 	if err != nil {
 		return nil, err

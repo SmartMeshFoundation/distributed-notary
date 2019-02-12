@@ -26,6 +26,7 @@ func TestNewPrivateKeyInfo(t *testing.T) {
 	r := dutils.NewRandomHash()
 	p := &PrivateKeyInfo{
 		Key:             r,
+		Address:         dutils.NewRandomAddress(),
 		UI:              share.RandomPrivateKey(),
 		XI:              share.RandomPrivateKey(),
 		PaillierPrivkey: pprivKey,
@@ -49,6 +50,10 @@ func TestNewPrivateKeyInfo(t *testing.T) {
 	t.Logf("p=%s", utils.StringInterface(p, 7))
 	t.Logf("p2=%s", utils.StringInterface(p2, 7))
 	assert.EqualValues(t, p, p2)
+
+	p3, err := db.LoadPrivateKeyInfoByAccountAddress(p.Address)
+	assert.Empty(t, err)
+	assert.EqualValues(t, p, p3)
 
 }
 
