@@ -30,6 +30,8 @@ import (
 DSMHandler 控制一次签名的完整周期
 */
 type DSMHandler struct {
+	Running bool //主线程启动控制
+
 	db             *models.DB
 	sessionID      common.Hash
 	self           *models.NotaryInfo
@@ -45,6 +47,7 @@ type DSMHandler struct {
 	vss                *feldman.VerifiableSS     //上次协商生成的feldman vss
 	signMessage        *models.SignMessage       //此次签名生成过程中需要保存到数据库的信息
 
+	phase2MessageBLock sync.Mutex //由于phase2Msg接收是在请求里面同步返回的,由于请求是并发的所以单独设置一个锁
 	/*
 		消息接收chan
 	*/
@@ -117,12 +120,14 @@ func (dh *DSMHandler) StartDSMAndWaitFinish() (signature []byte, err error) {
 		log.Info(sessionLogMsg(dh.sessionID, err.Error()))
 		return
 	}
+	// 1.5 初始化phase1Msg
+	phase1Msg := dh.generatePhase1Broadcast()
 	// 2. 启动消息接收线程
-	go dh.receiveLoop()
+	//go dh.receiveLoop()
 
 	// 3. 开始phase1
 	log.Info(sessionLogMsg(dh.sessionID, "dsm phase 1 start..."))
-	phase1Req := notaryapi.NewDSMPhase1BroadcastRequest(dh.sessionID, dh.self, dh.privateKeyInfo.Key, dh.generatePhase1Broadcast())
+	phase1Req := notaryapi.NewDSMPhase1BroadcastRequest(dh.sessionID, dh.self, dh.privateKeyInfo.Key, phase1Msg)
 	dh.notaryClient.WSBroadcast(phase1Req, dh.otherNotaryIDs...)
 	// 等待phase1完成
 	err = dh.waitPhaseDone(dh.phase1DoneChan)
@@ -134,17 +139,17 @@ func (dh *DSMHandler) StartDSMAndWaitFinish() (signature []byte, err error) {
 
 	// 4. 开始phase2,phase2需要接收返回
 	log.Info(sessionLogMsg(dh.sessionID, "dsm phase 2 start..."))
-	wg := sync.WaitGroup{}
-	wg.Add(len(dh.otherNotaryIDs))
+	phase2Msg := dh.generatePhase2MessageA()
 	for _, notaryID := range dh.otherNotaryIDs {
-		go func(notaryID int) {
-			defer wg.Done()
-			phase2Req := notaryapi.NewDSMPhase2MessageARequest(dh.sessionID, dh.self, dh.privateKeyInfo.Key, dh.generatePhase2MessageA())
+		go func(notaryID int, phase2Msg *models.MessageA) {
+			//defer wg.Done()
+			phase2Req := notaryapi.NewDSMPhase2MessageARequest(dh.sessionID, dh.self, dh.privateKeyInfo.Key, phase2Msg)
 			dh.notaryClient.SendWSReqToNotary(phase2Req, notaryID)
 			resp, err2 := dh.notaryClient.WaitWSResponse(phase2Req.GetRequestID())
 			if err2 != nil {
 				err = err2
 				log.Error(sessionLogMsg(dh.sessionID, "dsm failed at phase 2 , err : %s ", err.Error()))
+				dh.notify(nil, err)
 				return
 			}
 			var respMsg models.MessageBPhase2
@@ -152,14 +157,11 @@ func (dh *DSMHandler) StartDSMAndWaitFinish() (signature []byte, err error) {
 			if err2 != nil {
 				err = err2
 				log.Error("parse MessageBPhase2 err =%s \n%s", err.Error(), utils.ToJSONStringFormat(resp))
+				dh.notify(nil, err)
 				return
 			}
 			dh.receivePhase2MessageB(&respMsg, notaryID)
-		}(notaryID)
-	}
-	wg.Wait()
-	if err != nil {
-		return
+		}(notaryID, phase2Msg)
 	}
 	// 等待phase2完成
 	err = dh.waitPhaseDone(dh.phase2DoneChan)
@@ -251,46 +253,7 @@ func (dh *DSMHandler) OnRequest(req api.Req) {
 	default:
 		// never block
 	}
-}
-
-/*
-消息接收线程,该会话的所有消息都在这里面处理
-*/
-func (dh *DSMHandler) receiveLoop() {
-	for {
-		var req api.Req
-		select {
-		case req = <-dh.receiveChan:
-		case err := <-dh.quitChan:
-			if err != nil {
-				log.Error(sessionLogMsg(dh.sessionID, "receiveLoop of DSMHandler quit with err %s", err.Error()))
-			}
-			return
-		}
-		switch r := req.(type) {
-		case *notaryapi.DSMPhase1BroadcastRequest:
-			dh.receivePhase1Broadcast(r.Msg, r.GetSenderNotaryID())
-			r.WriteSuccessResponse(nil)
-		case *notaryapi.DSMPhase2MessageARequest:
-			resp := dh.receivePhase2MessageA(r.Msg, r.GetSenderNotaryID())
-			r.WriteSuccessResponse(resp)
-		case *notaryapi.DSMPhase3DeltaIRequest:
-			dh.receivePhase3DeltaI(r.Msg, r.GetSenderNotaryID())
-			r.WriteSuccessResponse(nil)
-		case *notaryapi.DSMPhase5A5BProofRequest:
-			dh.receivePhase5A5BProof(r.Msg, r.GetSenderNotaryID())
-			r.WriteSuccessResponse(nil)
-		case *notaryapi.DSMPhase5CProofRequest:
-			dh.receivePhase5cProof(r.Msg, r.GetSenderNotaryID())
-			r.WriteSuccessResponse(nil)
-		case *notaryapi.DSMPhase6ReceiveSIRequest:
-			dh.recevieSI(r.Msg, r.GetSenderNotaryID())
-			r.WriteSuccessResponse(nil)
-		default:
-			log.Error(sessionLogMsg(dh.sessionID, "unknown msg for DSMHandler :\n%s", utils.ToJSONStringFormat(req)))
-		}
-		// TODO 在这里可以更精确的判断当前状态,来通知主线程
-	}
+	//dh.receiveChan <- req
 }
 
 // 载入相关信息
@@ -309,7 +272,7 @@ func (dh *DSMHandler) loadLockout(signMessage *models.SignMessage) {
 }
 
 /*
-		//参数：自己的私钥片、系数点乘集合和我的多项式y集合、签名人的原始编号、所有签名人的编号
+//参数：自己的私钥片、系数点乘集合和我的多项式y集合、签名人的原始编号、所有签名人的编号
 //==>每个公证人的公私钥、公钥片、{{{t,n},t+1个系数点乘G的结果(c1...c2)},y1...yn}
 */
 func (dh *DSMHandler) createSignKeys() {
@@ -463,29 +426,29 @@ func verifyProofsGetAlpha(m *models.MessageB, dk *proofs.PrivateKey, a share.SPr
 
 //receivePhase2MessageB 收集并验证MessageB证明信息
 func (dh *DSMHandler) receivePhase2MessageB(msg *models.MessageBPhase2, index int) {
-	//dh.loadLockout(dh.signMessage)
-	alphaijGamma, err := verifyProofsGetAlpha(msg.MessageBGamma, dh.paillierPrivateKey, dh.signMessage.SignedKey.KI)
-	if err != nil {
-		dh.notify(nil, err)
-		return
-	}
-	alphaijWi, err := verifyProofsGetAlpha(msg.MessageBWi, dh.paillierPrivateKey, dh.signMessage.SignedKey.KI)
-	if err != nil {
-		dh.notify(nil, err)
-		return
-	}
-	//if !EqualGE(msg.MessageBWi.BProof.PK, dh.signMessage.SignedKey.Gwi) { 这里应该等于index的gwi,而不是l.index的gwi
-	//	panic("not equal")
-	//}
+	dh.phase2MessageBLock.Lock()
 	dh.signMessage.Phase2MessageB[index] = msg
-	dh.signMessage.AlphaGamma[index] = alphaijGamma
-	dh.signMessage.AlphaWI[index] = alphaijWi
+	dh.phase2MessageBLock.Unlock()
 	dh.checkPhase2Done()
 	return
 }
 
 func (dh *DSMHandler) checkPhase2Done() {
 	if len(dh.signMessage.Phase2MessageB) == len(dh.signMessage.S)-1 {
+		for index, msg := range dh.signMessage.Phase2MessageB {
+			alphaijGamma, err := verifyProofsGetAlpha(msg.MessageBGamma, dh.paillierPrivateKey, dh.signMessage.SignedKey.KI)
+			if err != nil {
+				dh.notify(nil, err)
+				return
+			}
+			alphaijWi, err := verifyProofsGetAlpha(msg.MessageBWi, dh.paillierPrivateKey, dh.signMessage.SignedKey.KI)
+			if err != nil {
+				dh.notify(nil, err)
+				return
+			}
+			dh.signMessage.AlphaGamma[index] = alphaijGamma
+			dh.signMessage.AlphaWI[index] = alphaijWi
+		}
 		dh.notify(dh.phase2DoneChan, nil)
 	}
 }
@@ -1052,15 +1015,41 @@ func init() {
 }
 
 func (dh *DSMHandler) waitPhaseDone(c chan bool) (err error) {
-	select {
-	case <-c:
-	case err = <-dh.quitChan:
-		if err != nil {
-			log.Error(sessionLogMsg(dh.sessionID, "waitPhaseDone of DSMHandler quit with err %s", err.Error()))
+	var req api.Req
+	for {
+		select {
+		case <-c:
+			return
+		case err = <-dh.quitChan:
+			if err != nil {
+				log.Error(sessionLogMsg(dh.sessionID, "waitPhaseDone of DSMHandler quit with err %s", err.Error()))
+			}
+			return
+		case req = <-dh.receiveChan:
+			switch r := req.(type) {
+			case *notaryapi.DSMPhase1BroadcastRequest:
+				dh.receivePhase1Broadcast(r.Msg, r.GetSenderNotaryID())
+				r.WriteSuccessResponse(nil)
+			case *notaryapi.DSMPhase2MessageARequest:
+				resp := dh.receivePhase2MessageA(r.Msg, r.GetSenderNotaryID())
+				r.WriteSuccessResponse(resp)
+			case *notaryapi.DSMPhase3DeltaIRequest:
+				dh.receivePhase3DeltaI(r.Msg, r.GetSenderNotaryID())
+				r.WriteSuccessResponse(nil)
+			case *notaryapi.DSMPhase5A5BProofRequest:
+				dh.receivePhase5A5BProof(r.Msg, r.GetSenderNotaryID())
+				r.WriteSuccessResponse(nil)
+			case *notaryapi.DSMPhase5CProofRequest:
+				dh.receivePhase5cProof(r.Msg, r.GetSenderNotaryID())
+				r.WriteSuccessResponse(nil)
+			case *notaryapi.DSMPhase6ReceiveSIRequest:
+				dh.recevieSI(r.Msg, r.GetSenderNotaryID())
+				r.WriteSuccessResponse(nil)
+			default:
+				log.Error(sessionLogMsg(dh.sessionID, "unknown msg for DSMHandler :\n%s", utils.ToJSONStringFormat(req)))
+			}
 		}
-		return
 	}
-	return
 }
 
 func (dh *DSMHandler) notify(c chan bool, err error) {

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"time"
-
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
@@ -14,7 +12,7 @@ import (
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
-	mecdsa2 "github.com/SmartMeshFoundation/distributed-notary/service/mecdsa"
+	"github.com/SmartMeshFoundation/distributed-notary/service/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -114,7 +112,7 @@ func (ns *NotaryService) startNewPrivateKeyNegotiation() (privateKeyInfo *models
 	/*
 		创建一个新的PKNHandler,并保存到内存
 	*/
-	ph := mecdsa2.NewPKNHandler(ns.db, ns.self, otherNotaryIDs, sessionID, ns.notaryClient)
+	ph := mecdsa.NewPKNHandler(ns.db, ns.self, otherNotaryIDs, sessionID, ns.notaryClient)
 	ns.pknHandlerMap.Store(sessionID, ph)
 	// 开始pkn并阻塞等待
 	return ph.StartPKNAndWaitFinish(nil)
@@ -157,12 +155,12 @@ func (ns *NotaryService) onPKNRequest(req api.Req) {
 		for _, notary := range ns.otherNotaries {
 			otherNotaryIDs = append(otherNotaryIDs, notary.ID)
 		}
-		phSavedInterface, loaded = ns.pknHandlerMap.LoadOrStore(sessionID, mecdsa2.NewPKNHandler(ns.db, ns.self, otherNotaryIDs, sessionID, ns.notaryClient))
+		phSavedInterface, loaded = ns.pknHandlerMap.LoadOrStore(sessionID, mecdsa.NewPKNHandler(ns.db, ns.self, otherNotaryIDs, sessionID, ns.notaryClient))
 	}
 	/*
 		投递到ph,如果是被动开始的,启动协商线程
 	*/
-	ph := phSavedInterface.(*mecdsa2.PKNHandler)
+	ph := phSavedInterface.(*mecdsa.PKNHandler)
 	if loaded {
 		// 已经存在,直接投递
 		ph.OnRequest(req)
@@ -217,49 +215,13 @@ func (ns *NotaryService) startDistributedSignAndWait(msgToSign messagetosign.Mes
 	}
 	log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection done..."))
 	// 3. 构造DSMHandler
-	dh := mecdsa2.NewDSMHandler(ns.db, ns.self, otherNotaryIDs, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
+	dh := mecdsa.NewDSMHandler(ns.db, ns.self, otherNotaryIDs, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
 	// 4. 保存DSMHandler
 	ns.dsmHandlerMap.Store(sessionID, dh)
-	// 5. 开始签名过程并阻塞等待
+	// 5. 开始签名过程并阻塞等待,协商发起者需要把标志位Running置为true,避免启动2个主线程
+	dh.Running = true
 	signature, err = dh.StartDSMAndWaitFinish()
 	return
-	//
-	//err = ns.startDSMNotifySelection(sessionID, notaryIDs, privateKeyInfo.Key, msgToSign)
-	//if err != nil {
-	//	log.Error("startDSMNotifySelection err = %s", err.Error())
-	//	return
-	//}
-	//// 3. 通知完毕之后,直接开始签名过程
-	//err = ns.startDSMPhase1(sessionID, privateKeyInfo.Key)
-	//if err != nil {
-	//	log.Error("startDSMPhase1 err = %s", err.Error())
-	//	return
-	//}
-	//// 4. 轮询数据库,等待签名完成
-	//times := 0
-	//for {
-	//	time.Sleep(time.Second) // TODO 这里轮询周期设置为多少合适,是否需要设置超时
-	//	dsm2, err2 := mecdsa.NewDistributedSignMessageFromDB(ns.db, ns.self.ID, sessionID, privateKeyInfo.Key)
-	//	if err2 != nil {
-	//		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
-	//		return
-	//	}
-	//	var finish bool
-	//	signature, finish, err2 = dsm2.GetFinalSignature()
-	//	if err2 != nil {
-	//		log.Error("NewDistributedSignMessageFromDB err = %s", err.Error())
-	//		return
-	//	}
-	//	if finish {
-	//		timeUsed := time.Since(start)
-	//		log.Trace("distributedSignMessage end ,total use %f seconds", timeUsed.Seconds())
-	//		return
-	//	}
-	//	if times%10 == 0 {
-	//		log.Trace(SessionLogMsg(sessionID, "waiting for distributedSignMessage..."))
-	//	}
-	//	times++
-	//}
 }
 
 func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int) (sessionID common.Hash, otherNotaryIDs []int, err error) {
@@ -358,12 +320,10 @@ func (ns *NotaryService) onDSMNotifySelectionRequest(req *notaryapi.DSMNotifySel
 			otherNotaryIDs = append(otherNotaryIDs, notaryID)
 		}
 	}
-	dh := mecdsa2.NewDSMHandler(ns.db, ns.self, otherNotaryIDs, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
+	dh := mecdsa.NewDSMHandler(ns.db, ns.self, otherNotaryIDs, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
 	// 6. 保存dh,这里不会重复
 	ns.dsmHandlerMap.Store(sessionID, dh)
 	log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection done..."))
-	// 7. 开始dh的主线程
-	go dh.StartDSMAndWaitFinish()
 	// 7. 返回
 	req.WriteSuccessResponse(nil)
 	return
@@ -382,7 +342,7 @@ func (ns *NotaryService) onDSMNotifySelectionRequest(req *notaryapi.DSMNotifySel
 	//		otherNotaryIDs = append(otherNotaryIDs, notaryID)
 	//	}
 	//}
-	//dh := mecdsa2.NewDSMHandler(ns.db, ns.self, otherNotaryIDs, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
+	//dh := mecdsa.NewDSMHandler(ns.db, ns.self, otherNotaryIDs, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
 	//// 2. 构造dsm
 	//err := ns.saveDSMNotifySelection(req)
 	//if err != nil {
@@ -414,25 +374,8 @@ func (ns *NotaryService) onDSMRequest(req api.Req) {
 	// 1. 获取DSMHandler
 	var dsmHandlerInterface interface{}
 	var loaded bool
-	// 这里找不到分两种情况:
+	// 这里找不到直接报错
 	dsmHandlerInterface, loaded = ns.dsmHandlerMap.Load(sessionID)
-	// 1. 是phase1消息,可能是我对之前的NotifySelection处理得太慢了,所以收到的时候还没构造好DSM,轮询5次等待下,每次50ms
-	// 2. 其余消息,直接报错
-	// TODO 直接把NotifySelection放入DSMHandler中处理就避免轮询了
-	if !loaded && req.GetRequestName() == notaryapi.APINameDSMPhase1Broadcast {
-		retry := 0
-		for {
-			time.Sleep(50 * time.Millisecond)
-			if retry > 5 {
-				break
-			}
-			dsmHandlerInterface, loaded = ns.dsmHandlerMap.Load(sessionID)
-			if loaded {
-				break
-			}
-			retry++
-		}
-	}
 	if !loaded {
 		if needResponse {
 			errMsg := SessionLogMsg(sessionID, "can not find DSMHandler with this sessionID")
@@ -440,187 +383,17 @@ func (ns *NotaryService) onDSMRequest(req api.Req) {
 		}
 		return
 	}
+	// 由于发起者会在所有人NotifySelection处理完成后才开始发送消息,所以被动参与者可以考虑在收到发起者的phase1Msg消息之后才启动dsmHandler的主线程发送自己的phase1Msg消息
+	// 如果这样,那么被动参与方收到的第一条消息一定是发起者发来的phase1Msg,并且收到的时候,dsmHandler一定已经初始化了,所以直接启动主线程
+	dh := dsmHandlerInterface.(*mecdsa.DSMHandler)
+	if !dh.Running {
+		dh.Running = true
+		go dh.StartDSMAndWaitFinish()
+	}
 	// 2. 投递消息
-	dsmHandlerInterface.(*mecdsa2.DSMHandler).OnRequest(req)
+	dh.OnRequest(req)
 	return
 }
-
-///*
-//收到 DSMPhase1BroadcastRequest
-//*/
-//func (ns *NotaryService) onDSMPhase1BroadcastRequest(req *notaryapi.DSMPhase1BroadcastRequest) {
-//	sessionID := req.GetSessionID()
-//	// 1. 校验sender
-//	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-//	if !ok {
-//		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-//		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
-//		return
-//	}
-//	// 2. save
-//	finish, err := ns.saveDSMPhase1(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
-//	if err != nil {
-//		errMsg := SessionLogMsg(sessionID, "saveDSMPhase1 err = %s", err.Error())
-//		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-//		return
-//	}
-//	// 3.先行返回,避免阻塞调用方
-//	req.WriteSuccessResponse(nil)
-//	// 4.开始下一步
-//	if finish {
-//		finish, err = ns.startDSMPhase2(sessionID, req.PrivateKeyID)
-//		if err != nil {
-//			log.Error(SessionLogMsg(sessionID, "startDSMPhase2 err = %s", err.Error()))
-//			return
-//		}
-//		// 5.phase2是同步的,如果完成,直接开始pahse3
-//		if finish {
-//			err = ns.startDSMPhase3(sessionID, req.PrivateKeyID)
-//			if err != nil {
-//				log.Error(SessionLogMsg(sessionID, "startDSMPhase3 err = %s", err.Error()))
-//			}
-//		}
-//	}
-//}
-//
-///*
-//收到 DSMPhase2MessageARequest
-//*/
-//func (ns *NotaryService) onDSMPhase2MessageARequest(req *notaryapi.DSMPhase2MessageARequest) {
-//	sessionID := req.GetSessionID()
-//	// 1. 校验sender
-//	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-//	if !ok {
-//		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-//		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
-//		return
-//	}
-//	// 2.
-//	msgResp, err := ns.saveDSMPhase2(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
-//	if err != nil {
-//		errMsg := SessionLogMsg(sessionID, "saveDSMPhase2 err = %s", err.Error())
-//		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-//		return
-//	}
-//	req.WriteSuccessResponse(msgResp)
-//	return
-//}
-//
-///*
-//收到 DSMPhase3DeltaIRequest
-//*/
-//func (ns *NotaryService) onDSMPhase3DeltaIRequest(req *notaryapi.DSMPhase3DeltaIRequest) {
-//	sessionID := req.GetSessionID()
-//	// 1. 校验sender
-//	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-//	if !ok {
-//		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-//		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
-//		return
-//	}
-//	// 2. save
-//	finish, err := ns.saveDSMPhase3(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
-//	if err != nil {
-//		errMsg := SessionLogMsg(sessionID, "saveDSMPhase3 err = %s", err.Error())
-//		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-//		return
-//	}
-//	// 3.先行返回,避免阻塞调用方
-//	req.WriteSuccessResponse(nil)
-//	// 4.开始下一步
-//	if finish {
-//		err = ns.startDSMPhase5A5B(sessionID, req.PrivateKeyID)
-//		if err != nil {
-//			log.Error(SessionLogMsg(sessionID, "startDSMPhase5A5B err = %s", err.Error()))
-//		}
-//	}
-//}
-//
-///*
-//收到 DSMPhase5A5BProofRequest
-//*/
-//func (ns *NotaryService) onDSMPhase5A5BProofRequest(req *notaryapi.DSMPhase5A5BProofRequest) {
-//	sessionID := req.GetSessionID()
-//	// 1. 校验sender
-//	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-//	if !ok {
-//		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-//		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
-//		return
-//	}
-//	// 2. save
-//	finish, err := ns.saveDSMPhase5A5B(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
-//	if err != nil {
-//		errMsg := SessionLogMsg(sessionID, "saveDSMPhase5A5B err = %s", err.Error())
-//		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-//		return
-//	}
-//	// 3.先行返回,避免阻塞调用方
-//	req.WriteSuccessResponse(nil)
-//	// 4.开始下一步
-//	if finish {
-//		err = ns.startDSMPhase5C(sessionID, req.PrivateKeyID)
-//		if err != nil {
-//			log.Error(SessionLogMsg(sessionID, "startDSMPhase5C err = %s", err.Error()))
-//		}
-//	}
-//}
-//
-///*
-//收到 DSMPhase5CProofRequest
-//*/
-//func (ns *NotaryService) onDSMPhase5CProofRequest(req *notaryapi.DSMPhase5CProofRequest) {
-//	sessionID := req.GetSessionID()
-//	// 1. 校验sender
-//	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-//	if !ok {
-//		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-//		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
-//		return
-//	}
-//	// 2. save
-//	finish, err := ns.saveDSMPhase5C(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
-//	if err != nil {
-//		errMsg := SessionLogMsg(sessionID, "saveDSMPhase5C err = %s", err.Error())
-//		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-//		return
-//	}
-//	// 3.先行返回,避免阻塞调用方
-//	req.WriteSuccessResponse(nil)
-//	// 4.开始下一步
-//	if finish {
-//		err = ns.startDSMPhase6(sessionID, req.PrivateKeyID)
-//		if err != nil {
-//			log.Error(SessionLogMsg(sessionID, "startDSMPhase6 err = %s", err.Error()))
-//		}
-//	}
-//}
-//
-///*
-//收到 DSMPhase6ReceiveSIRequest
-//*/
-//func (ns *NotaryService) onDSMPhase6ReceiveSIRequest(req *notaryapi.DSMPhase6ReceiveSIRequest) {
-//	sessionID := req.GetSessionID()
-//	// 1. 校验sender
-//	notaryInfo, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-//	if !ok {
-//		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-//		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
-//		return
-//	}
-//	// 2. save
-//	signature, finish, err := ns.saveDSMPhase6(sessionID, req.PrivateKeyID, req.Msg, notaryInfo.ID)
-//	if err != nil {
-//		errMsg := SessionLogMsg(sessionID, "saveDSMPhase6 err = %s", err.Error())
-//		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-//		return
-//	}
-//	// 4. 如果结束,签名生成成功,打印日志
-//	if finish {
-//		log.Info(SessionLogMsg(sessionID, "Distributed sign message END, signature=%s", common.BytesToHash(signature).String()))
-//	}
-//	req.WriteSuccessResponse(nil)
-//}
 
 func (ns *NotaryService) getNotaryInfoByAddress(addr common.Address) (notaryInfo *models.NotaryInfo, ok bool) {
 	for _, v := range ns.otherNotaries {
@@ -633,30 +406,6 @@ func (ns *NotaryService) getNotaryInfoByAddress(addr common.Address) (notaryInfo
 	ok = false
 	return
 }
-
-//func (ns *NotaryService) lockSession(sessionID common.Hash) {
-//	var lock *sync.Mutex
-//	var ok bool
-//	ns.sessionLockMapLock.Lock()
-//	if lock, ok = ns.sessionLockMap[sessionID]; !ok {
-//		lock = &sync.Mutex{}
-//		ns.sessionLockMap[sessionID] = lock
-//	}
-//	ns.sessionLockMapLock.Unlock()
-//	lock.Lock()
-//}
-//func (ns *NotaryService) unlockSession(sessionID common.Hash) {
-//	var lock *sync.Mutex
-//	ns.sessionLockMapLock.Lock()
-//	lock = ns.sessionLockMap[sessionID]
-//	ns.sessionLockMapLock.Unlock()
-//	lock.Unlock()
-//}
-//func (ns *NotaryService) removeSessionLock(sessionID common.Hash) {
-//	ns.sessionLockMapLock.Lock()
-//	delete(ns.sessionLockMap, sessionID)
-//	ns.sessionLockMapLock.Unlock()
-//}
 
 /*
 解析其他公证人传来的待签名消息
