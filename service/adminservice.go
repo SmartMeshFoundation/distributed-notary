@@ -286,7 +286,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 
 func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo, params ...string) (contractAddress common.Address, sessionID common.Hash, err error) {
 	// 0. 获取nonce
-	nonce, err := as.dispatchService.applyNonceFromNonceServer(smcevents.ChainName, privateKeyInfo.Address)
+	nonce, err := as.dispatchService.applyNonceFromNonceServer(c.GetChainName(), privateKeyInfo.Address)
 	if err != nil {
 		return
 	}

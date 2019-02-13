@@ -45,7 +45,7 @@ type BaseResponse struct {
 	ErrorCode ErrorCode `json:"error_code"`
 	ErrorMsg  string    `json:"error_msg"`
 	//Data      interface{} `json:"data,omitempty"`
-	Data json.RawMessage
+	Data json.RawMessage `json:"data,omitempty"`
 }
 
 // NewSuccessResponse :

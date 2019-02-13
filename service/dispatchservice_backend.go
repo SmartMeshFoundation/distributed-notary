@@ -11,6 +11,7 @@ import (
 
 	"bytes"
 
+	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	spectrumevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
@@ -154,7 +155,7 @@ func (ds *DispatchService) updateLockoutInfoNotaryIDInChargeID(scTokenAddress co
 
 func (ds *DispatchService) applyNonceFromNonceServer(chainName string, account common.Address) (nonce uint64, err error) {
 	url := ds.nonceServerHost + nonceapi.APIName2URLMap[nonceapi.APINameApplyNonce]
-	req := nonceapi.NewApplyNonceReq(chainName, account, ds.notaryService.self.Host+userapi.APIName2URLMap[userapi.APIAdminNameCancelNonce])
+	req := nonceapi.NewApplyNonceReq(chainName, account, "http://"+ds.userAPI.IPPort+userapi.APIName2URLMap[userapi.APIAdminNameCancelNonce])
 	payload, err := json.Marshal(req)
 	if err != nil {
 		return
@@ -170,8 +171,13 @@ func (ds *DispatchService) applyNonceFromNonceServer(chainName string, account c
 	if err != nil && err.Error() == "EOF" {
 		err = nil
 	}
+	var response api.BaseResponse
 	var applyNonceResponse nonceapi.ApplyNonceResponse
-	err = json.Unmarshal(buf[:n], &applyNonceResponse)
+	err = json.Unmarshal(buf[:n], &response)
+	if err != nil {
+		return
+	}
+	err = response.ParseData(&applyNonceResponse)
 	if err != nil {
 		return
 	}

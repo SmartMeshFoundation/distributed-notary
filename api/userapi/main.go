@@ -46,7 +46,7 @@ func init() {
 	APIName2URLMap[APIAdminNameCreatePrivateKey] = "/api/1/admin/private-key"
 	APIName2URLMap[APIAdminNameGetPrivateKeyList] = "/api/1/admin/private-keys"
 	APIName2URLMap[APIAdminNameRegisterNewSCToken] = "/api/1/admin/sctoken"
-	APIName2URLMap[APIAdminNameCancelNonce] = "/api/1/admin/cancel-nonce/:nonce"
+	APIName2URLMap[APIAdminNameCancelNonce] = "/api/1/admin/cancel-nonce"
 	/*
 		user
 	*/
@@ -76,6 +76,7 @@ UserAPI :
 */
 type UserAPI struct {
 	api.BaseAPI
+	IPPort string
 }
 
 // NewUserAPI :
@@ -102,7 +103,7 @@ func NewUserAPI(host string) *UserAPI {
 		*/
 		rest.Get(APIName2URLMap[APIAdminNameGetPrivateKeyList], userAPI.getPrivateKeyList),
 		rest.Put(APIName2URLMap[APIAdminNameRegisterNewSCToken], userAPI.registerNewSCToken),
-		rest.Get(APIName2URLMap[APIAdminNameCancelNonce], userAPI.cancelNonce),
+		rest.Post(APIName2URLMap[APIAdminNameCancelNonce], userAPI.cancelNonce),
 		/*
 			debug api
 		*/
@@ -127,5 +128,6 @@ func NewUserAPI(host string) *UserAPI {
 	}
 	userAPI.BaseAPI = api.NewBaseAPI("UserAPI-Server", host, router, corsMiddleware)
 	userAPI.Timeout = defaultAPITimeout
+	userAPI.IPPort = host
 	return &userAPI
 }

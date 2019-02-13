@@ -79,7 +79,7 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	secretHash := localLockinInfo.SecretHash
 	amount := localLockinInfo.Amount
 	// 0. 获取nonce
-	nonce, err := cs.dispatchService.applyNonceFromNonceServer(cs.meta.MCName, privateKeyInfo.Address)
+	nonce, err := cs.dispatchService.applyNonceFromNonceServer(smcevents.ChainName, privateKeyInfo.Address)
 	if err != nil {
 		return
 	}

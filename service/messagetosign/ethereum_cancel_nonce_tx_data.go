@@ -17,18 +17,22 @@ import (
 )
 
 // EthereumCancelNonceTxDataName 用做消息传输时识别
-const EthereumCancelNonceTxDataName = "EthereumPrepareLockoutTxData"
+const EthereumCancelNonceTxDataName = "EthereumCancelNonceTxData"
 
 // EthereumCancelNonceTxData :
 type EthereumCancelNonceTxData struct {
 	BytesToSign []byte `json:"bytes_to_sign"`
+	ChainName   string `json:"chain_name"`
+	Account     string `json:"account"`
 	Nonce       uint64 `json:"nonce"`
 }
 
 // NewEthereumCancelNonceTxData :
 func NewEthereumCancelNonceTxData(c chain.Chain, account common.Address, nonce uint64) (data *EthereumCancelNonceTxData, chainID *big.Int, rawTx *types.Transaction, err error) {
 	data = &EthereumCancelNonceTxData{
-		Nonce: nonce,
+		ChainName: c.GetChainName(),
+		Account:   account.String(),
+		Nonce:     nonce,
 	}
 	conn := c.GetConn()
 	ctx := context.Background()

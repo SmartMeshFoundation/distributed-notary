@@ -672,6 +672,9 @@ func parseMessageToSign(msgName string, buf []byte) (msg messagetosign.MessageTo
 	case messagetosign.EthereumPrepareLockoutTxDataName:
 		msg = new(messagetosign.EthereumPrepareLockoutTxData)
 		err = msg.Parse(buf)
+	case messagetosign.EthereumCancelNonceTxDataName:
+		msg = new(messagetosign.EthereumCancelNonceTxData)
+		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")
 	}
@@ -734,6 +737,26 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		}
 		// 5. 更新本地lockoutInfo的NotaryIDInChargeID,记录该lockinInfo的负责人
 		err = ns.dispatchService.updateLockoutInfoNotaryIDInChargeID(localLockoutInfo.SCTokenAddress, localLockoutInfo.SecretHash, senderID)
+	// 4. nonce销毁消息
+	case *messagetosign.EthereumCancelNonceTxData:
+		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
+		// 1. 获取chain
+		var c chain.Chain
+		c, err = ns.dispatchService.getChainByName(m.ChainName)
+		if err != nil {
+			return
+		}
+		// 2. 校验account
+		account := common.HexToAddress(m.Account)
+		_, err = ns.db.LoadPrivateKeyInfoByAccountAddress(account)
+		if err != nil {
+			return
+		}
+		// 3. 校验
+		err = m.VerifySignData(c, account)
+		if err != nil {
+			return
+		}
 	default:
 		err = fmt.Errorf("unknow message name=%s", msg.GetName())
 	}

@@ -24,6 +24,13 @@ func eth2Wei(ethAmount int64) *big.Int {
 	return new(big.Int).Mul(big.NewInt(int64(params.Ether)), big.NewInt(ethAmount))
 }
 
+func TestTT(t *testing.T) {
+	c, _ := ethclient.Dial("http://127.0.0.1:17888")
+	account := common.HexToAddress("0x53D9591A9033c72caDa8eA3D8D51b858B850CCD5")
+	nonce, _ := c.NonceAt(context.Background(), account, nil)
+	fmt.Println(nonce)
+}
+
 func TestNonce(t *testing.T) {
 	c, _ := ethclient.Dial("http://127.0.0.1:17888")
 	key, _ := crypto.HexToECDSA("36234555bc087435cf52371f9a0139cb98a4267ba62b722e3f46b90d35f31678")

@@ -13,6 +13,7 @@ import (
 
 	"bytes"
 
+	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/nkbai/log"
@@ -112,12 +113,12 @@ func (nm *nonceManager) confirmLoop(nonceUsed uint64) {
 
 func (nm *nonceManager) reuseNonce(nonceUsed uint64) {
 	nm.usedNonceToCancelURLMap.Delete(nonceUsed)
-	log.Info("chain=%s account=%s nonce=%d reuse", nm.chainName, nm.account.String(), nonceUsed)
+	log.Info("account=%s chain=%s nonce=%d reuse", nm.account.String(), nm.chainName, nonceUsed)
 }
 
 func (nm *nonceManager) confirmNonce(nonceUsed uint64) {
 	nm.usedNonceToCancelURLMap.Delete(nonceUsed)
-	log.Info("chain=%s account=%s nonce=%d confirm", nm.chainName, nm.account.String(), nonceUsed)
+	log.Info("account=%s chain=%s nonce=%d confirm", nm.account.String(), nm.chainName, nonceUsed)
 }
 
 func (nm *nonceManager) cancelNonce(nonceUsed uint64) {
@@ -129,15 +130,31 @@ func (nm *nonceManager) cancelNonce(nonceUsed uint64) {
 	req := userapi.NewCancelNonceRequest(nm.chainName, nm.account, nonceUsed)
 	payload, err := json.Marshal(req)
 	if err != nil {
-		log.Error("chain=%s account=%s nonce=%d cancelNonce error %s", nm.chainName, nm.account.String(), nonceUsed, err.Error())
+		log.Error("account=%s chain=%s nonce=%d cancelNonce error %s", nm.account.String(), nm.chainName, nonceUsed, err.Error())
 		return
 	}
 	/* #nosec */
-	_, err = http.Post(cancelURL, "application/json", bytes.NewReader(payload))
+	resp, err := http.Post(cancelURL, "application/json", bytes.NewReader(payload))
 	if err != nil {
-		log.Error("chain=%s account=%s nonce=%d cancelNonce error %s", nm.chainName, nm.account.String(), nonceUsed, err.Error())
+		log.Error("account=%s chain=%s nonce=%d cancelNonce error %s", nm.account.String(), nm.chainName, nonceUsed, err.Error())
+		return
+	}
+	var buf [4096 * 1024]byte
+	n := 0
+	n, err = resp.Body.Read(buf[:])
+	if err != nil && err.Error() == "EOF" {
+		err = nil
+	}
+	var response api.BaseResponse
+	err = json.Unmarshal(buf[:n], &response)
+	if err != nil {
+		log.Error("account=%s chain=%s nonce=%d cancelNonce error %s", nm.account.String(), nm.chainName, nonceUsed, err.Error())
+		return
+	}
+	if response.GetErrorCode() != api.ErrorCodeSuccess {
+		log.Error("account=%s chain=%s nonce=%d cancelNonce error : errorCode=%s errorMsg=%s", nm.account.String(), nm.chainName, nonceUsed, response.ErrorCode, response.ErrorMsg)
 		return
 	}
 	nm.usedNonceToCancelURLMap.Delete(nonceUsed)
-	log.Info("chain=%s account=%s nonce=%d cancel", nm.chainName, nm.account.String(), nonceUsed)
+	log.Info("account=%s chain=%s nonce=%d cancel", nm.account.String(), nm.chainName, nonceUsed)
 }

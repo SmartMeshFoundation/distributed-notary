@@ -75,6 +75,7 @@ func NewApplyNonceReq(chainName string, account common.Address, cancelURL string
 	}
 }
 
+// ApplyNonceResponse :
 type ApplyNonceResponse struct {
 	Nonce uint64 `json:"nonce"`
 }
@@ -89,7 +90,8 @@ func (nsAPI *NonceServerAPI) ApplyNonce(w rest.ResponseWriter, r *rest.Request) 
 	}
 	err := r.DecodeJsonPayload(req)
 	if err != nil {
-		api.HTTPReturnJSON(w, api.NewFailResponse("", api.ErrorCodeParamsWrong))
+		log.Warn("got apply-nonce request but parse err : %s", err.Error())
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.GetRequestID(), api.ErrorCodeParamsWrong))
 		return
 	}
 	nsAPI.SendToService(req)

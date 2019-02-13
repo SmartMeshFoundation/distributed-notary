@@ -90,7 +90,7 @@ type CancelNonceRequest struct {
 // NewCancelNonceRequest :
 func NewCancelNonceRequest(chainName string, account common.Address, nonce uint64) *CancelNonceRequest {
 	return &CancelNonceRequest{
-		BaseReq:             api.NewBaseReq(APIAdminNameRegisterNewSCToken),
+		BaseReq:             api.NewBaseReq(APIAdminNameCancelNonce),
 		BaseReqWithResponse: api.NewBaseReqWithResponse(),
 		ChainName:           chainName,
 		Account:             account.String(),
