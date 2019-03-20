@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/nkbai/gopbft/util"
+
 	"github.com/SmartMeshFoundation/distributed-notary/accounts"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
@@ -54,7 +56,10 @@ type DispatchService struct {
 	adminService                     *AdminService
 	notaryService                    *NotaryService
 	scToken2CrossChainServiceMap     map[common.Address]*CrossChainService
+	pbftServices                     map[string]*pbftService //私钥id->pbftService
 	scToken2CrossChainServiceMapLock sync.Mutex
+	notaries                         []*models.NotaryInfo
+	lock                             sync.Mutex
 }
 
 // NewDispatchService :
@@ -106,6 +111,8 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		db:                           db,
 		quitChan:                     make(chan struct{}),
 		scToken2CrossChainServiceMap: make(map[common.Address]*CrossChainService),
+		pbftServices:                 make(map[string]*pbftService),
+		notaries:                     notaries,
 	}
 	// 3.5 初始化nonce-server-host
 	ds.nonceServerHost = cfg.NonceServerHost
@@ -269,6 +276,15 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Req) {
 		return
 	case api.ReqWithSessionID:
 		go ds.notaryService.OnRequest(req)
+	case *notaryapi.PBFTMessage:
+		ps, err := ds.getPbftService(r.Key)
+		if err != nil {
+			log.Error(fmt.Sprintf("receive pbft message r=%s,err=%s",
+				util.StringInterface(r, 3), err),
+			)
+		} else {
+			go ps.OnRequest(r)
+		}
 	case api.Req:
 		go ds.adminService.OnRequest(req)
 	}

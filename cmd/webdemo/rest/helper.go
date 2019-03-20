@@ -55,7 +55,7 @@ func success(w rest.ResponseWriter, r interface{}) {
 func pubkey2Address(w rest.ResponseWriter, r *rest.Request) {
 	var err error
 	defer func() {
-		log.Trace(fmt.Sprintf("Restful Api Call ----> pubkey2Address ,err=%v", err))
+		log.Trace(fmt.Sprintf("Restful Api SendMessage ----> pubkey2Address ,err=%v", err))
 	}()
 	pubkey := common.Hex2Bytes(r.PathParam("pubkey"))
 	if len(pubkey) != 32*2+1 {
@@ -122,7 +122,7 @@ func queryStatus(w rest.ResponseWriter, r *rest.Request) {
 		} else {
 			success(w, sr)
 		}
-		log.Trace(fmt.Sprintf("Restful Api Call ----> pubkey2Address ,err=%v", err))
+		log.Trace(fmt.Sprintf("Restful Api SendMessage ----> pubkey2Address ,err=%v", err))
 	}()
 	var req statusReq
 	err = r.DecodeJsonPayload(&req)

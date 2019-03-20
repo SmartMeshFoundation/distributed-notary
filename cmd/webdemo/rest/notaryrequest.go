@@ -32,7 +32,7 @@ func scPrepareLockin(w rest.ResponseWriter, r *rest.Request) {
 		if err != nil {
 			errError(w, err)
 		}
-		log.Trace(fmt.Sprintf("Restful Api Call ----> scPrepareLockin ,err=%v", err))
+		log.Trace(fmt.Sprintf("Restful Api SendMessage ----> scPrepareLockin ,err=%v", err))
 	}()
 	var req scPrepareLockinRequest
 	err = r.DecodeJsonPayload(&req)
@@ -71,7 +71,7 @@ func mcPrepareLockout(w rest.ResponseWriter, r *rest.Request) {
 		if err != nil {
 			errError(w, err)
 		}
-		log.Trace(fmt.Sprintf("Restful Api Call ----> mcPrepareLockout ,err=%v", err))
+		log.Trace(fmt.Sprintf("Restful Api SendMessage ----> mcPrepareLockout ,err=%v", err))
 	}()
 	var req scPrepareLockinRequest
 	err = r.DecodeJsonPayload(&req)

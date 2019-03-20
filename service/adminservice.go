@@ -286,7 +286,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 
 func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo, params ...string) (contractAddress common.Address, sessionID common.Hash, err error) {
 	// 0. 获取nonce
-	nonce, err := as.dispatchService.applyNonceFromNonceServer(c.GetChainName(), privateKeyInfo.Address)
+	nonce, err := as.dispatchService.applyNonceFromNonceServer(c.GetChainName(), privateKeyInfo.Key, "deployContract")
 	if err != nil {
 		return
 	}
@@ -325,7 +325,7 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 func (as *AdminService) onCancelNonceRequest(req *userapi.CancelNonceRequest) {
 	chain, err := as.dispatchService.getChainByName(req.ChainName)
 	if err != nil {
-		log.Error("unknown chain name : %s", req.ChainName)
+		log.Error("unknown chain chainName : %s", req.ChainName)
 		req.WriteErrorResponse(api.ErrorCodeDataNotFound, err.Error())
 		return
 	}

@@ -79,7 +79,7 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	secretHash := localLockinInfo.SecretHash
 	amount := localLockinInfo.Amount
 	// 0. 获取nonce
-	nonce, err := cs.dispatchService.applyNonceFromNonceServer(smcevents.ChainName, privateKeyInfo.Address)
+	nonce, err := cs.dispatchService.applyNonceFromNonceServer(smcevents.ChainName, privateKeyInfo.Key, req.SecretHash.String())
 	if err != nil {
 		return
 	}
@@ -137,8 +137,8 @@ func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutR
 	mcExpiration := localLockoutInfo.MCExpiration
 	secretHash := localLockoutInfo.SecretHash
 	amount := localLockoutInfo.Amount
-	// 0. 获取nonce
-	nonce, err := cs.dispatchService.applyNonceFromNonceServer(cs.meta.MCName, privateKeyInfo.Address)
+	// 0. 获取nonce ,这个地方不合理,应该使用侧链Txhash,因为密码可能会重复
+	nonce, err := cs.dispatchService.applyNonceFromNonceServer(cs.meta.MCName, privateKeyInfo.Key, req.SecretHash.String())
 	if err != nil {
 		return
 	}

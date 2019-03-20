@@ -46,6 +46,7 @@ const (
 	APINameDSMPhase5A5BProof  = "DSM-Phase5A5BProof"
 	APINameDSMPhase5CProof    = "DSM-Phase5CProof"
 	APINameDSMPhase6ReceiveSI = "DSM-Phase6ReceiveSI"
+	APINamePBFTMessage        = "PBFT-Message"
 )
 
 /*
@@ -256,6 +257,9 @@ func (na *NotaryAPI) parseNotaryRequest(content []byte) (req api.Req, err error)
 		err = json.Unmarshal(content, &req)
 	case APINameDSMPhase6ReceiveSI:
 		req = &DSMPhase6ReceiveSIRequest{}
+		err = json.Unmarshal(content, &req)
+	case APINamePBFTMessage:
+		req = &PBFTMessage{}
 		err = json.Unmarshal(content, &req)
 	}
 	if err != nil {

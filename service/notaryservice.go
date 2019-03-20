@@ -507,7 +507,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 			return
 		}
 	default:
-		err = fmt.Errorf("unknow message name=%s", msg.GetName())
+		err = fmt.Errorf("unknow message chainName=%s", msg.GetName())
 	}
 	return
 }
