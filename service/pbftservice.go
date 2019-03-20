@@ -53,7 +53,8 @@ func NewPBFTService(key string, allNotaries []*models.NotaryInfo, notaryClient n
 	if err != nil {
 		panic(err)
 	}
-	log.Trace(fmt.Sprintf("allids=%v", allids))
+	nonce++ //数据库中存的是上次用的nonce,
+	log.Trace(fmt.Sprintf("allids=%v,nonce=%d", allids, nonce))
 	ps.client = pbft.NewPBFTClient(myid, ps.clientMsg, ps, f, allids)
 	ps.server = pbft.NewPBFTServer(myid, f, nonce, ps.serverMsg, ps, allids, ps)
 	go ps.loop()
@@ -69,7 +70,7 @@ func (ps *pbftService) SendMessage(msg interface{}, target int) {
 		Key: ps.key,
 		Msg: pbft.EncodeMsg(msg),
 	}
-	log.Trace(fmt.Sprintf("ps sendMessage %v,to %d", msg, target))
+	//log.Trace(fmt.Sprintf("ps sendMessage %v,to %d", msg, target))
 	if target == ps.dispatchService.getSelfNotaryInfo().ID {
 		ps.OnRequest(req)
 	} else {
@@ -127,6 +128,7 @@ func (ps *pbftService) newNonce(op string) (nonce uint64, err error) {
 	ps.lock.Unlock()
 	ps.client.Start(op)
 	r := <-c
+	log.Trace(fmt.Sprintf("ps[%s] new nonce return %s", ps.key, utils.StringInterface(r, 3)))
 	return uint64(r.Seq), r.Error
 }
 

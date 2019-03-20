@@ -19,7 +19,10 @@ func (db *DB) GetNonce(key string) (nonce int, err error) {
 		Key: key,
 	}
 	err = db.Where(n).First(n).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return -1, nil
+		}
 		return
 	}
 	return n.Nonce, nil
