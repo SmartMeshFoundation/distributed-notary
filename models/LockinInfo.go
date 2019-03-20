@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/asdine/storm"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -156,8 +155,7 @@ func (db *DB) NewLockinInfo(lockinInfo *LockinInfo) (err error) {
 func (db *DB) GetAllLockinInfo() (list []*LockinInfo, err error) {
 	var t []lockinInfoModel
 	err = db.Find(&t).Error
-	if err == storm.ErrNotFound {
-		err = nil
+	if err != nil {
 		return
 	}
 	for _, l := range t {
@@ -172,8 +170,7 @@ func (db *DB) GetAllLockinInfoBySCToken(scToken common.Address) (list []*LockinI
 	err = db.Where(&lockinInfoModel{
 		SCTokenAddress: scToken[:],
 	}).Find(&t).Error
-	if err == storm.ErrNotFound {
-		err = nil
+	if err != nil {
 		return
 	}
 	for _, l := range t {

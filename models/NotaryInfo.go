@@ -52,7 +52,7 @@ func (ns *NotaryInfo) GetAddress() common.Address {
 
 // GetNotaryInfo :
 func (db *DB) GetNotaryInfo() (notaries []*NotaryInfo, err error) {
-	err = db.Find(&notaries).Error
+	err = db.Order("id asc").Find(&notaries).Error
 	if err == gorm.ErrRecordNotFound {
 		err = nil
 	}
