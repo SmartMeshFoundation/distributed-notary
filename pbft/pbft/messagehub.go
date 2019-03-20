@@ -1,11 +1,5 @@
 package pbft
 
-import (
-	"fmt"
-
-	"github.com/nkbai/log"
-)
-
 //for test only
 type MessageHub struct {
 	ClientAddresses []chan interface{}
@@ -15,15 +9,15 @@ type MessageHub struct {
 
 //不再同步了,完全是异步
 func (c *MessageHub) SendMessage(req interface{}, receiver int) {
-	// Remote server is offline
-	if c.ni != nil && !c.ni.connected[receiver] {
-		return
-	}
-	log.Trace(fmt.Sprintf("clientEnd SendMessage to %v", req))
+	//log.Trace(fmt.Sprintf("clientEnd SendMessage to %v", req))
 	switch req.(type) {
 	case ClientMessager:
 		c.ClientAddresses[receiver] <- req
 	case ServerMessager:
+		// Remote server is offline
+		if c.ni != nil && !c.ni.connected[receiver] {
+			return
+		}
 		c.ServerAddresses[receiver] <- req
 	default:
 		panic("unkown req ")

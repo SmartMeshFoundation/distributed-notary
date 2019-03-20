@@ -130,6 +130,10 @@ func newNewViewMessage(arg *NewViewArgs) *NewViewMessage {
 	}
 }
 
+type internalTimerMessage struct {
+	ServerMessage
+}
+
 func init() {
 	gob.Register(&ClientMessage{})
 	gob.Register(&StartMessage{})

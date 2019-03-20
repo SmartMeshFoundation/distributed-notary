@@ -140,12 +140,18 @@ func (s *Server) handleRequestLeader(args *RequestArgs) error {
 }
 
 func (s *Server) handleRequestFollower(args *RequestArgs) error {
-	log.Trace("%s follower receive request %v", s, args)
+	log.Trace(fmt.Sprintf("%s follower receive request %v", s, args))
 	if !s.monitor {
+		if s.change != nil { //有可能二次view change正在运行
+			s.change.Stop()
+			log.Trace(fmt.Sprintf("%s handleRequestFollower stop change=%v", s, s.change))
+		}
 		//监控主节点是否拒绝服务,不关心主节点是否有错
 		s.monitor = true
 		//收到主节点的PrePrepare,prePare都停止,只是处理主节点不响应请求这种情况
+		log.Trace(fmt.Sprintf("%s startviewchange timer", s))
 		s.change = time.AfterFunc(changeViewTimeout, s.startViewChange)
+		log.Trace(fmt.Sprintf("%s handleRequestFollower change=%v", s, s.change))
 		//转发请求到主节点
 		go s.sender.SendMessage(newRequestMessage(args), s.view%len(s.replicas))
 
@@ -216,7 +222,7 @@ func (s *Server) Prepare(args PrepareArgs) error {
 		log.Trace("%s[R/Prepare]:PrepareArgs:%+v", s, args)
 		ent.p = append(ent.p, &args)
 		//todo 发送commit条件,prepare消息数量够了,或者已经发送过commit, 这会导致commit消息会重复发送几次 如果不重复,在view change的过程中会失败
-		if ent.pp != nil && (ent.sendCommit || s.prepared(ent)) {
+		if ent.pp != nil && !ent.sendCommit && s.prepared(ent) {
 			//避免重复发送commit
 			s.seqmap[ent.pp.Message.Op] = args.Seq
 			cArgs := CommitArgs{
@@ -225,10 +231,11 @@ func (s *Server) Prepare(args PrepareArgs) error {
 				Digest: ent.pp.Digest,
 				Rid:    s.id,
 			}
-			ent.sendCommit = true
 			//每个节点都会发两次
 			log.Trace("%s[B/Commit]:CommitArgs:%+v", s, cArgs)
 			s.broadcast(true, newCommitMessage(&cArgs))
+			ent.sendCommit = true
+
 		}
 	}
 	return nil
@@ -277,7 +284,7 @@ func (s *Server) Commit(args CommitArgs) error {
 			// Execute will make sure there only one execution of one request
 			s.execute(args.Seq, ent, args)
 		} else {
-			s.reply(ent)
+			//s.reply(ent)
 		} //todo 如果确保只reply一次,那会造成view change的时候无法成功
 
 	}
@@ -405,7 +412,7 @@ func (s *Server) startCheckPoint(v int, n int) {
 			View:   s.view,
 		}
 
-		log.Trace("%s[B/CheckPoint]: Seq:%d", s, n)
+		log.Trace("%s[B/CheckPoint]: Seq:%d,digest=%s", s, n, cp.Digest)
 
 		s.broadcast(true, newCheckPointMessage(&cpArgs))
 	}
@@ -508,9 +515,12 @@ func (s *Server) stablizeCP(cp *CheckPoint, proof *CheckPointArgs) {
 只有检测到主节点不作为,没有检测主节点乱作为问题
 */
 func (s *Server) startViewChange() {
-
 	log.Trace("%s[StartViewChange]", s)
-	s.monitor = false
+	s.msgChan <- &internalTimerMessage{}
+}
+
+func (s *Server) handleTimer() {
+	log.Trace(fmt.Sprintf("%s[handleTimer]", s))
 	vcArgs := s.generateViewChange()
 	s.myViewChangeCount++ //下次就进入新的view了
 
@@ -518,6 +528,8 @@ func (s *Server) startViewChange() {
 	s.broadcast(true, newViewChangeMessage(vcArgs))
 	//再次超时启动start view change,针对连续主节点崩溃问题
 	s.change = time.AfterFunc(changeViewTimeout, s.startViewChange)
+	log.Trace(fmt.Sprintf("%s handleTimer change=%v", s, s.change))
+	s.monitor = true
 }
 
 func (s *Server) generateViewChange() *ViewChangeArgs {
@@ -825,12 +837,12 @@ func (s *Server) getStateRange(from, to int) []pbftHistory {
 		}
 	}
 	if i < 0 || i == len(s.state)-1 {
-		log.Warn(fmt.Sprintf("%s get StateRange %d-%d,but cannot found", s, from, to))
+		log.Trace(fmt.Sprintf("%s get StateRange %d-%d,but cannot found", s, from, to))
 		return nil
 	}
 	end := i + to - from
 	if end > len(s.state) {
-		log.Warn(fmt.Sprintf("%s get StateRange end is too large ,end=%d,from=%d,to=%d", s, end, from, to))
+		log.Trace(fmt.Sprintf("%s get StateRange end is too large ,end=%d,from=%d,to=%d", s, end, from, to))
 		end = len(s.state)
 	}
 	return s.state[i:end]
@@ -934,7 +946,9 @@ func (s *Server) removeOldSeqMap(seq int) {
 }
 func (s *Server) stopTimer() {
 	if s.change != nil {
+		log.Trace(fmt.Sprintf("%s stopTimer change=%v", s, s.change))
 		s.change.Stop()
+		s.change = nil
 	}
 	s.monitor = false
 	s.myViewChangeCount = 0 //重置为0,不再继续增长
@@ -969,7 +983,7 @@ func (s *Server) handleReq(req interface{}) {
 	if !s.isPrimary() {
 		primary = "follower"
 	}
-	log.Trace("%s %s receive call %v  id=%s", s, primary, req, id)
+	log.Trace("%s %s receive call %+v  id=%s", s, primary, req, id)
 	switch r := req.(type) {
 	case *RequestMessage:
 		log.Trace("args=%+v", r.Arg.Op)
@@ -990,6 +1004,8 @@ func (s *Server) handleReq(req interface{}) {
 		err = s.ViewChange(*r.Arg)
 	case *NewViewMessage:
 		err = s.NewView(*r.Arg)
+	case *internalTimerMessage:
+		s.handleTimer()
 	default:
 		panic(fmt.Sprintf("unkown request %+v", r))
 

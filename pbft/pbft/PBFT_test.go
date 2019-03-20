@@ -24,7 +24,7 @@ func init() {
 	retransmitTimeout = 500 * time.Millisecond //注意retransmitTimeout 和view change的时间关系,必须远小于view change time out
 	outstanding = 1                            //client请求并发数量,要小于checkpointdiv,否则会反复重试,导致卡死
 	changeViewTimeout = 1000 * time.Millisecond
-	checkpointDiv = 1
+	checkpointDiv = 2 //checkpoint不能是1,否则会出现主节点连续broadcast checkpoint,还没来得及处理其他人的checkpoint,从而导致错误
 }
 
 type config struct {
@@ -157,7 +157,7 @@ func TestDisconnectLeader(t *testing.T) {
 	totalNum := checkpointDiv * 3
 	wg := sync.WaitGroup{}
 
-	wg.Add(cn)
+	wg.Add(totalNum * cn)
 	go func() {
 		for i := 0; i < cn; i++ {
 			go func(index int) {
@@ -173,35 +173,22 @@ func TestDisconnectLeader(t *testing.T) {
 					t.Logf("add-res %s", res.Cmd)
 					m[cid] = append(m[cid], seq)
 					l.Unlock()
+					wg.Done()
 				}
-				wg.Done()
+
 			}(i)
 		}
 
 	}()
 
-	wg.Add(cn * 2)
+	c.ni.Enable(0, false)
 	go func() {
-
 		for i := 0; i < cn; i++ {
 			go func(index int) {
-				for j := 0; j < totalNum/2; j++ {
+				for j := 0; j < totalNum; j++ {
 					c.clients[index].Start(strconv.Itoa(j) + "-" + strconv.Itoa(index))
 					time.Sleep(2 * time.Millisecond)
 				}
-				wg.Done()
-			}(i)
-		}
-		c.ni.Enable(0+c.cn, false)
-		log.Trace("Disconnect replica 0")
-
-		for i := 0; i < cn; i++ {
-			go func(index int) {
-				for j := totalNum / 2; j < totalNum; j++ {
-					c.clients[index].Start(strconv.Itoa(j) + "-" + strconv.Itoa(index))
-					time.Sleep(2 * time.Millisecond)
-				}
-				wg.Done()
 			}(i)
 		}
 	}()
@@ -260,8 +247,8 @@ func TestDisconnectLeader2(t *testing.T) {
 				wg.Done()
 			}(i)
 		}
-		c.ni.Enable(0+c.cn, false)
-		c.ni.Enable(1+c.cn, false)
+		c.ni.Enable(0, false)
+		c.ni.Enable(1, false)
 		//c.ni.Enable(5+c.cn, false)
 		//c.ni.Enable(7+c.cn, false)
 
@@ -292,7 +279,7 @@ func testDisconnect(t *testing.T, rid int, reqnum int, pause time.Duration) {
 	c := config{useMockServer: false}
 	c.init(1, 4, 0)
 
-	c.ni.Enable(rid+c.cn, false)
+	c.ni.Enable(rid, false)
 
 	wg := sync.WaitGroup{}
 
@@ -332,7 +319,7 @@ func TestDisconnectFollowerAndReConnect(t *testing.T) {
 /*
 测试主节点一开始就掉线,工作一会儿主节点上线,再一会儿当前主节点再下线,保证可以工作
 */
-func TestDisconnectFollowerAndReConnectLeader(t *testing.T) {
+func TestDisconnectLeaderAndReConnectLeader(t *testing.T) {
 	testNodeDisconnectAndReconnect(t, 0, 2*time.Millisecond)
 }
 
@@ -356,7 +343,7 @@ func testNodeDisconnectAndReconnect(t *testing.T, rid int, pause time.Duration) 
 	c := config{useMockServer: false}
 	c.init(1, 4, 0)
 
-	c.ni.Enable(rid+c.cn, false)
+	c.ni.Enable(rid, false)
 
 	wg := sync.WaitGroup{}
 
@@ -368,11 +355,11 @@ func testNodeDisconnectAndReconnect(t *testing.T, rid int, pause time.Duration) 
 				if j == firstPartNumber {
 					<-firstChan //等待第一部分完成
 					//rid联网成功
-					c.ni.Enable(rid+c.cn, true)
+					c.ni.Enable(rid, true)
 				}
 				if j == secondPartNumber {
 					<-firstChan //等待第二部分完成,这时候断开rid+1
-					c.ni.Enable(rid+1+c.cn, false)
+					c.ni.Enable(rid+1, false)
 				}
 				time.Sleep(pause)
 			}
@@ -414,7 +401,7 @@ func (c *config) init(cn int, sn int, initSeq int) {
 	c.clients = make([]*Client, c.cn)
 	c.serverAddresses = make([]chan interface{}, c.sn)
 	c.clientAddresses = make([]chan interface{}, c.cn)
-	c.ni = NewNetwork(c.n)
+	c.ni = NewNetwork(c.sn)
 	c.hub = NewMessageHub(c.serverAddresses, c.clientAddresses, c.ni)
 	for i := 0; i < c.sn; i++ {
 		c.serverAddresses[i] = make(chan interface{}, 10) //必须有缓冲区,否则会失败

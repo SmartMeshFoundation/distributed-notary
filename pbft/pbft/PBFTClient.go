@@ -150,7 +150,7 @@ func (c *Client) notifyResult(cmd string, seq int, err error) {
 func (c *Client) Response(args ResponseArgs) (err error) {
 	ent, exist := c.log[args.Res]
 	if !exist {
-		log.Trace(fmt.Sprintf("receive response args=%+v,but not found entry,may duplicate response", args))
+		log.Info(fmt.Sprintf("receive response args=%+v,but not found entry,may duplicate response", args))
 		return nil
 	}
 	//更新下次请求的view,错了也没关系,大不了重试一次就好了
