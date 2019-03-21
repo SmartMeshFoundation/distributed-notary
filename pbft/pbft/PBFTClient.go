@@ -38,10 +38,10 @@ type cEntry struct {
 	t     *time.Timer
 	ft    bool //单点请求还是广播请求公证人 第一次请求是单点发送,如果失败,后续尝试会广播
 }
-type retryStruct struct {
-	key string
-	ent *cEntry
-}
+
+/*
+Client 控制发送速度,一次不要发送太多的请求,否则会导致反复重试,从而堵塞业务处理.
+*/
 type Client struct {
 	id          int //当前client编号
 	msgChan     chan interface{}

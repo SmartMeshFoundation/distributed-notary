@@ -109,12 +109,12 @@ func TestInitSeq(t *testing.T) {
 	testBasic(t, 2, checkpointDiv, 3, 2*time.Millisecond, false)
 }
 func TestMultiple(t *testing.T) {
-	testBasic(t, 10, checkpointDiv, 0, 2*time.Millisecond, false)
+	testBasic(t, 10, checkpointDiv*10, 0, 2*time.Millisecond, false)
 }
 
 func TestMultiClientLowLoad(t *testing.T) {
 	changeViewTimeout = 10000 * time.Millisecond
-	testBasic(t, 2, 100*checkpointDiv, 0, 2*time.Millisecond, false)
+	testBasic(t, 2, 1000*checkpointDiv, 0, 2*time.Millisecond, false)
 }
 
 func TestDisconnectFollower(t *testing.T) {
