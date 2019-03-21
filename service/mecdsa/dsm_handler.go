@@ -160,6 +160,11 @@ func (dh *DSMHandler) StartDSMAndWaitFinish() (signature []byte, err error) {
 				dh.notify(nil, err)
 				return
 			}
+			if respMsg.MessageBGamma == nil || respMsg.MessageBWi == nil {
+				log.Error("parse MessageBPhase2 MessageBGamma nil   \n%s", utils.ToJSONStringFormat(resp))
+				dh.notify(nil, errors.New("parse MessageBPhase2 MessageBGamma nil "))
+				return
+			}
 			dh.receivePhase2MessageB(&respMsg, notaryID)
 		}(notaryID, phase2Msg)
 	}
