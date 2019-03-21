@@ -191,9 +191,6 @@ func (r *BaseReqWithResponse) GetRequestID() string {
 
 // GetResponseChan impl ReqWithResponse
 func (r *BaseReqWithResponse) GetResponseChan() chan *BaseResponse {
-	//if r.responseChan == nil {
-	//	r.responseChan = make(chan *BaseResponse, 1)
-	//}
 	return r.responseChan
 }
 
@@ -204,21 +201,16 @@ func (r *BaseReqWithResponse) NewResponseChan() {
 
 // WriteResponse impl ReqWithResponse
 func (r *BaseReqWithResponse) WriteResponse(resp *BaseResponse) {
-	//if r.responseChan == nil {
-	//	r.responseChan = make(chan *BaseResponse, 1)
-	//}
 	select {
 	case r.responseChan <- resp:
 	default:
+		panic("never block")
 		// never block
 	}
 }
 
 // WriteSuccessResponse impl ReqWithResponse
 func (r *BaseReqWithResponse) WriteSuccessResponse(data interface{}) {
-	//if r.responseChan == nil {
-	//	r.responseChan = make(chan *BaseResponse, 1)
-	//}
 	writeFail := false
 	select {
 	case r.responseChan <- NewSuccessResponse(r.RequestID, data):

@@ -2,7 +2,9 @@ package proofs
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"math/big"
 )
@@ -170,6 +172,9 @@ func l(u *big.Int, n *big.Int) *big.Int {
 // text MUST NOT be larger than the modulus of the passed public key.
 func Encrypt(pubKey *PublicKey, plainText []byte) ([]byte, error) {
 	c, _, err := EncryptAndNonce(pubKey, plainText)
+	if err != nil {
+		panic(fmt.Sprintf("err=%s,plainText=%s", err, hex.EncodeToString(plainText)))
+	}
 	return c, err
 }
 

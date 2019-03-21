@@ -396,11 +396,13 @@ func (dh *DSMHandler) receivePhase2MessageA(msg *models.MessageA, index int) (mb
 	//dh.loadLockout(dh.signMessage)
 	mgGamma, err := newMessageB(dh.signMessage.SignedKey.GammaI, dh.paillierPubKeys[index], msg)
 	if err != nil {
+		panic(err)
 		dh.notify(nil, err)
 		return
 	}
 	mbw, err := newMessageB(dh.signMessage.SignedKey.WI, dh.paillierPubKeys[index], msg)
 	if err != nil {
+		panic(err)
 		dh.notify(nil, err)
 		return
 	}
@@ -1075,6 +1077,7 @@ func (dh *DSMHandler) notify(c chan bool, err error) {
 		select {
 		case c <- true:
 		default:
+			panic("write to channel blocked")
 			// never block
 		}
 	}

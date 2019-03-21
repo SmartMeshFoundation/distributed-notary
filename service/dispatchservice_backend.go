@@ -1,8 +1,15 @@
 package service
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
+
+	"github.com/SmartMeshFoundation/distributed-notary/api"
+	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
+	"github.com/SmartMeshFoundation/distributed-notary/cmd/nonce_server/nonceapi"
 
 	"crypto/ecdsa"
 
@@ -145,7 +152,49 @@ func (ds *DispatchService) updateLockoutInfoNotaryIDInChargeID(scTokenAddress co
 	return lh.updateLockout(lockinInfo)
 }
 
+var debugpbft = true
+
+//纯粹试了测试需要,避开pbft, 走传统的nonce server
+func (ds *DispatchService) applyNonceFromNonceServerFake(chainName string, privKeyID common.Hash, reason string) (nonce uint64, err error) {
+	pk, err := ds.db.LoadPrivateKeyInfo(privKeyID)
+	if err != nil {
+		panic(err)
+	}
+	account := pk.ToAddress()
+	url := ds.nonceServerHost + nonceapi.APIName2URLMap[nonceapi.APINameApplyNonce]
+	req := nonceapi.NewApplyNonceReq(chainName, account, "http://"+ds.userAPI.IPPort+userapi.APIName2URLMap[userapi.APIAdminNameCancelNonce])
+	payload, err := json.Marshal(req)
+	if err != nil {
+		return
+	}
+	/* #nosec */
+	resp, err := http.Post(url, "application/json", bytes.NewReader(payload))
+	if err != nil {
+		return
+	}
+	var buf [4096 * 1024]byte
+	n := 0
+	n, err = resp.Body.Read(buf[:])
+	if err != nil && err.Error() == "EOF" {
+		err = nil
+	}
+	var response api.BaseResponse
+	var applyNonceResponse nonceapi.ApplyNonceResponse
+	err = json.Unmarshal(buf[:n], &response)
+	if err != nil {
+		return
+	}
+	err = response.ParseData(&applyNonceResponse)
+	if err != nil {
+		return
+	}
+	nonce = applyNonceResponse.Nonce
+	return
+}
 func (ds *DispatchService) applyNonceFromNonceServer(chainName string, privKeyID common.Hash, reason string) (nonce uint64, err error) {
+	if debugpbft {
+		return ds.applyNonceFromNonceServerFake(chainName, privKeyID, reason)
+	}
 	key := fmt.Sprintf("%s-%s", chainName, privKeyID.String())
 	ps, err := ds.getPbftService(key)
 	if err != nil {
