@@ -6,6 +6,7 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/nkbai/log"
 )
 
 // RequestName :
@@ -163,6 +164,7 @@ ReqWithResponse **********************************************
 type ReqWithResponse interface {
 	GetRequestID() string
 	GetResponseChan() chan *BaseResponse
+	NewResponseChan()
 	WriteResponse(resp *BaseResponse)
 	WriteSuccessResponse(data interface{})
 	WriteErrorResponse(errorCode ErrorCode, errorMsg ...string)
@@ -177,7 +179,7 @@ type BaseReqWithResponse struct {
 // NewBaseReqWithResponse constructor
 func NewBaseReqWithResponse() BaseReqWithResponse {
 	return BaseReqWithResponse{
-		RequestID:    utils.HPex(utils.NewRandomHash()),
+		RequestID:    utils.NewRandomHash().String(),
 		responseChan: make(chan *BaseResponse, 1),
 	}
 }
@@ -189,17 +191,22 @@ func (r *BaseReqWithResponse) GetRequestID() string {
 
 // GetResponseChan impl ReqWithResponse
 func (r *BaseReqWithResponse) GetResponseChan() chan *BaseResponse {
-	if r.responseChan == nil {
-		r.responseChan = make(chan *BaseResponse, 1)
-	}
+	//if r.responseChan == nil {
+	//	r.responseChan = make(chan *BaseResponse, 1)
+	//}
 	return r.responseChan
+}
+
+// NewResponseChan :
+func (r *BaseReqWithResponse) NewResponseChan() {
+	r.responseChan = make(chan *BaseResponse, 1)
 }
 
 // WriteResponse impl ReqWithResponse
 func (r *BaseReqWithResponse) WriteResponse(resp *BaseResponse) {
-	if r.responseChan == nil {
-		r.responseChan = make(chan *BaseResponse, 1)
-	}
+	//if r.responseChan == nil {
+	//	r.responseChan = make(chan *BaseResponse, 1)
+	//}
 	select {
 	case r.responseChan <- resp:
 	default:
@@ -209,21 +216,25 @@ func (r *BaseReqWithResponse) WriteResponse(resp *BaseResponse) {
 
 // WriteSuccessResponse impl ReqWithResponse
 func (r *BaseReqWithResponse) WriteSuccessResponse(data interface{}) {
-	if r.responseChan == nil {
-		r.responseChan = make(chan *BaseResponse, 1)
-	}
+	//if r.responseChan == nil {
+	//	r.responseChan = make(chan *BaseResponse, 1)
+	//}
+	writeFail := false
 	select {
 	case r.responseChan <- NewSuccessResponse(r.RequestID, data):
 	default:
-		// never block
+		writeFail = true
+	}
+	if writeFail {
+		log.Error("responseChan full with requestID=%s", r.RequestID)
 	}
 }
 
 // WriteErrorResponse impl ReqWithResponse
 func (r *BaseReqWithResponse) WriteErrorResponse(errorCode ErrorCode, errorMsg ...string) {
-	if r.responseChan == nil {
-		r.responseChan = make(chan *BaseResponse, 1)
-	}
+	//if r.responseChan == nil {
+	//	r.responseChan = make(chan *BaseResponse, 1)
+	//}
 	select {
 	case r.responseChan <- NewFailResponse(r.RequestID, errorCode, errorMsg...):
 	default:

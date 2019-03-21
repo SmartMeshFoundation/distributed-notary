@@ -265,6 +265,10 @@ func (na *NotaryAPI) parseNotaryRequest(content []byte) (req api.Req, err error)
 	if err != nil {
 		return
 	}
+	// 在接收到需要返回的请求时,第一时间初始化responseChan
+	if r2, ok := req.(api.ReqWithResponse); ok {
+		r2.NewResponseChan()
+	}
 	return
 }
 

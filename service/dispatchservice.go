@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/nkbai/gopbft/util"
-
 	"github.com/SmartMeshFoundation/distributed-notary/accounts"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
@@ -280,7 +278,7 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Req) {
 		ps, err := ds.getPbftService(r.Key)
 		if err != nil {
 			log.Error(fmt.Sprintf("receive pbft message r=%s,err=%s",
-				util.StringInterface(r, 3), err),
+				utils.ToJSONStringFormat(r), err),
 			)
 		} else {
 			go ps.OnRequest(r)
