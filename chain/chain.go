@@ -30,5 +30,5 @@ type Chain interface {
 	GetContractProxy(contractAddress common.Address) ContractProxy
 	GetConn() *ethclient.Client
 
-	Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int) (err error) // for debug
+	Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int, nonce ...int) (err error) // for debug
 }

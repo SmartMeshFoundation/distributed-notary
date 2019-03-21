@@ -229,7 +229,7 @@ func (ss *ETHService) DeployContract(opts *bind.TransactOpts, params ...string) 
 }
 
 // Transfer10ToAccount : impl chain.Chain
-func (ss *ETHService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int) (err error) {
+func (ss *ETHService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int, nonce ...int) (err error) {
 	if amount == nil || amount.Cmp(big.NewInt(0)) == 0 {
 		return
 	}
@@ -237,9 +237,14 @@ func (ss *ETHService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo commo
 	ctx := context.Background()
 	auth := bind.NewKeyedTransactor(key)
 	fromAddr := crypto.PubkeyToAddress(key.PublicKey)
-	nonce, err := conn.NonceAt(ctx, fromAddr, nil)
-	if err != nil {
-		return err
+	var currentNonce uint64
+	if len(nonce) > 0 {
+		currentNonce = uint64(nonce[0])
+	} else {
+		currentNonce, err = conn.NonceAt(ctx, fromAddr, nil)
+		if err != nil {
+			return err
+		}
 	}
 	msg := ethereum.CallMsg{From: fromAddr, To: &accountTo, Value: amount, Data: nil}
 	gasLimit, err := conn.EstimateGas(ctx, msg)
@@ -254,7 +259,7 @@ func (ss *ETHService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo commo
 	if err != nil {
 		return fmt.Errorf("failed to get networkID : %v", err)
 	}
-	rawTx := types.NewTransaction(nonce, accountTo, amount, gasLimit, gasPrice, nil)
+	rawTx := types.NewTransaction(currentNonce, accountTo, amount, gasLimit, gasPrice, nil)
 	signedTx, err := auth.Signer(types.NewEIP155Signer(chainID), auth.From, rawTx)
 	if err != nil {
 		return err

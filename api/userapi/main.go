@@ -67,7 +67,7 @@ func init() {
 }
 
 // defaultAPITimeout : 默认api请求超时时间
-var defaultAPITimeout = 120 * time.Second
+var defaultAPITimeout = 1200 * time.Second
 
 /*
 UserAPI :

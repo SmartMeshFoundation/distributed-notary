@@ -272,9 +272,14 @@ func readBytesFromWSConn(ws *websocket.Conn) (buf []byte, err error) {
 	if ws == nil {
 		panic("readBytesFromWSConn ws can not be nil")
 	}
+	var n int32
 	lengthBytes := make([]byte, 4)
-	if _, err = ws.Read(lengthBytes); err != nil {
-		return
+	for n < 4 {
+		var n1 int
+		if n1, err = ws.Read(lengthBytes[n:]); err != nil {
+			return
+		}
+		n += int32(n1)
 	}
 	var length int32
 	err = binary.Read(bytes.NewBuffer(lengthBytes), binary.BigEndian, &length)
@@ -287,7 +292,7 @@ func readBytesFromWSConn(ws *websocket.Conn) (buf []byte, err error) {
 		return
 	}
 	buf2 := make([]byte, length)
-	var n int32
+	n = 0
 	for n < length {
 		var n1 int
 		if n1, err = ws.Read(buf2[n:]); err != nil {

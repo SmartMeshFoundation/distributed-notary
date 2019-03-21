@@ -1,6 +1,7 @@
 package dnc
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"net/http"
 
@@ -161,23 +162,35 @@ func benchmarkDSM(mcName string, num int) {
 	expiration := uint64(10000)
 	expiration2 := getEthLastBlockNumber(es.GetClient()) + expiration
 	fmt.Printf("==> wait for init accounts , include transfer money and PLI  ...\n")
-	for index, key := range keys {
-		account := crypto.PubkeyToAddress(key.PublicKey)
-		secretHash := secretHashs[index]
-		//2. 主链转账1eth
-		err := es.Transfer10ToAccount(mcKey, account, eth2Wei(10*1000000000))
-		if err != nil {
-			fmt.Println("transfer eth to account fail : ", err)
-			os.Exit(-1)
-		}
-		//3. 调用合约pli
-		auth := bind.NewKeyedTransactor(key)
-		err = mcp.PrepareLockin(auth, account.String(), secretHash, expiration2, eth2Wei(amount))
-		if err != nil {
-			fmt.Println("pli fail : ", err)
-			os.Exit(-1)
-		}
+	baseNonce, err := es.GetClient().NonceAt(context.Background(), crypto.PubkeyToAddress(mcKey.PublicKey), nil)
+	if err != nil {
+		fmt.Println("GetClient err ", err)
+		return
 	}
+	wg := sync.WaitGroup{}
+	wg.Add(len(keys))
+	for i, ckey := range keys {
+		go func(index int, key *ecdsa.PrivateKey, nonce int) {
+			account := crypto.PubkeyToAddress(key.PublicKey)
+			secretHash := secretHashs[index]
+			//2. 主链转账1eth
+			err := es.Transfer10ToAccount(mcKey, account, eth2Wei(10*1000000000), nonce)
+			if err != nil {
+				fmt.Println("transfer eth to account fail : ", err)
+				os.Exit(-1)
+			}
+			//3. 调用合约pli
+			auth := bind.NewKeyedTransactor(key)
+			err = mcp.PrepareLockin(auth, account.String(), secretHash, expiration2, eth2Wei(amount))
+			if err != nil {
+				fmt.Println("pli fail : ", err)
+				os.Exit(-1)
+			}
+			wg.Done()
+		}(i, ckey, int(baseNonce)+i)
+
+	}
+	wg.Wait()
 	// 3.5 等待pli事件完成
 	fmt.Printf("==> wait for notary to confirm pli event ...\n")
 	time.Sleep(20 * time.Second)
@@ -186,8 +199,9 @@ func benchmarkDSM(mcName string, num int) {
 	// 5. 调用
 	fmt.Printf("==> DSM Benchmark  START ...\n")
 	start := time.Now()
-	wg := sync.WaitGroup{}
+	wg = sync.WaitGroup{}
 	wg.Add(num)
+	cnt := 0
 	for _, r := range reqs {
 		go func(r *req) {
 			var resp api.BaseResponse
@@ -197,6 +211,8 @@ func benchmarkDSM(mcName string, num int) {
 				os.Exit(-1)
 			}
 			wg.Done()
+			cnt++
+			fmt.Printf("dnc cnt=%d\n", cnt)
 		}(r)
 	}
 	wg.Wait()
