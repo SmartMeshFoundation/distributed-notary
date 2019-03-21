@@ -11,7 +11,7 @@ type KeyGenerationPhase1MessageRequest struct {
 	api.BaseReq
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
-	api.BaseReqWithResponse
+	//api.BaseReqWithResponse
 	Msg *models.KeyGenBroadcastMessage1 `json:"msg"`
 }
 
@@ -21,8 +21,8 @@ func NewKeyGenerationPhase1MessageRequest(sessionID common.Hash, self *models.No
 		BaseReq:              api.NewBaseReq(APINamePKNPhase1PubKeyProof),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		Msg:                  msg,
+		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		Msg: msg,
 	}
 }
 
@@ -31,7 +31,7 @@ type KeyGenerationPhase2MessageRequest struct {
 	api.BaseReq
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
-	api.BaseReqWithResponse
+	//api.BaseReqWithResponse
 	Msg *models.KeyGenBroadcastMessage2 `json:"msg"`
 }
 
@@ -41,8 +41,8 @@ func NewKeyGenerationPhase2MessageRequest(sessionID common.Hash, self *models.No
 		BaseReq:              api.NewBaseReq(APINamePKNPhase2PaillierKeyProof),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		Msg:                  msg,
+		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		Msg: msg,
 	}
 }
 
@@ -51,7 +51,7 @@ type KeyGenerationPhase3MessageRequest struct {
 	api.BaseReq
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
-	api.BaseReqWithResponse
+	//api.BaseReqWithResponse
 	Msg *models.KeyGenBroadcastMessage3 `json:"msg"`
 }
 
@@ -61,8 +61,8 @@ func NewKeyGenerationPhase3MessageRequest(sessionID common.Hash, self *models.No
 		BaseReq:              api.NewBaseReq(APINamePKNPhase3SecretShare),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		Msg:                  msg,
+		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		Msg: msg,
 	}
 }
 
@@ -71,7 +71,7 @@ type KeyGenerationPhase4MessageRequest struct {
 	api.BaseReq
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
-	api.BaseReqWithResponse
+	//api.BaseReqWithResponse
 	Msg *models.KeyGenBroadcastMessage4 `json:"msg"`
 }
 
@@ -81,7 +81,7 @@ func NewKeyGenerationPhase4MessageRequest(sessionID common.Hash, self *models.No
 		BaseReq:              api.NewBaseReq(APINamePKNPhase4PubKeyProof),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		Msg:                  msg,
+		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		Msg: msg,
 	}
 }

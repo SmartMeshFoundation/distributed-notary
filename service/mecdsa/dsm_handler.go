@@ -397,14 +397,10 @@ func (dh *DSMHandler) receivePhase2MessageA(msg *models.MessageA, index int) (mb
 	mgGamma, err := newMessageB(dh.signMessage.SignedKey.GammaI, dh.paillierPubKeys[index], msg)
 	if err != nil {
 		panic(err)
-		dh.notify(nil, err)
-		return
 	}
 	mbw, err := newMessageB(dh.signMessage.SignedKey.WI, dh.paillierPubKeys[index], msg)
 	if err != nil {
 		panic(err)
-		dh.notify(nil, err)
-		return
 	}
 	mb = &models.MessageBPhase2{
 		MessageBGamma: mgGamma,
@@ -1036,22 +1032,17 @@ func (dh *DSMHandler) waitPhaseDone(c chan bool) (err error) {
 			switch r := req.(type) {
 			case *notaryapi.DSMPhase1BroadcastRequest:
 				dh.receivePhase1Broadcast(r.Msg, r.GetSenderNotaryID())
-				r.WriteSuccessResponse(nil)
 			case *notaryapi.DSMPhase2MessageARequest:
 				resp := dh.receivePhase2MessageA(r.Msg, r.GetSenderNotaryID())
 				r.WriteSuccessResponse(resp)
 			case *notaryapi.DSMPhase3DeltaIRequest:
 				dh.receivePhase3DeltaI(r.Msg, r.GetSenderNotaryID())
-				r.WriteSuccessResponse(nil)
 			case *notaryapi.DSMPhase5A5BProofRequest:
 				dh.receivePhase5A5BProof(r.Msg, r.GetSenderNotaryID())
-				r.WriteSuccessResponse(nil)
 			case *notaryapi.DSMPhase5CProofRequest:
 				dh.receivePhase5cProof(r.Msg, r.GetSenderNotaryID())
-				r.WriteSuccessResponse(nil)
 			case *notaryapi.DSMPhase6ReceiveSIRequest:
 				dh.recevieSI(r.Msg, r.GetSenderNotaryID())
-				r.WriteSuccessResponse(nil)
 			default:
 				log.Error(sessionLogMsg(dh.sessionID, "unknown msg for DSMHandler :\n%s", utils.ToJSONStringFormat(req)))
 			}

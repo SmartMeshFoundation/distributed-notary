@@ -57,7 +57,7 @@ type DSMPhase1BroadcastRequest struct {
 	api.BaseReq
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
-	api.BaseReqWithResponse
+	//api.BaseReqWithResponse
 	PrivateKeyID common.Hash                 `json:"private_key_id"`
 	Msg          *models.SignBroadcastPhase1 `json:"msg"`
 }
@@ -68,9 +68,9 @@ func NewDSMPhase1BroadcastRequest(sessionID common.Hash, self *models.NotaryInfo
 		BaseReq:              api.NewBaseReq(APINameDSMPhase1Broadcast),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		PrivateKeyID:         privateKeyID,
-		Msg:                  msg,
+		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		PrivateKeyID: privateKeyID,
+		Msg:          msg,
 	}
 }
 
@@ -101,7 +101,7 @@ type DSMPhase3DeltaIRequest struct {
 	api.BaseReq
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
-	api.BaseReqWithResponse
+	//api.BaseReqWithResponse
 	PrivateKeyID common.Hash         `json:"private_key_id"`
 	Msg          *models.DeltaPhase3 `json:"msg"`
 }
@@ -112,9 +112,9 @@ func NewDSMPhase3DeltaIRequest(sessionID common.Hash, self *models.NotaryInfo, p
 		BaseReq:              api.NewBaseReq(APINameDSMPhase3DeltaI),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		PrivateKeyID:         privateKeyID,
-		Msg:                  msg,
+		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		PrivateKeyID: privateKeyID,
+		Msg:          msg,
 	}
 }
 
@@ -123,7 +123,7 @@ type DSMPhase5A5BProofRequest struct {
 	api.BaseReq
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
-	api.BaseReqWithResponse
+	//api.BaseReqWithResponse
 	PrivateKeyID common.Hash     `json:"private_key_id"`
 	Msg          *models.Phase5A `json:"msg"`
 }
@@ -134,9 +134,9 @@ func NewDSMPhase5A5BProofRequest(sessionID common.Hash, self *models.NotaryInfo,
 		BaseReq:              api.NewBaseReq(APINameDSMPhase5A5BProof),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		PrivateKeyID:         privateKeyID,
-		Msg:                  msg,
+		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		PrivateKeyID: privateKeyID,
+		Msg:          msg,
 	}
 }
 
@@ -145,7 +145,7 @@ type DSMPhase5CProofRequest struct {
 	api.BaseReq
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
-	api.BaseReqWithResponse
+	//api.BaseReqWithResponse
 	PrivateKeyID common.Hash     `json:"private_key_id"`
 	Msg          *models.Phase5C `json:"msg"`
 }
@@ -156,9 +156,9 @@ func NewDSMPhase5CProofRequest(sessionID common.Hash, self *models.NotaryInfo, p
 		BaseReq:              api.NewBaseReq(APINameDSMPhase5CProof),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		PrivateKeyID:         privateKeyID,
-		Msg:                  msg,
+		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		PrivateKeyID: privateKeyID,
+		Msg:          msg,
 	}
 }
 
@@ -167,7 +167,7 @@ type DSMPhase6ReceiveSIRequest struct {
 	api.BaseReq
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
-	api.BaseReqWithResponse
+	//api.BaseReqWithResponse
 	PrivateKeyID common.Hash    `json:"private_key_id"`
 	Msg          share.SPrivKey `json:"msg"`
 }
@@ -178,8 +178,8 @@ func NewDSMPhase6ReceiveSIRequest(sessionID common.Hash, self *models.NotaryInfo
 		BaseReq:              api.NewBaseReq(APINameDSMPhase6ReceiveSI),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		PrivateKeyID:         privateKeyID,
-		Msg:                  msg,
+		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		PrivateKeyID: privateKeyID,
+		Msg:          msg,
 	}
 }
