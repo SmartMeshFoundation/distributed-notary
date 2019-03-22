@@ -485,7 +485,7 @@ func (s *Server) stablizeCP(cp *CheckPoint, proof *CheckPointArgs) {
 	s.removeOldLog(cp.Seq)
 	s.removeOldCheckPoint(cp.Seq)
 	s.removeOldState(cp.Seq)
-	s.removeOldSeqMap(cp.Seq)
+	s.removeOldSeqMap(cp.Seq - 2*checkpointDiv) //不能清理seqmap太及时了,否则在checkpoint临界值会导致为统一op分配不同的seq,
 	s.insertStateAt0(newHistoryCheckPointState(proof.Seq, proof.Digest))
 	s.h = cp.Seq
 	s.H = s.h + 2*checkpointDiv
