@@ -79,7 +79,7 @@ func benchmarkPKN(mcName string, num int) {
 	wg.Add(num)
 	for i := 0; i < num; i++ {
 		go func() {
-			url := fmt.Sprintf("http://127.0.0.1:333%d/api/1/admin/private-key", rand.Intn(7))
+			url := fmt.Sprintf("http://127.0.0.1:803%d/api/1/admin/private-key", rand.Intn(7))
 			var resp api.BaseResponse
 			s := time.Now()
 			err2 := call(http.MethodPut, url, "", &resp)
@@ -149,9 +149,9 @@ func benchmarkDSM(mcName string, num int) {
 	var keys []*ecdsa.PrivateKey
 	var secretHashs []common.Hash
 	for i := 0; i < num; i++ {
-		k, err := crypto.GenerateKey()
-		if err != nil {
-			panic(err)
+		k, err2 := crypto.GenerateKey()
+		if err2 != nil {
+			panic(err2)
 		}
 		keys = append(keys, k)
 		secret := utils.NewRandomHash()

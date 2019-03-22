@@ -82,7 +82,7 @@ StartPKNAndWaitFinish 开始一次私钥协商
 */
 func (ph *PKNHandler) StartPKNAndWaitFinish(req *notaryapi.KeyGenerationPhase1MessageRequest) (privateKeyInfo *models.PrivateKeyInfo, err error) {
 	// 0. 启动消息处理线程
-	go ph.receiveLoop()
+	//go ph.receiveLoop()
 	// 0.5 投递
 	if req != nil {
 		ph.OnRequest(req)
@@ -157,36 +157,6 @@ func (ph *PKNHandler) OnRequest(req api.Req) {
 	case ph.receiveChan <- req:
 	default:
 		// never block
-	}
-}
-
-/*
-消息接收线程,该会话的所有消息都在这里面处理
-*/
-func (ph *PKNHandler) receiveLoop() {
-	var req api.Req
-	for {
-		select {
-		case req = <-ph.receiveChan:
-		case err := <-ph.quitChan:
-			if err != nil {
-				log.Error(sessionLogMsg(ph.sessionID, "receiveLoop of PKNHandler quit with err %s", err.Error()))
-			}
-			return
-		}
-		switch r := req.(type) {
-		case *notaryapi.KeyGenerationPhase1MessageRequest:
-			ph.receivePhase1PubKeyProof(r.Msg, r.GetSenderNotaryID())
-		case *notaryapi.KeyGenerationPhase2MessageRequest:
-			ph.receivePhase2PaillierPubKeyProof(r.Msg, r.GetSenderNotaryID())
-		case *notaryapi.KeyGenerationPhase3MessageRequest:
-			ph.receivePhase3SecretShare(r.Msg, r.GetSenderNotaryID())
-		case *notaryapi.KeyGenerationPhase4MessageRequest:
-			ph.receivePhase4VerifyTotalPubKey(r.Msg, r.GetSenderNotaryID())
-		default:
-			log.Error(sessionLogMsg(ph.sessionID, "unknown msg for PKNHandler :\n%s", utils.ToJSONStringFormat(req)))
-		}
-		// TODO 在这里可以更精确的判断当前状态,来通知主线程
 	}
 }
 
@@ -432,15 +402,30 @@ func (ph *PKNHandler) checkPhase4Done() {
 	}
 }
 func (ph *PKNHandler) waitPhaseDone(c chan bool) (err error) {
-	select {
-	case <-c:
-	case err = <-ph.quitChan:
-		if err != nil {
-			log.Error(sessionLogMsg(ph.sessionID, "waitPhaseDone of PKNHandler quit with err %s", err.Error()))
+	var req api.Req
+	for {
+		select {
+		case <-c:
+			return
+		case err = <-ph.quitChan:
+			if err != nil {
+				log.Error(sessionLogMsg(ph.sessionID, "waitPhaseDone of PKNHandler quit with err %s", err.Error()))
+			}
+		case req = <-ph.receiveChan:
+			switch r := req.(type) {
+			case *notaryapi.KeyGenerationPhase1MessageRequest:
+				ph.receivePhase1PubKeyProof(r.Msg, r.GetSenderNotaryID())
+			case *notaryapi.KeyGenerationPhase2MessageRequest:
+				ph.receivePhase2PaillierPubKeyProof(r.Msg, r.GetSenderNotaryID())
+			case *notaryapi.KeyGenerationPhase3MessageRequest:
+				ph.receivePhase3SecretShare(r.Msg, r.GetSenderNotaryID())
+			case *notaryapi.KeyGenerationPhase4MessageRequest:
+				ph.receivePhase4VerifyTotalPubKey(r.Msg, r.GetSenderNotaryID())
+			default:
+				log.Error(sessionLogMsg(ph.sessionID, "unknown msg for PKNHandler :\n%s", utils.ToJSONStringFormat(req)))
+			}
 		}
-		return
 	}
-	return
 }
 
 func (ph *PKNHandler) notify(c chan bool, err error) {
