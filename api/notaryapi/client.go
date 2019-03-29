@@ -95,6 +95,20 @@ func (na *NotaryAPI) WaitWSResponse(requestID string, timeout ...time.Duration) 
 	return
 }
 
+func (na *NotaryAPI) getNotaryInfoById(notaryID int) (notary *models.NotaryInfo, err error) {
+	for _, n := range na.notaries {
+		if n.ID == notaryID {
+			notary = n
+			break
+		}
+	}
+	if notary == nil {
+		err = fmt.Errorf("can not find notary info with id : %d", notaryID)
+		return
+	}
+	return
+}
+
 func (na *NotaryAPI) getNotaryWSURLAndOrigin(notaryID int) (wsURL string, origin string, err error) {
 	var notary *models.NotaryInfo
 	for _, n := range na.notaries {

@@ -269,6 +269,19 @@ func (na *NotaryAPI) parseNotaryRequest(content []byte) (req api.Req, err error)
 	if r2, ok := req.(api.ReqWithResponse); ok {
 		r2.NewResponseChan()
 	}
+	r1, ok1 := req.(api.ReqWithSignature)
+	r2, ok2 := req.(api.ReqWithSessionID)
+	if ok1 && ok2 {
+		sender, err2 := na.getNotaryInfoById(r2.GetSenderNotaryID())
+		if err2 != nil {
+			err = err2
+			return
+		}
+		if sender.GetAddress() != r1.GetSigner() {
+			err = fmt.Errorf("signer address not euqal with msg.sender : signer=%s sender=%s", sender.AddressStr, r1.GetSigner().String())
+			return
+		}
+	}
 	return
 }
 
