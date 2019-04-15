@@ -31,7 +31,7 @@ func (ua *UserAPI) getLockinStatus(w rest.ResponseWriter, r *rest.Request) {
 	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }
 
-// SCPrepareLockinRequest :
+// SCPrepareLockinRequest : 用户在主链prepareLockin完成一段时间后,通知相关公证人,需要侧链PrepareLockin
 type SCPrepareLockinRequest struct {
 	api.BaseReq
 	api.BaseReqWithResponse
