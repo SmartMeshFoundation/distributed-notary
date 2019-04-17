@@ -13,9 +13,9 @@ import (
 )
 
 /*
-负责节点之间的nonce协商
+PBFTService 负责节点之间的nonce协商
 */
-type pbftService struct {
+type PBFTService struct {
 	key       string //协商哪一个地址的nonce
 	client    *pbft.Client
 	clientMsg chan interface{}
@@ -32,8 +32,9 @@ type pbftService struct {
 	quit            chan struct{}
 }
 
-func NewPBFTService(key string, allNotaries []*models.NotaryInfo, notaryClient notaryapi.NotaryClient, dispatchService dispatchServiceBackend, db *models.DB) *pbftService {
-	ps := &pbftService{
+// NewPBFTService :
+func NewPBFTService(key string, allNotaries []*models.NotaryInfo, notaryClient notaryapi.NotaryClient, dispatchService dispatchServiceBackend, db *models.DB) *PBFTService {
+	ps := &PBFTService{
 		clientMsg:       make(chan interface{}, 10),
 		serverMsg:       make(chan interface{}, 10),
 		notaryClient:    notaryClient,
@@ -62,7 +63,7 @@ func NewPBFTService(key string, allNotaries []*models.NotaryInfo, notaryClient n
 }
 
 //SendMessage 这里是否应该处理一下
-func (ps *pbftService) SendMessage(msg interface{}, target int) {
+func (ps *PBFTService) SendMessage(msg interface{}, target int) {
 	req := &notaryapi.PBFTMessage{
 		BaseReq: api.BaseReq{
 			Name: notaryapi.APINamePBFTMessage,
@@ -78,7 +79,8 @@ func (ps *pbftService) SendMessage(msg interface{}, target int) {
 	}
 }
 
-func (ps *pbftService) OnRequest(req *notaryapi.PBFTMessage) {
+// OnRequest :
+func (ps *PBFTService) OnRequest(req *notaryapi.PBFTMessage) {
 	msg := pbft.DecodeMsg(req.Msg)
 
 	switch msg.(type) {
@@ -87,15 +89,16 @@ func (ps *pbftService) OnRequest(req *notaryapi.PBFTMessage) {
 	case pbft.ServerMessager:
 		ps.serverMsg <- msg
 	default:
-		log.Error(fmt.Sprintf("pbftService onRquest unkown req=%s", utils.StringInterface(req, 2)))
+		log.Error(fmt.Sprintf("PBFTService onRquest unkown req=%s", utils.StringInterface(req, 2)))
 	}
 
 }
 
-func (ps *pbftService) Stop() {
+// Stop :
+func (ps *PBFTService) Stop() {
 	close(ps.quit)
 }
-func (ps *pbftService) loop() {
+func (ps *PBFTService) loop() {
 	for {
 		select {
 		case op := <-ps.client.Apply:
@@ -114,7 +117,7 @@ func (ps *pbftService) loop() {
 	}
 }
 
-func (ps *pbftService) newNonce(op string) (nonce uint64, err error) {
+func (ps *PBFTService) newNonce(op string) (nonce uint64, err error) {
 	log.Trace(fmt.Sprintf("ps[%s] new nonce for %s", ps.key, op))
 	ps.lock.Lock()
 	c, ok := ps.nonces[op]
@@ -132,7 +135,8 @@ func (ps *pbftService) newNonce(op string) (nonce uint64, err error) {
 	return uint64(r.Seq), r.Error
 }
 
-func (ps *pbftService) UpdateSeq(seq int) {
+// UpdateSeq :
+func (ps *PBFTService) UpdateSeq(seq int) {
 	nonce, err := ps.db.GetNonce(ps.key)
 	if err != nil {
 		panic(err)

@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 
+	"fmt"
+
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/nkbai/log"
@@ -204,6 +206,7 @@ func (r *BaseReqWithResponse) WriteResponse(resp *BaseResponse) {
 	select {
 	case r.responseChan <- resp:
 	default:
+		log.Error(fmt.Sprintf("response of requestID = %s double write", r.RequestID))
 		panic("never block")
 		// never block
 	}

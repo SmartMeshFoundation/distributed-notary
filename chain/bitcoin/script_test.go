@@ -64,7 +64,7 @@ func TestPrepareLockInScriptBuilder_GetSigScriptForNotary(t *testing.T) {
 	builder := bs.GetPrepareLockInScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, big.NewInt(1), secretHash, big.NewInt(100))
 
 	// 锁定脚本构造
-	lockScript, pkScript := builder.GetPKScript()
+	lockScript, _, pkScript := builder.GetPKScript()
 
 	// 模拟tx构造
 	redeemTx := getTestRedeemTx(builder.amount, pkScript)
@@ -107,7 +107,7 @@ func TestPrepareLockInScriptBuilder_GetSigScriptForUser(t *testing.T) {
 	builder := bs.GetPrepareLockInScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, big.NewInt(1), secretHash, big.NewInt(570000))
 
 	// 锁定脚本构造
-	lockScript, pkScript := builder.GetPKScript()
+	lockScript, _, pkScript := builder.GetPKScript()
 
 	// 模拟tx构造
 	redeemTx := getTestRedeemTx(builder.amount, pkScript)
@@ -153,7 +153,7 @@ func TestPrepareLockoutScriptBuilder_GetSigScriptForUser(t *testing.T) {
 	builder := bs.GetPrepareLockOutScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, big.NewInt(1), secretHash, big.NewInt(570000))
 
 	// 锁定脚本构造
-	lockScript, pkScript := builder.GetPKScript()
+	lockScript, _, pkScript := builder.GetPKScript()
 
 	// 模拟tx构造
 	redeemTx := getTestRedeemTx(builder.amount, pkScript)
@@ -196,7 +196,7 @@ func TestPrepareLockoutScriptBuilder_GetSigScriptForNotary(t *testing.T) {
 	builder := bs.GetPrepareLockOutScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, big.NewInt(1), secretHash, big.NewInt(100))
 
 	// 锁定脚本构造
-	lockScript, pkScript := builder.GetPKScript()
+	lockScript, _, pkScript := builder.GetPKScript()
 
 	// 模拟tx构造
 	redeemTx := getTestRedeemTx(builder.amount, pkScript)

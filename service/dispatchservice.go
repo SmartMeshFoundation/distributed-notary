@@ -10,6 +10,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum"
 	ethereumevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum"
@@ -54,7 +55,7 @@ type DispatchService struct {
 	adminService                     *AdminService
 	notaryService                    *NotaryService
 	scToken2CrossChainServiceMap     map[common.Address]*CrossChainService
-	pbftServices                     map[string]*pbftService //私钥id->pbftService
+	pbftServices                     map[string]*PBFTService //私钥id->PBFTService
 	scToken2CrossChainServiceMapLock sync.Mutex
 	notaries                         []*models.NotaryInfo
 	lock                             sync.Mutex
@@ -109,7 +110,7 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		db:                           db,
 		quitChan:                     make(chan struct{}),
 		scToken2CrossChainServiceMap: make(map[common.Address]*CrossChainService),
-		pbftServices:                 make(map[string]*pbftService),
+		pbftServices:                 make(map[string]*PBFTService),
 		notaries:                     notaries,
 	}
 	// 3.5 初始化nonce-server-host
@@ -125,11 +126,18 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		log.Error("new SMCService err : %s", err.Error())
 		return
 	}
-	// 5. 初始化主链事件监听
+	// 5. 初始化Eth事件监听
 	chainName = ethereumevents.ChainName
 	ds.chainMap[chainName], err = ethereum.NewETHService(cfg.EthRPCEndPoint)
 	if err != nil {
 		log.Error("new ETHService err : %s", err.Error())
+		return
+	}
+	// 5.4 初始化Btc事件监听
+	chainName = bitcoin.ChainName
+	ds.chainMap[chainName], err = bitcoin.NewBTCService(cfg.BtcRPCEndPoint, cfg.BtcRPCUser, cfg.BtcRPCPass, cfg.BtcRPCCertFilePath)
+	if err != nil {
+		log.Error("new BTCService err : %s", err.Error())
 		return
 	}
 	// 5.5 初始化BlockNumberService,这里同时会初始化每条链的LastBlockNumber

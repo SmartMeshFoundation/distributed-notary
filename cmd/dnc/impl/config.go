@@ -26,6 +26,7 @@ import (
 type runTime struct {
 	Secret     string `json:"secret"`
 	SecretHash string `json:"secret_hash"`
+	LockScript []byte `json:"lock_script"`
 }
 type dncConfig struct {
 	NotaryHost string `json:"notary_host"`
@@ -37,6 +38,9 @@ type dncConfig struct {
 	BtcRPCEndpoint     string `json:"btc_rpc_endpoint"`
 	BtcUserAddress     string `json:"btc_user_address"`
 
+	BtcWalletRPCCertFilePath string `json:"btc_wallet_rpc_cert_file_path"`
+	BtcWalletRPCEndpoint     string `json:"btc_wallet_rpc_endpoint"`
+
 	EthUserAddress  string `json:"eth_user_address"`
 	EthUserPassword string `json:"eth_user_password"`
 	EthRPCEndpoint  string `json:"eth_rpc_endpoint"`
@@ -44,8 +48,6 @@ type dncConfig struct {
 	SmcUserAddress  string `json:"smc_user_address"`
 	SmcUserPassword string `json:"smc_user_password"`
 	SmcRPCEndpoint  string `json:"smc_rpc_endpoint"`
-
-	BtcWalletRPCEndpoint string `json:"btc_wallet_rpc_endpoint"`
 
 	SCTokenList []service.ScTokenInfoToResponse `json:"sc_token_list"`
 
@@ -60,11 +62,14 @@ var DefaultConfig = &dncConfig{
 	NotaryHost: "http://127.0.0.1:8030",
 	Keystore:   "../../testdata/keystore",
 
-	BtcRPCUser:         "bai",
-	BtcRPCPass:         "bai",
-	BtcRPCCertFilePath: "/home/chuck/.btcd/rpc.cert",
-	BtcRPCEndpoint:     "192.168.124.13:18334",
-	BtcUserAddress:     "Sd2s6mZt6UhjosLQBG5DF1dhFHbaU1y6VV",
+	BtcRPCUser:         "wuhan",
+	BtcRPCPass:         "wuhan",
+	BtcRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcd/rpc.cert"),
+	BtcRPCEndpoint:     "192.168.124.13:18556",
+	BtcUserAddress:     "SNH6bb5iXiofYra5kHzqT9HgN38ABWCshX",
+
+	BtcWalletRPCEndpoint:     "192.168.124.13:18554",
+	BtcWalletRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcwallet/rpc.cert"),
 
 	EthUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	EthUserPassword: "123",
@@ -73,8 +78,6 @@ var DefaultConfig = &dncConfig{
 	SmcUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	SmcUserPassword: "123",
 	SmcRPCEndpoint:  "http://127.0.0.1:17888",
-
-	BtcWalletRPCEndpoint: "http://192.168.124.13:18554",
 }
 
 //var configDir = path.Join(".dnc-client")

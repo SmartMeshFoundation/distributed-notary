@@ -8,6 +8,10 @@ import (
 	"github.com/btcsuite/btcutil"
 )
 
+func NewPrepareLockInScript() {
+
+}
+
 // GetPrepareLockInScriptBuilder :
 func (bs *BTCService) GetPrepareLockInScriptBuilder(userAddr, notaryAddr *btcutil.AddressPubKeyHash, amount *big.Int, lockSecretHashBytes []byte, expiration *big.Int) *PrepareLockInScriptBuilder {
 	return &PrepareLockInScriptBuilder{
@@ -42,7 +46,7 @@ ENDIF
 
 HASH160 {ADDR} EQUEAL
 */
-func (b *PrepareLockInScriptBuilder) GetPKScript() (lockScript []byte, pkScript []byte) {
+func (b *PrepareLockInScriptBuilder) GetPKScript() (lockScript []byte, lockScriptAddr *btcutil.AddressScriptHash, pkScript []byte) {
 	sb := txscript.NewScriptBuilder()
 	sb.AddOp(txscript.OP_IF)
 	// 给公证人使用的锁定脚本
@@ -71,12 +75,12 @@ func (b *PrepareLockInScriptBuilder) GetPKScript() (lockScript []byte, pkScript 
 	if err != nil {
 		panic(err)
 	}
-	scriptHash, err := btcutil.NewAddressScriptHash(lockScript, &b.net)
+	lockScriptAddr, err = btcutil.NewAddressScriptHash(lockScript, &b.net)
 	if err != nil {
 		panic(err)
 	}
 
-	pkScript, err = txscript.PayToAddrScript(scriptHash)
+	pkScript, err = txscript.PayToAddrScript(lockScriptAddr)
 	if err != nil {
 		panic(err)
 	}
@@ -150,7 +154,7 @@ ENDIF
 
 HASH160 {ADDR} EQUEAL
 */
-func (b *PrepareLockOutScriptBuilder) GetPKScript() (lockScript []byte, pkScript []byte) {
+func (b *PrepareLockOutScriptBuilder) GetPKScript() (lockScript []byte, lockScriptAddr *btcutil.AddressScriptHash, pkScript []byte) {
 	sb := txscript.NewScriptBuilder()
 	sb.AddOp(txscript.OP_IF)
 	// 给用户使用的锁定脚本
@@ -179,12 +183,12 @@ func (b *PrepareLockOutScriptBuilder) GetPKScript() (lockScript []byte, pkScript
 	if err != nil {
 		panic(err)
 	}
-	scriptHash, err := btcutil.NewAddressScriptHash(lockScript, &b.net)
+	lockScriptAddr, err = btcutil.NewAddressScriptHash(lockScript, &b.net)
 	if err != nil {
 		panic(err)
 	}
 
-	pkScript, err = txscript.PayToAddrScript(scriptHash)
+	pkScript, err = txscript.PayToAddrScript(lockScriptAddr)
 	if err != nil {
 		panic(err)
 	}

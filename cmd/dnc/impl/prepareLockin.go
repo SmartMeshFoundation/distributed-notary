@@ -3,16 +3,19 @@ package dnc
 import (
 	"context"
 	"fmt"
-
+	"reflect"
 	"time"
 
 	"os"
+
+	"math/big"
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/kataras/go-errors"
@@ -60,36 +63,63 @@ func prepareLockin(ctx *cli.Context) error {
 }
 
 func prepareLockinOnBitcoin(amount int64, expiration uint64) (err error) {
-	//// 1. connect to btcd
-	//certs, err := ioutil.ReadFile(filepath.Join("/home/chuck/.btcd", "rpc.cert"))
-	//if err != nil {
-	//	fmt.Println("get certs of btc err : ", err)
-	//	os.Exit(-1)
-	//}
-	//connCfg := &rpcclient.ConnConfig{
-	//	Host:         "192.168.124.13:18334",
-	//	User:         "bai",
-	//	Pass:         "bai",
-	//	HTTPPostMode: true, // Bitcoin core only supports HTTP POST mode
-	//	DisableTLS:   true, // Bitcoin core does not provide TLS by default
-	//	Certificates: certs,
-	//}
-	//c, err := rpcclient.New(connCfg, nil)
-	//if err != nil {
-	//	fmt.Println("connect to btc err : ", err)
-	//	os.Exit(-1)
-	//}
-	//// 2. get auth
-	//privateKeyT, err := getPrivateKey(GlobalConfig.EthUserAddress, GlobalConfig.EthUserPassword)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	os.Exit(-1)
-	//}
-	//privateKey := (*btcec.PrivateKey)(privateKeyT)
-	//// 获取账号utxo集
-	//wire.NewMsgTx(1)
-	//c.CreateEncryptedWallet()
-	//c.SendRawTransaction()
+	//account := "default"
+	// 1. 构造钱包连接,复用BTCService
+	bs, err := bitcoin.NewBTCService(GlobalConfig.BtcWalletRPCEndpoint, GlobalConfig.BtcRPCUser, GlobalConfig.BtcRPCPass, GlobalConfig.BtcWalletRPCCertFilePath)
+	if err != nil {
+		fmt.Println("NewBTCService err : ", err)
+		os.Exit(-1)
+	}
+	c := bs.GetBtcRPCClient()
+	// 2. 解锁钱包
+	err = c.WalletPassphrase("123", 1000)
+	if err != nil {
+		fmt.Println("WalletPassphrase err : ", err)
+		os.Exit(-1)
+	}
+	// 3. 获取双方地址
+	userAddress, err := btcutil.DecodeAddress(GlobalConfig.BtcUserAddress, bs.GetNetParam())
+	if err != nil {
+		fmt.Println("DecodeAddress err : ", err)
+		os.Exit(-1)
+	}
+	fmt.Printf(" ======> [userAddress=%s type=%s]\n", userAddress.String(), reflect.TypeOf(userAddress))
+	notaryAddress, err := btcutil.DecodeAddress(getSCTokenByMCName(bitcoin.ChainName).MCLockedPublicKeyHashStr, bs.GetNetParam())
+	if err != nil {
+		fmt.Println("DecodeAddress err : ", err)
+		os.Exit(-1)
+	}
+	fmt.Printf(" ======> [notaryAddress=%s type=%s]\n", notaryAddress.String(), reflect.TypeOf(notaryAddress))
+	// 4. 生成密码及其他参数
+	amount2 := btcutil.Amount(amount)
+	secret := utils.NewRandomHash()
+	secretHash := utils.ShaSecret(secret[:])
+	expiration2 := big.NewInt(int64(getBtcLastBlockNumber(c) + expiration))
+	fmt.Printf(" ======> [secret=%s, secretHash=%s]\n", secret.String(), secretHash.String())
+	GlobalConfig.RunTime = &runTime{
+		Secret:     secret.String(),
+		SecretHash: secretHash.String(),
+	}
+	// 5. 构造锁定脚本的地址
+	scriptBuilder := bs.GetPrepareLockInScriptBuilder(userAddress.(*btcutil.AddressPubKeyHash), notaryAddress.(*btcutil.AddressPubKeyHash), big.NewInt(amount), secretHash[:], expiration2)
+	lockScript, lockScriptAddr, _ := scriptBuilder.GetPKScript()
+	GlobalConfig.RunTime.LockScript = lockScript
+	// 6. 发送交易
+	err = c.WalletPassphrase("123", 100)
+	if err != nil {
+		fmt.Println("WalletPassphrase err : ", err)
+		os.Exit(-1)
+	}
+	utils.PrintBTCBalanceOfAccount(c, "default")
+	fmt.Println(amount2)
+	txHash, err := c.SendToAddress(lockScriptAddr, amount2)
+	if err != nil {
+		fmt.Println("SendToAddress err : ", err)
+		os.Exit(-1)
+	}
+	fmt.Printf(" ======> [LockScriptHash=%s, txHash=%s]\n", lockScriptAddr.String(), txHash.String())
+	utils.PrintBTCBalanceOfAccount(c, "default")
+	fmt.Println("PrepareLockin SUCCESS")
 	return
 }
 

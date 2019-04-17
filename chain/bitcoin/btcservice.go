@@ -51,10 +51,9 @@ func NewBTCService(host, rpcUser, rpcPass, certFilePath string) (bs *BTCService,
 	bs.certificates = certs
 	connCfg := &rpcclient.ConnConfig{
 		Host:         bs.host,
+		Endpoint:     "ws",
 		User:         bs.rpcUser,
 		Pass:         bs.rpcPass,
-		HTTPPostMode: true,  // Bitcoin core only supports HTTP POST mode
-		DisableTLS:   false, // Bitcoin core does not provide TLS by default
 		Certificates: certs,
 	}
 	// Notice the notification parameter is nil since notifications are
@@ -98,7 +97,7 @@ func (bs *BTCService) StartEventListener() error {
 		return errors.New("event listener already start")
 	}
 	bs.eventListenerQuitChan = make(chan struct{})
-	return errors.New("TODO")
+	return nil
 }
 
 // StopEventListener impl chain.Chain
@@ -142,11 +141,20 @@ func (bs *BTCService) GetConn() *ethclient.Client {
 	panic(chain.ErrorCallWrongChain.Error())
 }
 
+// GetNetParam :
+func (bs *BTCService) GetNetParam() *chaincfg.Params {
+	return &bs.net
+}
+
 // Transfer10ToAccount impl chain.Chain, for debug
 func (bs *BTCService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int, nonce ...int) (err error) {
 	// do nothing
 	return
 }
 
+// GetBtcRPCClient :
+func (bs *BTCService) GetBtcRPCClient() *rpcclient.Client {
+	return bs.c
+}
 func (bs *BTCService) loop() {
 }

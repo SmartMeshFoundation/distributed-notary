@@ -119,7 +119,7 @@ func (pi *PrivateKeyInfo) ToAddress() common.Address {
 
 // ToBTCPubKeyAddress :
 func (pi *PrivateKeyInfo) ToBTCPubKeyAddress(net *chaincfg.Params) (pubKeyAddress *btcutil.AddressPubKey) {
-	pubKeySerial := (*btcec.PublicKey)(pi.ToPublicKey()).SerializeUncompressed()
+	pubKeySerial := (*btcec.PublicKey)(pi.ToPublicKey()).SerializeCompressed()
 	pubKeyAddress, err := btcutil.NewAddressPubKey(pubKeySerial, net)
 	if err != nil {
 		panic(err)
