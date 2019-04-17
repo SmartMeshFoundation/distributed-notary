@@ -15,6 +15,8 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/curv/proofs"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/jinzhu/gorm"
@@ -113,6 +115,16 @@ func (pi *PrivateKeyInfo) ToPublicKey() *ecdsa.PublicKey {
 // ToAddress :
 func (pi *PrivateKeyInfo) ToAddress() common.Address {
 	return crypto.PubkeyToAddress(*pi.ToPublicKey())
+}
+
+// ToBTCPubKeyAddress :
+func (pi *PrivateKeyInfo) ToBTCPubKeyAddress(net *chaincfg.Params) (pubKeyAddress *btcutil.AddressPubKey) {
+	pubKeySerial := (*btcec.PublicKey)(pi.ToPublicKey()).SerializeUncompressed()
+	pubKeyAddress, err := btcutil.NewAddressPubKey(pubKeySerial, net)
+	if err != nil {
+		panic(err)
+	}
+	return
 }
 
 // PrivateKeyInfoModel :

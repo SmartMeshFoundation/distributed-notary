@@ -31,6 +31,12 @@ type dncConfig struct {
 	NotaryHost string `json:"notary_host"`
 	Keystore   string `json:"keystore"`
 
+	BtcRPCUser         string `json:"btc_rpc_user"`
+	BtcRPCPass         string `json:"btc_rpc_pass"`
+	BtcRPCCertFilePath string `json:"btc_rpc_cert_file_path"`
+	BtcRPCEndpoint     string `json:"btc_rpc_endpoint"`
+	BtcUserAddress     string `json:"btc_user_address"`
+
 	EthUserAddress  string `json:"eth_user_address"`
 	EthUserPassword string `json:"eth_user_password"`
 	EthRPCEndpoint  string `json:"eth_rpc_endpoint"`
@@ -38,6 +44,8 @@ type dncConfig struct {
 	SmcUserAddress  string `json:"smc_user_address"`
 	SmcUserPassword string `json:"smc_user_password"`
 	SmcRPCEndpoint  string `json:"smc_rpc_endpoint"`
+
+	BtcWalletRPCEndpoint string `json:"btc_wallet_rpc_endpoint"`
 
 	SCTokenList []service.ScTokenInfoToResponse `json:"sc_token_list"`
 
@@ -52,6 +60,12 @@ var DefaultConfig = &dncConfig{
 	NotaryHost: "http://127.0.0.1:8030",
 	Keystore:   "../../testdata/keystore",
 
+	BtcRPCUser:         "bai",
+	BtcRPCPass:         "bai",
+	BtcRPCCertFilePath: "/home/chuck/.btcd/rpc.cert",
+	BtcRPCEndpoint:     "192.168.124.13:18334",
+	BtcUserAddress:     "Sd2s6mZt6UhjosLQBG5DF1dhFHbaU1y6VV",
+
 	EthUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	EthUserPassword: "123",
 	EthRPCEndpoint:  "http://127.0.0.1:19888",
@@ -59,6 +73,8 @@ var DefaultConfig = &dncConfig{
 	SmcUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	SmcUserPassword: "123",
 	SmcRPCEndpoint:  "http://127.0.0.1:17888",
+
+	BtcWalletRPCEndpoint: "http://192.168.124.13:18554",
 }
 
 //var configDir = path.Join(".dnc-client")

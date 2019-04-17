@@ -1,4 +1,4 @@
-package spectrum
+package bitcoin
 
 import "time"
 
@@ -14,8 +14,5 @@ var pollPeriod = 500 * time.Millisecond
 //var logPeriod = uint64(10)
 var logPeriod = uint64(20)
 
-//defaultPollTimeout  request wait time
-const defaultPollTimeout = 180 * time.Second
-
-// spectrumRPCTimeout :
-var spectrumRPCTimeout = 3 * time.Second
+// btcdRPCTimeout :
+var btcdRPCTimeout = 3 * time.Second

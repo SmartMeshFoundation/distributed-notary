@@ -8,11 +8,14 @@ import (
 
 	"os"
 
+	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/kataras/go-errors"
 	"github.com/urfave/cli"
 )
 
@@ -40,15 +43,58 @@ var pliCmd = cli.Command{
 }
 
 func prepareLockin(ctx *cli.Context) error {
-	contract := getMCContractAddressByMCName(ctx.String("mcname"))
+	mcName := ctx.String("mcname")
 	amount := ctx.Int64("amount")
 	if amount == 0 {
 		fmt.Println("pli must run with --amount")
 		os.Exit(-1)
 	}
 	expiration := ctx.Uint64("expiration")
-	fmt.Printf("start to prepare lockin :\n ======> [contract=%s amount=%d expiartion=%d]\n", contract.String(), amount, expiration)
+	fmt.Printf("start to prepare lockin :\n ======> [chain=%s amount=%d expiartion=%d]\n", mcName, amount, expiration)
+	if mcName == events.ChainName {
+		return prepareLockinOnEthereum(mcName, amount, expiration)
+	} else if mcName == bitcoin.ChainName || mcName == "btc" {
+		return prepareLockinOnBitcoin(amount, expiration)
+	}
+	return errors.New("unknown chain name")
+}
 
+func prepareLockinOnBitcoin(amount int64, expiration uint64) (err error) {
+	//// 1. connect to btcd
+	//certs, err := ioutil.ReadFile(filepath.Join("/home/chuck/.btcd", "rpc.cert"))
+	//if err != nil {
+	//	fmt.Println("get certs of btc err : ", err)
+	//	os.Exit(-1)
+	//}
+	//connCfg := &rpcclient.ConnConfig{
+	//	Host:         "192.168.124.13:18334",
+	//	User:         "bai",
+	//	Pass:         "bai",
+	//	HTTPPostMode: true, // Bitcoin core only supports HTTP POST mode
+	//	DisableTLS:   true, // Bitcoin core does not provide TLS by default
+	//	Certificates: certs,
+	//}
+	//c, err := rpcclient.New(connCfg, nil)
+	//if err != nil {
+	//	fmt.Println("connect to btc err : ", err)
+	//	os.Exit(-1)
+	//}
+	//// 2. get auth
+	//privateKeyT, err := getPrivateKey(GlobalConfig.EthUserAddress, GlobalConfig.EthUserPassword)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	os.Exit(-1)
+	//}
+	//privateKey := (*btcec.PrivateKey)(privateKeyT)
+	//// 获取账号utxo集
+	//wire.NewMsgTx(1)
+	//c.CreateEncryptedWallet()
+	//c.SendRawTransaction()
+	return
+}
+
+func prepareLockinOnEthereum(mcName string, amount int64, expiration uint64) (err error) {
+	contract := getMCContractAddressByMCName(mcName)
 	// 1. init connect
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
 	c, err := ethclient.DialContext(ctx2, GlobalConfig.EthRPCEndpoint)
