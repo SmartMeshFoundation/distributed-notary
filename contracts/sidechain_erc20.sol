@@ -177,7 +177,7 @@ contract AtmosphereToken is StandardToken {
         LockinInfo storage li=lockin_htlc[account];
         //验证密码匹配,并且在有效期内
         require(li.value>0);
-        require(li.SecretHash==keccak256(abi.encodePacked(secret)));
+        require(li.SecretHash==sha256(abi.encodePacked(secret)));
         require(li.Expiration>block.number);
 
         //根据HTLC信息,为这个账户分配相应的token
@@ -233,7 +233,7 @@ contract AtmosphereToken is StandardToken {
         uint256 value=li.value;
         require(value>0);
         require(li.Expiration>block.number);
-        require(li.SecretHash==keccak256(abi.encodePacked(secret)));
+        require(li.SecretHash==sha256(abi.encodePacked(secret)));
         // 下发事件用
         bytes32 secretHash = li.SecretHash;
 

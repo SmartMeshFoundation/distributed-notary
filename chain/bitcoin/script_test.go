@@ -9,22 +9,24 @@ import (
 
 	"encoding/hex"
 
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )
 
 func getTestData() (testSecret, testSecretHash, userPrivateKeyBytes, notaryPrivateKeyBytes []byte) {
 	testSecret = common.HexToHash("0x630fbde9dd9e9a5ad33f01454e1c3a1a8821c78c9a886f61aa113cc5877b8166").Bytes()
-	testSecretHash = chainhash.DoubleHashB(testSecret)
+	testSecretHash = utils.ShaSecret(testSecret[:]).Bytes()
 	userPrivateKeyBytes, _ = hex.DecodeString("4d949ef677a600e449047eadb64b0686fcd24c4e820e3a3076f2cb5beb345c35")
 	notaryPrivateKeyBytes, _ = hex.DecodeString("396b36331bfd0705f826a6df70f6dcb56dacab2e6e56c10a319c1b349d7bdb3e")
 	return
 }
 
-func getTestRedeemTx(amount *big.Int, pkScript []byte) *wire.MsgTx {
+func getTestRedeemTx(amount btcutil.Amount, pkScript []byte) *wire.MsgTx {
 	// For this example, create a fake transaction that represents what
 	// would ordinarily be the real transaction that is being spent.  It
 	// contains a single output that pays to address in the amount of 1 BTC.
@@ -32,7 +34,7 @@ func getTestRedeemTx(amount *big.Int, pkScript []byte) *wire.MsgTx {
 	prevOut := wire.NewOutPoint(&chainhash.Hash{}, ^uint32(0))
 	txIn := wire.NewTxIn(prevOut, []byte{txscript.OP_0, txscript.OP_0}, nil)
 	originTx.AddTxIn(txIn)
-	txOut := wire.NewTxOut(amount.Int64(), pkScript)
+	txOut := wire.NewTxOut(int64(amount), pkScript)
 	originTx.AddTxOut(txOut)
 	originTxHash := originTx.TxHash()
 
@@ -61,7 +63,8 @@ func TestPrepareLockInScriptBuilder_GetSigScriptForNotary(t *testing.T) {
 	userPublicKeyHash := PrivateKeyBytes2AddressPublicKeyHash(userPrivateKeyBytes, &bs.net)
 	notaryPublicKeyHash := PrivateKeyBytes2AddressPublicKeyHash(notaryPrivateKeyBytes, &bs.net)
 	notaryPrivateKey := PrivateKeyBytes2PrivateKey(notaryPrivateKeyBytes)
-	builder := bs.GetPrepareLockInScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, big.NewInt(1), secretHash, big.NewInt(100))
+	amount := btcutil.Amount(1)
+	builder := bs.GetPrepareLockInScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, amount, secretHash, big.NewInt(100))
 
 	// 锁定脚本构造
 	lockScript, _, pkScript := builder.GetPKScript()
@@ -104,7 +107,8 @@ func TestPrepareLockInScriptBuilder_GetSigScriptForUser(t *testing.T) {
 	userPublicKeyHash := PrivateKeyBytes2AddressPublicKeyHash(userPrivateKeyBytes, &bs.net)
 	notaryPublicKeyHash := PrivateKeyBytes2AddressPublicKeyHash(notaryPrivateKeyBytes, &bs.net)
 	userPrivateKey := PrivateKeyBytes2PrivateKey(userPrivateKeyBytes)
-	builder := bs.GetPrepareLockInScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, big.NewInt(1), secretHash, big.NewInt(570000))
+	amount := btcutil.Amount(1)
+	builder := bs.GetPrepareLockInScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, amount, secretHash, big.NewInt(570000))
 
 	// 锁定脚本构造
 	lockScript, _, pkScript := builder.GetPKScript()
@@ -150,7 +154,8 @@ func TestPrepareLockoutScriptBuilder_GetSigScriptForUser(t *testing.T) {
 	userPublicKeyHash := PrivateKeyBytes2AddressPublicKeyHash(userPrivateKeyBytes, &bs.net)
 	notaryPublicKeyHash := PrivateKeyBytes2AddressPublicKeyHash(notaryPrivateKeyBytes, &bs.net)
 	userPrivateKey := PrivateKeyBytes2PrivateKey(userPrivateKeyBytes)
-	builder := bs.GetPrepareLockOutScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, big.NewInt(1), secretHash, big.NewInt(570000))
+	amount := btcutil.Amount(1)
+	builder := bs.GetPrepareLockOutScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, amount, secretHash, big.NewInt(570000))
 
 	// 锁定脚本构造
 	lockScript, _, pkScript := builder.GetPKScript()
@@ -193,7 +198,8 @@ func TestPrepareLockoutScriptBuilder_GetSigScriptForNotary(t *testing.T) {
 	userPublicKeyHash := PrivateKeyBytes2AddressPublicKeyHash(userPrivateKeyBytes, &bs.net)
 	notaryPublicKeyHash := PrivateKeyBytes2AddressPublicKeyHash(notaryPrivateKeyBytes, &bs.net)
 	notaryPrivateKey := PrivateKeyBytes2PrivateKey(notaryPrivateKeyBytes)
-	builder := bs.GetPrepareLockOutScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, big.NewInt(1), secretHash, big.NewInt(100))
+	amount := btcutil.Amount(1)
+	builder := bs.GetPrepareLockOutScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, amount, secretHash, big.NewInt(100))
 
 	// 锁定脚本构造
 	lockScript, _, pkScript := builder.GetPKScript()

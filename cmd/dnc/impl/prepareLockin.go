@@ -15,6 +15,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -40,7 +41,7 @@ var pliCmd = cli.Command{
 		cli.Uint64Flag{
 			Name:  "expiration",
 			Usage: "expiration of htlc",
-			Value: 1000,
+			Value: 500,
 		},
 	},
 }
@@ -78,32 +79,16 @@ func prepareLockinOnBitcoin(amount int64, expiration uint64) (err error) {
 		os.Exit(-1)
 	}
 	// 3. 获取双方地址
-	userAddress, err := btcutil.DecodeAddress(GlobalConfig.BtcUserAddress, bs.GetNetParam())
-	if err != nil {
-		fmt.Println("DecodeAddress err : ", err)
-		os.Exit(-1)
-	}
-	fmt.Printf(" ======> [userAddress=%s type=%s]\n", userAddress.String(), reflect.TypeOf(userAddress))
-	notaryAddress, err := btcutil.DecodeAddress(getSCTokenByMCName(bitcoin.ChainName).MCLockedPublicKeyHashStr, bs.GetNetParam())
-	if err != nil {
-		fmt.Println("DecodeAddress err : ", err)
-		os.Exit(-1)
-	}
-	fmt.Printf(" ======> [notaryAddress=%s type=%s]\n", notaryAddress.String(), reflect.TypeOf(notaryAddress))
+	userAddress, notaryAddress := getBtcAddresses(bs.GetNetParam())
 	// 4. 生成密码及其他参数
 	amount2 := btcutil.Amount(amount)
 	secret := utils.NewRandomHash()
 	secretHash := utils.ShaSecret(secret[:])
 	expiration2 := big.NewInt(int64(getBtcLastBlockNumber(c) + expiration))
 	fmt.Printf(" ======> [secret=%s, secretHash=%s]\n", secret.String(), secretHash.String())
-	GlobalConfig.RunTime = &runTime{
-		Secret:     secret.String(),
-		SecretHash: secretHash.String(),
-	}
 	// 5. 构造锁定脚本的地址
-	scriptBuilder := bs.GetPrepareLockInScriptBuilder(userAddress.(*btcutil.AddressPubKeyHash), notaryAddress.(*btcutil.AddressPubKeyHash), big.NewInt(amount), secretHash[:], expiration2)
+	scriptBuilder := bs.GetPrepareLockInScriptBuilder(userAddress.(*btcutil.AddressPubKeyHash), notaryAddress.(*btcutil.AddressPubKeyHash), btcutil.Amount(amount), secretHash[:], expiration2)
 	lockScript, lockScriptAddr, _ := scriptBuilder.GetPKScript()
-	GlobalConfig.RunTime.LockScript = lockScript
 	// 6. 发送交易
 	err = c.WalletPassphrase("123", 100)
 	if err != nil {
@@ -118,7 +103,20 @@ func prepareLockinOnBitcoin(amount int64, expiration uint64) (err error) {
 		os.Exit(-1)
 	}
 	fmt.Printf(" ======> [LockScriptHash=%s, txHash=%s]\n", lockScriptAddr.String(), txHash.String())
+	time.Sleep(time.Second * 6) // 等待确认
 	utils.PrintBTCBalanceOfAccount(c, "default")
+
+	// 记录runtime数据
+	GlobalConfig.RunTime = &runTime{
+		Secret:              secret.String(),
+		SecretHash:          secretHash.String(),
+		BtcLockScript:       lockScript,
+		BtcUserAddressBytes: userAddress.ScriptAddress(),
+		BtcTXHash:           txHash.String(),
+		BtcExpiration:       expiration2,
+		BtcAmount:           amount2,
+	}
+	updateConfigFile()
 	fmt.Println("PrepareLockin SUCCESS")
 	return
 }
@@ -165,4 +163,21 @@ func prepareLockinOnEthereum(mcName string, amount int64, expiration uint64) (er
 	}
 	fmt.Println("PrepareLockin SUCCESS")
 	return nil
+}
+
+func getBtcAddresses(net *chaincfg.Params) (userAddress, notaryAddress btcutil.Address) {
+	userAddress, err := btcutil.DecodeAddress(GlobalConfig.BtcUserAddress, net)
+	if err != nil {
+		fmt.Println("DecodeAddress err : ", err)
+		os.Exit(-1)
+	}
+	fmt.Printf(" ======> [userAddress=%s type=%s]\n", userAddress.String(), reflect.TypeOf(userAddress))
+	userAddress.ScriptAddress()
+	notaryAddress, err = btcutil.DecodeAddress(getSCTokenByMCName(bitcoin.ChainName).MCLockedPublicKeyHashStr, net)
+	if err != nil {
+		fmt.Println("DecodeAddress err : ", err)
+		os.Exit(-1)
+	}
+	fmt.Printf(" ======> [notaryAddress=%s type=%s]\n", notaryAddress.String(), reflect.TypeOf(notaryAddress))
+	return
 }

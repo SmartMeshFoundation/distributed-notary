@@ -8,12 +8,8 @@ import (
 	"github.com/btcsuite/btcutil"
 )
 
-func NewPrepareLockInScript() {
-
-}
-
 // GetPrepareLockInScriptBuilder :
-func (bs *BTCService) GetPrepareLockInScriptBuilder(userAddr, notaryAddr *btcutil.AddressPubKeyHash, amount *big.Int, lockSecretHashBytes []byte, expiration *big.Int) *PrepareLockInScriptBuilder {
+func (bs *BTCService) GetPrepareLockInScriptBuilder(userAddr, notaryAddr *btcutil.AddressPubKeyHash, amount btcutil.Amount, lockSecretHashBytes []byte, expiration *big.Int) *PrepareLockInScriptBuilder {
 	return &PrepareLockInScriptBuilder{
 		userAddr:            userAddr,
 		notaryAddr:          notaryAddr,
@@ -28,7 +24,7 @@ func (bs *BTCService) GetPrepareLockInScriptBuilder(userAddr, notaryAddr *btcuti
 type PrepareLockInScriptBuilder struct {
 	userAddr            *btcutil.AddressPubKeyHash
 	notaryAddr          *btcutil.AddressPubKeyHash
-	amount              *big.Int
+	amount              btcutil.Amount
 	lockSecretHashBytes []byte
 	expiration          *big.Int
 	net                 chaincfg.Params
@@ -38,7 +34,7 @@ type PrepareLockInScriptBuilder struct {
 GetPKScript 生成锁定脚本及对应的PKScript
 ###
 IF
-	OP_HASH256 {{LockSecretHash}} OP_EQUALVERIFY OP_DUP OP_HASH160 {{分布式私钥对应的PublicKeyHash}} OP_EQUALVERIFY OP_CHECKSIG
+	OP_SHA256 {{LockSecretHash}} OP_EQUALVERIFY OP_DUP OP_HASH160 {{分布式私钥对应的PublicKeyHash}} OP_EQUALVERIFY OP_CHECKSIG
 ELSE
 	{{过期的块号}} CHECKLOCKTIMEVERIFY DROP OP_DUP OP_HASH160 {{用户的PublicKeyHash}} OP_EQUALVERIFY OP_CHECKSIG
 ENDIF
@@ -50,7 +46,7 @@ func (b *PrepareLockInScriptBuilder) GetPKScript() (lockScript []byte, lockScrip
 	sb := txscript.NewScriptBuilder()
 	sb.AddOp(txscript.OP_IF)
 	// 给公证人使用的锁定脚本
-	sb.AddOp(txscript.OP_HASH256)
+	sb.AddOp(txscript.OP_SHA256)
 	sb.AddData(b.lockSecretHashBytes)
 	sb.AddOp(txscript.OP_EQUALVERIFY)
 	sb.AddOp(txscript.OP_DUP)
@@ -121,7 +117,7 @@ func (b *PrepareLockInScriptBuilder) GetSigScriptForUser() (script []byte) {
 }
 
 // GetPrepareLockOutScriptBuilder :
-func (bs *BTCService) GetPrepareLockOutScriptBuilder(userAddr, notaryAddr *btcutil.AddressPubKeyHash, amount *big.Int, lockSecretHashBytes []byte, expiration *big.Int) *PrepareLockOutScriptBuilder {
+func (bs *BTCService) GetPrepareLockOutScriptBuilder(userAddr, notaryAddr *btcutil.AddressPubKeyHash, amount btcutil.Amount, lockSecretHashBytes []byte, expiration *big.Int) *PrepareLockOutScriptBuilder {
 	return &PrepareLockOutScriptBuilder{
 		userAddr:            userAddr,
 		notaryAddr:          notaryAddr,
@@ -136,7 +132,7 @@ func (bs *BTCService) GetPrepareLockOutScriptBuilder(userAddr, notaryAddr *btcut
 type PrepareLockOutScriptBuilder struct {
 	userAddr            *btcutil.AddressPubKeyHash
 	notaryAddr          *btcutil.AddressPubKeyHash
-	amount              *big.Int
+	amount              btcutil.Amount
 	lockSecretHashBytes []byte
 	expiration          *big.Int
 	net                 chaincfg.Params
@@ -146,7 +142,7 @@ type PrepareLockOutScriptBuilder struct {
 GetPKScript 生成锁定脚本及对应的PKScript
 ###
 IF
-	OP_HASH256 {{LockSecretHash}} OP_EQUALVERIFY OP_DUP OP_HASH160 {{用户的PublicKeyHash}} OP_EQUALVERIFY OP_CHECKSIG
+	OP_SHA256 {{LockSecretHash}} OP_EQUALVERIFY OP_DUP OP_HASH160 {{用户的PublicKeyHash}} OP_EQUALVERIFY OP_CHECKSIG
 ELSE
 	{{过期的块号}} CHECKLOCKTIMEVERIFY DROP OP_DUP OP_HASH160 {{分布式私钥对应的PublicKeyHash}} OP_EQUALVERIFY OP_CHECKSIG
 ENDIF
@@ -158,7 +154,7 @@ func (b *PrepareLockOutScriptBuilder) GetPKScript() (lockScript []byte, lockScri
 	sb := txscript.NewScriptBuilder()
 	sb.AddOp(txscript.OP_IF)
 	// 给用户使用的锁定脚本
-	sb.AddOp(txscript.OP_HASH256)
+	sb.AddOp(txscript.OP_SHA256)
 	sb.AddData(b.lockSecretHashBytes)
 	sb.AddOp(txscript.OP_EQUALVERIFY)
 	sb.AddOp(txscript.OP_DUP)

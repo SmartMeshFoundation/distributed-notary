@@ -50,6 +50,7 @@ LockinInfo :
 该结构体记录一次Lockin的所有数据及状态
 */
 type LockinInfo struct {
+	MCChainName        string         `json:"mc_chain_name"`         // 链名
 	SecretHash         common.Hash    `json:"secret_hash"`           // 密码hash,db唯一ID
 	Secret             common.Hash    `json:"secret"`                // 密码
 	MCUserAddressHex   string         `json:"mc_user_address_hex"`   // 用户主链地址,格式根据链不同不同
@@ -85,6 +86,7 @@ func (l *LockinInfo) IsEnd() bool {
 }
 
 type lockinInfoModel struct {
+	MCChainName        string
 	SecretHash         []byte `gorm:"primary_key"`
 	Secret             []byte
 	MCUserAddressHex   string
@@ -107,6 +109,7 @@ func (lim *lockinInfoModel) toLockinInfo() *LockinInfo {
 	amount := new(big.Int)
 	amount.SetBytes(lim.Amount)
 	return &LockinInfo{
+		MCChainName:        lim.MCChainName,
 		SecretHash:         common.BytesToHash(lim.SecretHash),
 		Secret:             common.BytesToHash(lim.Secret),
 		MCUserAddressHex:   lim.MCUserAddressHex,
@@ -126,6 +129,7 @@ func (lim *lockinInfoModel) toLockinInfo() *LockinInfo {
 	}
 }
 func (lim *lockinInfoModel) fromLockinInfo(l *LockinInfo) *lockinInfoModel {
+	lim.MCChainName = l.MCChainName
 	lim.SecretHash = l.SecretHash[:]
 	lim.Secret = l.Secret[:]
 	lim.MCUserAddressHex = l.MCUserAddressHex

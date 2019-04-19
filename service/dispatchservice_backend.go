@@ -30,7 +30,7 @@ type dispatchServiceBackend interface {
 	getSelfPrivateKey() *ecdsa.PrivateKey
 	getSelfNotaryInfo() *models.NotaryInfo
 	getChainByName(chainName string) (c chain.Chain, err error)
-	getLockinInfo(scTokenAddress common.Address, secretHash common.Hash) (lockinInfo *models.LockinInfo, err error)
+	getLockInInfoBySCPrepareLockInRequest(req *userapi.SCPrepareLockinRequest) (lockinInfo *models.LockinInfo, err error)
 	getLockoutInfo(scTokenAddress common.Address, secretHash common.Hash) (lockoutInfo *models.LockoutInfo, err error)
 	getNotaryService() *NotaryService
 	getSCTokenMetaInfoBySCTokenAddress(scTokenAddress common.Address) (scToken *models.SideChainTokenMetaInfo)
@@ -85,14 +85,14 @@ func (ds *DispatchService) getNotaryService() *NotaryService {
 	return ds.notaryService
 }
 
-func (ds *DispatchService) getLockinInfo(scTokenAddress common.Address, secretHash common.Hash) (lockinInfo *models.LockinInfo, err error) {
+func (ds *DispatchService) getLockInInfoBySCPrepareLockInRequest(req *userapi.SCPrepareLockinRequest) (lockinInfo *models.LockinInfo, err error) {
 	ds.scToken2CrossChainServiceMapLock.Lock()
 	defer ds.scToken2CrossChainServiceMapLock.Unlock()
-	cs, ok := ds.scToken2CrossChainServiceMap[scTokenAddress]
+	cs, ok := ds.scToken2CrossChainServiceMap[req.SCTokenAddress]
 	if !ok {
 		panic("never happen")
 	}
-	return cs.lockinHandler.getLockin(secretHash)
+	return cs.getLockInInfoBySCPrepareLockInRequest(req)
 }
 
 func (ds *DispatchService) getLockoutInfo(scTokenAddress common.Address, secretHash common.Hash) (lockoutInfo *models.LockoutInfo, err error) {

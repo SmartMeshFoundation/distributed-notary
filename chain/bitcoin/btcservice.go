@@ -7,16 +7,20 @@ import (
 
 	"fmt"
 
+	"github.com/SmartMeshFoundation/Spectrum/log"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/kataras/go-errors"
 )
 
-// ChainName 公链名
+// MCChainName 公链名
 var ChainName = "bitcoin"
 
 // BTCService :
@@ -141,20 +145,65 @@ func (bs *BTCService) GetConn() *ethclient.Client {
 	panic(chain.ErrorCallWrongChain.Error())
 }
 
-// GetNetParam :
-func (bs *BTCService) GetNetParam() *chaincfg.Params {
-	return &bs.net
-}
-
 // Transfer10ToAccount impl chain.Chain, for debug
 func (bs *BTCService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int, nonce ...int) (err error) {
 	// do nothing
 	return
 }
 
+// GetNetParam :
+func (bs *BTCService) GetNetParam() *chaincfg.Params {
+	return &bs.net
+}
+
 // GetBtcRPCClient :
 func (bs *BTCService) GetBtcRPCClient() *rpcclient.Client {
 	return bs.c
 }
+
+// BtcPrepareLockinInfo :
+type BtcPrepareLockinInfo struct {
+	TxHash          chainhash.Hash `json:"tx_hash"`
+	Index           int            `json:"index"`
+	BlockNumber     uint64         `json:"block_number"`
+	BlockNumberTime int64          `json:"block_number_time"`
+}
+
+/*
+GetPrepareLockinInfo :
+*/
+func (bs *BTCService) GetPrepareLockinInfo(txHash chainhash.Hash, lockAddr string, lockAmount btcutil.Amount) (res *BtcPrepareLockinInfo, err error) {
+	tx, err := bs.c.GetRawTransactionVerbose(&txHash)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+	for _, txOut := range tx.Vout {
+		// 这里tx里面的amount单位为btc
+		if txOut.Value == lockAmount.ToBTC() && txOut.ScriptPubKey.Addresses[0] == lockAddr {
+			res = &BtcPrepareLockinInfo{
+				TxHash: txHash,
+				Index:  int(txOut.N),
+			}
+			var blockHash chainhash.Hash
+			err2 := chainhash.Decode(&blockHash, tx.BlockHash)
+			if err2 != nil {
+				log.Error(err2.Error())
+				return nil, err2
+			}
+			block, err2 := bs.c.GetBlockVerbose(&blockHash)
+			if err2 != nil {
+				log.Error(err2.Error())
+				return nil, err2
+			}
+			res.BlockNumberTime = block.Time
+			res.BlockNumber = uint64(block.Height)
+			return
+		}
+	}
+	err = fmt.Errorf("can not found PrepareLockinInfo on bitcoin : txHash=%s, lockAddr=%s, lockAmount=%d tx=\n%s", txHash.String(), lockAddr, lockAmount, utils.ToJSONStringFormat(tx))
+	return
+}
+
 func (bs *BTCService) loop() {
 }

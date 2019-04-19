@@ -9,7 +9,10 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -82,11 +85,27 @@ func (d *SpectrumPrepareLockinTxData) Parse(buf []byte) error {
 }
 
 // VerifySignData :
-func (d *SpectrumPrepareLockinTxData) VerifySignData(scTokenProxy chain.ContractProxy, privateKeyInfo *models.PrivateKeyInfo, localLockinInfo *models.LockinInfo) (err error) {
+func (d *SpectrumPrepareLockinTxData) VerifySignData(scTokenProxy chain.ContractProxy, privateKeyInfo *models.PrivateKeyInfo, localLockinInfo *models.LockinInfo, btcNetParam *chaincfg.Params) (err error) {
 	// 1. 校验本地lockinInfo状态
-	if localLockinInfo.MCUserAddressHex != d.UserRequest.MCUserAddress.String() {
-		err = fmt.Errorf("MCUserAddress wrong")
-		return
+	if localLockinInfo.MCChainName == bitcoin.ChainName {
+		// 比特币地址校验
+		mcUserAddressInRequest, err2 := btcutil.NewAddressPubKeyHash(d.UserRequest.MCUserAddress, btcNetParam)
+		if err2 != nil {
+			log.Error(err2.Error())
+			err = fmt.Errorf("MCUserAddress wrong")
+			return
+		}
+		if localLockinInfo.MCUserAddressHex != mcUserAddressInRequest.String() {
+			err = fmt.Errorf("MCUserAddress wrong")
+			return
+		}
+	} else {
+		//  以太坊地址校验
+		mcUserAddressInRequest := common.BytesToAddress(d.UserRequest.MCUserAddress)
+		if localLockinInfo.MCUserAddressHex != mcUserAddressInRequest.String() {
+			err = fmt.Errorf("MCUserAddress wrong")
+			return
+		}
 	}
 	if localLockinInfo.MCLockStatus != models.LockStatusLock {
 		err = fmt.Errorf("MCLockStatus wrong")

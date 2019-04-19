@@ -185,28 +185,32 @@ func (ns *NotaryService) startDistributedSignAndWait(msgToSign messagetosign.Mes
 		// 如果需要签名的是部署合约的tx,则要求所有公证人参与
 		notaryNumNeedExpectSelf = params.ShareCount - 1
 	}
-	var otherNotaryIDs []int
-	sessionID, otherNotaryIDs, err = ns.startDSMAsk(notaryNumNeedExpectSelf)
+	var otherDSMNotaryIDs []int
+	sessionID, otherDSMNotaryIDs, err = ns.startDSMAsk(notaryNumNeedExpectSelf, privateKeyInfo.Key, msgToSign)
 	if err != nil {
 		log.Error(SessionLogMsg(sessionID, "startDSMAsk err = %s", err.Error()))
 		return
 	}
-	allNotaryIDs := append(otherNotaryIDs, ns.self.ID)
-	// 2.DSMNotifySelection
-	// 这里需要同步等待返回,否则会出现其他节点尚未处理完NotifySelection请求,就收到发起者发出来的Phase1Msg,造成失败
+	dsmNotaryIDs := append(otherDSMNotaryIDs, ns.self.ID)
+	// 2.DSMNotifySelection 通知所有公证人该次签名参与的名单,并等待参与者的返回,否则会出现其他节点尚未处理完NotifySelection请求,就收到发起者发出来的Phase1Msg,造成失败
 	log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection start..."))
 	wg := sync.WaitGroup{}
-	wg.Add(len(otherNotaryIDs))
-	for _, notaryID := range otherNotaryIDs {
+	wg.Add(len(otherDSMNotaryIDs))
+	for _, notary := range ns.otherNotaries {
 		go func(notaryID int) {
-			notifySelectionReq := notaryapi.NewDSMNotifySelectionRequest(sessionID, ns.self, allNotaryIDs, privateKeyInfo.Key, msgToSign)
+			notifySelectionReq := notaryapi.NewDSMNotifySelectionRequest(sessionID, ns.self, dsmNotaryIDs)
 			ns.notaryClient.SendWSReqToNotary(notifySelectionReq, notaryID)
 			_, err2 := ns.notaryClient.WaitWSResponse(notifySelectionReq.GetRequestID())
 			if err2 != nil {
 				err = err2
 			}
-			wg.Done()
-		}(notaryID)
+			// 只等待参与者的返回
+			for _, id := range otherDSMNotaryIDs {
+				if notaryID == id {
+					wg.Done()
+				}
+			}
+		}(notary.ID)
 	}
 	wg.Wait()
 	if err != nil {
@@ -215,7 +219,7 @@ func (ns *NotaryService) startDistributedSignAndWait(msgToSign messagetosign.Mes
 	}
 	log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection done..."))
 	// 3. 构造DSMHandler
-	dh := mecdsa.NewDSMHandler(ns.db, ns.self, otherNotaryIDs, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
+	dh := mecdsa.NewDSMHandler(ns.db, ns.self, msgToSign, sessionID, privateKeyInfo, ns.notaryClient).RegisterOtherNotaryIDs(otherDSMNotaryIDs)
 	// 4. 保存DSMHandler
 	ns.dsmHandlerMap.Store(sessionID, dh)
 	// 5. 开始签名过程并阻塞等待,协商发起者需要把标志位Running置为true,避免启动2个主线程
@@ -224,7 +228,7 @@ func (ns *NotaryService) startDistributedSignAndWait(msgToSign messagetosign.Mes
 	return
 }
 
-func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int) (sessionID common.Hash, otherNotaryIDs []int, err error) {
+func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int, privateKeyID common.Hash, msgToSign messagetosign.MessageToSign) (sessionID common.Hash, otherNotaryIDs []int, err error) {
 	sessionID = utils.NewRandomHash()
 	log.Trace(SessionLogMsg(sessionID, "DSMAsk start..."))
 	m := new(sync.Map)
@@ -232,7 +236,7 @@ func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int) (sessionID com
 	wg.Add(len(ns.otherNotaries))
 	for _, notary := range ns.otherNotaries {
 		go func(notary *models.NotaryInfo) {
-			req := notaryapi.NewDSMAskRequest(sessionID, ns.self)
+			req := notaryapi.NewDSMAskRequest(sessionID, ns.self, privateKeyID, msgToSign)
 			ns.notaryClient.SendWSReqToNotary(req, notary.ID)
 			_, err2 := ns.notaryClient.WaitWSResponse(req.GetRequestID())
 			if err2 == nil {
@@ -264,6 +268,7 @@ func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int) (sessionID com
 收到 DSMAskRequest
 */
 func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
+	sessionID := req.GetSessionID()
 	// 1. 校验sender
 	_, ok := ns.getNotaryInfoByAddress(req.GetSigner())
 	if !ok {
@@ -271,25 +276,6 @@ func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
-	// 2. TODO 暂时所有公证人都默认愿意参与所有签名工作
-	log.Trace(SessionLogMsg(req.GetSessionID(), "accept DSMAsk from %s", utils.APex(req.GetSigner())))
-	req.WriteSuccessResponse(nil)
-	return
-}
-
-/*
-收到 DSMNotifySelectionRequest
-*/
-func (ns *NotaryService) onDSMNotifySelectionRequest(req *notaryapi.DSMNotifySelectionRequest) {
-	sessionID := req.GetSessionID()
-	// 1. 校验sender
-	_, ok := ns.getNotaryInfoByAddress(req.GetSigner())
-	if !ok {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
-		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
-		return
-	}
-	log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection start..."))
 	// 2. 校验私钥ID可用性
 	var privateKeyInfo *models.PrivateKeyInfo
 	privateKeyInfo, err := ns.db.LoadPrivateKeyInfo(req.PrivateKeyID)
@@ -314,49 +300,59 @@ func (ns *NotaryService) onDSMNotifySelectionRequest(req *notaryapi.DSMNotifySel
 		return
 	}
 	// 5. 构造DSMHandler
+	dh := mecdsa.NewDSMHandler(ns.db, ns.self, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
+	// 6. 保存dh,这里不会重复
+	ns.dsmHandlerMap.Store(sessionID, dh)
+	log.Trace(SessionLogMsg(req.GetSessionID(), "accept DSMAsk from %s", utils.APex(req.GetSigner())))
+	req.WriteSuccessResponse(nil)
+	return
+}
+
+/*
+收到 DSMNotifySelectionRequest
+*/
+func (ns *NotaryService) onDSMNotifySelectionRequest(req *notaryapi.DSMNotifySelectionRequest) {
+	sessionID := req.GetSessionID()
+	// 1. 校验sender
+	_, ok := ns.getNotaryInfoByAddress(req.GetSigner())
+	if !ok {
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
+		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
+		return
+	}
+	// 2. 判断自己是否需要参与
+	amIIn := false
 	var otherNotaryIDs []int
 	for _, notaryID := range req.NotaryIDs {
-		if notaryID != ns.self.ID {
+		if notaryID == ns.self.ID {
+			amIIn = true
+		} else {
 			otherNotaryIDs = append(otherNotaryIDs, notaryID)
 		}
 	}
-	dh := mecdsa.NewDSMHandler(ns.db, ns.self, otherNotaryIDs, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
-	// 6. 保存dh,这里不会重复
-	ns.dsmHandlerMap.Store(sessionID, dh)
+	// 3. 如果无需参与,即没被选中,删除dsmHandler并返回
+	if !amIIn {
+		ns.dsmHandlerMap.Delete(sessionID)
+		req.WriteSuccessResponse(nil)
+		return
+	}
+	// 4. 如果需要参与,获取DSMHandler
+	var dsmHandlerInterface interface{}
+	var loaded bool
+	// 这里找不到直接报错
+	dsmHandlerInterface, loaded = ns.dsmHandlerMap.Load(sessionID)
+	if !loaded {
+		errMsg := SessionLogMsg(sessionID, "can not find DSMHandler with this sessionID")
+		req.WriteErrorResponse(api.ErrorCodeException, errMsg)
+		return
+	}
+	dh := dsmHandlerInterface.(*mecdsa.DSMHandler)
+	// 注册参与者到dsmHandler中
+	dh.RegisterOtherNotaryIDs(otherNotaryIDs)
 	log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection done..."))
-	// 7. 返回
+	// 5. 返回
 	req.WriteSuccessResponse(nil)
 	return
-	//// 3. 构造dsm
-	//_, err = mecdsa.NewDistributedSignMessage(ns.db, ns.self.ID, msgToSign, sessionID, req.PrivateKeyID, req.NotaryIDs)
-	//if err != nil {
-	//	ns.unlockSession(sessionID)
-	//	return
-	//}
-	//ns.unlockSession(sessionID)
-	//log.Trace(SessionLogMsg(sessionID, "DSMNotifySelection done..."))
-	//// 2. 构造DSMHandler
-	//var otherNotaryIDs []int
-	//for _, notaryID := range req.NotaryIDs {
-	//	if notaryID != ns.self.ID {
-	//		otherNotaryIDs = append(otherNotaryIDs, notaryID)
-	//	}
-	//}
-	//dh := mecdsa.NewDSMHandler(ns.db, ns.self, otherNotaryIDs, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
-	//// 2. 构造dsm
-	//err := ns.saveDSMNotifySelection(req)
-	//if err != nil {
-	//	errMsg := SessionLogMsg(sessionID, "saveDSMNotifySelection err = %s", err.Error())
-	//	req.WriteErrorResponse(api.ErrorCodeException, errMsg)
-	//	return
-	//}
-	//// 3. 这里先行返回,以免阻塞发起人
-	//req.WriteSuccessResponse(nil)
-	//// 4.开始phase1
-	//err = ns.startDSMPhase1(req.GetSessionID(), req.PrivateKeyID)
-	//if err != nil {
-	//	log.Error(SessionLogMsg(sessionID, "startDSMPhase1 err = %s", err.Error()))
-	//}
 }
 
 func (ns *NotaryService) onDSMRequest(req api.Req) {
@@ -449,7 +445,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
 		// 1. 获取本地lockinInfo
 		var localLockinInfo *models.LockinInfo
-		localLockinInfo, err = ns.dispatchService.getLockinInfo(m.UserRequest.SCTokenAddress, m.UserRequest.SecretHash)
+		localLockinInfo, err = ns.dispatchService.getLockInInfoBySCPrepareLockInRequest(m.UserRequest)
 		if err != nil {
 			return
 		}
@@ -458,7 +454,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		c, err = ns.dispatchService.getChainByName(smcevents.ChainName)
 		scTokenProxy := c.GetContractProxy(localLockinInfo.SCTokenAddress)
 		// 2. 校验
-		err = m.VerifySignData(scTokenProxy, privateKeyInfo, localLockinInfo)
+		err = m.VerifySignData(scTokenProxy, privateKeyInfo, localLockinInfo, ns.dispatchService.getBtcNetworkParam())
 		if err != nil {
 			return
 		}

@@ -272,7 +272,7 @@ func (na *NotaryAPI) parseNotaryRequest(content []byte) (req api.Req, err error)
 	r1, ok1 := req.(api.ReqWithSignature)
 	r2, ok2 := req.(api.ReqWithSessionID)
 	if ok1 && ok2 {
-		sender, err2 := na.getNotaryInfoById(r2.GetSenderNotaryID())
+		sender, err2 := na.getNotaryInfoByID(r2.GetSenderNotaryID())
 		if err2 != nil {
 			err = err2
 			return

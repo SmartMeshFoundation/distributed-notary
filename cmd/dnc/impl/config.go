@@ -16,17 +16,24 @@ import (
 
 	"io/ioutil"
 
+	"math/big"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/service"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/btcsuite/btcutil"
 	"github.com/urfave/cli"
 )
 
 type runTime struct {
-	Secret     string `json:"secret"`
-	SecretHash string `json:"secret_hash"`
-	LockScript []byte `json:"lock_script"`
+	Secret              string         `json:"secret"`
+	SecretHash          string         `json:"secret_hash"`
+	BtcLockScript       []byte         `json:"btc_lock_script"`
+	BtcUserAddressBytes []byte         `json:"btc_user_address_bytes"`
+	BtcTXHash           string         `json:"btc_tx_hash"`
+	BtcExpiration       *big.Int       `json:"btc_expiration"`
+	BtcAmount           btcutil.Amount `json:"btc_amount"`
 }
 type dncConfig struct {
 	NotaryHost string `json:"notary_host"`

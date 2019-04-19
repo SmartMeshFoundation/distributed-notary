@@ -159,6 +159,7 @@ func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareL
 
 	// 2. 构造LockinInfo
 	lockinInfo := &models.LockinInfo{
+		MCChainName:      ethevents.ChainName,
 		SecretHash:       secretHash,
 		Secret:           utils.EmptyHash,
 		MCUserAddressHex: event.Account.String(),

@@ -95,7 +95,7 @@ func (na *NotaryAPI) WaitWSResponse(requestID string, timeout ...time.Duration) 
 	return
 }
 
-func (na *NotaryAPI) getNotaryInfoById(notaryID int) (notary *models.NotaryInfo, err error) {
+func (na *NotaryAPI) getNotaryInfoByID(notaryID int) (notary *models.NotaryInfo, err error) {
 	for _, n := range na.notaries {
 		if n.ID == notaryID {
 			notary = n
