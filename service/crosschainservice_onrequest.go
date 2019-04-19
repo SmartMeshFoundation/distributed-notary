@@ -156,6 +156,7 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 		// 4 计算scExpiration
 		scExpiration := cs.scLastedBlockNumber + (mcExpiration - btcPrepareLockinInfo.BlockNumber - 5*params.ForkConfirmNumber - 1)
 		// 5. 构造LockinInfo
+		txHash := btcPrepareLockinInfo.TxHash
 		lockinInfo = &models.LockinInfo{
 			MCChainName:      cs.meta.MCName,
 			SecretHash:       req.SecretHash,
@@ -169,9 +170,11 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 			MCLockStatus:     models.LockStatusLock,
 			SCLockStatus:     models.LockStatusNone,
 			//Data:               data,
-			NotaryIDInCharge:   models.UnknownNotaryIDInCharge,
-			StartTime:          btcPrepareLockinInfo.BlockNumberTime,
-			StartMCBlockNumber: btcPrepareLockinInfo.BlockNumber,
+			NotaryIDInCharge:       models.UnknownNotaryIDInCharge,
+			StartTime:              btcPrepareLockinInfo.BlockNumberTime,
+			StartMCBlockNumber:     btcPrepareLockinInfo.BlockNumber,
+			BTCPrepareLockinTXHash: &txHash,
+			BTCPrepareLockinVout:   uint32(btcPrepareLockinInfo.Index),
 		}
 		// 6. 调用handler处理
 		err2 = cs.lockinHandler.registerLockin(lockinInfo)

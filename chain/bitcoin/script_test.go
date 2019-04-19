@@ -72,7 +72,7 @@ func TestPrepareLockInScriptBuilder_GetSigScriptForNotary(t *testing.T) {
 	// 模拟tx构造
 	redeemTx := getTestRedeemTx(builder.amount, pkScript)
 
-	// 签名txout
+	// 签名txin
 	sigScript, err := txscript.SignatureScript(redeemTx, 0, lockScript, txscript.SigHashAll, notaryPrivateKey, true)
 
 	// 构造SignatureScript

@@ -8,6 +8,23 @@ import (
 	"github.com/btcsuite/btcutil"
 )
 
+/*
+GetSigScriptForNotary 获取公证人所使用的解锁脚本,不包含最前面的sig
+###
+sig {{分布式私钥对应的PublicKeyHash}} {{secretBytes}} OP_TRUE
+###
+*/
+func (bs *BTCService) GetSigScriptForNotary(secretBytes []byte) (script []byte) {
+	sb := txscript.NewScriptBuilder()
+	sb.AddData(secretBytes)
+	sb.AddOp(txscript.OP_TRUE)
+	script, err := sb.Script()
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
 // GetPrepareLockInScriptBuilder :
 func (bs *BTCService) GetPrepareLockInScriptBuilder(userAddr, notaryAddr *btcutil.AddressPubKeyHash, amount btcutil.Amount, lockSecretHashBytes []byte, expiration *big.Int) *PrepareLockInScriptBuilder {
 	return &PrepareLockInScriptBuilder{

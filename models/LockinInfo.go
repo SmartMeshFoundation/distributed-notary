@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -50,23 +51,25 @@ LockinInfo :
 该结构体记录一次Lockin的所有数据及状态
 */
 type LockinInfo struct {
-	MCChainName        string         `json:"mc_chain_name"`         // 链名
-	SecretHash         common.Hash    `json:"secret_hash"`           // 密码hash,db唯一ID
-	Secret             common.Hash    `json:"secret"`                // 密码
-	MCUserAddressHex   string         `json:"mc_user_address_hex"`   // 用户主链地址,格式根据链不同不同
-	SCUserAddress      common.Address `json:"sc_user_address"`       // 用户侧链地址,即在Spectrum上的地址
-	SCTokenAddress     common.Address `json:"sc_token_address"`      // SCToken
-	Amount             *big.Int       `json:"amount"`                // 金额
-	MCExpiration       uint64         `json:"mc_expiration"`         // 主链过期块
-	SCExpiration       uint64         `json:"sc_expiration"`         // 侧链过期块
-	MCLockStatus       LockStatus     `json:"mc_lock_status"`        // 主链锁状态
-	SCLockStatus       LockStatus     `json:"sc_lock_status"`        // 侧链锁状态
-	Data               []byte         `json:"data"`                  // 附加信息
-	NotaryIDInCharge   int            `json:"notary_id_in_charge"`   // 负责公证人ID,如果没参与lockin签名的公证人,在整个LockinInfo生命周期中,该值都为UnknownNotaryIdInCharge
-	StartTime          int64          `json:"start_time"`            // 开始时间,即MCPrepareLockin事件发生的时间
-	StartMCBlockNumber uint64         `json:"start_mc_block_number"` // 开始时主链块数
-	EndTime            int64          `json:"end_time"`              // 结束时间,即MCLockin事件发生的时间
-	EndMCBlockNumber   uint64         `json:"end_mc_block_number"`   // 结束时主链块数
+	MCChainName            string          `json:"mc_chain_name"`              // 链名
+	SecretHash             common.Hash     `json:"secret_hash"`                // 密码hash,db唯一ID
+	Secret                 common.Hash     `json:"secret"`                     // 密码
+	MCUserAddressHex       string          `json:"mc_user_address_hex"`        // 用户主链地址,格式根据链不同不同
+	SCUserAddress          common.Address  `json:"sc_user_address"`            // 用户侧链地址,即在Spectrum上的地址
+	SCTokenAddress         common.Address  `json:"sc_token_address"`           // SCToken
+	Amount                 *big.Int        `json:"amount"`                     // 金额
+	MCExpiration           uint64          `json:"mc_expiration"`              // 主链过期块
+	SCExpiration           uint64          `json:"sc_expiration"`              // 侧链过期块
+	MCLockStatus           LockStatus      `json:"mc_lock_status"`             // 主链锁状态
+	SCLockStatus           LockStatus      `json:"sc_lock_status"`             // 侧链锁状态
+	Data                   []byte          `json:"data"`                       // 附加信息
+	NotaryIDInCharge       int             `json:"notary_id_in_charge"`        // 负责公证人ID,如果没参与lockin签名的公证人,在整个LockinInfo生命周期中,该值都为UnknownNotaryIdInCharge
+	StartTime              int64           `json:"start_time"`                 // 开始时间,即MCPrepareLockin事件发生的时间
+	StartMCBlockNumber     uint64          `json:"start_mc_block_number"`      // 开始时主链块数
+	EndTime                int64           `json:"end_time"`                   // 结束时间,即MCLockin事件发生的时间
+	EndMCBlockNumber       uint64          `json:"end_mc_block_number"`        // 结束时主链块数
+	BTCPrepareLockinTXHash *chainhash.Hash `json:"btc_prepare_lockin_tx_hash"` // 比特币锁定的utxo的txhash
+	BTCPrepareLockinVout   uint32          `json:"btc_prepare_lockin_vout"`    // 比特币锁定的utxo的index
 }
 
 /*

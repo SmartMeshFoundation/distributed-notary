@@ -8,6 +8,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
@@ -420,6 +421,9 @@ func parseMessageToSign(msgName string, buf []byte) (msg messagetosign.MessageTo
 	case messagetosign.EthereumCancelNonceTxDataName:
 		msg = new(messagetosign.EthereumCancelNonceTxData)
 		err = msg.Parse(buf)
+	case messagetosign.BitcoinLockinTXDataName:
+		msg = new(messagetosign.BitcoinLockinTXData)
+		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")
 	}
@@ -499,6 +503,27 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		}
 		// 3. 校验
 		err = m.VerifySignData(c, account)
+		if err != nil {
+			return
+		}
+		// 5. BitcointLockin消息
+	case *messagetosign.BitcoinLockinTXData:
+		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
+		// 0. 获取bs
+		var c chain.Chain
+		c, err = ns.dispatchService.getChainByName(bitcoin.ChainName)
+		if err != nil {
+			return
+		}
+		bs := c.(*bitcoin.BTCService)
+		// 1. 获取本地lockinInfo
+		var localLockinInfo *models.LockinInfo
+		localLockinInfo, err = ns.dispatchService.getLockinInfo(m.SCTokenAddress, m.SecretHash)
+		if err != nil {
+			return
+		}
+		// 2. 校验
+		err = m.VerifySignData(bs, localLockinInfo, privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()))
 		if err != nil {
 			return
 		}

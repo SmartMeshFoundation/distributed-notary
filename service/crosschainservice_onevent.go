@@ -255,7 +255,7 @@ func (cs *CrossChainService) onSCLockinSecret(event smcevents.LockinSecretEvent)
 	}
 	// 4. 如果自己是负责人,发起主链Lockin
 	if lockinInfo.NotaryIDInCharge == cs.selfNotaryID {
-		err = cs.callMCLockin(lockinInfo.MCUserAddressHex, lockinInfo.Secret)
+		err = cs.callMCLockin(lockinInfo)
 		if err != nil {
 			err = fmt.Errorf("callMCLockin err = %s", err.Error())
 			return
