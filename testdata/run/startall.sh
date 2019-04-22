@@ -7,12 +7,14 @@
 #sh ./deploygeth.sh
 #cd ../run
 #kill 历史dnotary
+cd ../../cmd/dnotary 
+go install
+cd - 
 ps -ef | grep dnotary  | grep -v grep | awk '{print $2}' |xargs kill -9
 #MainEndPoint="http://193.112.248.133:19888"
 #SideEndPoint="http://193.112.248.133:17888"
 MainEndPoint="http://127.0.0.1:19888"
 SideEndPoint="http://127.0.0.1:17888"
-#nonce-server
 nonce_server -smc-rpc-endpoint=$SideEndPoint --eth-rpc-endpoint=$MainEndPoint  >>.nonce-server.txt 2>&1 &
 #0
 dnotary --address=0x1a9ec3b0b807464e6d3398a59d6b0a369bf422fa --user-listen=0.0.0.0:8030 --notary-listen=0.0.0.0:33300 --notary-config-file=./notary.conf --keystore-path=../keystore --datadir=./.notary_n0  --smc-rpc-point=$SideEndPoint --eth-rpc-point=$MainEndPoint  >>.n0.txt 2>&1 &
