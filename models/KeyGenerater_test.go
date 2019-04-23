@@ -7,14 +7,39 @@ import (
 
 	"math/big"
 
+	"fmt"
+
+	"github.com/SmartMeshFoundation/distributed-notary/accounts"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/feldman"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/proofs"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	dutils "github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/nkbai/goutils"
 	"github.com/stretchr/testify/assert"
 )
 
+func TestBTCPubKey(t *testing.T) {
+	am := accounts.NewAccountManager("../testdata/keystore")
+	addr := common.HexToAddress("0x201b20123b3c489b47fde27ce5b451a0fa55fd60")
+	privateKeyBin, err := am.GetPrivateKey(addr, "123")
+	if err != nil {
+		return
+	}
+	pk, err := crypto.ToECDSA(privateKeyBin)
+	if err != nil {
+		return
+	}
+	p := &PrivateKeyInfo{
+		PublicKeyX: pk.X,
+		PublicKeyY: pk.Y,
+	}
+	fmt.Println(p.ToAddress().String())
+	fmt.Println(p.ToBTCPubKeyAddress(&chaincfg.SimNetParams).EncodeAddress())
+	//pk2 := (*btcec.PrivateKey)(pk)
+}
 func TestNewPrivateKeyInfo(t *testing.T) {
 	db := SetupTestDB()
 	defer db.Close()

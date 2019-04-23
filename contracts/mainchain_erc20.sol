@@ -96,7 +96,7 @@ contract LockedEthereum is Owned {
         LockinInfo storage li=lockin_htlc[account];
         //验证密码匹配,并且在有效期内
         require(li.value>0);
-        require(li.SecretHash==keccak256(abi.encodePacked(secret)));
+        require(li.SecretHash==sha256(abi.encodePacked(secret)));
         require(li.Expiration>block.number);
         // 下发事件用
         bytes32 secretHash = li.SecretHash;
@@ -148,7 +148,7 @@ contract LockedEthereum is Owned {
         uint256 value=li.value;
         require(value>0);
         require(li.Expiration>block.number);
-        require(li.SecretHash==keccak256(abi.encodePacked(secret)));
+        require(li.SecretHash==sha256(abi.encodePacked(secret)));
 
         li.value=0;
         li.SecretHash=bytes32(0);

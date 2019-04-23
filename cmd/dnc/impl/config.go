@@ -16,20 +16,37 @@ import (
 
 	"io/ioutil"
 
+	"math/big"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/service"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/btcsuite/btcutil"
 	"github.com/urfave/cli"
 )
 
 type runTime struct {
-	Secret     string `json:"secret"`
-	SecretHash string `json:"secret_hash"`
+	Secret              string         `json:"secret"`
+	SecretHash          string         `json:"secret_hash"`
+	BtcLockScript       []byte         `json:"btc_lock_script"`
+	BtcUserAddressBytes []byte         `json:"btc_user_address_bytes"`
+	BtcTXHash           string         `json:"btc_tx_hash"`
+	BtcExpiration       *big.Int       `json:"btc_expiration"`
+	BtcAmount           btcutil.Amount `json:"btc_amount"`
 }
 type dncConfig struct {
 	NotaryHost string `json:"notary_host"`
 	Keystore   string `json:"keystore"`
+
+	BtcRPCUser         string `json:"btc_rpc_user"`
+	BtcRPCPass         string `json:"btc_rpc_pass"`
+	BtcRPCCertFilePath string `json:"btc_rpc_cert_file_path"`
+	BtcRPCEndpoint     string `json:"btc_rpc_endpoint"`
+	BtcUserAddress     string `json:"btc_user_address"`
+
+	BtcWalletRPCCertFilePath string `json:"btc_wallet_rpc_cert_file_path"`
+	BtcWalletRPCEndpoint     string `json:"btc_wallet_rpc_endpoint"`
 
 	EthUserAddress  string `json:"eth_user_address"`
 	EthUserPassword string `json:"eth_user_password"`
@@ -51,6 +68,15 @@ var GlobalConfig *dncConfig
 var DefaultConfig = &dncConfig{
 	NotaryHost: "http://127.0.0.1:8030",
 	Keystore:   "../../testdata/keystore",
+
+	BtcRPCUser:         "wuhan",
+	BtcRPCPass:         "wuhan",
+	BtcRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcd/rpc.cert"),
+	BtcRPCEndpoint:     "192.168.124.13:18556",
+	BtcUserAddress:     "SNH6bb5iXiofYra5kHzqT9HgN38ABWCshX",
+
+	BtcWalletRPCEndpoint:     "192.168.124.13:18554",
+	BtcWalletRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcwallet/rpc.cert"),
 
 	EthUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	EthUserPassword: "123",

@@ -14,15 +14,21 @@ type DSMAskRequest struct {
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
 	api.BaseReqWithResponse
+	PrivateKeyID            common.Hash `json:"private_key_id"`
+	MsgName                 string      `json:"msg_name"`
+	MsgToSignTransportBytes []byte      `json:"msg_to_sign_transport_bytes"`
 }
 
 // NewDSMAskRequest :
-func NewDSMAskRequest(sessionID common.Hash, self *models.NotaryInfo) *DSMAskRequest {
+func NewDSMAskRequest(sessionID common.Hash, self *models.NotaryInfo, privateKeyID common.Hash, msgToSign messagetosign.MessageToSign) *DSMAskRequest {
 	return &DSMAskRequest{
-		BaseReq:              api.NewBaseReq(APINameDSMAsk),
-		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		BaseReq:                 api.NewBaseReq(APINameDSMAsk),
+		BaseReqWithSessionID:    api.NewBaseReqWithSessionID(sessionID, self.ID),
+		BaseReqWithSignature:    api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithResponse:     api.NewBaseReqWithResponse(),
+		PrivateKeyID:            privateKeyID,
+		MsgToSignTransportBytes: msgToSign.GetTransportBytes(),
+		MsgName:                 msgToSign.GetName(),
 	}
 }
 
@@ -32,23 +38,17 @@ type DSMNotifySelectionRequest struct {
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
 	api.BaseReqWithResponse
-	NotaryIDs               []int       `json:"notary_ids"`
-	PrivateKeyID            common.Hash `json:"private_key_id"`
-	MsgName                 string      `json:"msg_name"`
-	MsgToSignTransportBytes []byte      `json:"msg_to_sign_transport_bytes"`
+	NotaryIDs []int `json:"notary_ids"`
 }
 
 // NewDSMNotifySelectionRequest :
-func NewDSMNotifySelectionRequest(sessionID common.Hash, self *models.NotaryInfo, notaryIDs []int, privateKeyID common.Hash, msgToSign messagetosign.MessageToSign) *DSMNotifySelectionRequest {
+func NewDSMNotifySelectionRequest(sessionID common.Hash, self *models.NotaryInfo, notaryIDs []int) *DSMNotifySelectionRequest {
 	return &DSMNotifySelectionRequest{
-		BaseReq:                 api.NewBaseReq(APINameDSMNotifySelection),
-		BaseReqWithSessionID:    api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature:    api.NewBaseReqWithSignature(self.GetAddress()),
-		BaseReqWithResponse:     api.NewBaseReqWithResponse(),
-		NotaryIDs:               notaryIDs,
-		PrivateKeyID:            privateKeyID,
-		MsgToSignTransportBytes: msgToSign.GetTransportBytes(),
-		MsgName:                 msgToSign.GetName(),
+		BaseReq:              api.NewBaseReq(APINameDSMNotifySelection),
+		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		NotaryIDs:            notaryIDs,
 	}
 }
 

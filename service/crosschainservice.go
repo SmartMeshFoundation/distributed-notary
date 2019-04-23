@@ -9,8 +9,12 @@ import (
 
 	"math/big"
 
+	"time"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
@@ -114,10 +118,68 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	return cs.scTokenProxy.PrepareLockin(transactor, scUserAddressHex, secretHash, scExpiration, amount)
 }
 
-func (cs *CrossChainService) callMCLockin(userAddressHex string, secret common.Hash) (err error) {
+func (cs *CrossChainService) callMCLockin(lockinInfo *models.LockinInfo) (err error) {
 	// 无需使用分布式签名,用自己的签名就好
-	auth := bind.NewKeyedTransactor(cs.selfPrivateKey)
-	return cs.mcProxy.Lockin(auth, userAddressHex, secret)
+	if cs.meta.MCName == events.ChainName {
+		// 以太坊直接使用自己私钥调用合约即可
+		auth := bind.NewKeyedTransactor(cs.selfPrivateKey)
+		return cs.mcProxy.Lockin(auth, lockinInfo.MCUserAddressHex, lockinInfo.Secret)
+	} else if cs.meta.MCName == bitcoin.ChainName {
+		// 比特币的lockin操作需要分布式签名
+		return cs.callBTCLockin(lockinInfo)
+	}
+	return errors.New("unknown chain")
+}
+
+func (cs *CrossChainService) callBTCLockin(lockinInfo *models.LockinInfo) (err error) {
+	// 0. 获取bs
+	c, err := cs.dispatchService.getChainByName(bitcoin.ChainName)
+	if err != nil {
+		return
+	}
+	bs := c.(*bitcoin.BTCService)
+	// 1. privateKey状态校验
+	privateKeyInfo, err := cs.lockinHandler.db.LoadPrivateKeyInfo(cs.meta.SCTokenOwnerKey)
+	if err != nil {
+		return
+	}
+	if privateKeyInfo.Status != models.PrivateKeyNegotiateStatusFinished {
+		panic("never happen")
+	}
+	// 2. 估算手续费
+	fee := int64(1000)
+	// 3. 构造MsgToSign
+	msgToSign, err := messagetosign.NewBitcoinLockinTXData(bs, lockinInfo, privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()), fee)
+	if err != nil {
+		return
+	}
+	// 4. 签名
+	var dsmSignature []byte
+	// 考虑到公证人之间区块高度同步的误差导致其他公证人拒绝本次签名,如果签名出错,则重试
+	for {
+		dsmSignature, _, err = cs.dispatchService.getNotaryService().startDistributedSignAndWait(msgToSign, privateKeyInfo)
+		if err != nil {
+			log.Error(fmt.Sprintf("callBTCLockin startDistributedSignAndWait error, retry in 10 seconds"))
+			time.Sleep(10 * time.Second)
+			continue
+		}
+		break
+	}
+
+	// 5. 构造RawTransaction
+	tx, err := msgToSign.BuildRawTransaction(dsmSignature)
+	if err != nil {
+		return
+	}
+	// 6. 发送交易到链上
+	log.Info("call PrepareLockin on bitcoin with account=%s", privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()))
+	txHash, err := bs.GetBtcRPCClient().SendRawTransaction(tx, false)
+	if err != nil {
+		log.Error(fmt.Sprintf("callBTCLockin SendRawTransaction err : %s", err.Error()))
+		return
+	}
+	log.Trace("callBTCLockin txHash=%s", txHash.String())
+	return
 }
 
 func (cs *CrossChainService) callSCCancelLockin(userAddressHex string) (err error) {

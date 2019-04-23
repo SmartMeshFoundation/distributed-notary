@@ -15,6 +15,7 @@ import (
 	smcproxy "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/service"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -95,6 +96,14 @@ func getSmcLastBlockNumber(c *smcclient.SafeEthClient) uint64 {
 		panic(err)
 	}
 	return h.Number.Uint64()
+}
+
+func getBtcLastBlockNumber(c *rpcclient.Client) uint64 {
+	_, h, err := c.GetBestBlock()
+	if err != nil {
+		panic(err)
+	}
+	return uint64(h)
 }
 
 func getSCTokenByMCName(mcName string) *service.ScTokenInfoToResponse {

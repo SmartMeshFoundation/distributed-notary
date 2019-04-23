@@ -14,6 +14,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
@@ -98,14 +99,15 @@ func (as *AdminService) onGetNotaryListRequest(req *userapi.GetNotaryListRequest
 
 // ScTokenInfoToResponse :
 type ScTokenInfoToResponse struct {
-	SCToken                  common.Address `json:"sc_token"`                               // 侧链token地址
-	SCTokenName              string         `json:"sc_token_name"`                          // 侧链Token名
-	SCTokenOwnerKey          common.Hash    `json:"sc_token_owner_key"`                     // 侧链token合约owner的key
-	MCLockedContractAddress  common.Address `json:"mc_locked_contract_address"`             // 对应主链锁定合约地址
-	MCName                   string         `json:"mc_name"`                                // 对应主链名
-	MCLockedContractOwnerKey common.Hash    `json:"mc_locked_contract_owner_key,omitempty"` // 对应主链锁定合约owner的key
-	CreateTime               string         `json:"create_time"`                            // 创建时间
-	OrganiserID              int            `json:"organiser_id"`                           // 发起人ID
+	SCToken                  common.Address `json:"sc_token"`                                // 侧链token地址
+	SCTokenName              string         `json:"sc_token_name"`                           // 侧链Token名
+	SCTokenOwnerKey          common.Hash    `json:"sc_token_owner_key"`                      // 侧链token合约owner的key
+	MCLockedContractAddress  common.Address `json:"mc_locked_contract_address"`              // 对应主链锁定合约地址
+	MCName                   string         `json:"mc_name"`                                 // 对应主链名
+	MCLockedContractOwnerKey common.Hash    `json:"mc_locked_contract_owner_key,omitempty"`  // 对应主链锁定合约owner的key
+	MCLockedPublicKeyHashStr string         `json:"mc_locked_public_key_hash_str,omitempty"` // 主链锁定地址,仅当主链为bitcoin时有意义,否则为空
+	CreateTime               string         `json:"create_time"`                             // 创建时间
+	OrganiserID              int            `json:"organiser_id"`                            // 发起人ID
 }
 
 func newSCTokenInfoToResponse(s *models.SideChainTokenMetaInfo) (r *ScTokenInfoToResponse) {
@@ -116,6 +118,7 @@ func newSCTokenInfoToResponse(s *models.SideChainTokenMetaInfo) (r *ScTokenInfoT
 		MCLockedContractAddress:  s.MCLockedContractAddress,
 		MCName:                   s.MCName,
 		MCLockedContractOwnerKey: s.MCLockedContractOwnerKey,
+		MCLockedPublicKeyHashStr: s.MCLockedPublicKeyHashStr,
 		OrganiserID:              s.OrganiserID,
 		CreateTime:               time.Unix(s.CreateTime, 0).String(),
 	}
@@ -239,6 +242,9 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	scTokenMetaInfo.MCLockedContractDeploySessionID = mcDeploySessionID
 	scTokenMetaInfo.CreateTime = time.Now().Unix()
 	scTokenMetaInfo.OrganiserID = as.dispatchService.getSelfNotaryInfo().ID
+	if scTokenMetaInfo.MCName == bitcoin.ChainName {
+		scTokenMetaInfo.MCLockedPublicKeyHashStr = privateKeyInfo.ToBTCPubKeyAddress(as.dispatchService.getBtcNetworkParam()).AddressPubKeyHash().String()
+	}
 	err = as.db.NewSCTokenMetaInfo(&scTokenMetaInfo)
 	if err != nil {
 		log.Error("err when NewSCTokenMetaInfo : %s", err.Error())
@@ -264,6 +270,10 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 }
 
 func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, sessionID common.Hash, err error) {
+	if chainName == bitcoin.ChainName {
+		// 比特币不需要合约
+		return
+	}
 	if chainName != ethevents.ChainName {
 		err = errors.New("only support ethereum as main chain now")
 		return

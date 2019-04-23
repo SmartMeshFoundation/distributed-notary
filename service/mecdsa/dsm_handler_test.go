@@ -91,11 +91,11 @@ func newFiveDSMHandler(t *testing.T) (d0, d1, d2, d3, d4 *DSMHandler) {
 		data: []byte{1, 2, 3},
 	}
 	c := &notaryClientForLocalDSMTest{handlers: make(map[int]*DSMHandler), waitingMap: new(sync.Map)}
-	d0 = NewDSMHandler(nil, &models.NotaryInfo{ID: 0}, []int{1, 2, 3, 4}, message, sessionID, l0.privateKeyInfo, c)
-	d1 = NewDSMHandler(nil, &models.NotaryInfo{ID: 1}, []int{0, 2, 3, 4}, message, sessionID, l1.privateKeyInfo, c)
-	d2 = NewDSMHandler(nil, &models.NotaryInfo{ID: 2}, []int{1, 0, 3, 4}, message, sessionID, l2.privateKeyInfo, c)
-	d3 = NewDSMHandler(nil, &models.NotaryInfo{ID: 3}, []int{1, 2, 0, 4}, message, sessionID, l3.privateKeyInfo, c)
-	d4 = NewDSMHandler(nil, &models.NotaryInfo{ID: 4}, []int{1, 2, 3, 0}, message, sessionID, l4.privateKeyInfo, c)
+	d0 = NewDSMHandler(nil, &models.NotaryInfo{ID: 0}, message, sessionID, l0.privateKeyInfo, c).RegisterOtherNotaryIDs([]int{1, 2, 3, 4})
+	d1 = NewDSMHandler(nil, &models.NotaryInfo{ID: 1}, message, sessionID, l1.privateKeyInfo, c).RegisterOtherNotaryIDs([]int{0, 2, 3, 4})
+	d2 = NewDSMHandler(nil, &models.NotaryInfo{ID: 2}, message, sessionID, l2.privateKeyInfo, c).RegisterOtherNotaryIDs([]int{1, 0, 3, 4})
+	d3 = NewDSMHandler(nil, &models.NotaryInfo{ID: 3}, message, sessionID, l3.privateKeyInfo, c).RegisterOtherNotaryIDs([]int{1, 2, 0, 4})
+	d4 = NewDSMHandler(nil, &models.NotaryInfo{ID: 4}, message, sessionID, l4.privateKeyInfo, c).RegisterOtherNotaryIDs([]int{1, 2, 3, 0})
 	c.registerDSMHandlers(d0, d1, d2, d3, d4)
 	return
 }

@@ -364,7 +364,7 @@ func (ss *SMCService) loop() {
 			log.Warn(fmt.Sprintf("SmcService.EventListener missed %d blocks", lastedBlock-currentBlock-1))
 		}
 		if lastedBlock%logPeriod == 0 {
-			log.Trace(fmt.Sprintf("SmcService.EventListener new block : %d", lastedBlock))
+			log.Trace(fmt.Sprintf("Spectrum new block : %d", lastedBlock))
 		}
 		var fromBlockNumber, toBlockNumber uint64
 		if currentBlock < 2*confirmBlockNumber {

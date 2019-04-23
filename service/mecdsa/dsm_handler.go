@@ -66,16 +66,12 @@ type DSMHandler struct {
 /*
 NewDSMHandler :
 */
-func NewDSMHandler(db *models.DB, self *models.NotaryInfo, otherNotaryIDs []int, message messagetosign.MessageToSign, sessionID common.Hash, privateKeyInfo *models.PrivateKeyInfo, notaryClient notaryapi.NotaryClient) *DSMHandler {
-	var allNotaryIDs []int
-	allNotaryIDs = append(allNotaryIDs, otherNotaryIDs...)
-	allNotaryIDs = append(allNotaryIDs, self.ID)
+func NewDSMHandler(db *models.DB, self *models.NotaryInfo, message messagetosign.MessageToSign, sessionID common.Hash, privateKeyInfo *models.PrivateKeyInfo, notaryClient notaryapi.NotaryClient) *DSMHandler {
 	dh := &DSMHandler{
 		db:                db,
 		sessionID:         sessionID,
 		self:              self,
 		selfNotaryID:      self.ID,
-		otherNotaryIDs:    otherNotaryIDs,
 		privateKeyInfo:    privateKeyInfo,
 		notaryClient:      notaryClient,
 		receiveChan:       make(chan api.Req, 10*params.ShareCount),
@@ -93,7 +89,6 @@ func NewDSMHandler(db *models.DB, self *models.NotaryInfo, otherNotaryIDs []int,
 		Message:         message.GetSignBytes(),
 		MessageName:     message.GetName(),
 		SignTime:        time.Now().Unix(),
-		S:               allNotaryIDs,
 		Phase1BroadCast: make(map[int]*models.SignBroadcastPhase1),
 		Phase2MessageB:  make(map[int]*models.MessageBPhase2),
 		Phase3Delta:     make(map[int]*models.DeltaPhase3),
@@ -105,6 +100,16 @@ func NewDSMHandler(db *models.DB, self *models.NotaryInfo, otherNotaryIDs []int,
 		Delta:           make(map[int]share.SPrivKey),
 	}
 	dh.loadLockout(signMessage)
+	return dh
+}
+
+// RegisterOtherNotaryIDs :
+func (dh *DSMHandler) RegisterOtherNotaryIDs(otherNotaryIDs []int) *DSMHandler {
+	var allNotaryIDs []int
+	allNotaryIDs = append(allNotaryIDs, otherNotaryIDs...)
+	allNotaryIDs = append(allNotaryIDs, dh.selfNotaryID)
+	dh.otherNotaryIDs = otherNotaryIDs
+	dh.signMessage.S = allNotaryIDs
 	dh.createSignKeys()
 	return dh
 }

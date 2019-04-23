@@ -10,6 +10,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
+	"crypto/sha256"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -61,8 +63,7 @@ func Sha3(data ...[]byte) common.Hash {
 //ShaSecret is short for sha256
 func ShaSecret(data []byte) common.Hash {
 	//	return crypto.Keccak256Hash(data...)
-	return Sha3(data)
-	//return sha256.Sum256(data)
+	return sha256.Sum256(data)
 }
 
 //PublicKeyToAddress convert public key bin to address

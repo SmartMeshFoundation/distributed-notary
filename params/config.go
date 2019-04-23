@@ -11,6 +11,10 @@ type Config struct {
 	NotaryConfFilePath string
 	SmcRPCEndPoint     string
 	EthRPCEndPoint     string
+	BtcRPCEndPoint     string
+	BtcRPCUser         string
+	BtcRPCPass         string
+	BtcRPCCertFilePath string
 	UserAPIListen      string
 	NotaryAPIListen    string
 	NonceServerHost    string

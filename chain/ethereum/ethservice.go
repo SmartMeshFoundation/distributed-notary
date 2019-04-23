@@ -364,7 +364,7 @@ func (ss *ETHService) loop() {
 			log.Warn(fmt.Sprintf("ETHService.EventListener missed %d blocks", lastedBlock-currentBlock-1))
 		}
 		if lastedBlock%logPeriod == 0 {
-			log.Trace(fmt.Sprintf("ETHService.EventListener new block : %d", lastedBlock))
+			log.Trace(fmt.Sprintf("Ethereum new block : %d", lastedBlock))
 		}
 		var fromBlockNumber, toBlockNumber uint64
 		if currentBlock < 2*confirmBlockNumber {

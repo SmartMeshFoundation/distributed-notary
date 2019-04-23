@@ -236,7 +236,7 @@ func getBenchmarkRequests(scTokenAddress common.Address, keys []*ecdsa.PrivateKe
 			BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenAddress),
 			BaseReqWithSignature: api.NewBaseReqWithSignature(address),
 			SecretHash:           secretHashs[index],
-			MCUserAddress:        address,
+			MCUserAddress:        address[:],
 			SCUserAddress:        address,
 		}
 		body.Sign(body, key)

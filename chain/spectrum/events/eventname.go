@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// ChainName 公链名
+// MCChainName 公链名
 var ChainName = "spectrum"
 
 // atmosphereTokenABI :

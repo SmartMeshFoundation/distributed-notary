@@ -14,8 +14,10 @@ import (
 	"crypto/ecdsa"
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	spectrumevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/nkbai/log"
 )
@@ -24,10 +26,12 @@ import (
 	其他service回调DispatchService的入口
 */
 type dispatchServiceBackend interface {
+	getBtcNetworkParam() *chaincfg.Params
 	getSelfPrivateKey() *ecdsa.PrivateKey
 	getSelfNotaryInfo() *models.NotaryInfo
 	getChainByName(chainName string) (c chain.Chain, err error)
 	getLockinInfo(scTokenAddress common.Address, secretHash common.Hash) (lockinInfo *models.LockinInfo, err error)
+	getLockInInfoBySCPrepareLockInRequest(req *userapi.SCPrepareLockinRequest) (lockinInfo *models.LockinInfo, err error)
 	getLockoutInfo(scTokenAddress common.Address, secretHash common.Hash) (lockoutInfo *models.LockoutInfo, err error)
 	getNotaryService() *NotaryService
 	getSCTokenMetaInfoBySCTokenAddress(scTokenAddress common.Address) (scToken *models.SideChainTokenMetaInfo)
@@ -51,6 +55,15 @@ type dispatchServiceBackend interface {
 	updateLockoutInfoNotaryIDInChargeID(scTokenAddress common.Address, secretHash common.Hash, notaryID int) (err error)
 }
 
+func (ds *DispatchService) getBtcNetworkParam() *chaincfg.Params {
+	c, err := ds.getChainByName(bitcoin.ChainName)
+	if err != nil {
+		log.Error(err.Error())
+		return nil
+	}
+	c2, _ := c.(*bitcoin.BTCService)
+	return c2.GetNetParam()
+}
 func (ds *DispatchService) getSelfPrivateKey() *ecdsa.PrivateKey {
 	return ds.notaryService.privateKey
 }
@@ -71,6 +84,16 @@ func (ds *DispatchService) getChainByName(chainName string) (c chain.Chain, err 
 
 func (ds *DispatchService) getNotaryService() *NotaryService {
 	return ds.notaryService
+}
+
+func (ds *DispatchService) getLockInInfoBySCPrepareLockInRequest(req *userapi.SCPrepareLockinRequest) (lockinInfo *models.LockinInfo, err error) {
+	ds.scToken2CrossChainServiceMapLock.Lock()
+	defer ds.scToken2CrossChainServiceMapLock.Unlock()
+	cs, ok := ds.scToken2CrossChainServiceMap[req.SCTokenAddress]
+	if !ok {
+		panic("never happen")
+	}
+	return cs.getLockInInfoBySCPrepareLockInRequest(req)
 }
 
 func (ds *DispatchService) getLockinInfo(scTokenAddress common.Address, secretHash common.Hash) (lockinInfo *models.LockinInfo, err error) {
@@ -203,7 +226,7 @@ func (ds *DispatchService) applyNonceFromNonceServer(chainName string, privKeyID
 	return ps.newNonce(fmt.Sprintf("%s-%s", chainName, reason))
 }
 
-func (ds *DispatchService) getPbftService(key string) (ps *pbftService, err error) {
+func (ds *DispatchService) getPbftService(key string) (ps *PBFTService, err error) {
 	ss := strings.Split(key, "-")
 	if len(ss) != 2 {
 		err = fmt.Errorf("key err =%s", key)
