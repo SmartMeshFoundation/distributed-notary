@@ -4,23 +4,29 @@ import (
 	"crypto/ecdsa"
 	"io/ioutil"
 	"math/big"
+	"time"
 
 	"fmt"
 
-	"github.com/SmartMeshFoundation/Spectrum/log"
+	"strings"
+
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/kataras/go-errors"
+	"github.com/nkbai/log"
 )
 
-// MCChainName 公链名
+// ChainName 公链名
 var ChainName = "bitcoin"
 
 // BTCService :
@@ -36,16 +42,20 @@ type BTCService struct {
 	eventChan             chan chain.Event
 	lastBlockNumber       uint64
 	eventListenerQuitChan chan struct{}
+	confirmMap            map[int32][]*btcutil.Tx
+	outpoint2VerifyHexMap map[string]string
 }
 
 // NewBTCService :
 func NewBTCService(host, rpcUser, rpcPass, certFilePath string) (bs *BTCService, err error) {
 	bs = &BTCService{
-		chainName: ChainName,
-		host:      host,
-		rpcUser:   rpcUser,
-		rpcPass:   rpcPass,
-		eventChan: make(chan chain.Event, 100),
+		chainName:             ChainName,
+		host:                  host,
+		rpcUser:               rpcUser,
+		rpcPass:               rpcPass,
+		eventChan:             make(chan chain.Event, 100),
+		confirmMap:            make(map[int32][]*btcutil.Tx),
+		outpoint2VerifyHexMap: make(map[string]string),
 	}
 	// #nosec
 	certs, err := ioutil.ReadFile(certFilePath)
@@ -62,7 +72,12 @@ func NewBTCService(host, rpcUser, rpcPass, certFilePath string) (bs *BTCService,
 	}
 	// Notice the notification parameter is nil since notifications are
 	// not supported in HTTP POST mode.
-	bs.c, err = rpcclient.New(connCfg, nil)
+	bs.c, err = rpcclient.New(connCfg, &rpcclient.NotificationHandlers{
+		OnFilteredBlockConnected: bs.onFilteredBlockConnected,
+		OnBlockDisconnected: func(hash *chainhash.Hash, height int32, t time.Time) {
+			fmt.Println("disconnected")
+		},
+	})
 	if err != nil {
 		return
 	}
@@ -161,6 +176,20 @@ func (bs *BTCService) GetBtcRPCClient() *rpcclient.Client {
 	return bs.c
 }
 
+// RegisterP2SHOutpoint 注册P2SH的outpoint,验证数据为lockScript
+func (bs *BTCService) RegisterP2SHOutpoint(outpoint wire.OutPoint, lockScript []byte) (err error) {
+	outPointKey := getOutpointKey(outpoint)
+	bs.outpoint2VerifyHexMap[outPointKey] = common.Bytes2Hex(lockScript)
+	return bs.c.LoadTxFilter(false, nil, []wire.OutPoint{outpoint})
+}
+
+// RegisterP2PKHOutpoint 注册P2PKH的outpoint,验证数据为pkh
+func (bs *BTCService) RegisterP2PKHOutpoint(outpoint wire.OutPoint, publicKeyHashStr string) (err error) {
+	outPointKey := getOutpointKey(outpoint)
+	bs.outpoint2VerifyHexMap[outPointKey] = publicKeyHashStr
+	return bs.c.LoadTxFilter(false, nil, []wire.OutPoint{outpoint})
+}
+
 // BtcPrepareLockinInfo :
 type BtcPrepareLockinInfo struct {
 	TxHash          chainhash.Hash `json:"tx_hash"`
@@ -205,5 +234,214 @@ func (bs *BTCService) GetPrepareLockinInfo(txHash chainhash.Hash, lockAddr strin
 	return
 }
 
-func (bs *BTCService) loop() {
+/*
+块销毁处理
+*/
+func (bs *BTCService) onFilteredBlockDisconnected(height int32, header *wire.BlockHeader) {
+	txs, ok := bs.confirmMap[height]
+	if ok {
+		log.Info("block %d disconnected, %d txs delete in confirm map", height, len(txs))
+		delete(bs.confirmMap, height)
+	} else {
+		log.Info("block %d disconnected")
+	}
+}
+
+/*
+新块处理
+*/
+func (bs *BTCService) onFilteredBlockConnected(height int32, header *wire.BlockHeader, txs []*btcutil.Tx) {
+	if height%logPeriod == 0 {
+		log.Trace(fmt.Sprintf("Bitcoin new block : %d", height))
+	}
+	// 1. 生成NewBlock事件
+	bs.lastBlockNumber = uint64(height)
+	bs.eventChan <- events.CreateNewBlockEvent(bs.lastBlockNumber)
+	// 2. 保存tx到确认池
+	if len(txs) > 0 {
+		bs.confirmMap[height] = txs
+		log.Trace("Bitcoin new block : %d relevant tx num: %d", len(txs))
+	}
+	// 3. 确认事件
+	var eventsToSend []chain.Event
+	var confirmBlockNumbers []int32
+	for blockNumber := range bs.confirmMap {
+		if blockNumber <= height-confirmBlockNumber {
+			for _, tx := range bs.confirmMap[height] {
+				eventsToSend = append(eventsToSend, bs.createEventsFromTx(tx)...)
+			}
+			confirmBlockNumbers = append(confirmBlockNumbers, blockNumber)
+		}
+	}
+	for _, n := range confirmBlockNumbers {
+		delete(bs.confirmMap, n)
+	}
+	// 4. 投递事件
+	for _, e := range eventsToSend {
+		bs.eventChan <- e
+	}
+}
+
+/*
+已确认的交易处理
+*/
+func (bs *BTCService) createEventsFromTx(tx *btcutil.Tx) (events []chain.Event) {
+	return
+}
+
+/*
+用户CancelPrepareLockin的tx
+SigScript : SIG {{用户PKH}} 0 {{锁定脚本}}
+*/
+func (bs *BTCService) isCancelPrepareLockin(tx *wire.MsgTx) bool {
+	// 获取锁定脚本
+	lockScriptHex := ""
+	ok := false
+	for _, txIn := range tx.TxIn {
+		outpointKey := getOutpointKey(txIn.PreviousOutPoint)
+		lockScriptHex, ok = bs.outpoint2VerifyHexMap[outpointKey]
+		if ok {
+			break
+		}
+	}
+	if !ok {
+		return false
+	}
+	// 验证部分: 0 {{锁定脚本}}
+	verifyStr := fmt.Sprintf("0 %s", lockScriptHex)
+	signatureScriptStr, err := txscript.DisasmString(tx.TxIn[0].SignatureScript)
+	if err != nil {
+		log.Error("DisasmString SignatureScript err : %s", err.Error())
+		return false
+	}
+	return strings.Contains(signatureScriptStr, verifyStr)
+}
+
+/*
+自己Lockin的tx
+txIn 只有一个 SigScript : SIG {{分布式私钥的PKH}} {{SECRET}} 1 {{锁定脚本}}
+*/
+func (bs *BTCService) isLockin(tx *wire.MsgTx) (secret chainhash.Hash, ok bool) {
+	// txIn 只有一个
+	if len(tx.TxIn) != 1 {
+		return
+	}
+	// 获取锁定脚本
+	outpointKey := getOutpointKey(tx.TxIn[0].PreviousOutPoint)
+	lockScriptHex, ok := bs.outpoint2VerifyHexMap[outpointKey]
+	if !ok {
+		return
+	}
+	// 验证部分: 1 {{锁定脚本}}
+	verifyStr := fmt.Sprintf("1 %s", lockScriptHex)
+	signatureScriptStr, err := txscript.DisasmString(tx.TxIn[0].SignatureScript)
+	if err != nil {
+		log.Error("DisasmString SignatureScript err : %s", err.Error())
+		return
+	}
+	if !strings.Contains(signatureScriptStr, verifyStr) {
+		return
+	}
+	// 验证通过,解析secret
+	ss := strings.Split(signatureScriptStr, " ")
+	err = chainhash.Decode(&secret, ss[2])
+	if err != nil {
+		log.Error("Decode secret err : %s", err.Error())
+		return
+	}
+	ok = true
+	return
+}
+
+/*
+自己PrepareLockout的tx
+txIns 数量不确定,但没有P2SH,SigScipt : SIG {{分布式私钥的PKH}}
+*/
+func (bs *BTCService) isPrepareLockout(tx *wire.MsgTx) bool {
+	for _, txIn := range tx.TxIn {
+		// 获取验证数据
+		outpointKey := getOutpointKey(txIn.PreviousOutPoint)
+		verifyStr, ok := bs.outpoint2VerifyHexMap[outpointKey]
+		if !ok {
+			return false
+		}
+		// 验证部分: {{分布式私钥的PKH}}
+		signatureScriptStr, err := txscript.DisasmString(txIn.SignatureScript)
+		if err != nil {
+			log.Error("DisasmString SignatureScript err : %s", err.Error())
+			return false
+		}
+		if !strings.Contains(signatureScriptStr, verifyStr) {
+			return false
+		}
+	}
+	return true
+}
+
+/*
+自己CancenlPrepareLockout的tx
+SigScript : SIG {{分布式私钥的PKH}} 0 {{锁定脚本}}
+*/
+func (bs *BTCService) isCancelPrepareLockout(tx *wire.MsgTx) bool {
+	// txIn 只有一个
+	if len(tx.TxIn) != 1 {
+		return false
+	}
+	// 获取锁定脚本
+	outpointKey := getOutpointKey(tx.TxIn[0].PreviousOutPoint)
+	lockScriptHex, ok := bs.outpoint2VerifyHexMap[outpointKey]
+	if !ok {
+		return false
+	}
+	// 验证部分: 1 {{锁定脚本}}
+	verifyStr := fmt.Sprintf("0 %s", lockScriptHex)
+	signatureScriptStr, err := txscript.DisasmString(tx.TxIn[0].SignatureScript)
+	if err != nil {
+		log.Error("DisasmString SignatureScript err : %s", err.Error())
+		return false
+	}
+	return strings.Contains(signatureScriptStr, verifyStr)
+}
+
+/*
+用户Lockout的tx
+SigScript : SIG {{用户的PKH}} {{SECRET}} 1 {{锁定脚本}}
+*/
+func (bs *BTCService) isLockout(tx *wire.MsgTx) (secret chainhash.Hash, ok bool) {
+	// 获取锁定脚本
+	lockScriptHex := ""
+	ok = false
+	for _, txIn := range tx.TxIn {
+		outpointKey := getOutpointKey(txIn.PreviousOutPoint)
+		lockScriptHex, ok = bs.outpoint2VerifyHexMap[outpointKey]
+		if ok {
+			break
+		}
+	}
+	if !ok {
+		return
+	}
+	// 验证部分: 1 {{锁定脚本}}
+	verifyStr := fmt.Sprintf("1 %s", lockScriptHex)
+	signatureScriptStr, err := txscript.DisasmString(tx.TxIn[0].SignatureScript)
+	if err != nil {
+		log.Error("DisasmString SignatureScript err : %s", err.Error())
+		return
+	}
+	if !strings.Contains(signatureScriptStr, verifyStr) {
+		return
+	}
+	// 验证通过,解析secret
+	ss := strings.Split(signatureScriptStr, " ")
+	err = chainhash.Decode(&secret, ss[2])
+	if err != nil {
+		log.Error("Decode secret err : %s", err.Error())
+		return
+	}
+	ok = true
+	return
+}
+
+func getOutpointKey(outpoint wire.OutPoint) string {
+	return fmt.Sprintf("%s-%d", outpoint.Hash.String(), outpoint.Index)
 }

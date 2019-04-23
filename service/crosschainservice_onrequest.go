@@ -14,6 +14,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -141,7 +142,7 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 		// 比特币,收到用户请求之前,公证人无从得知任何信息,所以这里必须根据用户的请求验证链上数据,并构造lockinInfo
 		// 1. 根据用户参数本地生成脚本hash
 		builder := btcService.GetPrepareLockInScriptBuilder(mcUserAddress, notaryAddress, req.MCLockedAmount, req.SecretHash[:], req.MCExpiration)
-		_, lockAddr, _ := builder.GetPKScript()
+		lockScript, lockAddr, _ := builder.GetPKScript()
 		// 2. 从链上查询tx并在其中查找锁定地址为上一步生成的hash值的outpoint及交易发生的blockNumber
 		btcPrepareLockinInfo, err2 := btcService.GetPrepareLockinInfo(req.MCTXHash, lockAddr.String(), req.MCLockedAmount)
 		if err2 != nil {
@@ -181,6 +182,15 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 		if err2 != nil {
 			err2 = fmt.Errorf("lockinHandler.registerLockin err2 = %s", err2.Error())
 			return nil, err2
+		}
+		// 7. 注册需要监听的outpoint到BTCService
+		err2 = btcService.RegisterP2SHOutpoint(wire.OutPoint{
+			Hash:  *lockinInfo.BTCPrepareLockinTXHash,
+			Index: lockinInfo.BTCPrepareLockinVout,
+		}, lockScript)
+		if err2 != nil {
+			log.Error("lockinHandler.RegisterP2SHOutpoint err2 = %s", err2.Error())
+			// 这里不返回错误,注册失败不能影响操作
 		}
 		return
 	}

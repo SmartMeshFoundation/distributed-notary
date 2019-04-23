@@ -233,3 +233,39 @@ func TestPrepareLockoutScriptBuilder_GetSigScriptForNotary(t *testing.T) {
 	}
 	fmt.Println("Transaction successfully signed")
 }
+
+func TestParseScript(t *testing.T) {
+	bs, err := NewBTCService(TestRPCHost, TestRPCUser, TestRPCPass, TestCertFilePath)
+	assert.Empty(t, err)
+
+	// 获取测试数据
+	secret, secretHash, userPrivateKeyBytes, notaryPrivateKeyBytes := getTestData()
+	userPublicKeyHash := PrivateKeyBytes2AddressPublicKeyHash(userPrivateKeyBytes, &bs.net)
+	notaryPublicKeyHash := PrivateKeyBytes2AddressPublicKeyHash(notaryPrivateKeyBytes, &bs.net)
+	notaryPrivateKey := PrivateKeyBytes2PrivateKey(notaryPrivateKeyBytes)
+	amount := btcutil.Amount(1)
+	builder := bs.GetPrepareLockInScriptBuilder(userPublicKeyHash, notaryPublicKeyHash, amount, secretHash, big.NewInt(100))
+
+	// 锁定脚本构造
+	lockScript, _, pkScript := builder.GetPKScript()
+
+	// 模拟tx构造
+	redeemTx := getTestRedeemTx(builder.amount, pkScript)
+
+	// 签名txin
+	sigScript, err := txscript.SignatureScript(redeemTx, 0, lockScript, txscript.SigHashAll, notaryPrivateKey, true)
+
+	// 构造SignatureScript
+	sb := txscript.NewScriptBuilder()
+	sb.AddOps(sigScript)
+	sb.AddOps(builder.GetSigScriptForNotary(secret))
+	sb.AddData(lockScript)
+	redeemTx.TxIn[0].SignatureScript, _ = sb.Script()
+	fmt.Println(txscript.DisasmString(redeemTx.TxIn[0].SignatureScript))
+	bs.RegisterP2SHOutpoint(redeemTx.TxIn[0].PreviousOutPoint, lockScript)
+	// 解析
+	fmt.Println("isCancelPrepareLockin : ", bs.isCancelPrepareLockin(redeemTx))
+	s, isLockin := bs.isLockin(redeemTx)
+	fmt.Println("isLockin : ", isLockin)
+	fmt.Println("secert :", s)
+}
