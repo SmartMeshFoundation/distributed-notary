@@ -262,10 +262,11 @@ func TestParseScript(t *testing.T) {
 	sb.AddData(lockScript)
 	redeemTx.TxIn[0].SignatureScript, _ = sb.Script()
 	fmt.Println(txscript.DisasmString(redeemTx.TxIn[0].SignatureScript))
-	bs.RegisterP2SHOutpoint(redeemTx.TxIn[0].PreviousOutPoint, lockScript)
 	// 解析
-	fmt.Println("isCancelPrepareLockin : ", bs.isCancelPrepareLockin(redeemTx))
-	s, isLockin := bs.isLockin(redeemTx)
-	fmt.Println("isLockin : ", isLockin)
-	fmt.Println("secert :", s)
+	info := &BTCOutpointRelevantInfo{
+		SecretHash:    common.BytesToHash(secretHash),
+		LockScriptHex: common.Bytes2Hex(lockScript),
+	}
+	fmt.Println("isCancelPrepareLockin : ", bs.isCancelPrepareLockin(redeemTx.TxIn[0], info))
+	fmt.Println("isLockin : ", bs.isLockin(redeemTx.TxIn[0], info))
 }

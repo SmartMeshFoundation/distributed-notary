@@ -66,6 +66,9 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 	case ethevents.CancelLockinEvent: // MCCancelLI
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC CancelLockinEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onMCCancelLockin4Ethereum(event)
+	case bitcoin.CancelLockinEvent: // MCCancelLI
+		log.Info(SCTokenLogMsg(cs.meta, "Receive MC CancelLockinEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onMCCancelLockin4Bitcoint(event)
 	case smcevents.CancelLockinEvent: // SCCancelLI
 		log.Info(SCTokenLogMsg(cs.meta, "Receive SC CancelLockinEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onSCCancelLockin(event)
@@ -378,6 +381,25 @@ func (cs *CrossChainService) onMCCancelLockin4Ethereum(event ethevents.CancelLoc
 	// 2. 校验 TODO
 	if lockinInfo.MCUserAddressHex != event.Account.String() {
 		err = fmt.Errorf("MCUserAddressHex does't match")
+		return
+	}
+	// 3. 更新本地信息,endTime哪个链取消在后面取哪个
+	lockinInfo.MCLockStatus = models.LockStatusCancel
+	lockinInfo.EndTime = event.Time.Unix()
+	lockinInfo.EndMCBlockNumber = event.BlockNumber
+	err = cs.lockinHandler.updateLockin(lockinInfo)
+	if err != nil {
+		err = fmt.Errorf("lockinHandler.updateLockin err = %s", err.Error())
+		return
+	}
+	return
+}
+
+func (cs *CrossChainService) onMCCancelLockin4Bitcoint(event bitcoin.CancelLockinEvent) (err error) {
+	// 1. 获取本地LockinInfo信息
+	lockinInfo, err := cs.lockinHandler.getLockin(event.SecretHash)
+	if err != nil {
+		err = fmt.Errorf("lockinHandler.getLockin err = %s", err.Error())
 		return
 	}
 	// 3. 更新本地信息,endTime哪个链取消在后面取哪个

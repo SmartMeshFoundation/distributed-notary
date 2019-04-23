@@ -187,7 +187,7 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 		err2 = btcService.RegisterP2SHOutpoint(wire.OutPoint{
 			Hash:  *lockinInfo.BTCPrepareLockinTXHash,
 			Index: lockinInfo.BTCPrepareLockinVout,
-		}, lockScript)
+		}, lockScript, lockinInfo.SecretHash)
 		if err2 != nil {
 			log.Error("lockinHandler.RegisterP2SHOutpoint err2 = %s", err2.Error())
 			// 这里不返回错误,注册失败不能影响操作
