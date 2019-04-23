@@ -16,9 +16,11 @@ import (
 PBFTService 负责节点之间的nonce协商
 */
 type PBFTService struct {
-	key       string //协商哪一个地址的nonce
-	client    *pbft.Client
-	clientMsg chan interface{}
+	key          string //协商哪一个地址的nonce
+	chain        string //which chain
+	privatekeyID string //which private key
+	client       *pbft.Client
+	clientMsg    chan interface{}
 
 	server    *pbft.Server
 	serverMsg chan interface{}
@@ -33,13 +35,15 @@ type PBFTService struct {
 }
 
 // NewPBFTService :
-func NewPBFTService(key string, allNotaries []*models.NotaryInfo, notaryClient notaryapi.NotaryClient, dispatchService dispatchServiceBackend, db *models.DB) *PBFTService {
+func NewPBFTService(serviceKey, chain, privKeyID string, allNotaries []*models.NotaryInfo, notaryClient notaryapi.NotaryClient, dispatchService dispatchServiceBackend, db *models.DB) *PBFTService {
 	ps := &PBFTService{
 		clientMsg:       make(chan interface{}, 10),
 		serverMsg:       make(chan interface{}, 10),
 		notaryClient:    notaryClient,
 		dispatchService: dispatchService,
-		key:             key,
+		key:             serviceKey,
+		chain:           chain,
+		privatekeyID:    privKeyID,
 		nonces:          make(map[string]chan pbft.OpResult),
 		db:              db,
 		quit:            make(chan struct{}),
@@ -50,7 +54,7 @@ func NewPBFTService(key string, allNotaries []*models.NotaryInfo, notaryClient n
 		allids = append(allids, allNotaries[i].ID)
 	}
 	f := len(allNotaries) / 3
-	nonce, err := db.GetNonce(key)
+	nonce, err := db.GetNonce(serviceKey)
 	if err != nil {
 		panic(err)
 	}
@@ -65,11 +69,10 @@ func NewPBFTService(key string, allNotaries []*models.NotaryInfo, notaryClient n
 //SendMessage 这里是否应该处理一下
 func (ps *PBFTService) SendMessage(msg interface{}, target int) {
 	req := &notaryapi.PBFTMessage{
-		BaseReq: api.BaseReq{
-			Name: notaryapi.APINamePBFTMessage,
-		},
-		Key: ps.key,
-		Msg: pbft.EncodeMsg(msg),
+		BaseReq:              api.NewBaseReq(notaryapi.APINamePBFTMessage),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(ps.dispatchService.getSelfNotaryInfo().GetAddress()),
+		Key:                  ps.key,
+		Msg:                  pbft.EncodeMsg(msg),
 	}
 	//log.Trace(fmt.Sprintf("ps sendMessage %v,to %d", msg, target))
 	if target == ps.dispatchService.getSelfNotaryInfo().ID {
@@ -79,14 +82,39 @@ func (ps *PBFTService) SendMessage(msg interface{}, target int) {
 	}
 }
 
-// OnRequest :
+//OnRequest 来自其他公证人和自己的pbft消息
 func (ps *PBFTService) OnRequest(req *notaryapi.PBFTMessage) {
-	msg := pbft.DecodeMsg(req.Msg)
+	var n *models.NotaryInfo
 
-	switch msg.(type) {
+	if req.GetSigner() != ps.dispatchService.getSelfNotaryInfo().GetAddress() {
+		var ok bool
+		n, ok = ps.dispatchService.getNotaryService().getNotaryInfoByAddress(req.GetSigner())
+		if !ok {
+			log.Error(fmt.Sprintf("receive req,but signer is unkown,req=%s", utils.StringInterface(req, 3)))
+			return
+		}
+	} else {
+		n = ps.dispatchService.getSelfNotaryInfo()
+	}
+
+	/*
+		todo 需要解决公证人id问题,需要带上签名,
+	*/
+	msg := pbft.DecodeMsg(req.Msg)
+	switch msg2 := msg.(type) {
 	case pbft.ClientMessager:
+		if !msg2.CheckMessageSender(n.ID) {
+			log.Error(fmt.Sprintf("receive pbft message,but signer not match,signer=%d,msg=%s",
+				n.ID, utils.StringInterface(msg, 3)))
+			return
+		}
 		ps.clientMsg <- msg
 	case pbft.ServerMessager:
+		if !msg2.CheckMessageSender(n.ID) {
+			log.Error(fmt.Sprintf("receive pbft message,but signer not match,signer=%d,msg=%s",
+				n.ID, utils.StringInterface(msg, 3)))
+			return
+		}
 		ps.serverMsg <- msg
 	default:
 		log.Error(fmt.Sprintf("PBFTService onRquest unkown req=%s", utils.StringInterface(req, 2)))
@@ -135,8 +163,8 @@ func (ps *PBFTService) newNonce(op string) (nonce uint64, err error) {
 	return uint64(r.Seq), r.Error
 }
 
-// UpdateSeq :
-func (ps *PBFTService) UpdateSeq(seq int) {
+//UpdateSeq 记录nonce已使用
+func (ps *PBFTService) UpdateSeq(seq int, _, _ string) {
 	nonce, err := ps.db.GetNonce(ps.key)
 	if err != nil {
 		panic(err)
@@ -147,4 +175,29 @@ func (ps *PBFTService) UpdateSeq(seq int) {
 			panic(err)
 		}
 	}
+}
+
+/*
+	GetOpAuxiliary 根据来自用户的op构造相应的辅助信息,
+	对于以太坊来说,就很简单,就是op的hash值
+	对于比特币来说就是,分配出去的UTXO列表
+*/
+func (ps *PBFTService) GetOpAuxiliary(op string, view int) (string, error) {
+	return pbft.Digest(op), nil
+}
+
+//PrepareSeq 实现PBFTAuxiliary
+//对于以太坊来说,只要主节点不恶意,都是不会重复的.
+//如果恶意,在CommitSeq中会被检测出来.
+func (ps *PBFTService) PrepareSeq(view, seq int, op string, auxiliary string) error {
+	return ps.db.NewNonceForOp(view, seq, op, ps.chain, ps.privatekeyID)
+}
+
+/*
+	CommitSeq 在集齐验证prepare消息后,验证op对应的auxiliary是否有效.
+	对于以太坊来说,需要验证没有重复为op分配nonce,也就是说同一个view为同一个op多次分配不同的nonce
+	对于比特币来说,可能因为分配出去的utxo已经使用,金额不够等原因造成失败
+*/
+func (ps *PBFTService) CommitSeq(view, seq int, op string, auxiliary string) error {
+	return ps.db.NewNonceForOp(view, seq, op, ps.chain, ps.privatekeyID)
 }

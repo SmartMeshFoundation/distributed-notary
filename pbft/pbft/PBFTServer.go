@@ -15,8 +15,29 @@ var (
 	checkpointDiv     = 100
 )
 
-type ApplySaver interface {
-	UpdateSeq(seq int)
+//PBFTAuxiliary 辅助,这几个函数都是运行在pbft主线程中,不能堵塞
+type PBFTAuxiliary interface {
+	/*
+		UpdateSeq pbftserver协商一个op完毕以后通知上层处理完毕
+	*/
+	UpdateSeq(seq int, op, auxiliary string)
+	/*
+		GetOpAuxiliary 根据来自用户的op构造相应的辅助信息,
+		对于以太坊来说,就很简单,就是op的hash值
+		对于比特币来说就是,分配出去的UTXO列表
+	*/
+	GetOpAuxiliary(op string, view int) (string, error)
+	/*
+		PrePareSeq 收到来自主节点的预选中某个Seq的消息,
+		需要记录下来防止重复使用
+	*/
+	PrepareSeq(view, seq int, op string, auxiliary string) error
+	/*
+		CommitSeq 在集齐验证prepare消息后,验证op对应的auxiliary是否有效.
+		对于以太坊来说,总是有效的
+		对于比特币来说,可能因为分配出去的utxo已经使用,金额不够等原因造成失败
+	*/
+	CommitSeq(view, seq int, op string, auxiliary string) error
 }
 
 /*
@@ -48,7 +69,7 @@ type Server struct {
 	applyQueue *PriorityQueue
 	vcs        map[int][]*ViewChangeArgs
 	lastcp     int //上一个check point
-	as         ApplySaver
+	as         PBFTAuxiliary
 }
 
 //客户端请求的唯一编号
@@ -98,10 +119,20 @@ func (s *Server) handleRequestLeader(args *RequestArgs) error {
 		// Extract continuous requests from message queue of client and update sequence
 		//一次性处理这一个用户的所有请求
 		ppArgs := PrePrepareArgs{
-			View:    s.view,
-			Seq:     s.tSeq,          //从0开始
-			Digest:  Digest(args.Op), //op作为唯一的标识,无论来自哪个客户端的重复op,都认为是相同的
+			View: s.view,
+			Seq:  s.tSeq, //从0开始
+			//Digest:  Digest(args.Op), //op作为唯一的标识,无论来自哪个客户端的重复op,都认为是相同的
+			//Digest:  s.as.GetOpAuxiliary(args.Op, s.id),
 			Message: *args,
+		}
+		if s.as != nil {
+			var err error
+			ppArgs.Digest, err = s.as.GetOpAuxiliary(args.Op, s.id)
+			if err != nil {
+				return err
+			}
+		} else {
+			ppArgs.Digest = Digest(args.Op)
 		}
 		s.seqmap[args.Op] = s.tSeq
 		s.tSeq++
@@ -165,7 +196,7 @@ type PrePrepareArgs struct {
 	View   int
 	Seq    int
 	Digest string
-	// Signature
+	// todo 需要Signature,否则如何证明呢?
 	Message RequestArgs
 }
 
@@ -174,6 +205,10 @@ func (s *Server) PrePrepare(args PrePrepareArgs) error {
 	if s.changing {
 		log.Info(fmt.Sprintf("%s ignore PrePrepare because changing args=%+v", s, args))
 		return nil
+	}
+	err := s.as.PrepareSeq(args.View, args.Seq, args.Message.Op, args.Digest)
+	if err != nil {
+		return err
 	}
 	s.stopTimer()
 	if s.view == args.View && s.h <= args.Seq && args.Seq < s.H {
@@ -221,8 +256,15 @@ func (s *Server) Prepare(args PrepareArgs) error {
 		}
 		log.Trace("%s[R/Prepare]:PrepareArgs:%+v", s, args)
 		ent.p = append(ent.p, &args)
-		//todo 发送commit条件,prepare消息数量够了,或者已经发送过commit, 这会导致commit消息会重复发送几次 如果不重复,在view change的过程中会失败
 		if ent.pp != nil && !ent.sendCommit && s.prepared(ent) {
+			if s.as != nil {
+				err := s.as.CommitSeq(s.view, ent.pp.Seq, ent.pp.Message.Op, ent.pp.Digest)
+				if err != nil { //master节点有误,需要启动viewchange
+					go s.startViewChange()
+					log.Error(fmt.Sprintf("CommitSeq error %s", err))
+					return err
+				}
+			}
 			//避免重复发送commit
 			s.seqmap[ent.pp.Message.Op] = args.Seq
 			cArgs := CommitArgs{
@@ -285,7 +327,7 @@ func (s *Server) Commit(args CommitArgs) error {
 			s.execute(args.Seq, ent, args)
 		} else {
 			//s.reply(ent)
-		} //todo 如果确保只reply一次,那会造成view change的时候无法成功
+		}
 
 	}
 	return nil
@@ -327,7 +369,7 @@ func (s *Server) replyByPendingTask(pt pendingTask) {
 		pt.ent.r = &rArgs
 	}
 	if s.as != nil {
-		s.as.UpdateSeq(pt.seq)
+		s.as.UpdateSeq(pt.seq, pt.ent.pp.Message.Op, pt.ent.pp.Digest)
 	}
 	s.reply(pt.ent)
 }
@@ -424,6 +466,7 @@ type CheckPointArgs struct {
 	Digest string
 	Rid    int
 	View   int //当前view是多少,为了让主节点能够参与同步
+	//todo 加上关于这次checkpoint的签名,否则广播给其他公证人,无法验证
 }
 
 /*
@@ -579,6 +622,7 @@ type ViewChangeArgs struct {
 	CP   *CheckPointArgs
 	P    []*Pm
 	Rid  int
+	//todo 需要有发送方的签名,否则在newview 的时候没法证明消息有效性
 }
 
 // ViewChange is the handler of  ViewChange
@@ -1025,7 +1069,7 @@ func (s *Server) loop() {
 }
 
 // NewPBFTServer use given information create a new pbft server
-func NewPBFTServer(rid, f, initSeq int, msgChan chan interface{}, sender MessageSender, nodes []int, as ApplySaver) *Server {
+func NewPBFTServer(rid, f, initSeq int, msgChan chan interface{}, sender MessageSender, nodes []int, as PBFTAuxiliary) *Server {
 	s := Server{
 		id:         rid,
 		msgChan:    msgChan,

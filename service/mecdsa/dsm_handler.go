@@ -22,7 +22,6 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/nkbai/log"
 )
 
@@ -246,8 +245,7 @@ func (dh *DSMHandler) StartDSMAndWaitFinish() (signature []byte, err error) {
 		}
 		share.ModAdd(s, si)
 	}
-	r := share.BigInt2PrivateKey(dh.signMessage.R.X)
-	signature, verifyResult := verify(s, r, dh.signMessage.LocalSignature.Y, dh.signMessage.LocalSignature.M)
+	signature, verifyResult := verify(s, dh.signMessage.R, dh.signMessage.LocalSignature.Y, dh.signMessage.LocalSignature.M)
 	if !verifyResult {
 		err = errors.New("invilad signature")
 	}
@@ -887,8 +885,7 @@ func (dh *DSMHandler) checkPhase6Done() {
 			}
 			share.ModAdd(s, si)
 		}
-		r := share.BigInt2PrivateKey(dh.signMessage.R.X)
-		_, verifyResult := verify(s, r, dh.signMessage.LocalSignature.Y, dh.signMessage.LocalSignature.M)
+		_, verifyResult := verify(s, dh.signMessage.R, dh.signMessage.LocalSignature.Y, dh.signMessage.LocalSignature.M)
 		if !verifyResult {
 			dh.notify(nil, errors.New("invilad signature"))
 		} else {
@@ -899,8 +896,23 @@ func (dh *DSMHandler) checkPhase6Done() {
 
 /*
 使用SignatureNormalize来对签名进行处理,符合EIP155签名要求.
+https://ethereum.stackexchange.com/questions/42455/during-ecdsa-signing-how-do-i-generate-the-recovery-id
+I never found any proper documentation about the Recovery ID but I did talk with somebody on Reddit and they gave me my answer:
+
+id = y1 & 1; // Where (x1,y1) = k x G;
+if (s > curve.n / 2) id = id ^ 1; // Invert id if s of signature is over half the n
+I had to modify the mbedtls library to pass back the Recovery ID but when I did I could generate transactions that Geth accepted 100% of the time.
+
+The long explanation:
+
+During signing, a point is generated (X, Y) called R and a number called S. R's X goes on to become r and S becomes s. In order to generate the Recovery ID you take the one's bit from Y. If S is bigger than half the curve's N parameter you invert that bit. That bit is the Recovery ID. Ethereum goes on to manipulate it to indicate compressed or uncompressed addresses as well as indicate what chain the transaction was signed for (so the transaction can't be replayed on another Ethereum chain that the private key might be present on). These modifications to the Recovery ID become v.
+
+There's also a super rare chance that you need to set the second bit of the recovery id meaning the recovery id could in theory be 0, 1, 2, or 3. But there's a 0.000000000000000000000000000000000000373% of needing to set the second bit according to a question on Bitcoin.SE.
+
+
 */
-func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bool) {
+func verify(s share.SPrivKey, R, y *share.SPubKey, message *big.Int) ([]byte, bool) {
+	r := share.BigInt2PrivateKey(R.X)
 	b := share.InvertN(s)
 	a := share.BigInt2PrivateKey(message)
 	u1 := a.Clone()
@@ -917,9 +929,9 @@ func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bo
 	} else {
 		return nil, false
 	}
-	sig := make([]byte, 64)
+	sig := make([]byte, 65)
 	copy(sig[:32], bigIntTo32Bytes(r.D))
-	copy(sig[32:], bigIntTo32Bytes(s.D))
+	copy(sig[32:64], bigIntTo32Bytes(s.D))
 	//leave sig[64]=0
 
 	//按照以太坊EIP155的规范来处理签名
@@ -927,14 +939,22 @@ func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bo
 	var err error
 	h.SetBytes(message.Bytes())
 	if s.D.Cmp(halfN) >= 0 {
+		/* //所谓的normalize就是如果s>n/2,s=n-s ,保证s的唯一性
 		sig, err = secp256k1.SignatureNormalize(sig)
 		if err != nil {
 			log.Error(fmt.Sprintf("SignatureNormalize err %s\n,r=%s,s=%s", err, r.D, s.D))
 			return nil, false
+		}*/
+		s2 := new(big.Int)
+		s2 = s2.Sub(share.S.N, s.D)
+		copy(sig[32:64], bigIntTo32Bytes(s2))
+		tmp := readBigInt(bytes.NewBuffer(sig[32:64]))
+		tmp = tmp.Add(tmp, s.D)
+		if tmp.Cmp(share.S.N) != 0 {
+			panic("must equal")
 		}
+		//log.Info(fmt.Sprintf("s=%s,normals=%s,n=fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", s.D.Text(16), .Text(16)))
 	}
-	sig2 := make([]byte, 65)
-	copy(sig2, sig)
 
 	key, err := crypto.GenerateKey()
 	pubkey := key.PublicKey
@@ -942,33 +962,27 @@ func verify(s, r share.SPrivKey, y *share.SPubKey, message *big.Int) ([]byte, bo
 	pubkey.Y = y.Y
 	addr := crypto.PubkeyToAddress(pubkey)
 
+	/*
+		id = y1 & 1; // Where (x1,y1) = k x G; x1,y1 is R
+		if (s > curve.n / 2) id = id ^ 1; // Invert id if s of signature is over half the n
+	*/
+	v := new(big.Int).Mod(R.Y, big2).Int64()
+	if s.D.Cmp(halfN) > 0 {
+		v = v ^ 1
+	}
+	sig[64] = byte(v)
 	//try v=0
-	pubkeybin, err := crypto.Ecrecover(h[:], sig2)
+	pubkeybin, err := crypto.Ecrecover(h[:], sig)
 	if err == nil {
 		pubkey2 := crypto.ToECDSAPub(pubkeybin)
 		addr2 := crypto.PubkeyToAddress(*pubkey2)
-
 		if addr2 == addr {
-			restoreAndCheckRS(sig2)
-			return sig2, true
+			restoreAndCheckRS(sig)
+			return sig, true
 		}
 
 	} else {
 		log.Error(fmt.Sprintf("Ecrecover err %s", err))
-	}
-
-	//try v=1
-	sig2[64] = 1
-	pubkeybin, err = crypto.Ecrecover(h[:], sig2)
-	if err != nil {
-		log.Error(fmt.Sprintf("Ecrecover err %s", err))
-		return nil, false
-	}
-	pubkey2 := crypto.ToECDSAPub(pubkeybin)
-	addr2 := crypto.PubkeyToAddress(*pubkey2)
-	if addr2 == addr {
-		restoreAndCheckRS(sig2)
-		return sig2, true
 	}
 	return nil, false
 }
@@ -1016,10 +1030,12 @@ func restoreAndCheckRS(sig []byte) {
 }
 
 var halfN *big.Int
+var big2 *big.Int
 
 func init() {
-	halfN, _ = new(big.Int).SetString("fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16)
-	halfN.Div(halfN, big.NewInt(2))
+	halfN = new(big.Int).Set(share.S.N)
+	big2 = big.NewInt(2)
+	halfN.Div(halfN, big2)
 }
 
 func (dh *DSMHandler) waitPhaseDone(c chan bool) (err error) {

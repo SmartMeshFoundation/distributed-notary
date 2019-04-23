@@ -41,6 +41,7 @@ func SetUpDB(dbtype, path string) (mdb *DB) {
 	db.AutoMigrate(&lockoutInfoModel{})
 	db.AutoMigrate(&Nonce{})
 	db.AutoMigrate(&BTCOutpoint{})
+	db.AutoMigrate(&OpNonce{})
 	//db.Model(&ChannelParticipantInfo{}).AddForeignKey("channel_id", "channels(channel_id)", "CASCADE", "CASCADE") // Foreign key need to define manually
 	//db.AutoMigrate(&SettledChannel{})
 	//db.AutoMigrate(&latestBlockNumber{})
@@ -71,5 +72,6 @@ func SetupTestDB2(name string) (db *DB) {
 	if err != nil {
 		//ignore
 	}
+	log.Printf("path=%s", dbPath)
 	return SetUpDB("sqlite3", dbPath)
 }

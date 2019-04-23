@@ -150,6 +150,7 @@ func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
 	if signer == r.GetSigner() {
 		return true
 	}
+	//todo 为了兼容来自浏览器的请求,go相关代码不会走到这里
 	sig[64] = 1
 	signer, err = utils.Ecrecover(dataHash, sig)
 	if err != nil {
