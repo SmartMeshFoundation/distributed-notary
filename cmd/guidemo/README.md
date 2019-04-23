@@ -1,14 +1,9 @@
-This package is a demo of an [astilectron](https://github.com/asticode/go-astilectron) app that uses the [bootstrap](https://github.com/asticode/go-astilectron-bootstrap) and the [bundler](https://github.com/asticode/go-astilectron-bundler).
-
-It's also the subject of this [blog post](https://medium.com/@social_57971/how-to-add-a-gui-to-your-golang-app-in-5-easy-steps-c25c99d4d8e0).
-
-![screenshot](screenshot.png)
+ 
 
 # Step 1: install the demo
 
 Run the following commands:
 
-    $ go get -u github.com/asticode/go-astilectron-demo/...
     $ mv bind.go ../
 
 # Step 2: install the bundler
@@ -30,19 +25,13 @@ Run the following commands:
     $ rm bind_darwin_amd64.go  #删除/bind_darwin_amd64.go
     $ mv ../bind.go .
     
-# Step 4: test the app
-
-The result is in the `output/<your os>-<your arch>` folder and is waiting for you to test it!
-
-# Step 5: bundle the app for more environments
-
-To bundle the app for more environments, add an `environments` key to the bundler configuration (`bundler.json`):
-
-```json
-"environments": [
-  {"arch": "amd64", "os": "linux"},
-  {"arch": "386", "os": "windows"}
-]
+# Step 4: 
+检查vendor 目录结构,应该如下:
+```bash
+astilectron
+electron-darwin-amd642
 ```
 
-and repeat **step 3**.
+# step 5
+$ go build
+$ ./guidemo 
