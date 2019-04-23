@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -96,6 +95,11 @@ func NewBTCService(host, rpcUser, rpcPass, certFilePath string) (bs *BTCService,
 		bs.net = chaincfg.RegressionNetParams
 	default:
 		err = fmt.Errorf("unknown bitcoin network : %s", info.Chain)
+	}
+	// 开启BlockNumber订阅
+	err = bs.c.NotifyBlocks()
+	if err != nil {
+		return
 	}
 	return
 }
@@ -252,23 +256,23 @@ func (bs *BTCService) onFilteredBlockDisconnected(height int32, header *wire.Blo
 */
 func (bs *BTCService) onFilteredBlockConnected(height int32, header *wire.BlockHeader, txs []*btcutil.Tx) {
 	if height%logPeriod == 0 {
-		log.Trace(fmt.Sprintf("Bitcoin new block : %d", height))
+		log.Trace(fmt.Sprintf("Bitcoin  new block : %d", height))
 	}
 	// 1. 生成NewBlock事件
 	bs.lastBlockNumber = uint64(height)
-	bs.eventChan <- events.CreateNewBlockEvent(bs.lastBlockNumber)
+	bs.eventChan <- createNewBlockEvent(bs.lastBlockNumber)
 	// 2. 保存tx到确认池
 	if len(txs) > 0 {
 		bs.confirmMap[height] = txs
-		log.Trace("Bitcoin new block : %d relevant tx num: %d", len(txs))
+		log.Trace("Bitcoin  new block : %d relevant tx num: %d", height, len(txs))
 	}
 	// 3. 确认事件
 	var eventsToSend []chain.Event
 	var confirmBlockNumbers []int32
 	for blockNumber := range bs.confirmMap {
 		if blockNumber <= height-confirmBlockNumber {
-			for _, tx := range bs.confirmMap[height] {
-				eventsToSend = append(eventsToSend, bs.createEventsFromTx(tx)...)
+			for _, tx := range bs.confirmMap[blockNumber] {
+				eventsToSend = append(eventsToSend, bs.createEventsFromTx(blockNumber, tx)...)
 			}
 			confirmBlockNumbers = append(confirmBlockNumbers, blockNumber)
 		}
@@ -285,7 +289,27 @@ func (bs *BTCService) onFilteredBlockConnected(height int32, header *wire.BlockH
 /*
 已确认的交易处理
 */
-func (bs *BTCService) createEventsFromTx(tx *btcutil.Tx) (events []chain.Event) {
+func (bs *BTCService) createEventsFromTx(blockNumber int32, tx *btcutil.Tx) (events []chain.Event) {
+	if secret, isLockin := bs.isLockin(tx.MsgTx()); isLockin {
+		log.Info("收到BTC Lockin 事件,secret=%s secretHash=%s", secret.String(), utils.ShaSecret(secret[:]).String())
+		e := createLockinEvent(uint64(blockNumber), tx.Hash().String(), utils.ShaSecret(secret[:]), tx.MsgTx().TxOut)
+		events = append(events, e)
+		return
+	}
+	if secret, isLockout := bs.isLockout(tx.MsgTx()); isLockout {
+		log.Info("收到BTC Lockout 事件,secret = %s", secret.String())
+		return
+	}
+	if bs.isCancelPrepareLockin(tx.MsgTx()) {
+		return
+	}
+	if bs.isCancelPrepareLockout(tx.MsgTx()) {
+		return
+	}
+	if bs.isPrepareLockout(tx.MsgTx()) {
+		return
+	}
+	log.Error("receive unknown tx : \n%s", utils.ToJSONStringFormat(tx))
 	return
 }
 
@@ -321,7 +345,7 @@ func (bs *BTCService) isCancelPrepareLockin(tx *wire.MsgTx) bool {
 自己Lockin的tx
 txIn 只有一个 SigScript : SIG {{分布式私钥的PKH}} {{SECRET}} 1 {{锁定脚本}}
 */
-func (bs *BTCService) isLockin(tx *wire.MsgTx) (secret chainhash.Hash, ok bool) {
+func (bs *BTCService) isLockin(tx *wire.MsgTx) (secret common.Hash, ok bool) {
 	// txIn 只有一个
 	if len(tx.TxIn) != 1 {
 		return
@@ -344,11 +368,7 @@ func (bs *BTCService) isLockin(tx *wire.MsgTx) (secret chainhash.Hash, ok bool) 
 	}
 	// 验证通过,解析secret
 	ss := strings.Split(signatureScriptStr, " ")
-	err = chainhash.Decode(&secret, ss[2])
-	if err != nil {
-		log.Error("Decode secret err : %s", err.Error())
-		return
-	}
+	secret = common.HexToHash(ss[2])
 	ok = true
 	return
 }

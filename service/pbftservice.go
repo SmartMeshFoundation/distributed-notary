@@ -178,7 +178,7 @@ func (ps *PBFTService) UpdateSeq(seq int, _, _ string) {
 }
 
 /*
-	GetOpAuxiliary 根据来自用户的op构造相应的辅助信息,
+GetOpAuxiliary 根据来自用户的op构造相应的辅助信息,
 	对于以太坊来说,就很简单,就是op的hash值
 	对于比特币来说就是,分配出去的UTXO列表
 */
@@ -194,7 +194,7 @@ func (ps *PBFTService) PrepareSeq(view, seq int, op string, auxiliary string) er
 }
 
 /*
-	CommitSeq 在集齐验证prepare消息后,验证op对应的auxiliary是否有效.
+CommitSeq 在集齐验证prepare消息后,验证op对应的auxiliary是否有效.
 	对于以太坊来说,需要验证没有重复为op分配nonce,也就是说同一个view为同一个op多次分配不同的nonce
 	对于比特币来说,可能因为分配出去的utxo已经使用,金额不够等原因造成失败
 */

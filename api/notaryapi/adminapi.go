@@ -16,7 +16,7 @@ type NotifySCTokenDeployedRequest struct {
 	api.BaseReqWithSessionID
 	api.BaseReqWithSignature
 	api.BaseReqWithSCToken
-	api.BaseReqWithResponse
+	//api.BaseReqWithResponse
 	SCTokenMetaInfo *models.SideChainTokenMetaInfo `json:"sc_token_meta_info"`
 }
 
@@ -28,8 +28,8 @@ func NewNotifySCTokenDeployedRequest(self *models.NotaryInfo, scTokenMetaInfo *m
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
 		BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenMetaInfo.SCToken),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		SCTokenMetaInfo:      scTokenMetaInfo,
+		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
+		SCTokenMetaInfo: scTokenMetaInfo,
 	}
 	return req
 }

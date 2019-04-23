@@ -259,16 +259,16 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Req) {
 				// 2. 保存
 				err = ds.db.NewSCTokenMetaInfo(scTokenMetaInfo)
 				if err != nil {
-					r2.WriteErrorResponse(api.ErrorCodeException)
+					//r2.WriteErrorResponse(api.ErrorCodeException)
 					return
 				}
 				// 3. 注册到DispatchService并开始提供服务
 				err = ds.registerNewSCToken(scTokenMetaInfo)
 				if err != nil {
-					r2.WriteErrorResponse(api.ErrorCodeException)
+					//r2.WriteErrorResponse(api.ErrorCodeException)
 					return
 				}
-				r2.WriteSuccessResponse(nil)
+				//r2.WriteSuccessResponse(nil)
 				return
 			}
 			log.Error(fmt.Sprintf("%s receive request with out notary service : \n%s\n", logPrefix, utils.ToJSONStringFormat(req)))
@@ -340,6 +340,11 @@ func (ds *DispatchService) dispatchEvent(e chain.Event) {
 	if e.GetSCTokenAddress() == utils.EmptyAddress {
 		// 主链事件,根据主链合约地址FromAddress调度,遍历,后续可优化,维护一个主链合约地址-SCToken地址的map即可
 		for _, service := range ds.scToken2CrossChainServiceMap {
+			if e.GetChainName() == bitcoin.ChainName && service.meta.MCName == bitcoin.ChainName {
+				// 比特币事件
+				go service.OnEvent(e)
+				return
+			}
 			if service.getMCContractAddress() == e.GetFromAddress() {
 				// 事件业务逻辑处理
 				go service.OnEvent(e)

@@ -5,12 +5,18 @@ import (
 
 	"fmt"
 
+	"time"
+
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcutil"
 	"github.com/nkbai/log"
 )
 
@@ -22,7 +28,13 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 		events about block number
 	*/
 	case ethevents.NewBlockEvent:
-		err = cs.onMCNewBlockEvent(event)
+		err = cs.onMCNewBlockEvent(event.BlockNumber)
+		if err != nil {
+			log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s", e.GetEventName(), err.Error()))
+		}
+		return
+	case bitcoin.NewBlockEvent:
+		err = cs.onMCNewBlockEvent(event.BlockNumber)
 		if err != nil {
 			log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s", e.GetEventName(), err.Error()))
 		}
@@ -48,6 +60,9 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 	case ethevents.LockinEvent: // MCLI
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC LockinEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onMCLockin4Ethereum(event)
+	case bitcoin.LockinEvent:
+		log.Info(SCTokenLogMsg(cs.meta, "Receive MC LockinEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onMCLockin4Bitcoin(event)
 	case ethevents.CancelLockinEvent: // MCCancelLI
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC CancelLockinEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onMCCancelLockin4Ethereum(event)
@@ -86,16 +101,16 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 	return
 }
 
-func (cs *CrossChainService) onMCNewBlockEvent(event ethevents.NewBlockEvent) (err error) {
-	cs.mcLastedBlockNumber = event.BlockNumber
+func (cs *CrossChainService) onMCNewBlockEvent(blockNumber uint64) (err error) {
+	cs.mcLastedBlockNumber = blockNumber
 	// lockin
-	err = cs.lockinHandler.onMCNewBlockEvent(event.BlockNumber)
+	err = cs.lockinHandler.onMCNewBlockEvent(blockNumber)
 	if err != nil {
 		return
 	}
 	// lockout
 	var lockoutListNeedCancel []*models.LockoutInfo
-	lockoutListNeedCancel, err = cs.lockoutHandler.onMCNewBlockEvent(event.BlockNumber)
+	lockoutListNeedCancel, err = cs.lockoutHandler.onMCNewBlockEvent(blockNumber)
 	if err != nil {
 		return
 	}
@@ -288,6 +303,64 @@ func (cs *CrossChainService) onMCLockin4Ethereum(event ethevents.LockinEvent) (e
 	if err != nil {
 		err = fmt.Errorf("lockinHandler.UpdateLockinInfo err = %s", err.Error())
 		return
+	}
+	return
+}
+
+/*
+收到该事件,说明一次Lockin完整结束,合约上已经清楚该UserAccount的lockin信息
+*/
+func (cs *CrossChainService) onMCLockin4Bitcoin(event bitcoin.LockinEvent) (err error) {
+	// 1. 获取本地LockinInfo信息
+	lockinInfo, err := cs.lockinHandler.getLockin(event.SecretHash)
+	if err != nil {
+		err = fmt.Errorf("lockinHandler.getLockin err = %s", err.Error())
+		return
+	}
+	// 2. 更新本地信息
+	lockinInfo.MCLockStatus = models.LockStatusUnlock
+	lockinInfo.EndTime = event.Time.Unix()
+	lockinInfo.EndMCBlockNumber = event.BlockNumber
+	err = cs.lockinHandler.updateLockin(lockinInfo)
+	if err != nil {
+		err = fmt.Errorf("lockinHandler.UpdateLockinInfo err = %s", err.Error())
+		return
+	}
+	// 3. 注册新的普通outpoint
+	var txHash chainhash.Hash
+	err = chainhash.Decode(&txHash, event.TxHashStr)
+	if err != nil {
+		err = fmt.Errorf("chainhash.Decode err = %s", err.Error())
+		return
+	}
+	for index, outpoint := range event.TxOuts {
+		log.Trace("receive new utxo on BTC :[txHash=%s index=%d amount=%d]", event.TxHashStr, index, outpoint.Value)
+		err = cs.lockinHandler.db.NewBTCOutpoint(&models.BTCOutpoint{
+			PublicKeyHashStr: cs.meta.MCLockedPublicKeyHashStr,
+			TxHashStr:        event.TxHashStr,
+			Index:            index,
+			Amount:           btcutil.Amount(outpoint.Value),
+			Status:           models.BTCOutpointStatusUsable,
+			CreateTime:       time.Now().Unix(),
+		})
+		if err != nil {
+			// 这里应当如何处理比较好???
+			log.Error(err.Error())
+		}
+		// 0. 获取bs,注册outpoint监听
+		c, err := cs.dispatchService.getChainByName(bitcoin.ChainName)
+		if err != nil {
+			log.Error(err.Error())
+			continue
+		}
+		bs := c.(*bitcoin.BTCService)
+		err = bs.RegisterP2PKHOutpoint(wire.OutPoint{
+			Hash:  txHash,
+			Index: uint32(index),
+		}, cs.meta.MCLockedPublicKeyHashStr)
+		if err != nil {
+			log.Error(err.Error())
+		}
 	}
 	return
 }
