@@ -245,8 +245,7 @@ func (dh *DSMHandler) StartDSMAndWaitFinish() (signature []byte, err error) {
 		}
 		share.ModAdd(s, si)
 	}
-	r := share.BigInt2PrivateKey(dh.signMessage.R.X)
-	signature, verifyResult := verify(s, r, dh.signMessage.LocalSignature.Y, dh.signMessage.LocalSignature.M)
+	signature, verifyResult := verify(s, dh.signMessage.R, dh.signMessage.LocalSignature.Y, dh.signMessage.LocalSignature.M)
 	if !verifyResult {
 		err = errors.New("invilad signature")
 	}
@@ -886,8 +885,7 @@ func (dh *DSMHandler) checkPhase6Done() {
 			}
 			share.ModAdd(s, si)
 		}
-		r := share.BigInt2PrivateKey(dh.signMessage.R.X)
-		_, verifyResult := verify(s, r, dh.signMessage.LocalSignature.Y, dh.signMessage.LocalSignature.M)
+		_, verifyResult := verify(s, dh.signMessage.R, dh.signMessage.LocalSignature.Y, dh.signMessage.LocalSignature.M)
 		if !verifyResult {
 			dh.notify(nil, errors.New("invilad signature"))
 		} else {

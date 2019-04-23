@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strings"
 
@@ -38,7 +39,7 @@ type dispatchServiceBackend interface {
 	/*
 		发送http请求给nonce-sever,调用/api/1/apply-nonce接口申请可用某个账号的可用nonce,合约调用之前使用
 	*/
-	applyNonceFromNonceServer(chainName string, priveKeyID common.Hash, reason string) (nonce uint64, err error)
+	applyNonceFromNonceServer(chainName string, priveKeyID common.Hash, reason string, amount *big.Int) (nonce uint64, err error)
 
 	/*
 		notaryService在部署合约之后调用,原则上除此和启动时,其余地方不能调用
@@ -214,7 +215,7 @@ func (ds *DispatchService) applyNonceFromNonceServerFake(chainName string, privK
 	nonce = applyNonceResponse.Nonce
 	return
 }
-func (ds *DispatchService) applyNonceFromNonceServer(chainName string, privKeyID common.Hash, reason string) (nonce uint64, err error) {
+func (ds *DispatchService) applyNonceFromNonceServer(chainName string, privKeyID common.Hash, reason string, amount *big.Int) (nonce uint64, err error) {
 	if debugpbft {
 		return ds.applyNonceFromNonceServerFake(chainName, privKeyID, reason)
 	}
@@ -223,7 +224,7 @@ func (ds *DispatchService) applyNonceFromNonceServer(chainName string, privKeyID
 	if err != nil {
 		return
 	}
-	return ps.newNonce(fmt.Sprintf("%s-%s", chainName, reason))
+	return ps.newNonce(fmt.Sprintf("%s-%s-%s", chainName, reason, amount))
 }
 
 func (ds *DispatchService) getPbftService(key string) (ps *PBFTService, err error) {
@@ -249,10 +250,10 @@ func (ds *DispatchService) getPbftService(key string) (ps *PBFTService, err erro
 	if ok {
 		return
 	}
-	log.Info(fmt.Sprintf("applyNonceFromNonceServer new pbft Service chainName=%s,keyID=%s",
+	log.Info(fmt.Sprintf("applyNonceFromNonceServer new pbft Service chainName=%s,privatekeyID=%s",
 		chainName, privKeyID.String(),
 	))
-	ps = NewPBFTService(key,
+	ps = NewPBFTService(key, chainName, privKeyID.String(),
 		ds.notaries,
 		ds.notaryService.notaryClient,
 		ds, ds.db)

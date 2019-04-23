@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"math/big"
 	"time"
 
 	"fmt"
@@ -296,7 +297,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 
 func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo, params ...string) (contractAddress common.Address, sessionID common.Hash, err error) {
 	// 0. 获取nonce
-	nonce, err := as.dispatchService.applyNonceFromNonceServer(c.GetChainName(), privateKeyInfo.Key, "deployContract")
+	nonce, err := as.dispatchService.applyNonceFromNonceServer(c.GetChainName(), privateKeyInfo.Key, "deployContract", big.NewInt(0))
 	if err != nil {
 		return
 	}

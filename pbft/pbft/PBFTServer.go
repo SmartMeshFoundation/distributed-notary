@@ -26,13 +26,18 @@ type PBFTAuxiliary interface {
 		对于以太坊来说,就很简单,就是op的hash值
 		对于比特币来说就是,分配出去的UTXO列表
 	*/
-	GetOpAuxiliary(op string, view int) string
+	GetOpAuxiliary(op string, view int) (string, error)
 	/*
-		VerifyAuxiliary 在集齐验证prepare消息后,验证op对应的auxiliary是否有效.
+		PrePareSeq 收到来自主节点的预选中某个Seq的消息,
+		需要记录下来防止重复使用
+	*/
+	PrepareSeq(view, seq int, op string, auxiliary string) error
+	/*
+		CommitSeq 在集齐验证prepare消息后,验证op对应的auxiliary是否有效.
 		对于以太坊来说,总是有效的
 		对于比特币来说,可能因为分配出去的utxo已经使用,金额不够等原因造成失败
 	*/
-	VerifyAuxiliary(view int, op string, auxiliary string) error
+	CommitSeq(view, seq int, op string, auxiliary string) error
 }
 
 /*
@@ -121,7 +126,11 @@ func (s *Server) handleRequestLeader(args *RequestArgs) error {
 			Message: *args,
 		}
 		if s.as != nil {
-			ppArgs.Digest = s.as.GetOpAuxiliary(args.Op, s.id)
+			var err error
+			ppArgs.Digest, err = s.as.GetOpAuxiliary(args.Op, s.id)
+			if err != nil {
+				return err
+			}
 		} else {
 			ppArgs.Digest = Digest(args.Op)
 		}
@@ -197,6 +206,10 @@ func (s *Server) PrePrepare(args PrePrepareArgs) error {
 		log.Info(fmt.Sprintf("%s ignore PrePrepare because changing args=%+v", s, args))
 		return nil
 	}
+	err := s.as.PrepareSeq(args.View, args.Seq, args.Message.Op, args.Digest)
+	if err != nil {
+		return err
+	}
 	s.stopTimer()
 	if s.view == args.View && s.h <= args.Seq && args.Seq < s.H {
 		log.Trace("%s[R/PrePrepare]:PrePrepareArgs:%+v", s, args)
@@ -245,10 +258,10 @@ func (s *Server) Prepare(args PrepareArgs) error {
 		ent.p = append(ent.p, &args)
 		if ent.pp != nil && !ent.sendCommit && s.prepared(ent) {
 			if s.as != nil {
-				err := s.as.VerifyAuxiliary(s.view, ent.pp.Message.Op, ent.pp.Digest)
+				err := s.as.CommitSeq(s.view, ent.pp.Seq, ent.pp.Message.Op, ent.pp.Digest)
 				if err != nil { //master节点有误,需要启动viewchange
 					go s.startViewChange()
-					log.Error(fmt.Sprintf("VerifyAuxiliary error %s", err))
+					log.Error(fmt.Sprintf("CommitSeq error %s", err))
 					return err
 				}
 			}
