@@ -50,11 +50,12 @@ func (s *mockServer) loop() {
 			time.Sleep(time.Duration(delay))
 			for i := 0; i <= s.f; i++ {
 				s.sender.SendMessage(newResponseMessage(&ResponseArgs{
-					View: 0,
-					Seq:  seq2,
-					Cid:  arg.ID,
-					Rid:  i,
-					Res:  arg.Op,
+					View:      0,
+					Seq:       seq2,
+					Cid:       arg.ID,
+					Rid:       i,
+					Res:       arg.Op,
+					Auxiliary: "",
 				}), arg.ID)
 			}
 

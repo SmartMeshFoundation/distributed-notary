@@ -206,10 +206,13 @@ func (s *Server) PrePrepare(args PrePrepareArgs) error {
 		log.Info(fmt.Sprintf("%s ignore PrePrepare because changing args=%+v", s, args))
 		return nil
 	}
-	err := s.as.PrepareSeq(args.View, args.Seq, args.Message.Op, args.Digest)
-	if err != nil {
-		return err
+	if s.as != nil {
+		err := s.as.PrepareSeq(args.View, args.Seq, args.Message.Op, args.Digest)
+		if err != nil {
+			return err
+		}
 	}
+
 	s.stopTimer()
 	if s.view == args.View && s.h <= args.Seq && args.Seq < s.H {
 		log.Trace("%s[R/PrePrepare]:PrePrepareArgs:%+v", s, args)
@@ -360,11 +363,12 @@ func (s *Server) reply(ent *entry) {
 func (s *Server) replyByPendingTask(pt pendingTask) {
 	if pt.ent.r == nil {
 		rArgs := ResponseArgs{
-			View: pt.args.View,
-			Seq:  pt.seq, //集体序号
-			Cid:  pt.ent.pp.Message.ID,
-			Rid:  s.id,
-			Res:  pt.ent.pp.Message.Op,
+			View:      pt.args.View,
+			Seq:       pt.seq, //集体序号
+			Cid:       pt.ent.pp.Message.ID,
+			Rid:       s.id,
+			Res:       pt.ent.pp.Message.Op,
+			Auxiliary: pt.ent.pp.Digest,
 		}
 		pt.ent.r = &rArgs
 	}
