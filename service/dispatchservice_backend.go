@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/SmartMeshFoundation/distributed-notary/pbft/pbft"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/cmd/nonce_server/nonceapi"
@@ -40,6 +42,10 @@ type dispatchServiceBackend interface {
 		发送http请求给nonce-sever,调用/api/1/apply-nonce接口申请可用某个账号的可用nonce,合约调用之前使用
 	*/
 	applyNonceFromNonceServer(chainName string, priveKeyID common.Hash, reason string, amount *big.Int) (nonce uint64, err error)
+	/*
+		让PBFT协商分配合适的UTXO用于prepareLockout
+	*/
+	applyUTXO(chainName string, priveKeyID common.Hash, reason string, amount *big.Int) (utxos string, err error)
 
 	/*
 		notaryService在部署合约之后调用,原则上除此和启动时,其余地方不能调用
@@ -220,14 +226,32 @@ func (ds *DispatchService) applyNonceFromNonceServer(chainName string, privKeyID
 		return ds.applyNonceFromNonceServerFake(chainName, privKeyID, reason)
 	}
 	key := fmt.Sprintf("%s-%s", chainName, privKeyID.String())
-	ps, err := ds.getPbftService(key)
+	ps, err := ds.getPbftService(key, pbftTypeEthereum)
 	if err != nil {
 		return
 	}
-	return ps.newNonce(fmt.Sprintf("%s-%s-%s", chainName, reason, amount))
+	return ps.(*PBFTService).newNonce(fmt.Sprintf("%s-%s-%s", chainName, reason, amount))
 }
-
-func (ds *DispatchService) getPbftService(key string) (ps *PBFTService, err error) {
+func (ds *DispatchService) applyUTXO(chainName string, priveKeyID common.Hash, reason string, amount *big.Int) (utxos string, err error) {
+	key := fmt.Sprintf("%s-%s", chainName, priveKeyID.String())
+	ps, err := ds.getPbftService(key, pbftTypeBTC)
+	if err != nil {
+		return
+	}
+	return ps.(*btcPBFTService).newUTXO(fmt.Sprintf("%s-%s-%s", chainName, reason, amount))
+}
+func (ds *DispatchService) getPbftService(key string, typ pbftType) (ps pbft.PBFTAuxiliary, err error) {
+	ds.lock.Lock()
+	defer ds.lock.Unlock()
+	ps, ok := ds.pbftServices[key]
+	if ok {
+		return
+	}
+	/*
+		需要创建pbftservice的时候需要验证
+		chain存在
+		privkey存在
+	*/
 	ss := strings.Split(key, "-")
 	if len(ss) != 2 {
 		err = fmt.Errorf("key err =%s", key)
@@ -244,19 +268,21 @@ func (ds *DispatchService) getPbftService(key string) (ps *PBFTService, err erro
 	if err != nil {
 		return
 	}
-	ds.lock.Lock()
-	defer ds.lock.Unlock()
-	ps, ok := ds.pbftServices[key]
-	if ok {
-		return
-	}
 	log.Info(fmt.Sprintf("applyNonceFromNonceServer new pbft Service chainName=%s,privatekeyID=%s",
 		chainName, privKeyID.String(),
 	))
-	ps = NewPBFTService(key, chainName, privKeyID.String(),
+
+	ps2 := NewPBFTService(key, chainName, privKeyID.String(),
 		ds.notaries,
 		ds.notaryService.notaryClient,
 		ds, ds.db)
-	ds.pbftServices[key] = ps
+	if typ == pbftTypeEthereum {
+		ds.pbftServices[key] = ps2
+	} else {
+		ps3 := &btcPBFTService{ps2}
+		ds.pbftServices[key] = ps3
+
+	}
+	ps = ds.pbftServices[key]
 	return
 }

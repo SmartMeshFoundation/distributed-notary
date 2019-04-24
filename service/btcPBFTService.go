@@ -6,12 +6,16 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/SmartMeshFoundation/distributed-notary/pbft/pbft"
+	utils "github.com/nkbai/goutils"
+	"github.com/nkbai/log"
+
 	"github.com/btcsuite/btcutil"
 	"github.com/kataras/go-errors"
 )
 
 type btcPBFTService struct {
-	PBFTService
+	*PBFTService
 }
 
 func (ps *btcPBFTService) UpdateSeq(seq int, op, auxiliary string) {
@@ -49,7 +53,11 @@ func (ps *btcPBFTService) GetOpAuxiliary(op string, view int) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	//auxiliary string格式为digest-outpoint1-outpoint2
 	bf := new(bytes.Buffer)
+	digest := pbft.Digest(op)
+	bf.WriteString(digest)
+	bf.WriteByte(byte('-'))
 	for _, o := range os {
 		_, err = bf.WriteString(o.TxHashStr)
 		err = bf.WriteByte(byte('-'))
@@ -75,7 +83,13 @@ func (ps *btcPBFTService) PrepareSeq(view, seq int, op string, auxiliary string)
 		return errors.New("auxiliary is empty")
 	}
 	ss := strings.Split(auxiliary, "-")
-	for _, tx := range ss {
+	if len(ss) <= 1 {
+		return errors.New("auxiliary format is digest-outpoint1-outpoint2")
+	}
+	for i, tx := range ss {
+		if i == 0 {
+			continue
+		}
 		err := ps.db.PreSelectUTXO(tx, view, op)
 		if err != nil {
 			return err
@@ -94,11 +108,42 @@ func (ps *btcPBFTService) CommitSeq(view, seq int, op string, auxiliary string) 
 		return errors.New("auxiliary is empty")
 	}
 	ss := strings.Split(auxiliary, "-")
-	for _, tx := range ss {
+	for i, tx := range ss {
+		if i == 0 {
+			continue
+		}
 		err := ps.db.CommitUTXO(tx, view, op)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (ps *btcPBFTService) newUTXO(op string) (utxos string, err error) {
+	log.Trace(fmt.Sprintf("ps[%s] new nonce for %s", ps.key, op))
+	ps.lock.Lock()
+	c, ok := ps.nonces[op]
+	if ok {
+		ps.lock.Unlock()
+		err = fmt.Errorf("already exist req %s", op)
+		return
+	}
+	c = make(chan pbft.OpResult, 1)
+	ps.nonces[op] = c
+	ps.lock.Unlock()
+	ps.client.Start(op)
+	r := <-c
+	log.Trace(fmt.Sprintf("ps[%s] newUTXO return %s", ps.key, utils.StringInterface(r, 3)))
+	if r.Error != nil {
+		err = r.Error
+		return
+	}
+	ss := strings.Split(r.Auxiliary, "-")
+	if len(ss) <= 1 {
+		err = errors.New("no valid utxo on reply,it's impossible")
+		return
+	}
+	utxos = strings.Join(ss[1:], "-")
+	return
 }

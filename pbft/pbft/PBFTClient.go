@@ -27,9 +27,10 @@ type RequestReply struct {
 	Err string
 }
 type OpResult struct {
-	Cmd   string
-	Seq   int
-	Error error
+	Cmd       string
+	Auxiliary string
+	Seq       int
+	Error     error
 }
 type cEntry struct {
 	apply bool //是否已经收到足够的reply
@@ -75,7 +76,7 @@ func (c *Client) call(r interface{}) {
 	case *StartMessage:
 		err = c.startInternal(r2)
 		if err != nil {
-			c.notifyResult(r2.Arg, -1, err)
+			c.notifyResult(r2.Arg, "", -1, err)
 		}
 	case *ResponseMessage:
 		err = c.Response(*r2.Arg)
@@ -124,21 +125,23 @@ func (c *Client) Start(cmd string) {
 
 // ResponseArgs is the argument for  handler  Response
 type ResponseArgs struct {
-	View int    //处理此次的cmdview是多少
-	Seq  int    //server协商出来,在所有client请求中的排序结果
-	Cid  int    // Client id
-	Rid  int    // Replica id
-	Res  string //op request中的op
+	View      int    //处理此次的cmdview是多少
+	Seq       int    //server协商出来,在所有client请求中的排序结果
+	Cid       int    // Client id
+	Rid       int    // Replica id
+	Res       string //op request中的op
+	Auxiliary string //对于以太坊系列来说可有可无,对于btc系列来说包含的是可用outpoint
 	// Signature
 }
 
-func (c *Client) notifyResult(cmd string, seq int, err error) {
+func (c *Client) notifyResult(cmd, auxiliary string, seq int, err error) {
 	log.Trace(fmt.Sprintf("%s cmd=%s,SeqVal=%d complete", c, cmd, seq))
 	select {
 	case c.Apply <- OpResult{
-		Cmd:   cmd,
-		Seq:   seq,
-		Error: err,
+		Cmd:       cmd,
+		Auxiliary: auxiliary,
+		Seq:       seq,
+		Error:     err,
 	}:
 	default:
 		log.Trace("notify result cmd:%s,SeqVal:%d,err=%v fail", cmd, seq, err)
@@ -179,7 +182,7 @@ func (c *Client) Response(args ResponseArgs) (err error) {
 						panic("must exist")
 					}
 					c.updateQueue(args.Seq)
-					c.notifyResult(args.Res, args.Seq, nil)
+					c.notifyResult(args.Res, args.Auxiliary, args.Seq, nil)
 					break
 				}
 			}

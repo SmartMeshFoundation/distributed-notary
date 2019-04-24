@@ -12,6 +12,19 @@ import (
 	"github.com/nkbai/log"
 )
 
+type pbftType int
+
+const (
+	/*
+		用于创建协商nonce的PBFT
+	*/
+	pbftTypeEthereum = iota
+	/*
+		用于创建协商btc prepareLockout的Cutxo
+	*/
+	pbftTypeBTC
+)
+
 /*
 PBFTService 负责节点之间的nonce协商
 */

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/SmartMeshFoundation/distributed-notary/pbft/pbft"
+
 	"github.com/SmartMeshFoundation/distributed-notary/accounts"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
@@ -55,7 +57,7 @@ type DispatchService struct {
 	adminService                     *AdminService
 	notaryService                    *NotaryService
 	scToken2CrossChainServiceMap     map[common.Address]*CrossChainService
-	pbftServices                     map[string]*PBFTService //私钥id->PBFTService
+	pbftServices                     map[string]pbft.PBFTAuxiliary //私钥id->PBFTService
 	scToken2CrossChainServiceMapLock sync.Mutex
 	notaries                         []*models.NotaryInfo
 	lock                             sync.Mutex
