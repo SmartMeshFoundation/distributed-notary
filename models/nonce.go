@@ -39,7 +39,7 @@ func (db *DB) GetNonce(key string) (nonce int, err error) {
 	return n.Nonce, nil
 }
 
-//记录 为每一个op分配的nonce,主要用于以太坊
+//OpNonce 记录 为每一个op分配的nonce,主要用于以太坊
 type OpNonce struct {
 	Key     string `gorm:"primary_key"`
 	Nonce   int    //为op分配的Nonce

@@ -271,9 +271,9 @@ func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int, privateKeyID c
 func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	_, ok := ns.getNotaryInfoByAddress(req.GetSigner())
+	_, ok := ns.getNotaryInfoByAddress(req.GetSignerETHAddress())
 	if !ok {
-		log.Warn(SessionLogMsg(req.GetSessionID(), "unknown notary %s, maybe attack", req.GetSigner().String()))
+		log.Warn(SessionLogMsg(req.GetSessionID(), "unknown notary %s, maybe attack", req.GetSignerETHAddress().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -304,7 +304,7 @@ func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
 	dh := mecdsa.NewDSMHandler(ns.db, ns.self, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
 	// 6. 保存dh,这里不会重复
 	ns.dsmHandlerMap.Store(sessionID, dh)
-	log.Trace(SessionLogMsg(req.GetSessionID(), "accept DSMAsk from %s", utils.APex(req.GetSigner())))
+	log.Trace(SessionLogMsg(req.GetSessionID(), "accept DSMAsk from %s", utils.APex(req.GetSignerETHAddress())))
 	req.WriteSuccessResponse(nil)
 	return
 }
@@ -315,9 +315,9 @@ func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
 func (ns *NotaryService) onDSMNotifySelectionRequest(req *notaryapi.DSMNotifySelectionRequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	_, ok := ns.getNotaryInfoByAddress(req.GetSigner())
+	_, ok := ns.getNotaryInfoByAddress(req.GetSignerETHAddress())
 	if !ok {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSigner().String()))
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSignerETHAddress().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}

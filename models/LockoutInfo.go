@@ -5,7 +5,6 @@ import (
 	"math/big"
 
 	"github.com/asdine/storm"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -25,25 +24,25 @@ LockoutInfo :
 该结构体记录一次lockout的所有数据及状态
 */
 type LockoutInfo struct {
-	MCChainName             string          `json:"mc_chain_name"`               // 链名
-	SecretHash              common.Hash     `json:"secret_hash"`                 // 密码hash,db唯一ID
-	Secret                  common.Hash     `json:"secret"`                      // 密码
-	MCUserAddressHex        string          `json:"mc_user_address_hex"`         // 用户主链地址,格式根据链不同不同
-	SCUserAddress           common.Address  `json:"sc_user_address"`             // 用户侧链地址,即在Spectrum上的地址
-	SCTokenAddress          common.Address  `json:"sc_token_address"`            // SCToken
-	Amount                  *big.Int        `json:"amount"`                      // 金额
-	MCExpiration            uint64          `json:"mc_expiration"`               // 主链过期块
-	SCExpiration            uint64          `json:"sc_expiration"`               // 侧链过期块
-	MCLockStatus            LockStatus      `json:"mc_lock_status"`              // 主链锁状态
-	SCLockStatus            LockStatus      `json:"sc_lock_status"`              // 侧链锁状态
-	Data                    []byte          `json:"data"`                        // 附加信息
-	NotaryIDInCharge        int             `json:"notary_id_in_charge"`         // 负责公证人ID,如果没参与lockout签名的公证人,在整个LockoutInfo生命周期中,该值都为UnknownNotaryIdInCharge
-	StartTime               int64           `json:"start_time"`                  // 开始时间,即MCPrepareLockout事件发生的时间
-	StartSCBlockNumber      uint64          `json:"start_sc_block_number"`       // 开始时侧链块数
-	EndTime                 int64           `json:"end_time"`                    // 结束时间,即MCLockout事件发生的时间
-	EndSCBlockNumber        uint64          `json:"end_sc_block_number"`         // 结束时侧链块数
-	BTCPrepareLockoutTXHash *chainhash.Hash `json:"btc_prepare_lockout_tx_hash"` // 比特币锁定的utxo的txhash
-	BTCPrepareLockoutVout   uint32          `json:"btc_prepare_lockout_vout"`    // 比特币锁定的utxo的index
+	MCChainName                string         `json:"mc_chain_name"`                   // 链名
+	SecretHash                 common.Hash    `json:"secret_hash"`                     // 密码hash,db唯一ID
+	Secret                     common.Hash    `json:"secret"`                          // 密码
+	MCUserAddressHex           string         `json:"mc_user_address_hex"`             // 用户主链地址,格式根据链不同不同
+	SCUserAddress              common.Address `json:"sc_user_address"`                 // 用户侧链地址,即在Spectrum上的地址
+	SCTokenAddress             common.Address `json:"sc_token_address"`                // SCToken
+	Amount                     *big.Int       `json:"amount"`                          // 金额
+	MCExpiration               uint64         `json:"mc_expiration"`                   // 主链过期块
+	SCExpiration               uint64         `json:"sc_expiration"`                   // 侧链过期块
+	MCLockStatus               LockStatus     `json:"mc_lock_status"`                  // 主链锁状态
+	SCLockStatus               LockStatus     `json:"sc_lock_status"`                  // 侧链锁状态
+	Data                       []byte         `json:"data"`                            // 附加信息
+	NotaryIDInCharge           int            `json:"notary_id_in_charge"`             // 负责公证人ID,如果没参与lockout签名的公证人,在整个LockoutInfo生命周期中,该值都为UnknownNotaryIdInCharge
+	StartTime                  int64          `json:"start_time"`                      // 开始时间,即MCPrepareLockout事件发生的时间
+	StartSCBlockNumber         uint64         `json:"start_sc_block_number"`           // 开始时侧链块数
+	EndTime                    int64          `json:"end_time"`                        // 结束时间,即MCLockout事件发生的时间
+	EndSCBlockNumber           uint64         `json:"end_sc_block_number"`             // 结束时侧链块数
+	BTCPrepareLockoutTXHashHex string         `json:"btc_prepare_lockout_tx_hash_hex"` // 比特币锁定的utxo的txhash
+	BTCPrepareLockoutVout      uint32         `json:"btc_prepare_lockout_vout"`        // 比特币锁定的utxo的index
 }
 
 /*
@@ -63,51 +62,49 @@ func (l *LockoutInfo) IsEnd() bool {
 }
 
 type lockoutInfoModel struct {
-	MCChainName             string
-	SecretHash              []byte `gorm:"primary_key"`
-	Secret                  []byte
-	MCUserAddressHex        string
-	SCUserAddress           []byte
-	SCTokenAddress          []byte
-	Amount                  []byte
-	MCExpiration            uint64
-	SCExpiration            uint64
-	MCLockStatus            int
-	SCLockStatus            int
-	Data                    []byte
-	NotaryIDInCharge        int
-	StartTime               int64
-	StartMCBlockNumber      uint64
-	EndTime                 int64
-	EndMCBlockNumber        uint64
-	BTCPrepareLockoutTXHash []byte // 比特币锁定的utxo的txhash
-	BTCPrepareLockoutVout   uint32 // 比特币锁定的utxo的index
+	MCChainName                string
+	SecretHash                 []byte `gorm:"primary_key"`
+	Secret                     []byte
+	MCUserAddressHex           string
+	SCUserAddress              []byte
+	SCTokenAddress             []byte
+	Amount                     []byte
+	MCExpiration               uint64
+	SCExpiration               uint64
+	MCLockStatus               int
+	SCLockStatus               int
+	Data                       []byte
+	NotaryIDInCharge           int
+	StartTime                  int64
+	StartMCBlockNumber         uint64
+	EndTime                    int64
+	EndMCBlockNumber           uint64
+	BTCPrepareLockoutTXHashHex string // 比特币锁定的utxo的txhash
+	BTCPrepareLockoutVout      uint32 // 比特币锁定的utxo的index
 }
 
 func (lom *lockoutInfoModel) toLockoutInfo() *LockoutInfo {
 	amount := new(big.Int)
 	amount.SetBytes(lom.Amount)
-	btcTxHash := chainhash.Hash{}
-	btcTxHash.SetBytes(lom.BTCPrepareLockoutTXHash)
 	return &LockoutInfo{
-		SecretHash:              common.BytesToHash(lom.SecretHash),
-		Secret:                  common.BytesToHash(lom.Secret),
-		MCUserAddressHex:        lom.MCUserAddressHex,
-		SCUserAddress:           common.BytesToAddress(lom.SCUserAddress),
-		SCTokenAddress:          common.BytesToAddress(lom.SCTokenAddress),
-		Amount:                  amount,
-		MCExpiration:            lom.MCExpiration,
-		SCExpiration:            lom.SCExpiration,
-		MCLockStatus:            LockStatus(lom.MCLockStatus),
-		SCLockStatus:            LockStatus(lom.SCLockStatus),
-		Data:                    lom.Data,
-		NotaryIDInCharge:        lom.NotaryIDInCharge,
-		StartTime:               lom.StartTime,
-		StartSCBlockNumber:      lom.StartMCBlockNumber,
-		EndTime:                 lom.EndTime,
-		EndSCBlockNumber:        lom.EndMCBlockNumber,
-		BTCPrepareLockoutTXHash: &btcTxHash,
-		BTCPrepareLockoutVout:   lom.BTCPrepareLockoutVout,
+		SecretHash:                 common.BytesToHash(lom.SecretHash),
+		Secret:                     common.BytesToHash(lom.Secret),
+		MCUserAddressHex:           lom.MCUserAddressHex,
+		SCUserAddress:              common.BytesToAddress(lom.SCUserAddress),
+		SCTokenAddress:             common.BytesToAddress(lom.SCTokenAddress),
+		Amount:                     amount,
+		MCExpiration:               lom.MCExpiration,
+		SCExpiration:               lom.SCExpiration,
+		MCLockStatus:               LockStatus(lom.MCLockStatus),
+		SCLockStatus:               LockStatus(lom.SCLockStatus),
+		Data:                       lom.Data,
+		NotaryIDInCharge:           lom.NotaryIDInCharge,
+		StartTime:                  lom.StartTime,
+		StartSCBlockNumber:         lom.StartMCBlockNumber,
+		EndTime:                    lom.EndTime,
+		EndSCBlockNumber:           lom.EndMCBlockNumber,
+		BTCPrepareLockoutTXHashHex: lom.BTCPrepareLockoutTXHashHex,
+		BTCPrepareLockoutVout:      lom.BTCPrepareLockoutVout,
 	}
 }
 func (lom *lockoutInfoModel) fromLockoutInfo(l *LockoutInfo) *lockoutInfoModel {
@@ -127,7 +124,7 @@ func (lom *lockoutInfoModel) fromLockoutInfo(l *LockoutInfo) *lockoutInfoModel {
 	lom.StartMCBlockNumber = l.StartSCBlockNumber
 	lom.EndTime = l.EndTime
 	lom.EndMCBlockNumber = l.EndSCBlockNumber
-	lom.BTCPrepareLockoutTXHash = l.BTCPrepareLockoutTXHash.CloneBytes()
+	lom.BTCPrepareLockoutTXHashHex = l.BTCPrepareLockoutTXHashHex
 	lom.BTCPrepareLockoutVout = l.BTCPrepareLockoutVout
 	return lom
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
@@ -48,7 +49,12 @@ func NewBitcoinLockinTXData(bs *bitcoin.BTCService, lockinInfo *models.LockinInf
 	// 4. 构造tx
 	tx := wire.NewMsgTx(wire.TxVersion)
 	// txIn
-	prevOut := wire.NewOutPoint(lockinInfo.BTCPrepareLockinTXHash, lockinInfo.BTCPrepareLockinVout)
+	txHash, err := chainhash.NewHashFromStr(lockinInfo.BTCPrepareLockinTXHashHex)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+	prevOut := wire.NewOutPoint(txHash, lockinInfo.BTCPrepareLockinVout)
 	txIn := wire.NewTxIn(prevOut, nil, nil)
 	tx.AddTxIn(txIn)
 	// txOut

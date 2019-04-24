@@ -62,13 +62,13 @@ func scPrepareLockIn4Btc(mcName string) {
 		BaseReq:              api.NewBaseReq(userapi.APIUserNameSCPrepareLockin),
 		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenInfo.SCToken),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(common.HexToAddress(GlobalConfig.SmcUserAddress)),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		SecretHash:           common.HexToHash(GlobalConfig.RunTime.SecretHash),
 		MCUserAddress:        GlobalConfig.RunTime.BtcUserAddressBytes,
-		SCUserAddress:        common.HexToAddress(GlobalConfig.SmcUserAddress),
-		MCTXHash:             mcTXHash,
-		MCExpiration:         GlobalConfig.RunTime.BtcExpiration,
-		MCLockedAmount:       GlobalConfig.RunTime.BtcAmount,
+		//SCUserAddress:        common.HexToAddress(GlobalConfig.SmcUserAddress),
+		MCTXHash:       mcTXHash,
+		MCExpiration:   GlobalConfig.RunTime.BtcExpiration,
+		MCLockedAmount: GlobalConfig.RunTime.BtcAmount,
 	}
 	privateKey, err := getPrivateKey(GlobalConfig.SmcUserAddress, GlobalConfig.SmcUserPassword)
 	if err != nil {
@@ -102,10 +102,10 @@ func scPrepareLockIn4Eth(mcName string) {
 		BaseReq:              api.NewBaseReq(userapi.APIUserNameSCPrepareLockin),
 		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenInfo.SCToken),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(common.HexToAddress(GlobalConfig.SmcUserAddress)),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		SecretHash:           common.HexToHash(GlobalConfig.RunTime.SecretHash),
 		MCUserAddress:        common.HexToAddress(GlobalConfig.EthUserAddress).Bytes(),
-		SCUserAddress:        common.HexToAddress(GlobalConfig.SmcUserAddress),
+		//SCUserAddress:        common.HexToAddress(GlobalConfig.SmcUserAddress),
 	}
 	privateKey, err := getPrivateKey(GlobalConfig.SmcUserAddress, GlobalConfig.SmcUserPassword)
 	if err != nil {

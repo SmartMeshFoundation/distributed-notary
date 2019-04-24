@@ -20,7 +20,7 @@ func NewKeyGenerationPhase1MessageRequest(sessionID common.Hash, self *models.No
 	return &KeyGenerationPhase1MessageRequest{
 		BaseReq:              api.NewBaseReq(APINamePKNPhase1PubKeyProof),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		Msg: msg,
 	}
@@ -40,7 +40,7 @@ func NewKeyGenerationPhase2MessageRequest(sessionID common.Hash, self *models.No
 	return &KeyGenerationPhase2MessageRequest{
 		BaseReq:              api.NewBaseReq(APINamePKNPhase2PaillierKeyProof),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		Msg: msg,
 	}
@@ -60,7 +60,7 @@ func NewKeyGenerationPhase3MessageRequest(sessionID common.Hash, self *models.No
 	return &KeyGenerationPhase3MessageRequest{
 		BaseReq:              api.NewBaseReq(APINamePKNPhase3SecretShare),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		Msg: msg,
 	}
@@ -80,7 +80,7 @@ func NewKeyGenerationPhase4MessageRequest(sessionID common.Hash, self *models.No
 	return &KeyGenerationPhase4MessageRequest{
 		BaseReq:              api.NewBaseReq(APINamePKNPhase4PubKeyProof),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		Msg: msg,
 	}

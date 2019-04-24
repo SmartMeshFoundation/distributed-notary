@@ -24,7 +24,7 @@ func NewDSMAskRequest(sessionID common.Hash, self *models.NotaryInfo, privateKey
 	return &DSMAskRequest{
 		BaseReq:                 api.NewBaseReq(APINameDSMAsk),
 		BaseReqWithSessionID:    api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature:    api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature:    api.NewBaseReqWithSignature(),
 		BaseReqWithResponse:     api.NewBaseReqWithResponse(),
 		PrivateKeyID:            privateKeyID,
 		MsgToSignTransportBytes: msgToSign.GetTransportBytes(),
@@ -46,7 +46,7 @@ func NewDSMNotifySelectionRequest(sessionID common.Hash, self *models.NotaryInfo
 	return &DSMNotifySelectionRequest{
 		BaseReq:              api.NewBaseReq(APINameDSMNotifySelection),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		NotaryIDs:            notaryIDs,
 	}
@@ -67,7 +67,7 @@ func NewDSMPhase1BroadcastRequest(sessionID common.Hash, self *models.NotaryInfo
 	return &DSMPhase1BroadcastRequest{
 		BaseReq:              api.NewBaseReq(APINameDSMPhase1Broadcast),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		PrivateKeyID: privateKeyID,
 		Msg:          msg,
@@ -89,7 +89,7 @@ func NewDSMPhase2MessageARequest(sessionID common.Hash, self *models.NotaryInfo,
 	return &DSMPhase2MessageARequest{
 		BaseReq:              api.NewBaseReq(APINameDSMPhase2MessageA),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		PrivateKeyID:         privateKeyID,
 		Msg:                  msg,
@@ -111,7 +111,7 @@ func NewDSMPhase3DeltaIRequest(sessionID common.Hash, self *models.NotaryInfo, p
 	return &DSMPhase3DeltaIRequest{
 		BaseReq:              api.NewBaseReq(APINameDSMPhase3DeltaI),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		PrivateKeyID: privateKeyID,
 		Msg:          msg,
@@ -133,7 +133,7 @@ func NewDSMPhase5A5BProofRequest(sessionID common.Hash, self *models.NotaryInfo,
 	return &DSMPhase5A5BProofRequest{
 		BaseReq:              api.NewBaseReq(APINameDSMPhase5A5BProof),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		PrivateKeyID: privateKeyID,
 		Msg:          msg,
@@ -155,7 +155,7 @@ func NewDSMPhase5CProofRequest(sessionID common.Hash, self *models.NotaryInfo, p
 	return &DSMPhase5CProofRequest{
 		BaseReq:              api.NewBaseReq(APINameDSMPhase5CProof),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		PrivateKeyID: privateKeyID,
 		Msg:          msg,
@@ -177,7 +177,7 @@ func NewDSMPhase6ReceiveSIRequest(sessionID common.Hash, self *models.NotaryInfo
 	return &DSMPhase6ReceiveSIRequest{
 		BaseReq:              api.NewBaseReq(APINameDSMPhase6ReceiveSI),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		PrivateKeyID: privateKeyID,
 		Msg:          msg,

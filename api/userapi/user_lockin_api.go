@@ -41,9 +41,9 @@ type SCPrepareLockinRequest struct {
 	api.BaseReqWithResponse
 	api.BaseReqWithSCToken
 	api.BaseReqWithSignature
-	SecretHash     common.Hash    `json:"secret_hash"`
-	MCUserAddress  []byte         `json:"mc_user_address"`         // 主链PrepareLockin使用的地址,校验用
-	SCUserAddress  common.Address `json:"sc_user_address"`         // 侧链收款地址,即验证签名
+	SecretHash    common.Hash `json:"secret_hash"`
+	MCUserAddress []byte      `json:"mc_user_address"` // 主链PrepareLockin使用的地址,校验用
+	//SCUserAddress  common.Address `json:"sc_user_address"`         // 侧链收款地址,即验证签名
 	MCTXHash       chainhash.Hash `json:"mc_tx_hash,omitempty"`    // 当主链为BTC的时候使用
 	MCExpiration   *big.Int       `json:"mc_expiration,omitempty"` // 当主链为BTC的时候使用
 	MCLockedAmount btcutil.Amount `json:"mc_locked_amount"`        // 当主链为BTC的时候使用
@@ -61,10 +61,10 @@ func (ua *UserAPI) scPrepareLockin(w rest.ResponseWriter, r *rest.Request) {
 		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
 		return
 	}
-	if req.SCUserAddress == utils.EmptyAddress {
-		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
-		return
-	}
+	//if req.SCUserAddress == utils.EmptyAddress {
+	//	api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
+	//	return
+	//}
 	if req.SecretHash == utils.EmptyHash {
 		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
 		return

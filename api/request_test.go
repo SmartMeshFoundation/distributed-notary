@@ -10,7 +10,6 @@ import (
 	"github.com/SmartMeshFoundation/Spectrum/common"
 	"github.com/SmartMeshFoundation/distributed-notary/testcode"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +26,7 @@ func TestRequest(t *testing.T) {
 	tr := testR{
 		BaseReq:              NewBaseReq("APIName-testR"),
 		BaseReqWithResponse:  NewBaseReqWithResponse(),
-		BaseReqWithSignature: NewBaseReqWithSignature(utils.NewRandomAddress()),
+		BaseReqWithSignature: NewBaseReqWithSignature(),
 		BaseReqWithSCToken:   NewBaseReqWithSCToken(utils.NewRandomAddress()),
 		BaseReqWithSessionID: NewBaseReqWithSessionID(utils.NewRandomHash(), 1),
 	}
@@ -97,9 +96,8 @@ func TestBaseReqWithSignature(t *testing.T) {
 
 	// 1. 构造request
 	privateKey := testcode.GetTestPrivateKey1()
-	sender := crypto.PubkeyToAddress(privateKey.PublicKey)
 	req := &TestRequest{
-		BaseReqWithSignature: NewBaseReqWithSignature(sender),
+		BaseReqWithSignature: NewBaseReqWithSignature(),
 	}
 	fmt.Println("Before sign : \n", utils.ToJSONStringFormat(req))
 

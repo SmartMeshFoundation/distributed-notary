@@ -277,8 +277,8 @@ func (na *NotaryAPI) parseNotaryRequest(content []byte) (req api.Req, err error)
 			err = err2
 			return
 		}
-		if sender.GetAddress() != r1.GetSigner() {
-			err = fmt.Errorf("signer address not euqal with msg.sender : signer=%s sender=%s", sender.AddressStr, r1.GetSigner().String())
+		if sender.GetAddress() != r1.GetSignerETHAddress() {
+			err = fmt.Errorf("signer address not euqal with msg.sender : signer=%s sender=%s", sender.AddressStr, r1.GetSignerETHAddress().String())
 			return
 		}
 	}

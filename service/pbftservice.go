@@ -8,6 +8,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/pbft/pbft"
+	"github.com/ethereum/go-ethereum/crypto"
 	utils "github.com/nkbai/goutils"
 	"github.com/nkbai/log"
 )
@@ -70,12 +71,14 @@ func NewPBFTService(serviceKey, chain, privKeyID string, allNotaries []*models.N
 func (ps *PBFTService) SendMessage(msg interface{}, target int) {
 	req := &notaryapi.PBFTMessage{
 		BaseReq:              api.NewBaseReq(notaryapi.APINamePBFTMessage),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(ps.dispatchService.getSelfNotaryInfo().GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		Key:                  ps.key,
 		Msg:                  pbft.EncodeMsg(msg),
 	}
 	//log.Trace(fmt.Sprintf("ps sendMessage %v,to %d", msg, target))
 	if target == ps.dispatchService.getSelfNotaryInfo().ID {
+		pubKey := ps.dispatchService.getSelfPrivateKey().PublicKey
+		req.Signer = crypto.CompressPubkey(&pubKey)
 		ps.OnRequest(req)
 	} else {
 		ps.notaryClient.SendWSReqToNotary(req, target)
@@ -86,9 +89,9 @@ func (ps *PBFTService) SendMessage(msg interface{}, target int) {
 func (ps *PBFTService) OnRequest(req *notaryapi.PBFTMessage) {
 	var n *models.NotaryInfo
 
-	if req.GetSigner() != ps.dispatchService.getSelfNotaryInfo().GetAddress() {
+	if req.GetSignerETHAddress() != ps.dispatchService.getSelfNotaryInfo().GetAddress() {
 		var ok bool
-		n, ok = ps.dispatchService.getNotaryService().getNotaryInfoByAddress(req.GetSigner())
+		n, ok = ps.dispatchService.getNotaryService().getNotaryInfoByAddress(req.GetSignerETHAddress())
 		if !ok {
 			log.Error(fmt.Sprintf("receive req,but signer is unkown,req=%s", utils.StringInterface(req, 3)))
 			return

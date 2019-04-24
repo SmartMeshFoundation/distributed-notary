@@ -473,11 +473,11 @@ func (cs *CrossChainService) onSCPrepareLockout(event smcevents.PrepareLockoutEv
 		MCLockStatus:     models.LockStatusNone,
 		SCLockStatus:     models.LockStatusLock,
 		//Data:               data,
-		NotaryIDInCharge:        models.UnknownNotaryIDInCharge,
-		StartTime:               event.Time.Unix(),
-		StartSCBlockNumber:      event.BlockNumber,
-		BTCPrepareLockoutTXHash: &chainhash.Hash{},
-		BTCPrepareLockoutVout:   0,
+		NotaryIDInCharge:           models.UnknownNotaryIDInCharge,
+		StartTime:                  event.Time.Unix(),
+		StartSCBlockNumber:         event.BlockNumber,
+		BTCPrepareLockoutTXHashHex: "",
+		BTCPrepareLockoutVout:      0,
 	}
 	// 3. 调用handler处理
 	err = cs.lockoutHandler.registerLockout(lockoutInfo)

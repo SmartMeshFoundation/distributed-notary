@@ -157,13 +157,12 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 		// 4 计算scExpiration
 		scExpiration := cs.scLastedBlockNumber + (mcExpiration - btcPrepareLockinInfo.BlockNumber - 5*params.ForkConfirmNumber - 1)
 		// 5. 构造LockinInfo
-		txHash := btcPrepareLockinInfo.TxHash
 		lockinInfo = &models.LockinInfo{
 			MCChainName:      cs.meta.MCName,
 			SecretHash:       req.SecretHash,
 			Secret:           utils.EmptyHash,
 			MCUserAddressHex: mcUserAddress.String(),
-			SCUserAddress:    req.SCUserAddress,
+			SCUserAddress:    req.GetSignerETHAddress(),
 			SCTokenAddress:   cs.meta.SCToken,
 			Amount:           big.NewInt(int64(req.MCLockedAmount)),
 			MCExpiration:     mcExpiration,
@@ -171,11 +170,11 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 			MCLockStatus:     models.LockStatusLock,
 			SCLockStatus:     models.LockStatusNone,
 			//Data:               data,
-			NotaryIDInCharge:       models.UnknownNotaryIDInCharge,
-			StartTime:              btcPrepareLockinInfo.BlockNumberTime,
-			StartMCBlockNumber:     btcPrepareLockinInfo.BlockNumber,
-			BTCPrepareLockinTXHash: &txHash,
-			BTCPrepareLockinVout:   uint32(btcPrepareLockinInfo.Index),
+			NotaryIDInCharge:          models.UnknownNotaryIDInCharge,
+			StartTime:                 btcPrepareLockinInfo.BlockNumberTime,
+			StartMCBlockNumber:        btcPrepareLockinInfo.BlockNumber,
+			BTCPrepareLockinTXHashHex: btcPrepareLockinInfo.TxHash.String(),
+			BTCPrepareLockinVout:      uint32(btcPrepareLockinInfo.Index),
 		}
 		// 6. 调用handler处理
 		err2 = cs.lockinHandler.registerLockin(lockinInfo)
@@ -185,7 +184,7 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 		}
 		// 7. 注册需要监听的outpoint到BTCService
 		err2 = btcService.RegisterP2SHOutpoint(wire.OutPoint{
-			Hash:  *lockinInfo.BTCPrepareLockinTXHash,
+			Hash:  btcPrepareLockinInfo.TxHash,
 			Index: lockinInfo.BTCPrepareLockinVout,
 		}, lockScript, lockinInfo.SecretHash)
 		if err2 != nil {
@@ -240,7 +239,7 @@ func (cs *CrossChainService) onMCPrepareLockoutRequest(req *userapi.MCPrepareLoc
 		req.WriteErrorResponse(api.ErrorCodeException, fmt.Sprintf("callMCPrepareLockout err = %s", err.Error()))
 		return
 	}
-	// 4. 更新NotaryInCharge
+	// 4. 更新lockoutInfo
 	lockoutInfo.NotaryIDInCharge = cs.selfNotaryID
 	err = cs.lockoutHandler.updateLockout(lockoutInfo)
 	if err != nil {

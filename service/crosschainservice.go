@@ -78,7 +78,7 @@ func (cs *CrossChainService) getMCContractAddress() common.Address {
 // SCPLI 需使用分布式签名
 func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinRequest, privateKeyInfo *models.PrivateKeyInfo, localLockinInfo *models.LockinInfo) (err error) {
 	// 从本地获取调用合约的参数
-	scUserAddressHex := req.SCUserAddress.String()
+	scUserAddressHex := req.GetSignerETHAddress().String()
 	scExpiration := localLockinInfo.SCExpiration
 	secretHash := localLockinInfo.SecretHash
 	amount := localLockinInfo.Amount
@@ -205,12 +205,13 @@ func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutR
 	return
 }
 func (cs *CrossChainService) callBitcoinPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
+	// 1. 获取可用utxo
 	return
 }
 
 func (cs *CrossChainService) callEthereumPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
 	// 从本地获取调用合约的参数
-	mcUserAddressHex := req.MCUserAddress.String()
+	mcUserAddressHex := req.GetSignerETHAddress().String()
 	mcExpiration := localLockoutInfo.MCExpiration
 	secretHash := localLockoutInfo.SecretHash
 	amount := localLockoutInfo.Amount

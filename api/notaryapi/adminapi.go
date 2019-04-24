@@ -26,7 +26,7 @@ func NewNotifySCTokenDeployedRequest(self *models.NotaryInfo, scTokenMetaInfo *m
 	req := &NotifySCTokenDeployedRequest{
 		BaseReq:              api.NewBaseReq(APINameNotifySCTokenDeployed),
 		BaseReqWithSessionID: api.NewBaseReqWithSessionID(sessionID, self.ID),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(self.GetAddress()),
+		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenMetaInfo.SCToken),
 		//BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 		SCTokenMetaInfo: scTokenMetaInfo,

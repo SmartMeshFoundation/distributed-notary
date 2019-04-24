@@ -7,7 +7,11 @@ import (
 	"fmt"
 
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/btcsuite/btcd/btcec"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/nkbai/log"
 )
 
@@ -74,30 +78,44 @@ ReqWithSignature **********************************************
 该类请求在接收时需要校验Sender签名
 */
 type ReqWithSignature interface {
-	GetSigner() common.Address
+	GetSigner() *ecdsa.PublicKey
+	SetSigner(publicKey *ecdsa.PublicKey)
 	GetSignature() []byte
 	SetSignature(sig []byte)
 	Sign(req ReqWithSignature, key *ecdsa.PrivateKey)
 	VerifySign(req ReqWithSignature) bool
+
+	GetSignerETHAddress() common.Address
+	GetSignerBTCPublicKey(net *chaincfg.Params) *btcutil.AddressPubKey
 }
 
 // BaseReqWithSignature 基类
 type BaseReqWithSignature struct {
-	Signer    common.Address `json:"signer,omitempty"`
-	Signature []byte         `json:"signature,omitempty"`
+	Signer    []byte `json:"signer,omitempty"`
+	Signature []byte `json:"signature,omitempty"`
 }
 
 // NewBaseReqWithSignature constructor
-func NewBaseReqWithSignature(signer common.Address) BaseReqWithSignature {
+func NewBaseReqWithSignature() BaseReqWithSignature {
 	return BaseReqWithSignature{
-		Signer:    signer,
+		Signer:    nil,
 		Signature: nil,
 	}
 }
 
 // GetSigner impl ReqWithSignature
-func (r *BaseReqWithSignature) GetSigner() common.Address {
-	return r.Signer
+func (r *BaseReqWithSignature) GetSigner() *ecdsa.PublicKey {
+	pubKey, err := crypto.DecompressPubkey(r.Signer)
+	if err != nil {
+		log.Error(" crypto.DecompressPubkey err : %s", err.Error())
+	}
+	return pubKey
+}
+
+// SetSigner impl ReqWithSignature
+func (r *BaseReqWithSignature) SetSigner(publicKey *ecdsa.PublicKey) {
+	r.Signer = crypto.CompressPubkey(publicKey)
+
 }
 
 // GetSignature impl ReqWithSignature
@@ -112,14 +130,17 @@ func (r *BaseReqWithSignature) SetSignature(sig []byte) {
 
 // Sign impl ReqWithSignature
 func (r *BaseReqWithSignature) Sign(req ReqWithSignature, key *ecdsa.PrivateKey) {
-	sig := req.GetSignature()
+	// 清空不参与签名的数据
 	req.SetSignature(nil)
+	// 填入数据
+	req.SetSigner(&key.PublicKey)
+	// 签名
 	data, err := json.Marshal(req)
 	if err != nil {
 		panic(err)
 	}
 	//fmt.Println("data to sign :", string(data))
-	sig, err = utils.SignData(key, data)
+	sig, err := utils.SignData(key, data)
 	//fmt.Println("sig:", common.Bytes2Hex(sig))
 	if err != nil {
 		panic(err)
@@ -130,11 +151,10 @@ func (r *BaseReqWithSignature) Sign(req ReqWithSignature, key *ecdsa.PrivateKey)
 
 // VerifySign impl ReqWithSignature
 func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
-	if r.GetSigner() == utils.EmptyAddress {
-		return false
-	}
+	// 清空不参与签名的数据
 	sig := req.GetSignature()
 	req.SetSignature(nil)
+	// 验证签名
 	data, err := json.Marshal(req)
 	if err != nil {
 		return false
@@ -142,22 +162,45 @@ func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
 	//fmt.Println("data to verify :", string(data))
 	//fmt.Println("sig:", common.Bytes2Hex(sig))
 	dataHash := utils.Sha3(data)
-	signer, err := utils.Ecrecover(dataHash, sig)
+	publicKey, err := utils.Ecrecover(dataHash, sig)
 	if err != nil {
 		panic(err)
 	}
 	req.SetSignature(sig)
-	if signer == r.GetSigner() {
+	signerEthAddress := crypto.PubkeyToAddress(*publicKey)
+	if signerEthAddress == r.GetSignerETHAddress() {
 		return true
 	}
 	//todo 为了兼容来自浏览器的请求,go相关代码不会走到这里
 	sig[64] = 1
-	signer, err = utils.Ecrecover(dataHash, sig)
+	publicKey, err = utils.Ecrecover(dataHash, sig)
 	if err != nil {
 		panic(err)
 	}
 	req.SetSignature(sig)
-	return signer == r.GetSigner()
+	signerEthAddress = crypto.PubkeyToAddress(*publicKey)
+	return signerEthAddress == r.GetSignerETHAddress()
+}
+
+// GetSignerETHAddress impl ReqWithSignature
+func (r *BaseReqWithSignature) GetSignerETHAddress() common.Address {
+	if r.Signer == nil {
+		return utils.EmptyAddress
+	}
+	return crypto.PubkeyToAddress(*r.GetSigner())
+}
+
+// GetSignerBTCPublicKey impl ReqWithSignature
+func (r *BaseReqWithSignature) GetSignerBTCPublicKey(net *chaincfg.Params) *btcutil.AddressPubKey {
+	if r.Signer == nil {
+		return nil
+	}
+	pubKey := (*btcec.PublicKey)(r.GetSigner())
+	addressPubKey, err := btcutil.NewAddressPubKey(pubKey.SerializeCompressed(), net)
+	if err != nil {
+		panic(err)
+	}
+	return addressPubKey
 }
 
 /*

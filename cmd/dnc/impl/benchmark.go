@@ -234,10 +234,10 @@ func getBenchmarkRequests(scTokenAddress common.Address, keys []*ecdsa.PrivateKe
 			BaseReq:              api.NewBaseReq(userapi.APIUserNameSCPrepareLockin),
 			BaseReqWithResponse:  api.NewBaseReqWithResponse(),
 			BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenAddress),
-			BaseReqWithSignature: api.NewBaseReqWithSignature(address),
+			BaseReqWithSignature: api.NewBaseReqWithSignature(),
 			SecretHash:           secretHashs[index],
 			MCUserAddress:        address[:],
-			SCUserAddress:        address,
+			//SCUserAddress:        address,
 		}
 		body.Sign(body, key)
 		requests = append(requests, &req{

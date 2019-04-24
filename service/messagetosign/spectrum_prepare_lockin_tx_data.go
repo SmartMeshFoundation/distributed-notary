@@ -125,7 +125,7 @@ func (d *SpectrumPrepareLockinTxData) VerifySignData(scTokenProxy chain.Contract
 		return
 	}
 	// 3. 使用本地数据获取MsgToSign
-	scUserAddressHex := d.UserRequest.SCUserAddress.String()
+	scUserAddressHex := d.UserRequest.GetSignerETHAddress().String()
 	scExpiration := localLockinInfo.SCExpiration
 	secretHash := localLockinInfo.SecretHash
 	amount := localLockinInfo.Amount

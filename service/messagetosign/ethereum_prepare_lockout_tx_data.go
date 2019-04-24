@@ -106,7 +106,7 @@ func (d *EthereumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProx
 		return
 	}
 	// 3. 使用本地数据获取MsgToSign
-	mcUserAddressHex := d.UserRequest.MCUserAddress.String()
+	mcUserAddressHex := d.UserRequest.GetSignerETHAddress().String()
 	mcExpiration := localLockoutInfo.MCExpiration
 	secretHash := localLockoutInfo.SecretHash
 	amount := localLockoutInfo.Amount
