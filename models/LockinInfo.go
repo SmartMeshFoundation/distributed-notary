@@ -89,46 +89,52 @@ func (l *LockinInfo) IsEnd() bool {
 }
 
 type lockinInfoModel struct {
-	MCChainName        string
-	SecretHash         []byte `gorm:"primary_key"`
-	Secret             []byte
-	MCUserAddressHex   string
-	SCUserAddress      []byte
-	SCTokenAddress     []byte
-	Amount             []byte
-	MCExpiration       uint64
-	SCExpiration       uint64
-	MCLockStatus       int
-	SCLockStatus       int
-	Data               []byte
-	NotaryIDInCharge   int
-	StartTime          int64
-	StartMCBlockNumber uint64
-	EndTime            int64
-	EndMCBlockNumber   uint64
+	MCChainName            string
+	SecretHash             []byte `gorm:"primary_key"`
+	Secret                 []byte
+	MCUserAddressHex       string
+	SCUserAddress          []byte
+	SCTokenAddress         []byte
+	Amount                 []byte
+	MCExpiration           uint64
+	SCExpiration           uint64
+	MCLockStatus           int
+	SCLockStatus           int
+	Data                   []byte
+	NotaryIDInCharge       int
+	StartTime              int64
+	StartMCBlockNumber     uint64
+	EndTime                int64
+	EndMCBlockNumber       uint64
+	BTCPrepareLockinTXHash []byte // 比特币锁定的utxo的txhash
+	BTCPrepareLockinVout   uint32 // 比特币锁定的utxo的index
 }
 
 func (lim *lockinInfoModel) toLockinInfo() *LockinInfo {
 	amount := new(big.Int)
 	amount.SetBytes(lim.Amount)
+	btcTxHash := chainhash.Hash{}
+	btcTxHash.SetBytes(lim.BTCPrepareLockinTXHash)
 	return &LockinInfo{
-		MCChainName:        lim.MCChainName,
-		SecretHash:         common.BytesToHash(lim.SecretHash),
-		Secret:             common.BytesToHash(lim.Secret),
-		MCUserAddressHex:   lim.MCUserAddressHex,
-		SCUserAddress:      common.BytesToAddress(lim.SCUserAddress),
-		SCTokenAddress:     common.BytesToAddress(lim.SCTokenAddress),
-		Amount:             amount,
-		MCExpiration:       lim.MCExpiration,
-		SCExpiration:       lim.SCExpiration,
-		MCLockStatus:       LockStatus(lim.MCLockStatus),
-		SCLockStatus:       LockStatus(lim.SCLockStatus),
-		Data:               lim.Data,
-		NotaryIDInCharge:   lim.NotaryIDInCharge,
-		StartTime:          lim.StartTime,
-		StartMCBlockNumber: lim.StartMCBlockNumber,
-		EndTime:            lim.EndTime,
-		EndMCBlockNumber:   lim.EndMCBlockNumber,
+		MCChainName:            lim.MCChainName,
+		SecretHash:             common.BytesToHash(lim.SecretHash),
+		Secret:                 common.BytesToHash(lim.Secret),
+		MCUserAddressHex:       lim.MCUserAddressHex,
+		SCUserAddress:          common.BytesToAddress(lim.SCUserAddress),
+		SCTokenAddress:         common.BytesToAddress(lim.SCTokenAddress),
+		Amount:                 amount,
+		MCExpiration:           lim.MCExpiration,
+		SCExpiration:           lim.SCExpiration,
+		MCLockStatus:           LockStatus(lim.MCLockStatus),
+		SCLockStatus:           LockStatus(lim.SCLockStatus),
+		Data:                   lim.Data,
+		NotaryIDInCharge:       lim.NotaryIDInCharge,
+		StartTime:              lim.StartTime,
+		StartMCBlockNumber:     lim.StartMCBlockNumber,
+		EndTime:                lim.EndTime,
+		EndMCBlockNumber:       lim.EndMCBlockNumber,
+		BTCPrepareLockinTXHash: &btcTxHash,
+		BTCPrepareLockinVout:   lim.BTCPrepareLockinVout,
 	}
 }
 func (lim *lockinInfoModel) fromLockinInfo(l *LockinInfo) *lockinInfoModel {
@@ -149,6 +155,8 @@ func (lim *lockinInfoModel) fromLockinInfo(l *LockinInfo) *lockinInfoModel {
 	lim.StartMCBlockNumber = l.StartMCBlockNumber
 	lim.EndTime = l.EndTime
 	lim.EndMCBlockNumber = l.EndMCBlockNumber
+	lim.BTCPrepareLockinTXHash = l.BTCPrepareLockinTXHash.CloneBytes()
+	lim.BTCPrepareLockinVout = l.BTCPrepareLockinVout
 	return lim
 }
 

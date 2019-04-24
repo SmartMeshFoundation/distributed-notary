@@ -117,7 +117,7 @@ func prepareLockinOnBitcoin(amount int64, expiration uint64) (err error) {
 		BtcAmount:           amount2,
 	}
 	updateConfigFile()
-	fmt.Println("PrepareLockin SUCCESS")
+	fmt.Println("PrepareLockin on bitcoin SUCCESS")
 	return
 }
 
@@ -161,7 +161,7 @@ func prepareLockinOnEthereum(mcName string, amount int64, expiration uint64) (er
 		fmt.Println("prepare lockin err : ", err.Error())
 		os.Exit(-1)
 	}
-	fmt.Println("PrepareLockin SUCCESS")
+	fmt.Println("PrepareLockin on ethereum SUCCESS")
 	return nil
 }
 

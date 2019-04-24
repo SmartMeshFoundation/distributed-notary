@@ -194,6 +194,21 @@ func (cs *CrossChainService) callSCCancelLockin(userAddressHex string) (err erro
 
 // MCPLO 需使用分布式签名
 func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
+	if localLockoutInfo.MCChainName == events.ChainName {
+		return cs.callEthereumPrepareLockout(req, privateKeyInfo, localLockoutInfo)
+	}
+	if localLockoutInfo.MCChainName == bitcoin.ChainName {
+		return cs.callBitcoinPrepareLockout(req, privateKeyInfo, localLockoutInfo)
+	}
+	err = fmt.Errorf("unknown chain : %s", localLockoutInfo.MCChainName)
+	log.Error(err.Error())
+	return
+}
+func (cs *CrossChainService) callBitcoinPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
+	return
+}
+
+func (cs *CrossChainService) callEthereumPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
 	// 从本地获取调用合约的参数
 	mcUserAddressHex := req.MCUserAddress.String()
 	mcExpiration := localLockoutInfo.MCExpiration

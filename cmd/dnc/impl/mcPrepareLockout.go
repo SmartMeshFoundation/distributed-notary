@@ -35,7 +35,7 @@ func mcPrepareLockout(ctx *cli.Context) (err error) {
 		os.Exit(-1)
 	}
 	if GlobalConfig.RunTime == nil {
-		fmt.Println("must call pli first")
+		fmt.Println("must call plo first")
 		os.Exit(-1)
 	}
 	url := GlobalConfig.NotaryHost + "/api/1/user/mcpreparelockout/" + scTokenInfo.SCToken.String()

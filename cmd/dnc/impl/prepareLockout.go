@@ -10,6 +10,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/urfave/cli"
 )
@@ -80,7 +81,9 @@ func prepareLockout(ctx *cli.Context) error {
 		SecretHash: secretHash.String(),
 	}
 	updateConfigFile()
-
+	_, scToken := getSCContractProxy("bitcoin")
+	balance, err := scToken.Contract.BalanceOf(nil, common.HexToAddress(GlobalConfig.SmcUserAddress))
+	fmt.Printf(" ======> [token balance=%d]\n", balance.Uint64())
 	fmt.Println("call params :")
 	fmt.Println("callerAddress = ", auth.From.String())
 	fmt.Println("secretHash    = ", secretHash.String())
