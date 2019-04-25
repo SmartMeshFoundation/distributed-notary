@@ -75,6 +75,8 @@ func (as *AdminService) OnRequest(req api.Req) {
 		as.onDebugGetAllLockinInfo(r)
 	case *userapi.DebugGetAllLockoutInfoRequest:
 		as.onDebugGetAllLockoutInfo(r)
+	case *userapi.DebugGetAllBTCUtxoRequest:
+		as.onDebugGetAllBTCUtxo(r)
 	default:
 		r2, ok := req.(api.ReqWithResponse)
 		if ok {

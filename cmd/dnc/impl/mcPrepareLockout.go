@@ -94,7 +94,6 @@ func mcPrepareLockout4Eth(mcName string) (err error) {
 		BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenInfo.SCToken),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		SecretHash:           common.HexToHash(GlobalConfig.RunTime.SecretHash),
-		MCUserAddress:        common.HexToAddress(GlobalConfig.EthUserAddress),
 		SCUserAddress:        common.HexToAddress(GlobalConfig.SmcUserAddress),
 	}
 	privateKey, err := getPrivateKey(GlobalConfig.EthUserAddress, GlobalConfig.EthUserPassword)

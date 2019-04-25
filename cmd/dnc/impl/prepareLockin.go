@@ -37,7 +37,7 @@ var pliCmd = cli.Command{
 		},
 		cli.Int64Flag{
 			Name:  "amount",
-			Usage: "amount of side chain token which you want to lockin, example amount=1 means 1eth",
+			Usage: "amount of side chain token which you want to lockin, example amount=1 means 1 wei",
 		},
 		cli.Uint64Flag{
 			Name:  "expiration",
@@ -157,7 +157,7 @@ func prepareLockinOnEthereum(mcName string, amount int64, expiration uint64) (er
 		SecretHash: secretHash.String(),
 	}
 	updateConfigFile()
-	err = cp.PrepareLockin(auth, "", secretHash, expiration2, eth2Wei(amount))
+	err = cp.PrepareLockin(auth, "", secretHash, expiration2, big.NewInt(amount))
 	if err != nil {
 		fmt.Println("prepare lockin err : ", err.Error())
 		os.Exit(-1)

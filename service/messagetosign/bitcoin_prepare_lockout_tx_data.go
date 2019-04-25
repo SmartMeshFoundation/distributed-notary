@@ -30,10 +30,11 @@ type BitcoinPrepareLockoutTXData struct {
 	SCTokenAddress common.Address `json:"sc_token_address"`
 	SecretHash     common.Hash    `json:"secret_hash"`
 	//构造原始交易的必须数据
-	UserRequest *userapi.MCPrepareLockoutRequest `json:"user_request"`
-	Fee         int64                            `json:"fee"`
-	UTXOKeysStr string                           `json:"utxo_keys_str"`
-	TxInID      int                              `json:"tx_in_id"` // 当前签名的txInID
+	UserRequest  *userapi.MCPrepareLockoutRequest `json:"user_request"`
+	Fee          int64                            `json:"fee"`
+	UTXOKeysStr  string                           `json:"utxo_keys_str"`
+	TxInID       int                              `json:"tx_in_id"`      // 当前签名的txInID
+	MCExpiration uint64                           `json:"mc_expiration"` // 由于公正之间的块号差距,这里以发起人的数据为准
 	// 校验及签名数据
 	OriginTXHash []byte `json:"origin_tx_hash"` // 原始交易的hash,校验数据用
 	BytesToSign  []byte `json:"bytes_to_sign"`
@@ -107,6 +108,7 @@ func NewBitcoinPrepareLockoutTXData(req *userapi.MCPrepareLockoutRequest, bs *bi
 		Fee:            fee,
 		UTXOKeysStr:    utxoKeysStr,
 		TxInID:         indexToSign,
+		MCExpiration:   lockoutInfo.MCExpiration,
 		OriginTXHash:   originTXHash.CloneBytes(),
 		BytesToSign:    bytesToSign,
 	}
@@ -141,7 +143,7 @@ func (d *BitcoinPrepareLockoutTXData) Parse(buf []byte) error {
 }
 
 // VerifySignData 这里直接校验本地状态及SignBytes就好,因为SignBytes中已经包含了完整的tx信息
-func (d *BitcoinPrepareLockoutTXData) VerifySignData(bs *bitcoin.BTCService, localLockoutInfo *models.LockoutInfo, mcNotaryPublicKey *btcutil.AddressPubKey, db *models.DB) (err error) {
+func (d *BitcoinPrepareLockoutTXData) VerifySignData(bs *bitcoin.BTCService, localLockoutInfo *models.LockoutInfo, mcNotaryPublicKey *btcutil.AddressPubKey, db *models.DB) (outpointToListen wire.OutPoint, err error) {
 	// 1. 校验本地lockoutInfo状态
 	if localLockoutInfo.SCLockStatus != models.LockStatusLock {
 		err = fmt.Errorf("SCLockStatus wrong")
@@ -171,6 +173,8 @@ func (d *BitcoinPrepareLockoutTXData) VerifySignData(bs *bitcoin.BTCService, loc
 		err = fmt.Errorf("BitcoinPrepareLockoutTXData verify SignBytes fail,maybe attack")
 		return
 	}
+	// 返回outpoint供注册使用
+	outpointToListen = local.GetOriginTxCopy().TxIn[d.TxInID].PreviousOutPoint
 	return
 }
 

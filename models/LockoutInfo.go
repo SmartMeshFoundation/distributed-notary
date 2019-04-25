@@ -87,6 +87,7 @@ func (lom *lockoutInfoModel) toLockoutInfo() *LockoutInfo {
 	amount := new(big.Int)
 	amount.SetBytes(lom.Amount)
 	return &LockoutInfo{
+		MCChainName:                lom.MCChainName,
 		SecretHash:                 common.BytesToHash(lom.SecretHash),
 		Secret:                     common.BytesToHash(lom.Secret),
 		MCUserAddressHex:           lom.MCUserAddressHex,
@@ -108,6 +109,7 @@ func (lom *lockoutInfoModel) toLockoutInfo() *LockoutInfo {
 	}
 }
 func (lom *lockoutInfoModel) fromLockoutInfo(l *LockoutInfo) *lockoutInfoModel {
+	lom.MCChainName = l.MCChainName
 	lom.SecretHash = l.SecretHash[:]
 	lom.Secret = l.Secret[:]
 	lom.MCUserAddressHex = l.MCUserAddressHex

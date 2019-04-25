@@ -183,12 +183,15 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 			return nil, err2
 		}
 		// 7. 注册需要监听的outpoint到BTCService
-		err2 = btcService.RegisterP2SHOutpoint(wire.OutPoint{
+		err2 = btcService.RegisterOutpoint(wire.OutPoint{
 			Hash:  btcPrepareLockinInfo.TxHash,
 			Index: lockinInfo.BTCPrepareLockinVout,
-		}, lockScript, lockinInfo.SecretHash)
+		}, &bitcoin.BTCOutpointRelevantInfo{
+			SecretHash:    req.SecretHash,
+			LockScriptHex: common.Bytes2Hex(lockScript),
+		})
 		if err2 != nil {
-			log.Error("lockinHandler.RegisterP2SHOutpoint err2 = %s", err2.Error())
+			log.Error("lockinHandler.RegisterOutpoint err2 = %s", err2.Error())
 			// 这里不返回错误,注册失败不能影响操作
 		}
 		return

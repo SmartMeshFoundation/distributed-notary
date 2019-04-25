@@ -45,3 +45,7 @@ func (as *AdminService) onDebugGetAllLockoutInfo(req *userapi.DebugGetAllLockout
 	}
 	req.WriteSuccessResponse(lockinInfoList)
 }
+
+func (as *AdminService) onDebugGetAllBTCUtxo(req *userapi.DebugGetAllBTCUtxoRequest) {
+	req.WriteSuccessResponse(as.db.GetBTCOutpointList(-1))
+}

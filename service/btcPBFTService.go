@@ -56,8 +56,8 @@ func (ps *btcPBFTService) GetOpAuxiliary(op string, view int) (string, error) {
 	//auxiliary string格式为digest-outpoint1-outpoint2
 	bf := new(bytes.Buffer)
 	digest := pbft.Digest(op)
-	bf.WriteString(digest)
-	bf.WriteByte(byte('-'))
+	_, err = bf.WriteString(digest)
+	err = bf.WriteByte(byte('-'))
 	for _, o := range os {
 		_, err = bf.WriteString(o.TxHashStr)
 		err = bf.WriteByte(byte('-'))
@@ -68,6 +68,7 @@ func (ps *btcPBFTService) GetOpAuxiliary(op string, view int) (string, error) {
 	}
 	bs := bf.Bytes()
 	bs = bs[:len(bs)-1] //去掉最后一个-
+	log.Debug("================== %s ", string(bs))
 	return string(bs), nil
 }
 

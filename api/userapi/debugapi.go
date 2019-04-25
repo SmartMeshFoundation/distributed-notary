@@ -57,3 +57,18 @@ func (ua *UserAPI) getAllLockoutInfo(w rest.ResponseWriter, r *rest.Request) {
 	ua.SendToService(req)
 	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }
+
+// DebugGetAllBTCUtxoRequest :
+type DebugGetAllBTCUtxoRequest struct {
+	api.BaseReq
+	api.BaseReqWithResponse
+}
+
+func (ua *UserAPI) getAllBTCUtxo(w rest.ResponseWriter, r *rest.Request) {
+	req := &DebugGetAllBTCUtxoRequest{
+		BaseReq:             api.NewBaseReq(APIDebugNameGetAllUtxo),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
+	}
+	ua.SendToService(req)
+	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
+}

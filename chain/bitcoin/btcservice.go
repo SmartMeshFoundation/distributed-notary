@@ -28,10 +28,17 @@ import (
 // ChainName 公链名
 var ChainName = "bitcoin"
 
+// BTCOutpointRelevantInfo4PrepareLockout :
+type BTCOutpointRelevantInfo4PrepareLockout struct {
+	UserAddressPublicKeyHashHex string `json:"user_address_public_key_hash_hex"`
+	MCExpiration                uint64 `json:"mc_expiration"`
+}
+
 // BTCOutpointRelevantInfo 存储需要监听的outpoint的相关信息
 type BTCOutpointRelevantInfo struct {
-	SecretHash    common.Hash
-	LockScriptHex string
+	SecretHash          common.Hash
+	LockScriptHex       string
+	Data4PrepareLockout *BTCOutpointRelevantInfo4PrepareLockout
 }
 
 // BTCService :
@@ -186,23 +193,10 @@ func (bs *BTCService) GetBtcRPCClient() *rpcclient.Client {
 	return bs.c
 }
 
-// RegisterP2SHOutpoint 注册P2SH的outpoint,验证数据为lockScript
-func (bs *BTCService) RegisterP2SHOutpoint(outpoint wire.OutPoint, lockScript []byte, secretHash common.Hash) (err error) {
+// RegisterOutpoint 注册outpoint监听
+func (bs *BTCService) RegisterOutpoint(outpoint wire.OutPoint, relevantInfo *BTCOutpointRelevantInfo) (err error) {
 	outPointKey := getOutpointKey(outpoint)
-	bs.outpoint2VerifyHexMap[outPointKey] = &BTCOutpointRelevantInfo{
-		SecretHash:    secretHash,
-		LockScriptHex: common.Bytes2Hex(lockScript),
-	}
-	return bs.c.LoadTxFilter(false, nil, []wire.OutPoint{outpoint})
-}
-
-// RegisterP2PKHOutpoint 注册P2PKH的outpoint,验证数据为pkh
-func (bs *BTCService) RegisterP2PKHOutpoint(outpoint wire.OutPoint, publicKeyHashStr string) (err error) {
-	outPointKey := getOutpointKey(outpoint)
-	bs.outpoint2VerifyHexMap[outPointKey] = &BTCOutpointRelevantInfo{
-		SecretHash:    utils.EmptyHash,
-		LockScriptHex: publicKeyHashStr,
-	}
+	bs.outpoint2VerifyHexMap[outPointKey] = relevantInfo
 	return bs.c.LoadTxFilter(false, nil, []wire.OutPoint{outpoint})
 }
 
@@ -331,15 +325,18 @@ func (bs *BTCService) createEventsFromTx(blockNumber int32, tx *btcutil.Tx) (eve
 		events = append(events, e)
 		return
 	}
+	if bs.isPrepareLockout(tx.MsgTx(), txIn, outpointRelevantInfo) {
+		// 自己-主链PrepareLockout
+		e := createPrepareLockoutEvent(uint64(blockNumber), tx.MsgTx().TxHash(), outpointRelevantInfo)
+		events = append(events, e)
+		return
+	}
 	//if secret, isLockout := bs.isLockout(txIn, outpointRelevantInfo); isLockout {
 	//	// 主链lockout
 	//	log.Info("收到BTC Lockout 事件,secret=%s secretHash=%s", secret.String(), utils.ShaSecret(secret[:]).String())
 	//	return
 	//}
 	//if bs.isCancelPrepareLockout(tx.MsgTx()) {
-	//	return
-	//}
-	//if bs.isPrepareLockout(tx.MsgTx()) {
 	//	return
 	//}
 	log.Error("receive unknown tx : \n%s", utils.ToJSONStringFormat(tx))
@@ -385,7 +382,10 @@ func (bs *BTCService) isLockin(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpoin
 自己PrepareLockout的tx
 txIns 数量不确定,但没有P2SH,SigScipt : SIG {{分布式私钥的PKH}}
 */
-func (bs *BTCService) isPrepareLockout(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) bool {
+func (bs *BTCService) isPrepareLockout(tx *wire.MsgTx, txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) bool {
+	if len(tx.TxOut) != 1 {
+		return false
+	}
 	// 验证部分: {{分布式私钥的PKH}}
 	signatureScriptStr, err := txscript.DisasmString(txIn.SignatureScript)
 	if err != nil {

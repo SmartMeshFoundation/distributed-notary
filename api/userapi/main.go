@@ -33,6 +33,7 @@ const (
 	APIDebugNameTransferToAccount = APIDebugNamePrefix + "TransferToAccount" // 给某个账户在所有链上转10eth,为了测试
 	APIDebugNameGetAllLockinInfo  = APIDebugNamePrefix + "GetAllLockinInfo"
 	APIDebugNameGetAllLockoutInfo = APIDebugNamePrefix + "GetAllLockoutInfo"
+	APIDebugNameGetAllUtxo        = APIDebugNamePrefix + "GetAllUtxo"
 )
 
 // APIName2URLMap :
@@ -64,6 +65,7 @@ func init() {
 	APIName2URLMap[APIDebugNameGetAllLockinInfo] = "/api/1/debug/lockin"
 	APIName2URLMap[APIDebugNameGetAllLockoutInfo] = "/api/1/debug/lockout"
 	APIName2URLMap[APIDebugNameTransferToAccount] = "/api/1/debug/transfer-to-account/:account"
+	APIName2URLMap[APIDebugNameGetAllUtxo] = "/api/1/debug/utxo"
 }
 
 // defaultAPITimeout : 默认api请求超时时间
@@ -110,6 +112,7 @@ func NewUserAPI(host string) *UserAPI {
 		rest.Get(APIName2URLMap[APIDebugNameGetAllLockinInfo], userAPI.getAllLockinInfo),
 		rest.Get(APIName2URLMap[APIDebugNameGetAllLockoutInfo], userAPI.getAllLockoutInfo),
 		rest.Get(APIName2URLMap[APIDebugNameTransferToAccount], userAPI.transferToAccount),
+		rest.Get(APIName2URLMap[APIDebugNameGetAllUtxo], userAPI.getAllBTCUtxo),
 	)
 	if err != nil {
 		log.Crit(fmt.Sprintf("maker router :%s", err))

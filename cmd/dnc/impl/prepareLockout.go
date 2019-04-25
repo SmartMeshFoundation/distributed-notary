@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"math/big"
+
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/client"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
@@ -28,7 +30,7 @@ var ploCmd = cli.Command{
 		},
 		cli.Int64Flag{
 			Name:  "amount",
-			Usage: "amount of side chain token which you want to lockout, example amount=1 means 1eth",
+			Usage: "amount of side chain token which you want to lockout, example amount=1 means 1 wei",
 		},
 		cli.Uint64Flag{
 			Name:  "expiration",
@@ -88,8 +90,8 @@ func prepareLockout(ctx *cli.Context) error {
 	fmt.Println("callerAddress = ", auth.From.String())
 	fmt.Println("secretHash    = ", secretHash.String())
 	fmt.Println("expiration    = ", expiration2)
-	fmt.Println("amount        = ", eth2Wei(amount))
-	err = cp.PrepareLockout(auth, "", secretHash, expiration2, eth2Wei(amount))
+	fmt.Println("amount        = ", amount)
+	err = cp.PrepareLockout(auth, "", secretHash, expiration2, big.NewInt(amount))
 	if err != nil {
 		fmt.Println("prepare lockout err : ", err.Error())
 		os.Exit(-1)

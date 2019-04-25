@@ -15,7 +15,6 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/nkbai/log"
 )
@@ -28,15 +27,19 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 		events about block number
 	*/
 	case ethevents.NewBlockEvent:
-		err = cs.onMCNewBlockEvent(event.BlockNumber)
-		if err != nil {
-			log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s", e.GetEventName(), err.Error()))
+		if cs.meta.MCName == event.ChainName {
+			err = cs.onMCNewBlockEvent(event.BlockNumber)
+			if err != nil {
+				log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s", e.GetEventName(), err.Error()))
+			}
 		}
 		return
 	case bitcoin.NewBlockEvent:
-		err = cs.onMCNewBlockEvent(event.BlockNumber)
-		if err != nil {
-			log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s", e.GetEventName(), err.Error()))
+		if cs.meta.MCName == event.ChainName {
+			err = cs.onMCNewBlockEvent(event.BlockNumber)
+			if err != nil {
+				log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s", e.GetEventName(), err.Error()))
+			}
 		}
 		return
 	case smcevents.NewBlockEvent:
@@ -81,6 +84,9 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 	case ethevents.PrepareLockoutEvent: // MCPLO
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC PrepareLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onMCPrepareLockout4Ethereum(event)
+	case bitcoin.PrepareLockoutEvent: // MCPLO
+		log.Info(SCTokenLogMsg(cs.meta, "Receive MC PrepareLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onMCPrepareLockout4Bitcoin(event)
 	case ethevents.LockoutSecretEvent: // MCLOS
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC LockoutSecretEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onMCLockoutSecret4Ethereum(event)
@@ -350,20 +356,6 @@ func (cs *CrossChainService) onMCLockin4Bitcoin(event bitcoin.LockinEvent) (err 
 			// 这里应当如何处理比较好???
 			log.Error(err.Error())
 		}
-		// 0. 获取bs,注册outpoint监听
-		c, err := cs.dispatchService.getChainByName(bitcoin.ChainName)
-		if err != nil {
-			log.Error(err.Error())
-			continue
-		}
-		bs := c.(*bitcoin.BTCService)
-		err = bs.RegisterP2PKHOutpoint(wire.OutPoint{
-			Hash:  txHash,
-			Index: uint32(index),
-		}, cs.meta.MCLockedPublicKeyHashStr)
-		if err != nil {
-			log.Error(err.Error())
-		}
 	}
 	return
 }
@@ -483,6 +475,38 @@ func (cs *CrossChainService) onSCPrepareLockout(event smcevents.PrepareLockoutEv
 	err = cs.lockoutHandler.registerLockout(lockoutInfo)
 	if err != nil {
 		err = fmt.Errorf("lockoutHandler.registerLockout err = %s", err.Error())
+		return
+	}
+	return
+}
+
+/*
+主链PrepareLockout(MCPLO)
+该事件的发起方为公证人,可能为自己
+事件为已确认事件,修改LockoutInfo状态
+*/
+func (cs *CrossChainService) onMCPrepareLockout4Bitcoin(event bitcoin.PrepareLockoutEvent) (err error) {
+	// 2. 获取本地LockoutInfo信息
+	lockoutInfo, err := cs.lockoutHandler.getLockout(event.SecretHash)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.getLockout err = %s", err.Error())
+		return
+	}
+	// 3.　校验 TODO
+	if lockoutInfo.MCLockStatus != models.LockStatusNone || lockoutInfo.SCLockStatus != models.LockStatusLock || lockoutInfo.Secret != utils.EmptyHash {
+		err = fmt.Errorf("local lockoutInfo status does't right,something must wrong, local lockoutInfo:\n%s", utils.ToJSONStringFormat(lockoutInfo))
+		return
+	}
+
+	// 4. 修改状态,等待后续调用
+	lockoutInfo.MCExpiration = event.MCExpiration // 这里由于自己本地块号和该笔MCPrepareLockout交易发起公证人的块号有些微差距,取合约上的值
+	lockoutInfo.MCLockStatus = models.LockStatusLock
+	lockoutInfo.MCUserAddressHex = event.UserAddressHex
+	lockoutInfo.BTCPrepareLockoutTXHashHex = event.LockOutPoint.Hash.String()
+	lockoutInfo.BTCPrepareLockoutVout = event.LockOutPoint.Index
+	err = cs.lockoutHandler.updateLockout(lockoutInfo)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.updateLockout err = %s", err.Error())
 		return
 	}
 	return

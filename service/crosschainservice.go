@@ -244,6 +244,21 @@ func (cs *CrossChainService) callBitcoinPrepareLockout(req *userapi.MCPrepareLoc
 		}
 		// 按比特币标准调整签名
 		tx.TxIn[index].SignatureScript = signature
+		// 注册outpoint监听
+		outpointToListen := msgToSign.GetOriginTxCopy().TxIn[index].PreviousOutPoint
+		mcLockedPublicKeyHashHex := cs.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress).MCLockedPublicKeyHashStr
+		err = bs.RegisterOutpoint(outpointToListen, &bitcoin.BTCOutpointRelevantInfo{
+			SecretHash:    req.SecretHash,
+			LockScriptHex: mcLockedPublicKeyHashHex,
+			Data4PrepareLockout: &bitcoin.BTCOutpointRelevantInfo4PrepareLockout{
+				// 保存用户主链取钱的地址
+				UserAddressPublicKeyHashHex: req.GetSignerBTCPublicKey(bs.GetNetParam()).AddressPubKeyHash().String(),
+				MCExpiration:                localLockoutInfo.MCExpiration,
+			},
+		})
+		if err != nil {
+			log.Error(err.Error())
+		}
 	}
 	// 4. 发送交易
 	log.Info("call PrepareLockout on bitcoin with account=%s", privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()))
