@@ -2,6 +2,7 @@ package pbft
 
 import (
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"time"
 
@@ -1105,7 +1106,13 @@ func NewPBFTServer(rid, f, initSeq int, msgChan chan interface{}, sender Message
 	go s.loop()
 	return &s
 }
-
+func (s *Server) UpdateAS(as PBFTAuxiliary) error {
+	if s.as != nil {
+		return errors.New(fmt.Sprintf("as must be nil,but as=%v", s.as))
+	}
+	s.as = as
+	return nil
+}
 func init() {
 	gob.Register(historyOpState{})
 	gob.Register(historyCheckPointState{})

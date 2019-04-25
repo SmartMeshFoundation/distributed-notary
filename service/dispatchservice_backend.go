@@ -282,9 +282,11 @@ func (ds *DispatchService) getPbftService(key string) (ps pbft.PBFTAuxiliary, er
 	switch typ {
 	case pbftTypeEthereum:
 		ds.pbftServices[key] = ps2
+		ps2.server.UpdateAS(ps2)
 	case pbftTypeBTC:
 		ps3 := &btcPBFTService{ps2}
 		ds.pbftServices[key] = ps3
+		ps3.server.UpdateAS(ps3)
 	default:
 		return nil, errors.New("unkown chain")
 	}
