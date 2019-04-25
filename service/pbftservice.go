@@ -17,9 +17,13 @@ type pbftType int
 
 const (
 	/*
+	 不应该出现,否则肯定有问题
+	*/
+	pbftTypeUnkown = iota
+	/*
 		用于创建协商nonce的PBFT
 	*/
-	pbftTypeEthereum = iota
+	pbftTypeEthereum
 	/*
 		用于创建协商btc prepareLockout的Cutxo
 	*/

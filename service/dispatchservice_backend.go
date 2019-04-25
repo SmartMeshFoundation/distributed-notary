@@ -3,10 +3,13 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
 	"strings"
+
+	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 
 	"github.com/SmartMeshFoundation/distributed-notary/pbft/pbft"
 
@@ -226,7 +229,7 @@ func (ds *DispatchService) applyNonceFromNonceServer(chainName string, privKeyID
 		return ds.applyNonceFromNonceServerFake(chainName, privKeyID, reason)
 	}
 	key := fmt.Sprintf("%s-%s", chainName, privKeyID.String())
-	ps, err := ds.getPbftService(key, pbftTypeEthereum)
+	ps, err := ds.getPbftService(key)
 	if err != nil {
 		return
 	}
@@ -234,13 +237,13 @@ func (ds *DispatchService) applyNonceFromNonceServer(chainName string, privKeyID
 }
 func (ds *DispatchService) applyUTXO(chainName string, priveKeyID common.Hash, reason string, amount *big.Int) (utxos string, err error) {
 	key := fmt.Sprintf("%s-%s", chainName, priveKeyID.String())
-	ps, err := ds.getPbftService(key, pbftTypeBTC)
+	ps, err := ds.getPbftService(key)
 	if err != nil {
 		return
 	}
 	return ps.(*btcPBFTService).newUTXO(fmt.Sprintf("%s-%s-%s", chainName, reason, amount))
 }
-func (ds *DispatchService) getPbftService(key string, typ pbftType) (ps pbft.PBFTAuxiliary, err error) {
+func (ds *DispatchService) getPbftService(key string) (ps pbft.PBFTAuxiliary, err error) {
 	ds.lock.Lock()
 	defer ds.lock.Unlock()
 	ps, ok := ds.pbftServices[key]
@@ -271,18 +274,32 @@ func (ds *DispatchService) getPbftService(key string, typ pbftType) (ps pbft.PBF
 	log.Info(fmt.Sprintf("applyNonceFromNonceServer new pbft Service chainName=%s,privatekeyID=%s",
 		chainName, privKeyID.String(),
 	))
-
+	typ := chainName2PBFTType(chainName)
 	ps2 := NewPBFTService(key, chainName, privKeyID.String(),
 		ds.notaries,
 		ds.notaryService.notaryClient,
 		ds, ds.db)
-	if typ == pbftTypeEthereum {
+	switch typ {
+	case pbftTypeEthereum:
 		ds.pbftServices[key] = ps2
-	} else {
+	case pbftTypeBTC:
 		ps3 := &btcPBFTService{ps2}
 		ds.pbftServices[key] = ps3
-
+	default:
+		return nil, errors.New("unkown chain")
 	}
 	ps = ds.pbftServices[key]
 	return
+}
+
+func chainName2PBFTType(chainName string) pbftType {
+	switch chainName {
+	case spectrumevents.ChainName:
+		return pbftTypeEthereum
+	case events.ChainName:
+		return pbftTypeEthereum
+	case bitcoin.ChainName:
+		return pbftTypeBTC
+	}
+	return pbftTypeUnkown
 }

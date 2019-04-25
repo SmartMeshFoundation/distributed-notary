@@ -112,7 +112,7 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		db:                           db,
 		quitChan:                     make(chan struct{}),
 		scToken2CrossChainServiceMap: make(map[common.Address]*CrossChainService),
-		pbftServices:                 make(map[string]*PBFTService),
+		pbftServices:                 make(map[string]pbft.PBFTAuxiliary),
 		notaries:                     notaries,
 	}
 	// 3.5 初始化nonce-server-host
@@ -291,7 +291,15 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Req) {
 				utils.ToJSONStringFormat(r), err),
 			)
 		} else {
-			go ps.OnRequest(r)
+			switch ps2 := ps.(type) {
+			case *PBFTService:
+				ps2.OnRequest(r)
+			case *btcPBFTService:
+				ps2.OnRequest(r)
+			default:
+				panic("impossible pbft service")
+			}
+
 		}
 	case api.Req:
 		go ds.adminService.OnRequest(req)
