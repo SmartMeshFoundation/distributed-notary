@@ -11,6 +11,8 @@ import (
 
 	"time"
 
+	"strings"
+
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
@@ -18,6 +20,7 @@ import (
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -205,7 +208,51 @@ func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutR
 	return
 }
 func (cs *CrossChainService) callBitcoinPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
-	// 1. 获取可用utxo
+	amount := localLockoutInfo.Amount
+	// 0. 获取可用utxo
+	utxoKeysStr, err := cs.dispatchService.applyUTXO(cs.meta.MCName, privateKeyInfo.Key, req.SecretHash.String(), amount)
+	if err != nil {
+		return
+	}
+	// 1. 获取bs
+	c, err := cs.dispatchService.getChainByName(bitcoin.ChainName)
+	if err != nil {
+		return
+	}
+	bs := c.(*bitcoin.BTCService)
+	// 1.5 获取fee
+	fee := int64(1000)
+	// 2. 对需要使用的每个utxo发起DSM
+	utxoKeys := strings.Split(utxoKeysStr, "-")
+	var tx *wire.MsgTx
+	for index := range utxoKeys {
+		//构造
+		msgToSign, err2 := messagetosign.NewBitcoinPrepareLockoutTXData(req, bs, localLockoutInfo, privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()), cs.lockoutHandler.db, utxoKeysStr, fee, index)
+		if err2 != nil {
+			err = err2
+			return
+		}
+		if tx == nil {
+			// 保存一份originTx,用于收集填写Signature
+			tx = msgToSign.GetOriginTxCopy()
+		}
+		// 签名
+		var signature []byte
+		signature, _, err = cs.dispatchService.getNotaryService().startDistributedSignAndWait(msgToSign, privateKeyInfo)
+		if err != nil {
+			return
+		}
+		// 按比特币标准调整签名
+		tx.TxIn[index].SignatureScript = signature
+	}
+	// 4. 发送交易
+	log.Info("call PrepareLockout on bitcoin with account=%s", privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()))
+	txHash, err := bs.GetBtcRPCClient().SendRawTransaction(tx, false)
+	if err != nil {
+		log.Error(fmt.Sprintf("callBTCLockin SendRawTransaction err : %s", err.Error()))
+		return
+	}
+	log.Trace("callBTCPrepareLockout txHash=%s", txHash.String())
 	return
 }
 

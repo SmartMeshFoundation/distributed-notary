@@ -203,7 +203,7 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 */
 func (cs *CrossChainService) onMCPrepareLockoutRequest(req *userapi.MCPrepareLockoutRequest) {
 	// 1. privateKey状态校验
-	privateKeyInfo, err := cs.lockoutHandler.db.LoadPrivateKeyInfo(cs.meta.SCTokenOwnerKey)
+	privateKeyInfo, err := cs.lockoutHandler.db.LoadPrivateKeyInfo(cs.meta.MCLockedContractOwnerKey)
 	if err != nil {
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 		return

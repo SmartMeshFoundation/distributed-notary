@@ -121,7 +121,7 @@ func (d *SpectrumPrepareLockinTxData) VerifySignData(scTokenProxy chain.Contract
 	}
 	// 2. 校验用户原始请求签名,验证请求中的SCUserAddress有效性
 	if !d.UserRequest.VerifySign(d.UserRequest) {
-		err = fmt.Errorf("signature in user request does't wrign")
+		err = fmt.Errorf("signature in user request does't wrigt")
 		return
 	}
 	// 3. 使用本地数据获取MsgToSign

@@ -2,6 +2,10 @@ package models
 
 import (
 	"github.com/asdine/storm"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/jinzhu/gorm"
 	"github.com/kataras/go-errors"
@@ -41,9 +45,39 @@ type BTCOutpoint struct {
 	PBFTReason string //为什么消费此UTXO
 }
 
+// GetOutpoint :
+func (o *BTCOutpoint) GetOutpoint() *wire.OutPoint {
+	utxoTxHash, err := chainhash.NewHashFromStr(o.TxHashStr)
+	if err != nil {
+		panic(err)
+	}
+	return wire.NewOutPoint(utxoTxHash, uint32(o.Index))
+}
+
+// GetPKScript :
+func (o *BTCOutpoint) GetPKScript(net *chaincfg.Params) []byte {
+	addr, err := btcutil.DecodeAddress(o.PublicKeyHashStr, net)
+	if err != nil {
+		panic(err)
+	}
+	pkScript, err := txscript.PayToAddrScript(addr)
+	if err != nil {
+		panic(err)
+	}
+	return pkScript
+}
+
 //NewBTCOutpoint :
 func (db *DB) NewBTCOutpoint(outpoint *BTCOutpoint) error {
 	return db.Create(outpoint).Error
+}
+
+//GetBTCOutpoint :
+func (db *DB) GetBTCOutpoint(txHashStr string) (outpoint *BTCOutpoint, err error) {
+	err = db.Where(&BTCOutpoint{
+		TxHashStr: txHashStr,
+	}).First(outpoint).Error
+	return
 }
 
 // GetBTCOutpointList 条件查询
