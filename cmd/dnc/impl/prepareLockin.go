@@ -104,7 +104,7 @@ func prepareLockinOnBitcoin(amount int64, expiration uint64) (err error) {
 		os.Exit(-1)
 	}
 	fmt.Printf(" ======> [LockScriptHash=%s, txHash=%s %s]\n", lockScriptAddr.String(), txHash.String(), common.Hash(*txHash).String())
-	time.Sleep(time.Second * 6) // 等待确认
+	//time.Sleep(time.Second * 6) // 等待确认
 	//utils.PrintBTCBalanceOfAccount(c, "default")
 
 	// 记录runtime数据

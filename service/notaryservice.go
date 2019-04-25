@@ -555,10 +555,10 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 			return
 		}
 		// 3. 获取bs,注册outpoint监听
-		lockScriptHex := ns.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress).MCLockedPublicKeyHashStr
+		//lockScriptHex := ns.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress).MCLockedPublicKeyHashStr
 		err = bs.RegisterOutpoint(outpointToListen, &bitcoin.BTCOutpointRelevantInfo{
 			SecretHash:    m.SecretHash,
-			LockScriptHex: lockScriptHex,
+			LockScriptHex: common.Bytes2Hex(privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()).PubKey().SerializeCompressed()),
 			Data4PrepareLockout: &bitcoin.BTCOutpointRelevantInfo4PrepareLockout{
 				// 保存用户主链取钱的地址及真实过期块号
 				UserAddressPublicKeyHashHex: m.UserRequest.GetSignerBTCPublicKey(bs.GetNetParam()).AddressPubKeyHash().String(),

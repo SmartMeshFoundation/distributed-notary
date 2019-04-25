@@ -5,15 +5,15 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 /* #nosec */
 const (
-	LockinEventName       = "LockinEvent"
-	CancelLockinEventName = "CancelLockinEvent"
+	LockinEventName         = "LockinEvent"
+	CancelLockinEventName   = "CancelLockinEvent"
+	PrepareLockoutEventName = "PrepareLockoutEvent"
 )
 
 // NewBlockEvent :
@@ -79,27 +79,37 @@ func createCancelLockinEvent(blockNumber uint64, secretHash common.Hash) CancelL
 // PrepareLockoutEvent :
 type PrepareLockoutEvent struct {
 	*chain.BaseEvent
-	SecretHash     common.Hash   `json:"secret_hash"`
-	LockOutPoint   wire.OutPoint `json:"lock_out_point"` // 锁定到脚本的vout
-	UserAddressHex string        `json:"user_address_hex"`
-	MCExpiration   uint64        `json:"mc_expiration"`
+	SecretHash          common.Hash `json:"secret_hash"`
+	TXHashHex           string      `json:"tx_hash_hex"`
+	LockOutpointIndex   int         `json:"lock_outpoint_index"`
+	ChangeOutPointIndex int         `json:"change_out_point_index"`
+	ChangeAmount        int64       `json:"change_amount"`
+	UserAddressHex      string      `json:"user_address_hex"`
+	MCExpiration        uint64      `json:"mc_expiration"`
 }
 
 // createPrepareLockoutEvent :
-func createPrepareLockoutEvent(blockNumber uint64, txHash chainhash.Hash, outpointRelevantInfo *BTCOutpointRelevantInfo) (event PrepareLockoutEvent) {
+func createPrepareLockoutEvent(blockNumber uint64, tx *wire.MsgTx, outpointRelevantInfo *BTCOutpointRelevantInfo) (event PrepareLockoutEvent) {
 	e := PrepareLockoutEvent{}
 	e.BaseEvent = &chain.BaseEvent{}
 	e.ChainName = ChainName
 	e.FromAddress = utils.EmptyAddress
 	e.BlockNumber = blockNumber
 	e.Time = time.Now()
-	e.EventName = CancelLockinEventName
+	e.EventName = PrepareLockoutEventName
 	e.SCTokenAddress = utils.EmptyAddress
+	e.TXHashHex = tx.TxHash().String()
 
 	e.SecretHash = outpointRelevantInfo.SecretHash
-	e.LockOutPoint = wire.OutPoint{
-		Hash:  txHash,
-		Index: 0,
+	if len(tx.TxOut) == 1 {
+		e.LockOutpointIndex = 1
+		e.ChangeOutPointIndex = -1
+	}
+	if len(tx.TxOut) == 2 {
+		// 包含找零vout
+		e.LockOutpointIndex = 1
+		e.ChangeOutPointIndex = 0
+		e.ChangeAmount = tx.TxOut[0].Value
 	}
 	e.UserAddressHex = outpointRelevantInfo.Data4PrepareLockout.UserAddressPublicKeyHashHex
 	e.MCExpiration = outpointRelevantInfo.Data4PrepareLockout.MCExpiration

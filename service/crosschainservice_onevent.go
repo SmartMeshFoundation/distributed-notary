@@ -502,13 +502,26 @@ func (cs *CrossChainService) onMCPrepareLockout4Bitcoin(event bitcoin.PrepareLoc
 	lockoutInfo.MCExpiration = event.MCExpiration // 这里由于自己本地块号和该笔MCPrepareLockout交易发起公证人的块号有些微差距,取合约上的值
 	lockoutInfo.MCLockStatus = models.LockStatusLock
 	lockoutInfo.MCUserAddressHex = event.UserAddressHex
-	lockoutInfo.BTCPrepareLockoutTXHashHex = event.LockOutPoint.Hash.String()
-	lockoutInfo.BTCPrepareLockoutVout = event.LockOutPoint.Index
+	lockoutInfo.BTCPrepareLockoutTXHashHex = event.TXHashHex
+	lockoutInfo.BTCPrepareLockoutVout = uint32(event.LockOutpointIndex)
 	err = cs.lockoutHandler.updateLockout(lockoutInfo)
 	if err != nil {
 		err = fmt.Errorf("lockoutHandler.updateLockout err = %s", err.Error())
 		return
 	}
+	// 5. 如果存在找零交易,保存
+	if event.ChangeOutPointIndex >= 0 {
+		err = cs.lockoutHandler.db.NewBTCOutpoint(&models.BTCOutpoint{
+			PublicKeyHashStr: cs.meta.MCLockedPublicKeyHashStr,
+			TxHashStr:        event.TXHashHex,
+			Index:            event.ChangeOutPointIndex,
+			Amount:           btcutil.Amount(event.ChangeAmount),
+			Status:           models.BTCOutpointStatusUsable,
+			CreateTime:       time.Now().Unix(),
+		})
+	}
+	// 6. 注册lockOutPoint监听 TODO
+	// 7. 发送cancelPrepareLockout交易到BTC TODO
 	return
 }
 

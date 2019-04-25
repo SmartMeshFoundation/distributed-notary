@@ -79,7 +79,7 @@ func NewPBFTService(serviceKey, chain, privKeyID string, allNotaries []*models.N
 	nonce++ //数据库中存的是上次用的nonce,
 	log.Trace(fmt.Sprintf("allids=%v,nonce=%d", allids, nonce))
 	ps.client = pbft.NewPBFTClient(myid, ps.clientMsg, ps, f, allids)
-	ps.server = pbft.NewPBFTServer(myid, f, nonce, ps.serverMsg, ps, allids, ps)
+	ps.server = pbft.NewPBFTServer(myid, f, nonce, ps.serverMsg, ps, allids, nil)
 	go ps.loop()
 	return ps
 }

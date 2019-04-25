@@ -110,7 +110,6 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 				return nil, errors.New("not authorized to sign this account")
 			}
 			msgToSign2 := signer.Hash(tx).Bytes()
-			fmt.Printf("======================from=%s nonce=%d\n", address.String(), tx.Nonce())
 			if bytes.Compare(msgToSign.GetSignBytes(), msgToSign2) != 0 {
 				err = fmt.Errorf("txbytes when deploy contract step1 and step2 does't match")
 				return nil, err
@@ -243,13 +242,13 @@ func (cs *CrossChainService) callBitcoinPrepareLockout(req *userapi.MCPrepareLoc
 			return
 		}
 		// 按比特币标准调整签名
-		tx.TxIn[index].SignatureScript = signature
+		tx.TxIn[index].SignatureScript = msgToSign.BuildBTCSignatureScript(signature)
 		// 注册outpoint监听
 		outpointToListen := msgToSign.GetOriginTxCopy().TxIn[index].PreviousOutPoint
-		mcLockedPublicKeyHashHex := cs.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress).MCLockedPublicKeyHashStr
+		//mcLockedPublicKeyHashHex := cs.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress).MCLockedPublicKeyHashStr
 		err = bs.RegisterOutpoint(outpointToListen, &bitcoin.BTCOutpointRelevantInfo{
 			SecretHash:    req.SecretHash,
-			LockScriptHex: mcLockedPublicKeyHashHex,
+			LockScriptHex: common.Bytes2Hex(privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()).PubKey().SerializeCompressed()),
 			Data4PrepareLockout: &bitcoin.BTCOutpointRelevantInfo4PrepareLockout{
 				// 保存用户主链取钱的地址
 				UserAddressPublicKeyHashHex: req.GetSignerBTCPublicKey(bs.GetNetParam()).AddressPubKeyHash().String(),

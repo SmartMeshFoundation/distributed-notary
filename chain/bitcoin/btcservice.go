@@ -36,9 +36,9 @@ type BTCOutpointRelevantInfo4PrepareLockout struct {
 
 // BTCOutpointRelevantInfo 存储需要监听的outpoint的相关信息
 type BTCOutpointRelevantInfo struct {
-	SecretHash          common.Hash
-	LockScriptHex       string
-	Data4PrepareLockout *BTCOutpointRelevantInfo4PrepareLockout
+	SecretHash          common.Hash                             `json:"secret_hash"`
+	LockScriptHex       string                                  `json:"lock_script_hex"`
+	Data4PrepareLockout *BTCOutpointRelevantInfo4PrepareLockout `json:"data_4_prepare_lockout"`
 }
 
 // BTCService :
@@ -325,9 +325,9 @@ func (bs *BTCService) createEventsFromTx(blockNumber int32, tx *btcutil.Tx) (eve
 		events = append(events, e)
 		return
 	}
-	if bs.isPrepareLockout(tx.MsgTx(), txIn, outpointRelevantInfo) {
+	if bs.isPrepareLockout(txIn, outpointRelevantInfo) {
 		// 自己-主链PrepareLockout
-		e := createPrepareLockoutEvent(uint64(blockNumber), tx.MsgTx().TxHash(), outpointRelevantInfo)
+		e := createPrepareLockoutEvent(uint64(blockNumber), tx.MsgTx(), outpointRelevantInfo)
 		events = append(events, e)
 		return
 	}
@@ -339,7 +339,7 @@ func (bs *BTCService) createEventsFromTx(blockNumber int32, tx *btcutil.Tx) (eve
 	//if bs.isCancelPrepareLockout(tx.MsgTx()) {
 	//	return
 	//}
-	log.Error("receive unknown tx : \n%s", utils.ToJSONStringFormat(tx))
+	log.Error("receive unknown tx : \n%s \n relevant info : \n%s", utils.ToJSONStringFormat(tx.MsgTx()), utils.ToJSONStringFormat(outpointRelevantInfo))
 	return
 }
 
@@ -349,7 +349,7 @@ SigScript : SIG {{用户PKH}} 0 {{锁定脚本}}
 */
 func (bs *BTCService) isCancelPrepareLockin(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) (isCancelPrepareLockin bool) {
 	// 验证部分: 0 {{锁定脚本}}
-	verifyStr := fmt.Sprintf("0 %s", outpointRelevantInfo.LockScriptHex)
+	verifyStr := fmt.Sprintf(" 0 %s", outpointRelevantInfo.LockScriptHex)
 	signatureScriptStr, err := txscript.DisasmString(txIn.SignatureScript)
 	if err != nil {
 		log.Error("DisasmString SignatureScript err : %s", err.Error())
@@ -365,7 +365,7 @@ txIn 只有一个 SigScript : SIG {{分布式私钥的PKH}} {{SECRET}} 1 {{锁�
 */
 func (bs *BTCService) isLockin(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) (ok bool) {
 	// 验证部分: 1 {{锁定脚本}}
-	verifyStr := fmt.Sprintf("1 %s", outpointRelevantInfo.LockScriptHex)
+	verifyStr := fmt.Sprintf(" 1 %s", outpointRelevantInfo.LockScriptHex)
 	signatureScriptStr, err := txscript.DisasmString(txIn.SignatureScript)
 	if err != nil {
 		log.Error("DisasmString SignatureScript err : %s", err.Error())
@@ -382,10 +382,7 @@ func (bs *BTCService) isLockin(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpoin
 自己PrepareLockout的tx
 txIns 数量不确定,但没有P2SH,SigScipt : SIG {{分布式私钥的PKH}}
 */
-func (bs *BTCService) isPrepareLockout(tx *wire.MsgTx, txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) bool {
-	if len(tx.TxOut) != 1 {
-		return false
-	}
+func (bs *BTCService) isPrepareLockout(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) bool {
 	// 验证部分: {{分布式私钥的PKH}}
 	signatureScriptStr, err := txscript.DisasmString(txIn.SignatureScript)
 	if err != nil {

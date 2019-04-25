@@ -74,6 +74,7 @@ func (db *DB) NewBTCOutpoint(outpoint *BTCOutpoint) error {
 
 //GetBTCOutpoint :
 func (db *DB) GetBTCOutpoint(txHashStr string) (outpoint *BTCOutpoint, err error) {
+	outpoint = &BTCOutpoint{}
 	err = db.Where(&BTCOutpoint{
 		TxHashStr: txHashStr,
 	}).First(outpoint).Error

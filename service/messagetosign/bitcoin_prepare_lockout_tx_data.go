@@ -13,6 +13,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
@@ -25,7 +26,8 @@ const BitcoinPrepareLockoutTXDataName = "BitcoinPrepareLockoutTXData"
 
 // BitcoinPrepareLockoutTXData :
 type BitcoinPrepareLockoutTXData struct {
-	originTx *wire.MsgTx
+	originTx            *wire.MsgTx
+	notaryAddressPubKey *btcutil.AddressPubKey
 	//请求分发必须参数
 	SCTokenAddress common.Address `json:"sc_token_address"`
 	SecretHash     common.Hash    `json:"secret_hash"`
@@ -70,17 +72,6 @@ func NewBitcoinPrepareLockoutTXData(req *userapi.MCPrepareLockoutRequest, bs *bi
 		tx.AddTxIn(txIn)
 		totalAmount += utxo.Amount
 	}
-	// 锁定txOut
-	amount := btcutil.Amount(lockoutInfo.Amount.Int64())
-	builder := bs.GetPrepareLockOutScriptBuilder(userAddress, notaryAddress, amount, lockoutInfo.SecretHash[:], big.NewInt(int64(lockoutInfo.MCExpiration)))
-	_, lockScriptAddr, _ := builder.GetPKScript()
-	pkScript, err := txscript.PayToAddrScript(lockScriptAddr)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
-	txOut4Lock := wire.NewTxOut(lockoutInfo.Amount.Int64(), pkScript)
-	tx.AddTxOut(txOut4Lock)
 	// 找零txOut
 	backAmount := int64(totalAmount) - lockoutInfo.Amount.Int64() - fee
 	if backAmount > 0 {
@@ -93,6 +84,17 @@ func NewBitcoinPrepareLockoutTXData(req *userapi.MCPrepareLockoutRequest, bs *bi
 		txOut4Notary := wire.NewTxOut(backAmount, pkScript)
 		tx.AddTxOut(txOut4Notary)
 	}
+	// 锁定txOut
+	amount := btcutil.Amount(lockoutInfo.Amount.Int64())
+	builder := bs.GetPrepareLockOutScriptBuilder(userAddress, notaryAddress, amount, lockoutInfo.SecretHash[:], big.NewInt(int64(lockoutInfo.MCExpiration)))
+	_, lockScriptAddr, _ := builder.GetPKScript()
+	pkScript, err := txscript.PayToAddrScript(lockScriptAddr)
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
+	txOut4Lock := wire.NewTxOut(lockoutInfo.Amount.Int64(), pkScript)
+	tx.AddTxOut(txOut4Lock)
 	// 5. 生成BytesToSign,
 	bytesToSign, err := txscript.CalcSignatureHash(utxos[indexToSign].GetPKScript(bs.GetNetParam()), txscript.SigHashAll, tx, indexToSign)
 	if err != nil {
@@ -101,16 +103,17 @@ func NewBitcoinPrepareLockoutTXData(req *userapi.MCPrepareLockoutRequest, bs *bi
 	}
 	originTXHash := tx.TxHash()
 	data = &BitcoinPrepareLockoutTXData{
-		originTx:       tx,
-		SCTokenAddress: lockoutInfo.SCTokenAddress,
-		SecretHash:     lockoutInfo.SecretHash,
-		UserRequest:    req,
-		Fee:            fee,
-		UTXOKeysStr:    utxoKeysStr,
-		TxInID:         indexToSign,
-		MCExpiration:   lockoutInfo.MCExpiration,
-		OriginTXHash:   originTXHash.CloneBytes(),
-		BytesToSign:    bytesToSign,
+		originTx:            tx,
+		notaryAddressPubKey: mcNotaryPublicKey,
+		SCTokenAddress:      lockoutInfo.SCTokenAddress,
+		SecretHash:          lockoutInfo.SecretHash,
+		UserRequest:         req,
+		Fee:                 fee,
+		UTXOKeysStr:         utxoKeysStr,
+		TxInID:              indexToSign,
+		MCExpiration:        lockoutInfo.MCExpiration,
+		OriginTXHash:        originTXHash.CloneBytes(),
+		BytesToSign:         bytesToSign,
 	}
 	return
 }
@@ -181,4 +184,23 @@ func (d *BitcoinPrepareLockoutTXData) VerifySignData(bs *bitcoin.BTCService, loc
 //GetOriginTxCopy :
 func (d *BitcoinPrepareLockoutTXData) GetOriginTxCopy() *wire.MsgTx {
 	return d.originTx.Copy()
+}
+
+// BuildBTCSignatureScript :
+func (d *BitcoinPrepareLockoutTXData) BuildBTCSignatureScript(dsmSignature []byte) []byte {
+	//1. 获取sigScript
+	r := new(big.Int)
+	s := new(big.Int)
+	r.SetBytes(dsmSignature[:32])
+	s.SetBytes(dsmSignature[32:64])
+	signature := &btcec.Signature{R: r, S: s}
+	sig := append(signature.Serialize(), byte(txscript.SigHashAll))
+	sb := txscript.NewScriptBuilder()
+	sb.AddData(sig)
+	sb.AddData(d.notaryAddressPubKey.PubKey().SerializeCompressed())
+	signatureScript, err := sb.Script()
+	if err != nil {
+		panic(err)
+	}
+	return signatureScript
 }
