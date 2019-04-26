@@ -32,6 +32,7 @@ import (
 	其他service回调DispatchService的入口
 */
 type dispatchServiceBackend interface {
+	getBTCService() *bitcoin.BTCService
 	getBtcNetworkParam() *chaincfg.Params
 	getSelfPrivateKey() *ecdsa.PrivateKey
 	getSelfNotaryInfo() *models.NotaryInfo
@@ -63,6 +64,10 @@ type dispatchServiceBackend interface {
 		notaryService在协商调用合约之后,更新lockinInfo中的NotaryIDInCharge字段,其余地方不应该调用
 	*/
 	updateLockoutInfoNotaryIDInChargeID(scTokenAddress common.Address, secretHash common.Hash, notaryID int) (err error)
+}
+
+func (ds *DispatchService) getBTCService() *bitcoin.BTCService {
+	return ds.chainMap[bitcoin.ChainName].(*bitcoin.BTCService)
 }
 
 func (ds *DispatchService) getBtcNetworkParam() *chaincfg.Params {

@@ -187,6 +187,7 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 			Hash:  btcPrepareLockinInfo.TxHash,
 			Index: lockinInfo.BTCPrepareLockinVout,
 		}, &bitcoin.BTCOutpointRelevantInfo{
+			Use:           bitcoin.OutpointUseToLockinOrCancel,
 			SecretHash:    req.SecretHash,
 			LockScriptHex: common.Bytes2Hex(lockScript),
 		})

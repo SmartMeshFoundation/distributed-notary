@@ -43,6 +43,7 @@ type LockoutInfo struct {
 	EndSCBlockNumber           uint64         `json:"end_sc_block_number"`             // 结束时侧链块数
 	BTCPrepareLockoutTXHashHex string         `json:"btc_prepare_lockout_tx_hash_hex"` // 比特币锁定的utxo的txhash
 	BTCPrepareLockoutVout      uint32         `json:"btc_prepare_lockout_vout"`        // 比特币锁定的utxo的index
+	BTCLockScriptHex           string         `json:"btc_lock_script_hex"`             // 比特币锁定交易
 }
 
 /*
@@ -81,6 +82,7 @@ type lockoutInfoModel struct {
 	EndMCBlockNumber           uint64
 	BTCPrepareLockoutTXHashHex string // 比特币锁定的utxo的txhash
 	BTCPrepareLockoutVout      uint32 // 比特币锁定的utxo的index
+	BTCLockScriptHex           string // 比特币锁定交易
 }
 
 func (lom *lockoutInfoModel) toLockoutInfo() *LockoutInfo {
@@ -106,6 +108,7 @@ func (lom *lockoutInfoModel) toLockoutInfo() *LockoutInfo {
 		EndSCBlockNumber:           lom.EndMCBlockNumber,
 		BTCPrepareLockoutTXHashHex: lom.BTCPrepareLockoutTXHashHex,
 		BTCPrepareLockoutVout:      lom.BTCPrepareLockoutVout,
+		BTCLockScriptHex:           lom.BTCLockScriptHex,
 	}
 }
 func (lom *lockoutInfoModel) fromLockoutInfo(l *LockoutInfo) *lockoutInfoModel {
@@ -128,6 +131,7 @@ func (lom *lockoutInfoModel) fromLockoutInfo(l *LockoutInfo) *lockoutInfoModel {
 	lom.EndMCBlockNumber = l.EndSCBlockNumber
 	lom.BTCPrepareLockoutTXHashHex = l.BTCPrepareLockoutTXHashHex
 	lom.BTCPrepareLockoutVout = l.BTCPrepareLockoutVout
+	lom.BTCLockScriptHex = l.BTCLockScriptHex
 	return lom
 }
 

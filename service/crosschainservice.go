@@ -245,14 +245,15 @@ func (cs *CrossChainService) callBitcoinPrepareLockout(req *userapi.MCPrepareLoc
 		tx.TxIn[index].SignatureScript = msgToSign.BuildBTCSignatureScript(signature)
 		// 注册outpoint监听
 		outpointToListen := msgToSign.GetOriginTxCopy().TxIn[index].PreviousOutPoint
-		//mcLockedPublicKeyHashHex := cs.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress).MCLockedPublicKeyHashStr
 		err = bs.RegisterOutpoint(outpointToListen, &bitcoin.BTCOutpointRelevantInfo{
+			Use:           bitcoin.OutpointUseToPrepareLockout,
 			SecretHash:    req.SecretHash,
 			LockScriptHex: common.Bytes2Hex(privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()).PubKey().SerializeCompressed()),
 			Data4PrepareLockout: &bitcoin.BTCOutpointRelevantInfo4PrepareLockout{
 				// 保存用户主链取钱的地址
 				UserAddressPublicKeyHashHex: req.GetSignerBTCPublicKey(bs.GetNetParam()).AddressPubKeyHash().String(),
 				MCExpiration:                localLockoutInfo.MCExpiration,
+				TxOutLockScriptHex:          msgToSign.GetLockScriptHex(),
 			},
 		})
 		if err != nil {
@@ -318,7 +319,51 @@ func (cs *CrossChainService) callSCLockout(userAddressHex string, secret common.
 }
 
 func (cs *CrossChainService) callMCCancelLockout(userAddressHex string) (err error) {
-	// 无需使用分布式签名,用自己的签名就好
+	if cs.meta.MCName == events.ChainName {
+		return cs.callEthereumCancelLockout(userAddressHex)
+	}
+	//if cs.meta.MCName == bitcoin.ChainName {
+	//	return cs.callBitcoinCancelLockout(userAddressHex)
+	//}
+	err = fmt.Errorf("unknown chain : %s", cs.meta.MCName)
+	log.Error(err.Error())
+	return
+}
+
+func (cs *CrossChainService) callEthereumCancelLockout(userAddressHex string) (err error) {
+	// 以太坊 无需使用分布式签名,用自己的签名就好
 	auth := bind.NewKeyedTransactor(cs.selfPrivateKey)
 	return cs.scTokenProxy.CancelLockout(auth, userAddressHex)
+}
+
+func (cs *CrossChainService) callBitcoinCancelLockout(lockoutInfo *models.LockoutInfo) (err error) {
+	// 0. privateKey状态校验
+	privateKeyInfo, err := cs.lockinHandler.db.LoadPrivateKeyInfo(cs.meta.SCTokenOwnerKey)
+	if err != nil {
+		return
+	}
+	if privateKeyInfo.Status != models.PrivateKeyNegotiateStatusFinished {
+		panic("never happen")
+	}
+	// 1. 估算手续费
+	fee := int64(1000)
+	// 2. 构造MsgToSign
+	bs := cs.dispatchService.getBTCService()
+	msgToSign := messagetosign.NewBitcoinCancelPrepareLockoutTXData(lockoutInfo, privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()), fee)
+	// 3. 签名
+	dsmSignature, _, err := cs.dispatchService.getNotaryService().startDistributedSignAndWait(msgToSign, privateKeyInfo)
+	// 4. 构造RawTransaction
+	tx, err := msgToSign.BuildRawTransaction(dsmSignature)
+	if err != nil {
+		return
+	}
+	// 6. 发送交易到链上
+	log.Info("call CancelPrepareLockout on bitcoin with account=%s lockTime=%d", privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()), tx.LockTime)
+	txHash, err := bs.GetBtcRPCClient().SendRawTransaction(tx, false)
+	if err != nil {
+		log.Error(fmt.Sprintf("callBitcoinCancelLockout SendRawTransaction err : %s", err.Error()))
+		return
+	}
+	log.Trace("callBitcoinCancelLockout txHash=%s", txHash.String())
+	return
 }

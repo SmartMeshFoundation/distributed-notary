@@ -15,6 +15,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/nkbai/log"
 )
@@ -90,12 +91,18 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 	case ethevents.LockoutSecretEvent: // MCLOS
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC LockoutSecretEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onMCLockoutSecret4Ethereum(event)
+	case bitcoin.LockoutSecretEvent: // MCLOS
+		log.Info(SCTokenLogMsg(cs.meta, "Receive MC LockoutSecretEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onMCLockoutSecret4Bitcoin(event)
 	case smcevents.LockoutEvent: // SCLO
-		log.Info(SCTokenLogMsg(cs.meta, "Receive SC LockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
+		log.Info(SCTokenLogMsg(cs.meta, "Receive SC LockoutSecretEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onSCLockout(event)
 	case ethevents.CancelLockoutEvent: // MCCancelLO
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC CancelLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onMCCancelLockout4Ethereum(event)
+	case bitcoin.CancelLockoutEvent: //MCCancelLO
+		log.Info(SCTokenLogMsg(cs.meta, "Receive MC CancelLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
+		err = cs.onMCCancelLockout4Bitcoin(event)
 	case smcevents.CancelLockoutEvent: // SCCancelLO
 		log.Info(SCTokenLogMsg(cs.meta, "Receive SC CancelLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onSCCancelLockout(event)
@@ -126,10 +133,15 @@ func (cs *CrossChainService) onMCNewBlockEvent(blockNumber uint64) (err error) {
 	if len(lockoutListNeedCancel) > 0 {
 		for _, lockout := range lockoutListNeedCancel {
 			if lockout.NotaryIDInCharge == cs.selfNotaryID {
-				// 如果我是负责人,尽快cancel,这里如果调用合约出错,也继续去尝试cancel下一个
-				err = cs.callMCCancelLockout(lockout.MCUserAddressHex)
-				if err != nil {
-					log.Error("callMCCancelLockout err = %s", err.Error())
+				if cs.meta.MCName == ethevents.ChainName {
+					// 如果我是负责人,尽快cancel,这里如果调用合约出错,也继续去尝试cancel下一个
+					err = cs.callMCCancelLockout(lockout.MCUserAddressHex)
+					if err != nil {
+						log.Error("callMCCancelLockout err = %s", err.Error())
+					}
+				}
+				if cs.meta.MCName == bitcoin.ChainName {
+					// 比特币的时候,流程正常的话,取消交易已经在PrepareLockout的时候就已经构造并发送出去了,不用在这里再发一次
 				}
 			}
 		}
@@ -504,6 +516,7 @@ func (cs *CrossChainService) onMCPrepareLockout4Bitcoin(event bitcoin.PrepareLoc
 	lockoutInfo.MCUserAddressHex = event.UserAddressHex
 	lockoutInfo.BTCPrepareLockoutTXHashHex = event.TXHashHex
 	lockoutInfo.BTCPrepareLockoutVout = uint32(event.LockOutpointIndex)
+	lockoutInfo.BTCLockScriptHex = event.TxOutLockScriptHex
 	err = cs.lockoutHandler.updateLockout(lockoutInfo)
 	if err != nil {
 		err = fmt.Errorf("lockoutHandler.updateLockout err = %s", err.Error())
@@ -520,8 +533,34 @@ func (cs *CrossChainService) onMCPrepareLockout4Bitcoin(event bitcoin.PrepareLoc
 			CreateTime:       time.Now().Unix(),
 		})
 	}
-	// 6. 注册lockOutPoint监听 TODO
-	// 7. 发送cancelPrepareLockout交易到BTC TODO
+	// 6. 记录已经使用的Outpoint
+	for _, outpoint := range event.TxInOutpoint {
+		err = cs.lockoutHandler.db.MarkBTCOutpointUsed(outpoint.Hash.String())
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}
+	// 6. 注册lockOutPoint监听
+	outpointTxHashToListen, err := chainhash.NewHashFromStr(lockoutInfo.BTCPrepareLockoutTXHashHex)
+	outpointToListen := wire.OutPoint{
+		Hash:  *outpointTxHashToListen,
+		Index: lockoutInfo.BTCPrepareLockoutVout,
+	}
+	err = cs.dispatchService.getBTCService().RegisterOutpoint(outpointToListen, &bitcoin.BTCOutpointRelevantInfo{
+		Use:           bitcoin.OutpointUseToLockoutOrCancel,
+		SecretHash:    lockoutInfo.SecretHash,
+		LockScriptHex: event.TxOutLockScriptHex,
+	})
+	if err != nil {
+		log.Error(err.Error())
+	}
+	// 7. 如果我是负责人,主持发起cancelPrepareLockout交易到BTC
+	if lockoutInfo.NotaryIDInCharge == cs.selfNotaryID {
+		err = cs.callBitcoinCancelLockout(lockoutInfo)
+		if err != nil {
+			log.Error(err.Error())
+		}
+	}
 	return
 }
 
@@ -606,6 +645,46 @@ func (cs *CrossChainService) onMCLockoutSecret4Ethereum(event ethevents.LockoutS
 }
 
 /*
+主链LockoutSecret(MCLOS)
+该事件由用户发起,已确认
+*/
+func (cs *CrossChainService) onMCLockoutSecret4Bitcoin(event bitcoin.LockoutSecretEvent) (err error) {
+	// 1.根据密码hash查询LockoutInfo
+	secretHash := utils.ShaSecret(event.Secret[:])
+	lockoutInfo, err := cs.lockoutHandler.getLockout(secretHash)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.getLockout err = %s", err.Error())
+		return
+	}
+	// 2. 重复校验 TODO
+	if lockoutInfo.Secret != utils.EmptyHash {
+		err = fmt.Errorf("receive repeat MCLockoutSecret, ignore")
+		return
+	}
+	// 3. 校验状态,好像没啥用,用户都拿走钱了,就算状态不对,也需要继续操作,让负责人尝试去侧链lockout
+	if lockoutInfo.MCLockStatus != models.LockStatusLock || lockoutInfo.SCLockStatus != models.LockStatusLock {
+		err = fmt.Errorf("local lockoutInfo status does't right,something must wrong, local lockoutInfo:\n%s", utils.ToJSONStringFormat(lockoutInfo))
+	}
+	// 3. 更新状态
+	lockoutInfo.Secret = event.Secret
+	lockoutInfo.MCLockStatus = models.LockStatusUnlock
+	err = cs.lockoutHandler.updateLockout(lockoutInfo)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.updateLockout err = %s", err.Error())
+		return
+	}
+	// 4. 如果自己是负责人,发起侧链Lockout
+	if lockoutInfo.NotaryIDInCharge == cs.selfNotaryID {
+		err = cs.callSCLockout(lockoutInfo.SCUserAddress.String(), lockoutInfo.Secret)
+		if err != nil {
+			err = fmt.Errorf("callSCLockout err = %s", err.Error())
+			return
+		}
+	}
+	return
+}
+
+/*
 侧链链Lockout
 收到该事件,说明一次Lockout完整结束,合约上已经清楚该UserAccount的lockout信息
 */
@@ -648,6 +727,28 @@ func (cs *CrossChainService) onMCCancelLockout4Ethereum(event ethevents.CancelLo
 		err = fmt.Errorf("MCUserAddressHex does't match")
 		return
 	}
+	// 3. 更新本地信息,endTime哪个链取消在后面取哪个
+	lockoutInfo.MCLockStatus = models.LockStatusCancel
+	lockoutInfo.EndTime = event.Time.Unix()
+	err = cs.lockoutHandler.updateLockout(lockoutInfo)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.updateLockout err = %s", err.Error())
+		return
+	}
+	return
+}
+
+/*
+主链取消
+*/
+func (cs *CrossChainService) onMCCancelLockout4Bitcoin(event bitcoin.CancelLockoutEvent) (err error) {
+	// 1. 获取本地LockoutInfo信息
+	lockoutInfo, err := cs.lockoutHandler.getLockout(event.SecretHash)
+	if err != nil {
+		err = fmt.Errorf("lockoutHandler.getLockout err = %s", err.Error())
+		return
+	}
+	// 2. 校验 比特币上无需校验
 	// 3. 更新本地信息,endTime哪个链取消在后面取哪个
 	lockoutInfo.MCLockStatus = models.LockStatusCancel
 	lockoutInfo.EndTime = event.Time.Unix()

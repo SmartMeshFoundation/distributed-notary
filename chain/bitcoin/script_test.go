@@ -209,7 +209,8 @@ func TestPrepareLockoutScriptBuilder_GetSigScriptForNotary(t *testing.T) {
 
 	// 签名txout
 	redeemTx.TxIn[0].Sequence = 0
-	redeemTx.LockTime = uint32(builder.expiration.Int64())
+	//redeemTx.LockTime = uint32(builder.expiration.Int64())
+	redeemTx.LockTime = 5
 	sigScript, err := txscript.SignatureScript(redeemTx, 0, lockScript, txscript.SigHashAll, notaryPrivateKey, true)
 
 	// 构造SignatureScript
