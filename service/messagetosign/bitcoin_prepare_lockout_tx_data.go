@@ -75,7 +75,8 @@ func NewBitcoinPrepareLockoutTXData(req *userapi.MCPrepareLockoutRequest, bs *bi
 		totalAmount += utxo.Amount
 	}
 	// 找零txOut
-	backAmount := int64(totalAmount) - lockoutInfo.Amount.Int64() - fee
+	lockAmount := new(big.Int).Sub(lockoutInfo.Amount, lockoutInfo.CrossFee)
+	backAmount := int64(totalAmount) - lockAmount.Int64() - fee
 	if backAmount > 0 {
 		pkScript, err2 := txscript.PayToAddrScript(notaryAddress)
 		if err2 != nil {
@@ -87,8 +88,7 @@ func NewBitcoinPrepareLockoutTXData(req *userapi.MCPrepareLockoutRequest, bs *bi
 		tx.AddTxOut(txOut4Notary)
 	}
 	// 锁定txOut
-	amount := btcutil.Amount(lockoutInfo.Amount.Int64())
-	builder := bs.GetPrepareLockOutScriptBuilder(userAddress, notaryAddress, amount, lockoutInfo.SecretHash[:], big.NewInt(int64(lockoutInfo.MCExpiration)))
+	builder := bs.GetPrepareLockOutScriptBuilder(userAddress, notaryAddress, btcutil.Amount(lockAmount.Int64()), lockoutInfo.SecretHash[:], big.NewInt(int64(lockoutInfo.MCExpiration)))
 	lockScript, lockScriptAddr, _ := builder.GetPKScript()
 	pkScript, err := txscript.PayToAddrScript(lockScriptAddr)
 	if err != nil {

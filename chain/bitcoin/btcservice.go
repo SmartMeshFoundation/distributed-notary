@@ -129,6 +129,16 @@ func NewBTCService(host, rpcUser, rpcPass, certFilePath string) (bs *BTCService,
 	return
 }
 
+// GetBlockPeriodTime impl chain.Chain
+func (bs *BTCService) GetBlockPeriodTime() time.Duration {
+	return blockPeriodSeconds
+}
+
+// GetCrossFeeRate impl chain.Chain
+func (bs *BTCService) GetCrossFeeRate() int64 {
+	return crossFeeRate
+}
+
 // GetChainName impl chain.Chain
 func (bs *BTCService) GetChainName() string {
 	return bs.chainName

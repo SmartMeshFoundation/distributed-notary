@@ -88,6 +88,16 @@ func NewETHService(host string, contractAddresses ...common.Address) (ss *ETHSer
 	return
 }
 
+// GetBlockPeriodTime impl chain.Chain
+func (ss *ETHService) GetBlockPeriodTime() time.Duration {
+	return blockPeriodSeconds
+}
+
+// GetCrossFeeRate impl chain.Chain
+func (ss *ETHService) GetCrossFeeRate() int64 {
+	return crossFeeRate
+}
+
 // GetClient :
 func (ss *ETHService) GetClient() *client.SafeEthClient {
 	return ss.c

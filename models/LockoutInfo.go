@@ -44,6 +44,7 @@ type LockoutInfo struct {
 	BTCPrepareLockoutTXHashHex string         `json:"btc_prepare_lockout_tx_hash_hex"` // 比特币锁定的utxo的txhash
 	BTCPrepareLockoutVout      uint32         `json:"btc_prepare_lockout_vout"`        // 比特币锁定的utxo的index
 	BTCLockScriptHex           string         `json:"btc_lock_script_hex"`             // 比特币锁定交易
+	CrossFee                   *big.Int       `json:"cross_fee"`                       // 该字段记录本次lockin收取的手续费,即用户主链锁定的金额-lockin完成后侧链用户账户新增的金额
 }
 
 /*
@@ -82,12 +83,15 @@ type lockoutInfoModel struct {
 	EndMCBlockNumber           uint64
 	BTCPrepareLockoutTXHashHex string // 比特币锁定的utxo的txhash
 	BTCPrepareLockoutVout      uint32 // 比特币锁定的utxo的index
-	BTCLockScriptHex           string // 比特币锁定交易
+	BTCLockScriptHex           string //
+	CrossFee                   []byte
 }
 
 func (lom *lockoutInfoModel) toLockoutInfo() *LockoutInfo {
 	amount := new(big.Int)
 	amount.SetBytes(lom.Amount)
+	crossFee := new(big.Int)
+	crossFee.SetBytes(lom.CrossFee)
 	return &LockoutInfo{
 		MCChainName:                lom.MCChainName,
 		SecretHash:                 common.BytesToHash(lom.SecretHash),
@@ -109,8 +113,10 @@ func (lom *lockoutInfoModel) toLockoutInfo() *LockoutInfo {
 		BTCPrepareLockoutTXHashHex: lom.BTCPrepareLockoutTXHashHex,
 		BTCPrepareLockoutVout:      lom.BTCPrepareLockoutVout,
 		BTCLockScriptHex:           lom.BTCLockScriptHex,
+		CrossFee:                   crossFee,
 	}
 }
+
 func (lom *lockoutInfoModel) fromLockoutInfo(l *LockoutInfo) *lockoutInfoModel {
 	lom.MCChainName = l.MCChainName
 	lom.SecretHash = l.SecretHash[:]
@@ -132,6 +138,7 @@ func (lom *lockoutInfoModel) fromLockoutInfo(l *LockoutInfo) *lockoutInfoModel {
 	lom.BTCPrepareLockoutTXHashHex = l.BTCPrepareLockoutTXHashHex
 	lom.BTCPrepareLockoutVout = l.BTCPrepareLockoutVout
 	lom.BTCLockScriptHex = l.BTCLockScriptHex
+	lom.CrossFee = l.CrossFee.Bytes()
 	return lom
 }
 

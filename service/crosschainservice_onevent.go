@@ -191,7 +191,8 @@ func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareL
 		return
 	}
 	// 1.6 计算scExpiration
-	scExpiration := cs.scLastedBlockNumber + (mcExpiration - event.BlockNumber - 5*params.ForkConfirmNumber - 1)
+	//scExpiration := cs.scLastedBlockNumber + (mcExpiration - event.BlockNumber - 5*params.ForkConfirmNumber - 1)
+	scExpiration := cs.calculateSCExpiration(mcExpiration)
 
 	// 2. 构造LockinInfo
 	lockinInfo := &models.LockinInfo{
@@ -210,6 +211,7 @@ func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareL
 		NotaryIDInCharge:   models.UnknownNotaryIDInCharge,
 		StartTime:          event.Time.Unix(),
 		StartMCBlockNumber: event.BlockNumber,
+		CrossFee:           cs.dispatchService.calculateCrossFee(cs.meta.MCName, amount), // 计算跨链手续费
 	}
 	// 3. 调用handler处理
 	err = cs.lockinHandler.registerLockin(lockinInfo)
@@ -227,7 +229,7 @@ func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareL
 */
 func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEvent) (err error) {
 	// 1. 查询
-	secretHash, scExpiration, amount, err := cs.scTokenProxy.QueryLockin(event.Account.String())
+	secretHash, scExpiration, _, err := cs.scTokenProxy.QueryLockin(event.Account.String())
 	if err != nil {
 		err = fmt.Errorf("scTokenProxy.QueryLockin err = %s", err.Error())
 		return
@@ -244,9 +246,10 @@ func (cs *CrossChainService) onSCPrepareLockin(event smcevents.PrepareLockinEven
 	if lockinInfo.MCLockStatus != models.LockStatusLock || lockinInfo.SCLockStatus != models.LockStatusNone || lockinInfo.Secret != utils.EmptyHash {
 		log.Error("local lockinInfo status does't right,something must wrong, local lockinInfo:\n%s", utils.ToJSONStringFormat(lockinInfo))
 	}
-	if lockinInfo.Amount.Cmp(amount) != 0 {
-		log.Error("amount does't match")
-	}
+	// 这里没必要校验金额,签名时已经校验了
+	//if lockinInfo.Amount.Cmp(amount) != 0 {
+	//	log.Error("amount does't match")
+	//}
 
 	// 4. 修改状态,等待后续调用
 	lockinInfo.SCExpiration = scExpiration // 存在因为各节点区块高度细微差距导致的自己之前计算的SCExpiration不对,这里取合约里面的真实值
@@ -461,7 +464,8 @@ func (cs *CrossChainService) onSCPrepareLockout(event smcevents.PrepareLockoutEv
 		return
 	}
 	// 1.6 计算mcExpiration
-	mcExpiration := cs.mcLastedBlockNumber + (scExpiration - event.BlockNumber - 5*params.ForkConfirmNumber - 1)
+	//mcExpiration := cs.mcLastedBlockNumber + (scExpiration - event.BlockNumber - 5*params.ForkConfirmNumber - 1)
+	mcExpiration := cs.calculateMCExpiration(scExpiration)
 
 	// 2. 构造LockoutInfo
 	lockoutInfo := &models.LockoutInfo{
@@ -482,6 +486,7 @@ func (cs *CrossChainService) onSCPrepareLockout(event smcevents.PrepareLockoutEv
 		StartSCBlockNumber:         event.BlockNumber,
 		BTCPrepareLockoutTXHashHex: "",
 		BTCPrepareLockoutVout:      0,
+		CrossFee:                   cs.dispatchService.calculateCrossFee(cs.meta.MCName, amount), // 计算跨链手续费
 	}
 	// 3. 调用handler处理
 	err = cs.lockoutHandler.registerLockout(lockoutInfo)
@@ -546,7 +551,8 @@ func (cs *CrossChainService) onMCPrepareLockout4Bitcoin(event bitcoin.PrepareLoc
 		Hash:  *outpointTxHashToListen,
 		Index: lockoutInfo.BTCPrepareLockoutVout,
 	}
-	err = cs.dispatchService.getBTCService().RegisterOutpoint(outpointToListen, &bitcoin.BTCOutpointRelevantInfo{
+	btcService := cs.mc.(*bitcoin.BTCService)
+	err = btcService.RegisterOutpoint(outpointToListen, &bitcoin.BTCOutpointRelevantInfo{
 		Use:           bitcoin.OutpointUseToLockoutOrCancel,
 		SecretHash:    lockoutInfo.SecretHash,
 		LockScriptHex: event.TxOutLockScriptHex,

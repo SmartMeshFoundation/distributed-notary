@@ -18,3 +18,9 @@ const defaultPollTimeout = 180 * time.Second
 
 // spectrumRPCTimeout :
 var spectrumRPCTimeout = 3 * time.Second
+
+// crossFeeRate 跨链手续费率
+var crossFeeRate int64 = 10000
+
+// blockPeriodSeconds 出块间隔
+var blockPeriodSeconds = time.Second

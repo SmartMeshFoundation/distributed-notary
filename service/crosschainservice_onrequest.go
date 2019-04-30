@@ -1,22 +1,12 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 
-	"math/big"
-
-	"github.com/SmartMeshFoundation/Spectrum/log"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
-	"github.com/SmartMeshFoundation/distributed-notary/utils"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcutil"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // OnRequest restful请求处理
@@ -97,108 +87,6 @@ func (cs *CrossChainService) onSCPrepareLockinRequest(req *userapi.SCPrepareLock
 		return
 	}
 	req.WriteSuccessResponse(lockinInfo)
-}
-
-func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.SCPrepareLockinRequest) (lockinInfo *models.LockinInfo, err error) {
-	if cs.meta.MCName == events.ChainName {
-		// 以太坊,收到用户请求时,lockinInfo必须已经存在,仅做校验工作
-		mcUserAddress := common.BytesToAddress(req.MCUserAddress)
-		lockinInfo, err = cs.lockinHandler.getLockin(req.SecretHash)
-		if err != nil {
-			req.WriteErrorResponse(api.ErrorCodeException, err.Error())
-			return
-		}
-		if lockinInfo.MCUserAddressHex != mcUserAddress.String() {
-			err = errors.New("MCUserAddress wrong")
-			return
-		}
-		if lockinInfo.MCLockStatus != models.LockStatusLock {
-			err = fmt.Errorf("MCLockStatus %d wrong", lockinInfo.MCLockStatus)
-			return
-		}
-		if lockinInfo.SCLockStatus != models.LockStatusNone {
-			err = fmt.Errorf("SCLockStatus %d wrong", lockinInfo.SCLockStatus)
-			return
-		}
-		return
-	}
-	if cs.meta.MCName == bitcoin.ChainName {
-		c, err2 := cs.dispatchService.getChainByName(cs.meta.MCName)
-		if err2 != nil {
-			panic(err2)
-		}
-		btcService := c.(*bitcoin.BTCService)
-		net := cs.dispatchService.getBtcNetworkParam()
-		mcUserAddress, err2 := btcutil.NewAddressPubKeyHash(req.MCUserAddress, net)
-		if err2 != nil {
-			log.Error(err2.Error())
-			return nil, err2
-		}
-		notaryPublicKeyHash, err2 := btcutil.DecodeAddress(cs.meta.MCLockedPublicKeyHashStr, net)
-		if err2 != nil {
-			panic("never happen")
-		}
-		notaryAddress := notaryPublicKeyHash.(*btcutil.AddressPubKeyHash)
-		// 比特币,收到用户请求之前,公证人无从得知任何信息,所以这里必须根据用户的请求验证链上数据,并构造lockinInfo
-		// 1. 根据用户参数本地生成脚本hash
-		builder := btcService.GetPrepareLockInScriptBuilder(mcUserAddress, notaryAddress, req.MCLockedAmount, req.SecretHash[:], req.MCExpiration)
-		lockScript, lockAddr, _ := builder.GetPKScript()
-		// 2. 从链上查询tx并在其中查找锁定地址为上一步生成的hash值的outpoint及交易发生的blockNumber
-		btcPrepareLockinInfo, err2 := btcService.GetPrepareLockinInfo(req.MCTXHash, lockAddr.String(), req.MCLockedAmount)
-		if err2 != nil {
-			return nil, err2
-		}
-		// 3. 校验mcExpiration
-		mcExpiration := req.MCExpiration.Uint64()
-		if mcExpiration-btcPrepareLockinInfo.BlockNumber <= params.MinLockinMCExpiration {
-			err2 = fmt.Errorf("mcExpiration must bigger than %d", params.MinLockinMCExpiration)
-			return nil, err2
-		}
-		// 4 计算scExpiration
-		scExpiration := cs.scLastedBlockNumber + (mcExpiration - btcPrepareLockinInfo.BlockNumber - 5*params.ForkConfirmNumber - 1)
-		// 5. 构造LockinInfo
-		lockinInfo = &models.LockinInfo{
-			MCChainName:      cs.meta.MCName,
-			SecretHash:       req.SecretHash,
-			Secret:           utils.EmptyHash,
-			MCUserAddressHex: mcUserAddress.String(),
-			SCUserAddress:    req.GetSignerETHAddress(),
-			SCTokenAddress:   cs.meta.SCToken,
-			Amount:           big.NewInt(int64(req.MCLockedAmount)),
-			MCExpiration:     mcExpiration,
-			SCExpiration:     scExpiration,
-			MCLockStatus:     models.LockStatusLock,
-			SCLockStatus:     models.LockStatusNone,
-			//Data:               data,
-			NotaryIDInCharge:          models.UnknownNotaryIDInCharge,
-			StartTime:                 btcPrepareLockinInfo.BlockNumberTime,
-			StartMCBlockNumber:        btcPrepareLockinInfo.BlockNumber,
-			BTCPrepareLockinTXHashHex: btcPrepareLockinInfo.TxHash.String(),
-			BTCPrepareLockinVout:      uint32(btcPrepareLockinInfo.Index),
-		}
-		// 6. 调用handler处理
-		err2 = cs.lockinHandler.registerLockin(lockinInfo)
-		if err2 != nil {
-			err2 = fmt.Errorf("lockinHandler.registerLockin err2 = %s", err2.Error())
-			return nil, err2
-		}
-		// 7. 注册需要监听的outpoint到BTCService
-		err2 = btcService.RegisterOutpoint(wire.OutPoint{
-			Hash:  btcPrepareLockinInfo.TxHash,
-			Index: lockinInfo.BTCPrepareLockinVout,
-		}, &bitcoin.BTCOutpointRelevantInfo{
-			Use:           bitcoin.OutpointUseToLockinOrCancel,
-			SecretHash:    req.SecretHash,
-			LockScriptHex: common.Bytes2Hex(lockScript),
-		})
-		if err2 != nil {
-			log.Error("lockinHandler.RegisterOutpoint err2 = %s", err2.Error())
-			// 这里不返回错误,注册失败不能影响操作
-		}
-		return
-	}
-	err = fmt.Errorf("unknown chain : %s", cs.meta.MCName)
-	return
 }
 
 /*
