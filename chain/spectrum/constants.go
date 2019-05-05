@@ -19,3 +19,6 @@ const defaultPollTimeout = 180 * time.Second
 
 // spectrumRPCTimeout :
 var spectrumRPCTimeout = 3 * time.Second
+
+// blockPeriodSeconds 出块间隔
+var blockPeriodSeconds = time.Second

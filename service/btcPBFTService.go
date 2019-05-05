@@ -96,7 +96,6 @@ func (ps *btcPBFTService) GetOpAuxiliary(op string, view int) (string, error) {
 	}
 	bs := bf.Bytes()
 	bs = bs[:len(bs)-1] //去掉最后一个-
-	log.Debug("================== %s ", string(bs))
 	return string(bs), nil
 }
 

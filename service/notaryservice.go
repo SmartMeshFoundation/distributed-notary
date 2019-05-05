@@ -428,6 +428,9 @@ func parseMessageToSign(msgName string, buf []byte) (msg messagetosign.MessageTo
 	case messagetosign.BitcoinPrepareLockoutTXDataName:
 		msg = new(messagetosign.BitcoinPrepareLockoutTXData)
 		err = msg.Parse(buf)
+	case messagetosign.BitcoinCancelPrepareLockoutTXDataName:
+		msg = new(messagetosign.BitcoinCancelPrepareLockoutTXData)
+		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")
 	}
@@ -557,16 +560,30 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		// 3. 获取bs,注册outpoint监听
 		//lockScriptHex := ns.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress).MCLockedPublicKeyHashStr
 		err = bs.RegisterOutpoint(outpointToListen, &bitcoin.BTCOutpointRelevantInfo{
+			Use:           bitcoin.OutpointUseToPrepareLockout,
 			SecretHash:    m.SecretHash,
 			LockScriptHex: common.Bytes2Hex(privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()).PubKey().SerializeCompressed()),
 			Data4PrepareLockout: &bitcoin.BTCOutpointRelevantInfo4PrepareLockout{
 				// 保存用户主链取钱的地址及真实过期块号
 				UserAddressPublicKeyHashHex: m.UserRequest.GetSignerBTCPublicKey(bs.GetNetParam()).AddressPubKeyHash().String(),
 				MCExpiration:                localLockoutInfo.MCExpiration,
+				TxOutLockScriptHex:          m.GetLockScriptHex(),
 			},
 		})
 		if err != nil {
 			log.Error(err.Error())
+		}
+		// 7. BitcoinCancelPrepareLockout消息
+	case *messagetosign.BitcoinCancelPrepareLockoutTXData:
+		// 1. 获取本地lockoutInfo
+		var localLockoutInfo *models.LockoutInfo
+		localLockoutInfo, err = ns.dispatchService.getLockoutInfo(m.SCTokenAddress, m.SecretHash)
+		if err != nil {
+			return
+		}
+		err = m.VerifySignData(localLockoutInfo, privateKeyInfo.ToBTCPubKeyAddress(ns.dispatchService.getBtcNetworkParam()))
+		if err != nil {
+			return
 		}
 	default:
 		err = fmt.Errorf("unknow message chainName=%s", msg.GetName())

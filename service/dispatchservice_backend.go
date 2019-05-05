@@ -36,6 +36,7 @@ type dispatchServiceBackend interface {
 	getSelfPrivateKey() *ecdsa.PrivateKey
 	getSelfNotaryInfo() *models.NotaryInfo
 	getChainByName(chainName string) (c chain.Chain, err error)
+	calculateCrossFee(chainName string, amount *big.Int) *big.Int
 	getLockinInfo(scTokenAddress common.Address, secretHash common.Hash) (lockinInfo *models.LockinInfo, err error)
 	getLockInInfoBySCPrepareLockInRequest(req *userapi.SCPrepareLockinRequest) (lockinInfo *models.LockinInfo, err error)
 	getLockoutInfo(scTokenAddress common.Address, secretHash common.Hash) (lockoutInfo *models.LockoutInfo, err error)
@@ -90,6 +91,15 @@ func (ds *DispatchService) getChainByName(chainName string) (c chain.Chain, err 
 		return
 	}
 	return
+}
+
+func (ds *DispatchService) calculateCrossFee(chainName string, amount *big.Int) *big.Int {
+	var ok bool
+	c, ok := ds.chainMap[chainName]
+	if !ok {
+		panic("wrong code")
+	}
+	return new(big.Int).Div(amount, big.NewInt(c.GetCrossFeeRate()))
 }
 
 func (ds *DispatchService) getNotaryService() *NotaryService {

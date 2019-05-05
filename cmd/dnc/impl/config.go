@@ -20,6 +20,7 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
+	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/service"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcutil"
@@ -27,13 +28,14 @@ import (
 )
 
 type runTime struct {
-	Secret              string         `json:"secret"`
-	SecretHash          string         `json:"secret_hash"`
-	BtcLockScript       []byte         `json:"btc_lock_script"`
-	BtcUserAddressBytes []byte         `json:"btc_user_address_bytes"`
-	BtcTXHash           string         `json:"btc_tx_hash"`
-	BtcExpiration       *big.Int       `json:"btc_expiration"`
-	BtcAmount           btcutil.Amount `json:"btc_amount"`
+	Secret              string              `json:"secret"`
+	SecretHash          string              `json:"secret_hash"`
+	BtcLockScript       []byte              `json:"btc_lock_script"`
+	BtcUserAddressBytes []byte              `json:"btc_user_address_bytes"`
+	BtcTXHash           string              `json:"btc_tx_hash"`
+	BtcExpiration       *big.Int            `json:"btc_expiration"`
+	BtcAmount           btcutil.Amount      `json:"btc_amount"`
+	LockoutInfo         *models.LockoutInfo `json:"lockout_info"`
 }
 type dncConfig struct {
 	NotaryHost string `json:"notary_host"`
@@ -73,7 +75,7 @@ var DefaultConfig = &dncConfig{
 	BtcRPCPass:         "wuhan",
 	BtcRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcd/rpc.cert"),
 	BtcRPCEndpoint:     "192.168.124.13:18556",
-	BtcUserAddress:     "SNH6bb5iXiofYra5kHzqT9HgN38ABWCshX",
+	BtcUserAddress:     "SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY",
 
 	BtcWalletRPCEndpoint:     "192.168.124.13:18554",
 	BtcWalletRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcwallet/rpc.cert"),
@@ -87,7 +89,7 @@ var DefaultConfig = &dncConfig{
 	SmcRPCEndpoint:  "http://127.0.0.1:17888",
 }
 
-//var configDir = path.Join(".dnc-client")
+//var configDir = path.Join(".dnc-client")c
 var configFile = filepath.Join(".dnc-config")
 
 func init() {
@@ -223,6 +225,7 @@ func RefreshSCTokenList() (err error) {
 	fmt.Println(utils.ToJSONStringFormat(GlobalConfig))
 	return
 }
+
 func updateConfigFile() {
 	err := ioutil.WriteFile(configFile, []byte(utils.ToJSONString(GlobalConfig)), 0777)
 	if err != nil {

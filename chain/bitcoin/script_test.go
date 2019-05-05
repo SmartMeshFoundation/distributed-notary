@@ -142,6 +142,10 @@ func TestPrepareLockInScriptBuilder_GetSigScriptForUser(t *testing.T) {
 		return
 	}
 	fmt.Println("Transaction successfully signed")
+	// fee
+	fmt.Println("fee test")
+	f, _ := bs.GetBtcRPCClient().EstimateFee(10)
+	fmt.Println(btcutil.NewAmount(f * float64(redeemTx.SerializeSize()) / 1024))
 }
 
 func TestPrepareLockoutScriptBuilder_GetSigScriptForUser(t *testing.T) {
@@ -187,6 +191,10 @@ func TestPrepareLockoutScriptBuilder_GetSigScriptForUser(t *testing.T) {
 		return
 	}
 	fmt.Println("Transaction successfully signed")
+	// fee
+	fmt.Println("fee test")
+	f, _ := bs.GetBtcRPCClient().EstimateFee(10)
+	fmt.Println(btcutil.NewAmount(f * float64(redeemTx.SerializeSize()) / 1024))
 }
 
 func TestPrepareLockoutScriptBuilder_GetSigScriptForNotary(t *testing.T) {
@@ -209,7 +217,8 @@ func TestPrepareLockoutScriptBuilder_GetSigScriptForNotary(t *testing.T) {
 
 	// 签名txout
 	redeemTx.TxIn[0].Sequence = 0
-	redeemTx.LockTime = uint32(builder.expiration.Int64())
+	//redeemTx.LockTime = uint32(builder.expiration.Int64())
+	redeemTx.LockTime = 5
 	sigScript, err := txscript.SignatureScript(redeemTx, 0, lockScript, txscript.SigHashAll, notaryPrivateKey, true)
 
 	// 构造SignatureScript
@@ -232,6 +241,10 @@ func TestPrepareLockoutScriptBuilder_GetSigScriptForNotary(t *testing.T) {
 		return
 	}
 	fmt.Println("Transaction successfully signed")
+	// fee
+	fmt.Println("fee test")
+	f, _ := bs.GetBtcRPCClient().EstimateFee(10)
+	fmt.Println(btcutil.NewAmount(f * float64(redeemTx.SerializeSize()) / 1024))
 }
 
 func TestParseScript(t *testing.T) {
@@ -269,4 +282,9 @@ func TestParseScript(t *testing.T) {
 	}
 	fmt.Println("isCancelPrepareLockin : ", bs.isCancelPrepareLockin(redeemTx.TxIn[0], info))
 	fmt.Println("isLockin : ", bs.isLockin(redeemTx.TxIn[0], info))
+	// fee
+	fmt.Println("fee test")
+	f, _ := bs.GetBtcRPCClient().EstimateFee(10)
+	fmt.Println(btcutil.NewAmount(f * float64(redeemTx.SerializeSize()) / 1024))
+
 }

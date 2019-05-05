@@ -88,6 +88,16 @@ func NewSMCService(host string, contractAddresses ...common.Address) (ss *SMCSer
 	return
 }
 
+// GetBlockPeriodTime impl chain.Chain
+func (ss *SMCService) GetBlockPeriodTime() time.Duration {
+	return blockPeriodSeconds
+}
+
+// GetCrossFeeRate impl chain.Chain
+func (ss *SMCService) GetCrossFeeRate() int64 {
+	return 0
+}
+
 // SetLastBlockNumber :
 func (ss *SMCService) SetLastBlockNumber(lastBlockNumber uint64) {
 	ss.lastBlockNumber = lastBlockNumber

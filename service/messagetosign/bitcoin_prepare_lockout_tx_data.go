@@ -28,6 +28,8 @@ const BitcoinPrepareLockoutTXDataName = "BitcoinPrepareLockoutTXData"
 type BitcoinPrepareLockoutTXData struct {
 	originTx            *wire.MsgTx
 	notaryAddressPubKey *btcutil.AddressPubKey
+	lockScriptHex       string
+	lockScriptHashHex   string
 	//请求分发必须参数
 	SCTokenAddress common.Address `json:"sc_token_address"`
 	SecretHash     common.Hash    `json:"secret_hash"`
@@ -73,7 +75,8 @@ func NewBitcoinPrepareLockoutTXData(req *userapi.MCPrepareLockoutRequest, bs *bi
 		totalAmount += utxo.Amount
 	}
 	// 找零txOut
-	backAmount := int64(totalAmount) - lockoutInfo.Amount.Int64() - fee
+	lockAmount := new(big.Int).Sub(lockoutInfo.Amount, lockoutInfo.CrossFee)
+	backAmount := int64(totalAmount) - lockAmount.Int64() - fee
 	if backAmount > 0 {
 		pkScript, err2 := txscript.PayToAddrScript(notaryAddress)
 		if err2 != nil {
@@ -85,9 +88,8 @@ func NewBitcoinPrepareLockoutTXData(req *userapi.MCPrepareLockoutRequest, bs *bi
 		tx.AddTxOut(txOut4Notary)
 	}
 	// 锁定txOut
-	amount := btcutil.Amount(lockoutInfo.Amount.Int64())
-	builder := bs.GetPrepareLockOutScriptBuilder(userAddress, notaryAddress, amount, lockoutInfo.SecretHash[:], big.NewInt(int64(lockoutInfo.MCExpiration)))
-	_, lockScriptAddr, _ := builder.GetPKScript()
+	builder := bs.GetPrepareLockOutScriptBuilder(userAddress, notaryAddress, btcutil.Amount(lockAmount.Int64()), lockoutInfo.SecretHash[:], big.NewInt(int64(lockoutInfo.MCExpiration)))
+	lockScript, lockScriptAddr, _ := builder.GetPKScript()
 	pkScript, err := txscript.PayToAddrScript(lockScriptAddr)
 	if err != nil {
 		log.Error(err.Error())
@@ -105,6 +107,8 @@ func NewBitcoinPrepareLockoutTXData(req *userapi.MCPrepareLockoutRequest, bs *bi
 	data = &BitcoinPrepareLockoutTXData{
 		originTx:            tx,
 		notaryAddressPubKey: mcNotaryPublicKey,
+		lockScriptHex:       common.Bytes2Hex(lockScript),
+		lockScriptHashHex:   lockScriptAddr.String(),
 		SCTokenAddress:      lockoutInfo.SCTokenAddress,
 		SecretHash:          lockoutInfo.SecretHash,
 		UserRequest:         req,
@@ -176,14 +180,26 @@ func (d *BitcoinPrepareLockoutTXData) VerifySignData(bs *bitcoin.BTCService, loc
 		err = fmt.Errorf("BitcoinPrepareLockoutTXData verify SignBytes fail,maybe attack")
 		return
 	}
-	// 返回outpoint供注册使用
+	// 返回outpoint及回填信息供注册使用
 	outpointToListen = local.GetOriginTxCopy().TxIn[d.TxInID].PreviousOutPoint
+	d.lockScriptHex = local.GetLockScriptHex()
+	d.lockScriptHashHex = local.GetLockScriptHashHex()
 	return
 }
 
 //GetOriginTxCopy :
 func (d *BitcoinPrepareLockoutTXData) GetOriginTxCopy() *wire.MsgTx {
 	return d.originTx.Copy()
+}
+
+// GetLockScriptHex :
+func (d *BitcoinPrepareLockoutTXData) GetLockScriptHex() string {
+	return d.lockScriptHex
+}
+
+// GetLockScriptHashHex :
+func (d *BitcoinPrepareLockoutTXData) GetLockScriptHashHex() string {
+	return d.lockScriptHashHex
 }
 
 // BuildBTCSignatureScript :

@@ -182,7 +182,7 @@ func (b *PrepareLockOutScriptBuilder) GetPKScript() (lockScript []byte, lockScri
 
 	sb.AddOp(txscript.OP_ELSE)
 	// 给公证人用于取消的脚本
-	sb.AddData(b.expiration.Bytes())
+	sb.AddInt64(b.expiration.Int64())
 	sb.AddOp(txscript.OP_CHECKLOCKTIMEVERIFY)
 	sb.AddOp(txscript.OP_DROP)
 	sb.AddOp(txscript.OP_DUP)

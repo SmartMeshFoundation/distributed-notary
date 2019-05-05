@@ -16,3 +16,9 @@ var logPeriod = int32(20)
 
 // btcdRPCTimeout :
 var btcdRPCTimeout = 3 * time.Second
+
+// crossFeeRate 跨链手续费率
+var crossFeeRate int64 = 10000
+
+// blockPeriodSeconds 出块间隔
+var blockPeriodSeconds = time.Second

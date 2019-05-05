@@ -69,6 +69,7 @@ type LockinInfo struct {
 	EndMCBlockNumber          uint64         `json:"end_mc_block_number"`            // 结束时主链块数
 	BTCPrepareLockinTXHashHex string         `json:"btc_prepare_lockin_tx_hash_hex"` // 比特币锁定的utxo的txhash
 	BTCPrepareLockinVout      uint32         `json:"btc_prepare_lockin_vout"`        // 比特币锁定的utxo的index
+	CrossFee                  *big.Int       `json:"cross_fee"`                      // 该字段记录本次lockin收取的手续费,即用户主链锁定的金额-lockin完成后侧链用户账户新增的金额
 }
 
 /*
@@ -107,11 +108,14 @@ type lockinInfoModel struct {
 	EndMCBlockNumber          uint64
 	BTCPrepareLockinTXHashHex string // 比特币锁定的utxo的txhash
 	BTCPrepareLockinVout      uint32 // 比特币锁定的utxo的index
+	CrossFee                  []byte
 }
 
 func (lim *lockinInfoModel) toLockinInfo() *LockinInfo {
 	amount := new(big.Int)
 	amount.SetBytes(lim.Amount)
+	crossFee := new(big.Int)
+	crossFee.SetBytes(lim.CrossFee)
 	return &LockinInfo{
 		MCChainName:               lim.MCChainName,
 		SecretHash:                common.BytesToHash(lim.SecretHash),
@@ -132,6 +136,7 @@ func (lim *lockinInfoModel) toLockinInfo() *LockinInfo {
 		EndMCBlockNumber:          lim.EndMCBlockNumber,
 		BTCPrepareLockinTXHashHex: lim.BTCPrepareLockinTXHashHex,
 		BTCPrepareLockinVout:      lim.BTCPrepareLockinVout,
+		CrossFee:                  crossFee,
 	}
 }
 func (lim *lockinInfoModel) fromLockinInfo(l *LockinInfo) *lockinInfoModel {
@@ -154,6 +159,7 @@ func (lim *lockinInfoModel) fromLockinInfo(l *LockinInfo) *lockinInfoModel {
 	lim.EndMCBlockNumber = l.EndMCBlockNumber
 	lim.BTCPrepareLockinTXHashHex = l.BTCPrepareLockinTXHashHex
 	lim.BTCPrepareLockinVout = l.BTCPrepareLockinVout
+	lim.CrossFee = l.CrossFee.Bytes()
 	return lim
 }
 

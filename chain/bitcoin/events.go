@@ -14,6 +14,8 @@ const (
 	LockinEventName         = "LockinEvent"
 	CancelLockinEventName   = "CancelLockinEvent"
 	PrepareLockoutEventName = "PrepareLockoutEvent"
+	LockoutEventName        = "LockoutSecretEvent"
+	CancelLockoutEventName  = "CancelLockoutEvent"
 )
 
 // NewBlockEvent :
@@ -79,13 +81,15 @@ func createCancelLockinEvent(blockNumber uint64, secretHash common.Hash) CancelL
 // PrepareLockoutEvent :
 type PrepareLockoutEvent struct {
 	*chain.BaseEvent
-	SecretHash          common.Hash `json:"secret_hash"`
-	TXHashHex           string      `json:"tx_hash_hex"`
-	LockOutpointIndex   int         `json:"lock_outpoint_index"`
-	ChangeOutPointIndex int         `json:"change_out_point_index"`
-	ChangeAmount        int64       `json:"change_amount"`
-	UserAddressHex      string      `json:"user_address_hex"`
-	MCExpiration        uint64      `json:"mc_expiration"`
+	SecretHash          common.Hash     `json:"secret_hash"`
+	TXHashHex           string          `json:"tx_hash_hex"`
+	LockOutpointIndex   int             `json:"lock_outpoint_index"`
+	ChangeOutPointIndex int             `json:"change_out_point_index"`
+	ChangeAmount        int64           `json:"change_amount"`
+	UserAddressHex      string          `json:"user_address_hex"`
+	MCExpiration        uint64          `json:"mc_expiration"`
+	TxInOutpoint        []wire.OutPoint `json:"-"`
+	TxOutLockScriptHex  string          `json:"tx_out_lock_script_hex"`
 }
 
 // createPrepareLockoutEvent :
@@ -111,7 +115,49 @@ func createPrepareLockoutEvent(blockNumber uint64, tx *wire.MsgTx, outpointRelev
 		e.ChangeOutPointIndex = 0
 		e.ChangeAmount = tx.TxOut[0].Value
 	}
+	for _, txIn := range tx.TxIn {
+		e.TxInOutpoint = append(e.TxInOutpoint, txIn.PreviousOutPoint)
+	}
 	e.UserAddressHex = outpointRelevantInfo.Data4PrepareLockout.UserAddressPublicKeyHashHex
 	e.MCExpiration = outpointRelevantInfo.Data4PrepareLockout.MCExpiration
+	e.TxOutLockScriptHex = outpointRelevantInfo.Data4PrepareLockout.TxOutLockScriptHex
+	return e
+}
+
+// LockoutSecretEvent :
+type LockoutSecretEvent struct {
+	*chain.BaseEvent
+	Secret common.Hash `json:"secre"`
+}
+
+func createLockoutEvent(blockNumber uint64, secret common.Hash) LockoutSecretEvent {
+	e := LockoutSecretEvent{}
+	e.BaseEvent = &chain.BaseEvent{}
+	e.ChainName = ChainName
+	e.FromAddress = utils.EmptyAddress
+	e.BlockNumber = blockNumber
+	e.Time = time.Now()
+	e.EventName = LockoutEventName
+	e.SCTokenAddress = utils.EmptyAddress
+	e.Secret = secret
+	return e
+}
+
+// CancelLockoutEvent :
+type CancelLockoutEvent struct {
+	*chain.BaseEvent
+	SecretHash common.Hash `json:"secret_hash"`
+}
+
+func createCancelLockoutEvent(blockNumber uint64, secretHash common.Hash) CancelLockoutEvent {
+	e := CancelLockoutEvent{}
+	e.BaseEvent = &chain.BaseEvent{}
+	e.ChainName = ChainName
+	e.FromAddress = utils.EmptyAddress
+	e.BlockNumber = blockNumber
+	e.Time = time.Now()
+	e.EventName = CancelLockoutEventName
+	e.SCTokenAddress = utils.EmptyAddress
+	e.SecretHash = secretHash
 	return e
 }

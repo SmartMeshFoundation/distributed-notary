@@ -1,14 +1,15 @@
 package bitcoin
 
 import (
+	"errors"
+	"fmt"
+	"time"
+
+	"strings"
+
 	"crypto/ecdsa"
 	"io/ioutil"
 	"math/big"
-	"time"
-
-	"fmt"
-
-	"strings"
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
@@ -21,21 +22,32 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/kataras/go-errors"
 	"github.com/nkbai/log"
 )
 
 // ChainName 公链名
 var ChainName = "bitcoin"
 
+// OutpointUse 定义utxo的用处
+type OutpointUse int
+
+/* #nosec */
+const (
+	OutpointUseToLockinOrCancel = iota
+	OutpointUseToLockoutOrCancel
+	OutpointUseToPrepareLockout
+)
+
 // BTCOutpointRelevantInfo4PrepareLockout :
 type BTCOutpointRelevantInfo4PrepareLockout struct {
-	UserAddressPublicKeyHashHex string `json:"user_address_public_key_hash_hex"`
+	UserAddressPublicKeyHashHex string `json:"user_address_public_key_hash_hex"` // 消费该utxo的交易所使用的解锁脚本中的用户PKH
 	MCExpiration                uint64 `json:"mc_expiration"`
+	TxOutLockScriptHex          string `json:"tx_out_lock_script_hex"` // 消费该utxo的交易所使用的解锁脚本
 }
 
 // BTCOutpointRelevantInfo 存储需要监听的outpoint的相关信息
 type BTCOutpointRelevantInfo struct {
+	Use                 OutpointUse                             `json:"use"`
 	SecretHash          common.Hash                             `json:"secret_hash"`
 	LockScriptHex       string                                  `json:"lock_script_hex"`
 	Data4PrepareLockout *BTCOutpointRelevantInfo4PrepareLockout `json:"data_4_prepare_lockout"`
@@ -115,6 +127,16 @@ func NewBTCService(host, rpcUser, rpcPass, certFilePath string) (bs *BTCService,
 		return
 	}
 	return
+}
+
+// GetBlockPeriodTime impl chain.Chain
+func (bs *BTCService) GetBlockPeriodTime() time.Duration {
+	return blockPeriodSeconds
+}
+
+// GetCrossFeeRate impl chain.Chain
+func (bs *BTCService) GetCrossFeeRate() int64 {
+	return crossFeeRate
 }
 
 // GetChainName impl chain.Chain
@@ -331,14 +353,18 @@ func (bs *BTCService) createEventsFromTx(blockNumber int32, tx *btcutil.Tx) (eve
 		events = append(events, e)
 		return
 	}
-	//if secret, isLockout := bs.isLockout(txIn, outpointRelevantInfo); isLockout {
-	//	// 主链lockout
-	//	log.Info("收到BTC Lockout 事件,secret=%s secretHash=%s", secret.String(), utils.ShaSecret(secret[:]).String())
-	//	return
-	//}
-	//if bs.isCancelPrepareLockout(tx.MsgTx()) {
-	//	return
-	//}
+	if secret, isLockout := bs.isLockout(txIn, outpointRelevantInfo); isLockout {
+		// 用户-主链lockout
+		e := createLockoutEvent(uint64(blockNumber), secret)
+		events = append(events, e)
+		return
+	}
+	if bs.isCancelPrepareLockout(txIn, outpointRelevantInfo) {
+		// 用户-主链lockout
+		e := createCancelLockoutEvent(uint64(blockNumber), outpointRelevantInfo.SecretHash)
+		events = append(events, e)
+		return
+	}
 	log.Error("receive unknown tx : \n%s \n relevant info : \n%s", utils.ToJSONStringFormat(tx.MsgTx()), utils.ToJSONStringFormat(outpointRelevantInfo))
 	return
 }
@@ -348,6 +374,9 @@ func (bs *BTCService) createEventsFromTx(blockNumber int32, tx *btcutil.Tx) (eve
 SigScript : SIG {{用户PKH}} 0 {{锁定脚本}}
 */
 func (bs *BTCService) isCancelPrepareLockin(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) (isCancelPrepareLockin bool) {
+	if outpointRelevantInfo.Use != OutpointUseToLockinOrCancel {
+		return false
+	}
 	// 验证部分: 0 {{锁定脚本}}
 	verifyStr := fmt.Sprintf(" 0 %s", outpointRelevantInfo.LockScriptHex)
 	signatureScriptStr, err := txscript.DisasmString(txIn.SignatureScript)
@@ -364,6 +393,9 @@ func (bs *BTCService) isCancelPrepareLockin(txIn *wire.TxIn, outpointRelevantInf
 txIn 只有一个 SigScript : SIG {{分布式私钥的PKH}} {{SECRET}} 1 {{锁定脚本}}
 */
 func (bs *BTCService) isLockin(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) (ok bool) {
+	if outpointRelevantInfo.Use != OutpointUseToLockinOrCancel {
+		return false
+	}
 	// 验证部分: 1 {{锁定脚本}}
 	verifyStr := fmt.Sprintf(" 1 %s", outpointRelevantInfo.LockScriptHex)
 	signatureScriptStr, err := txscript.DisasmString(txIn.SignatureScript)
@@ -383,6 +415,9 @@ func (bs *BTCService) isLockin(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpoin
 txIns 数量不确定,但没有P2SH,SigScipt : SIG {{分布式私钥的PKH}}
 */
 func (bs *BTCService) isPrepareLockout(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) bool {
+	if outpointRelevantInfo.Use != OutpointUseToPrepareLockout {
+		return false
+	}
 	// 验证部分: {{分布式私钥的PKH}}
 	signatureScriptStr, err := txscript.DisasmString(txIn.SignatureScript)
 	if err != nil {
@@ -400,6 +435,9 @@ func (bs *BTCService) isPrepareLockout(txIn *wire.TxIn, outpointRelevantInfo *BT
 SigScript : SIG {{分布式私钥的PKH}} 0 {{锁定脚本}}
 */
 func (bs *BTCService) isCancelPrepareLockout(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) bool {
+	if outpointRelevantInfo.Use != OutpointUseToLockoutOrCancel {
+		return false
+	}
 	// 验证部分: 1 {{锁定脚本}}
 	verifyStr := fmt.Sprintf("0 %s", outpointRelevantInfo.LockScriptHex)
 	signatureScriptStr, err := txscript.DisasmString(txIn.SignatureScript)
@@ -415,6 +453,10 @@ func (bs *BTCService) isCancelPrepareLockout(txIn *wire.TxIn, outpointRelevantIn
 SigScript : SIG {{用户的PKH}} {{SECRET}} 1 {{锁定脚本}}
 */
 func (bs *BTCService) isLockout(txIn *wire.TxIn, outpointRelevantInfo *BTCOutpointRelevantInfo) (secret common.Hash, ok bool) {
+	if outpointRelevantInfo.Use != OutpointUseToLockoutOrCancel {
+		ok = false
+		return
+	}
 	// 验证部分: 1 {{锁定脚本}}
 	verifyStr := fmt.Sprintf("1 %s", outpointRelevantInfo.LockScriptHex)
 	signatureScriptStr, err := txscript.DisasmString(txIn.SignatureScript)

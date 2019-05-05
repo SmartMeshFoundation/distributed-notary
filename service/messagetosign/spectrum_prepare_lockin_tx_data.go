@@ -128,7 +128,7 @@ func (d *SpectrumPrepareLockinTxData) VerifySignData(scTokenProxy chain.Contract
 	scUserAddressHex := d.UserRequest.GetSignerETHAddress().String()
 	scExpiration := localLockinInfo.SCExpiration
 	secretHash := localLockinInfo.SecretHash
-	amount := localLockinInfo.Amount
+	amount := new(big.Int).Sub(localLockinInfo.Amount, localLockinInfo.CrossFee) // 扣除手续费
 	var local *SpectrumPrepareLockinTxData
 	local = NewSpectrumPrepareLockinTxData(scTokenProxy, d.UserRequest, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, d.Nonce)
 	if bytes.Compare(local.GetSignBytes(), d.GetSignBytes()) != 0 {

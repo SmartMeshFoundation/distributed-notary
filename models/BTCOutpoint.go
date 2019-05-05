@@ -81,6 +81,16 @@ func (db *DB) GetBTCOutpoint(txHashStr string) (outpoint *BTCOutpoint, err error
 	return
 }
 
+// MarkBTCOutpointUsed :
+func (db *DB) MarkBTCOutpointUsed(txHashStr string) (err error) {
+	err = db.Model(&BTCOutpoint{
+		TxHashStr: txHashStr,
+	}).Update(&PrivateKeyInfoModel{
+		Status: BTCOutpointStatusUsed,
+	}).Error
+	return
+}
+
 // GetBTCOutpointList 条件查询
 func (db *DB) GetBTCOutpointList(status BTCOutpointStatus) (list []*BTCOutpoint) {
 	if status == -1 {

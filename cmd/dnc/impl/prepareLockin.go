@@ -18,7 +18,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/kataras/go-errors"
 	"github.com/urfave/cli"
@@ -103,7 +102,7 @@ func prepareLockinOnBitcoin(amount int64, expiration uint64) (err error) {
 		fmt.Println("SendToAddress err : ", err)
 		os.Exit(-1)
 	}
-	fmt.Printf(" ======> [LockScriptHash=%s, txHash=%s %s]\n", lockScriptAddr.String(), txHash.String(), common.Hash(*txHash).String())
+	fmt.Printf(" ======> [LockScriptHash=%s, txHash=%s]\n", lockScriptAddr.String(), txHash.String())
 	//time.Sleep(time.Second * 6) // 等待确认
 	//utils.PrintBTCBalanceOfAccount(c, "default")
 
