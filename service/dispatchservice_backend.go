@@ -297,7 +297,7 @@ func (ds *DispatchService) getPbftService(key string) (ps pbft.PBFTAuxiliary, er
 			panic(err)
 		}
 	case pbftTypeBTC:
-		ps3 := NewBTCPBFTService(ps2)
+		ps3 := newBTCPBFTService(ps2)
 		ds.pbftServices[key] = ps3
 		err = ps3.server.UpdateAS(ps3)
 		if err != nil {
