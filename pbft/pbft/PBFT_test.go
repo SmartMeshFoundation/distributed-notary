@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/require"
 
 	"sort"
@@ -425,4 +427,26 @@ func (c *config) init(cn int, sn int, initSeq int) {
 			c.servers[i] = NewPBFTServer(i, c.f, c.initSeq, c.serverAddresses[i], c.hub, nodes, nil)
 		}
 	}
+}
+
+type TestClientAuxiliary struct {
+}
+
+func (t TestClientAuxiliary) CanOpSuccess(op string, view int) error {
+	return assert.AnError
+}
+func TestMustFailOp(t *testing.T) {
+	ast := assert.New(t)
+	c := config{
+		useMockServer: true,
+	}
+	log.Trace("aa")
+	c.init(1, 4, 0)
+	err := c.clients[0].UpdateAS(TestClientAuxiliary{})
+	ast.Nil(err)
+	err = c.clients[0].UpdateAS(TestClientAuxiliary{})
+	ast.NotNil(err)
+	c.clients[0].Start("test")
+	r := <-c.clients[0].Apply
+	ast.EqualValues(r.Error, assert.AnError)
 }

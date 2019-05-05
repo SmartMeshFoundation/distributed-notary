@@ -16,6 +16,9 @@ var (
 	checkpointDiv     = 100
 )
 
+/*
+一旦进入PBFT协商的,只要节点正常,是否一定成功?
+*/
 //PBFTAuxiliary 辅助,这几个函数都是运行在pbft主线程中,不能堵塞
 type PBFTAuxiliary interface {
 	/*

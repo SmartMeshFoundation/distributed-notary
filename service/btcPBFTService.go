@@ -18,6 +18,16 @@ type btcPBFTService struct {
 	*PBFTService
 }
 
+func NewBTCPBFTService(ps *PBFTService) *btcPBFTService {
+	ps2 := &btcPBFTService{
+		PBFTService: ps,
+	}
+	err := ps2.client.UpdateAS(ps2)
+	if err != nil {
+		panic(err)
+	}
+	return ps2
+}
 func (ps *btcPBFTService) UpdateSeq(seq int, op, auxiliary string) {
 	nonce, err := ps.db.GetNonce(ps.key)
 	if err != nil {
@@ -29,6 +39,24 @@ func (ps *btcPBFTService) UpdateSeq(seq int, op, auxiliary string) {
 			panic(err)
 		}
 	}
+}
+
+//CanOpSuccess error为空表示可以继续,否则看具体错误
+func (ps *btcPBFTService) CanOpSuccess(op string, view int) error {
+	//todo 移除重复的代码
+	ss := strings.Split(op, "-")
+	if len(ss) != 3 {
+		panic(fmt.Sprintf("op in btc must be chainname-secrethash-amount,op=%s", op))
+	}
+	if ps.chain != ss[0] {
+		panic(fmt.Sprintf("op=%s,expect chain=%s", op, ps.chain))
+	}
+	amount, b := new(big.Int).SetString(ss[2], 0)
+	if !b {
+		panic(fmt.Sprintf("op format error,op=%s", op))
+	}
+	_, err := ps.db.GetAvailableUTXO(view, btcutil.Amount(amount.Int64()))
+	return err
 }
 
 /*

@@ -11,6 +11,18 @@ import (
 
 type ResponseFunc func(op string, res interface{})
 
+//PBFTClientAuxiliary 客户端自测请求能否成功
+//对于以太坊来说总是能成功,但是对于比特币来说,即使正常情况也有可能会失败,
+//需要长期等待,为了避免这种情况,直接返回错误
+type PBFTClientAuxiliary interface {
+	/*
+		GetOpAuxiliary 根据来自用户的op构造相应的辅助信息,
+		对于以太坊来说,就很简单,就是op的hash值
+		对于比特币来说就是,分配出去的UTXO列表
+	*/
+	CanOpSuccess(op string, view int) error
+}
+
 var (
 	retransmitTimeout = 500 * time.Millisecond //注意retransmitTimeout 和view change的时间关系,必须远小于view change time out
 	outstanding       = 10                     //client请求并发数量
@@ -56,6 +68,7 @@ type Client struct {
 	retry       chan *cEntry
 	count       int
 	sender      MessageSender
+	as          PBFTClientAuxiliary
 }
 
 func (c *Client) loop() {
@@ -99,6 +112,12 @@ func (c *Client) startInternal(msg *StartMessage) error {
 	ent, exist := c.newCEntry(args.Op)
 	if exist {
 		return errors.New("cmd duplicate")
+	}
+	if c.as != nil {
+		err := c.as.CanOpSuccess(args.Op, c.view)
+		if err != nil {
+			return err
+		}
 	}
 	ent.req = newRequestMessage(&args)
 
@@ -262,6 +281,15 @@ func (c *Client) newCEntry(op string) (ent *cEntry, alreadyExist bool) {
 		}
 	}
 	return c.log[op], ok
+}
+
+//UpdateAS 设置As
+func (s *Client) UpdateAS(as PBFTClientAuxiliary) error {
+	if s.as != nil {
+		return errors.New(fmt.Sprintf("as must be nil,but as=%v", s.as))
+	}
+	s.as = as
+	return nil
 }
 
 // NewPBFTClient use given information to create a new pbft client
