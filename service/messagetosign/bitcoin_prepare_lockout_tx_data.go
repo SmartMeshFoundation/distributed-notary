@@ -95,7 +95,7 @@ func NewBitcoinPrepareLockoutTXData(req *userapi.MCPrepareLockoutRequest, bs *bi
 		log.Error(err.Error())
 		return
 	}
-	txOut4Lock := wire.NewTxOut(lockoutInfo.Amount.Int64(), pkScript)
+	txOut4Lock := wire.NewTxOut(lockAmount.Int64(), pkScript)
 	tx.AddTxOut(txOut4Lock)
 	// 5. 生成BytesToSign,
 	bytesToSign, err := txscript.CalcSignatureHash(utxos[indexToSign].GetPKScript(bs.GetNetParam()), txscript.SigHashAll, tx, indexToSign)

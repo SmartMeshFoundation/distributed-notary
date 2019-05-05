@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -20,7 +19,7 @@ func SessionLogMsg(sessionID common.Hash, formatter string, a ...interface{}) st
 
 // SCTokenLogMsg :
 func SCTokenLogMsg(scToken *models.SideChainTokenMetaInfo, formatter string, a ...interface{}) string {
-	formatter = fmt.Sprintf("[%s%s] %s", scToken.MCName, params.SCTokenNameSuffix, formatter)
+	formatter = fmt.Sprintf("[%s-Token] %s", scToken.MCName, formatter)
 	if len(a) == 0 {
 		return formatter
 	}

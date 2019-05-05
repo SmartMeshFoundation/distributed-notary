@@ -51,7 +51,7 @@ func NewBitcoinCancelPrepareLockoutTXData(lockoutInfo *models.LockoutInfo, mcLoc
 	if err != nil {
 		panic(err)
 	}
-	txOut := wire.NewTxOut(lockoutInfo.Amount.Int64()-fee, pkScript)
+	txOut := wire.NewTxOut(lockoutInfo.Amount.Int64()-lockoutInfo.CrossFee.Int64()-fee, pkScript)
 	tx.AddTxOut(txOut)
 	// 5. 获取BytesToSign,
 	lockScript := common.Hex2Bytes(lockoutInfo.BTCLockScriptHex)

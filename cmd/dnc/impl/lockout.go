@@ -91,7 +91,7 @@ func lockoutOnBitcoin(mcName string) error {
 	tx.AddTxIn(txIn)
 	// txOut
 	pkScript, err := txscript.PayToAddrScript(userAddress)
-	txOut := wire.NewTxOut(lockoutInfo.Amount.Int64()-1000, pkScript)
+	txOut := wire.NewTxOut(lockoutInfo.Amount.Int64()-lockoutInfo.CrossFee.Int64()-1000, pkScript)
 	tx.AddTxOut(txOut)
 	// 5. 签名
 	lockScript := common.Hex2Bytes(lockoutInfo.BTCLockScriptHex)

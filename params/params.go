@@ -6,9 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/node"
 )
 
-// SCTokenNameSuffix 侧链Token名统一后缀
-var SCTokenNameSuffix = "-AtmosphereToken"
-
 // ForkConfirmNumber : 分叉确认块数量,BlockNumber < 最新块-ForkConfirmNumber的事件被认为无分叉的风险
 var ForkConfirmNumber uint64 = 17
 

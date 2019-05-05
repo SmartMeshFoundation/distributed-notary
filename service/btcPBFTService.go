@@ -18,6 +18,7 @@ type btcPBFTService struct {
 	*PBFTService
 }
 
+// NewBTCPBFTService :
 func NewBTCPBFTService(ps *PBFTService) *btcPBFTService {
 	ps2 := &btcPBFTService{
 		PBFTService: ps,
