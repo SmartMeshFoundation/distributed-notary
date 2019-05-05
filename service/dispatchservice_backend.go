@@ -99,6 +99,9 @@ func (ds *DispatchService) calculateCrossFee(chainName string, amount *big.Int) 
 	if !ok {
 		panic("wrong code")
 	}
+	if c.GetCrossFeeRate() == 0 {
+		return big.NewInt(0)
+	}
 	return new(big.Int).Div(amount, big.NewInt(c.GetCrossFeeRate()))
 }
 
