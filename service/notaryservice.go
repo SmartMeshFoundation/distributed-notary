@@ -235,7 +235,7 @@ func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int, privateKeyID c
 	log.Trace(SessionLogMsg(sessionID, "DSMAsk start..."))
 	m := new(sync.Map)
 	wg := sync.WaitGroup{}
-	wg.Add(notaryNumNeedExpectSelf)
+	wg.Add(len(ns.otherNotaries))
 	for _, notary := range ns.otherNotaries {
 		go func(notary *models.NotaryInfo) {
 			req := notaryapi.NewDSMAskRequest(sessionID, ns.self, privateKeyID, msgToSign)
