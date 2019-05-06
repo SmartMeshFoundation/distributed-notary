@@ -233,29 +233,27 @@ func (ns *NotaryService) startDistributedSignAndWait(msgToSign messagetosign.Mes
 func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int, privateKeyID common.Hash, msgToSign messagetosign.MessageToSign) (sessionID common.Hash, otherNotaryIDs []int, err error) {
 	sessionID = utils.NewRandomHash()
 	log.Trace(SessionLogMsg(sessionID, "DSMAsk start..."))
-	m := new(sync.Map)
-	wg := sync.WaitGroup{}
-	wg.Add(len(ns.otherNotaries))
+	answerChan := make(chan int, len(ns.otherNotaries))
 	for _, notary := range ns.otherNotaries {
 		go func(notary *models.NotaryInfo) {
 			req := notaryapi.NewDSMAskRequest(sessionID, ns.self, privateKeyID, msgToSign)
 			ns.notaryClient.SendWSReqToNotary(req, notary.ID)
 			_, err2 := ns.notaryClient.WaitWSResponse(req.GetRequestID())
 			if err2 == nil {
-				m.Store(notary.ID, true)
+				answerChan <- notary.ID
 			} else {
+				answerChan <- -1
 				log.Warn(SessionLogMsg(sessionID, "notary[%d] refuse DSMAsk : %s", notary.ID, err2.Error()))
 			}
-			wg.Done()
 		}(notary)
 	}
-	wg.Wait()
-	for _, notary := range ns.otherNotaries {
-		if _, ok := m.Load(notary.ID); ok {
-			otherNotaryIDs = append(otherNotaryIDs, notary.ID)
-			if len(otherNotaryIDs) >= notaryNumNeedExpectSelf {
-				break
-			}
+	for i := 0; i < len(ns.otherNotaries); i++ {
+		answer := <-answerChan
+		if answer != -1 {
+			otherNotaryIDs = append(otherNotaryIDs, answer)
+		}
+		if len(otherNotaryIDs) >= notaryNumNeedExpectSelf {
+			break
 		}
 	}
 	if len(otherNotaryIDs) < notaryNumNeedExpectSelf {
