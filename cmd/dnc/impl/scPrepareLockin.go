@@ -21,17 +21,15 @@ var scpliCmd = cli.Command{
 	ShortName: "scpli",
 	Usage:     "call SCPrepareLockin API of notary",
 	Action:    scPrepareLockin,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "mcname",
-			Usage: "name of main chain contract which you want to lockin",
-			Value: "ethereum",
-		},
-	},
+	Flags:     []cli.Flag{},
 }
 
 func scPrepareLockin(ctx *cli.Context) (err error) {
-	mcName := ctx.String("mcname")
+	if GlobalConfig.RunTime == nil {
+		fmt.Println("must call pli first")
+		os.Exit(-1)
+	}
+	mcName := GlobalConfig.RunTime.MCName
 	if mcName == cfg.ETH.Name {
 		scPrepareLockIn4Eth(mcName)
 	} else if mcName == cfg.BTC.Name {
@@ -44,10 +42,6 @@ func scPrepareLockIn4Btc(mcName string) {
 	scTokenInfo := getSCTokenByMCName(mcName)
 	if scTokenInfo == nil {
 		fmt.Println("wrong mcname")
-		os.Exit(-1)
-	}
-	if GlobalConfig.RunTime == nil {
-		fmt.Println("must call pli first")
 		os.Exit(-1)
 	}
 	url := GlobalConfig.NotaryHost + "/api/1/user/scpreparelockin/" + scTokenInfo.SCToken.String()
@@ -90,10 +84,6 @@ func scPrepareLockIn4Eth(mcName string) {
 	scTokenInfo := getSCTokenByMCName(mcName)
 	if scTokenInfo == nil {
 		fmt.Println("wrong mcname")
-		os.Exit(-1)
-	}
-	if GlobalConfig.RunTime == nil {
-		fmt.Println("must call pli first")
 		os.Exit(-1)
 	}
 	url := GlobalConfig.NotaryHost + "/api/1/user/scpreparelockin/" + scTokenInfo.SCToken.String()

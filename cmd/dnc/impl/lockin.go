@@ -15,17 +15,14 @@ var licmd = cli.Command{
 	ShortName: "li",
 	Usage:     "call side chain contract lock in",
 	Action:    lockin,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "mcname",
-			Usage: "name of main chain contract which you want to lockin",
-			Value: "ethereum",
-		},
-	},
 }
 
 func lockin(ctx *cli.Context) error {
-	_, cp := getSCContractProxy(ctx.String("mcname"))
+	if GlobalConfig.RunTime == nil {
+		fmt.Println("must call pli first")
+		os.Exit(-1)
+	}
+	_, cp := getSCContractProxy(GlobalConfig.RunTime.MCName)
 	if GlobalConfig.RunTime == nil {
 		fmt.Println("must call pli first")
 		os.Exit(-1)

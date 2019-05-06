@@ -8,6 +8,7 @@ import (
 
 	"math/big"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/client"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
@@ -41,7 +42,12 @@ var ploCmd = cli.Command{
 }
 
 func prepareLockout(ctx *cli.Context) error {
-	contract := getSCContractAddressByMCName(ctx.String("mcname"))
+	mcName := ctx.String("mcname")
+	if mcName != cfg.ETH.Name && mcName != cfg.BTC.Name {
+		fmt.Println("wrong mcname")
+		os.Exit(-1)
+	}
+	contract := getSCContractAddressByMCName(mcName)
 	amount := ctx.Int64("amount")
 	if amount == 0 {
 		fmt.Println("plo must run with --amount")
@@ -79,6 +85,7 @@ func prepareLockout(ctx *cli.Context) error {
 	expiration2 := getSmcLastBlockNumber(conn) + expiration
 	fmt.Printf(" ======> [secret=%s, secretHash=%s]\n", secret.String(), secretHash.String())
 	GlobalConfig.RunTime = &runTime{
+		MCName:     mcName,
 		Secret:     secret.String(),
 		SecretHash: secretHash.String(),
 	}

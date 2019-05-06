@@ -25,17 +25,14 @@ var locmd = cli.Command{
 	ShortName: "lo",
 	Usage:     "call main chain contract lock out",
 	Action:    lockout,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "mcname",
-			Usage: "name of main chain contract which you want to lockin",
-			Value: "ethereum",
-		},
-	},
 }
 
 func lockout(ctx *cli.Context) error {
-	mcName := ctx.String("mcname")
+	if GlobalConfig.RunTime == nil {
+		fmt.Println("must call pli first")
+		os.Exit(-1)
+	}
+	mcName := GlobalConfig.RunTime.MCName
 	fmt.Printf("start to lockout :\n ======> [chain=%s ]\n", mcName)
 	if mcName == cfg.ETH.Name {
 		return lockoutOnEthereum(mcName)

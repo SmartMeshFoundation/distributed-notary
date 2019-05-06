@@ -22,17 +22,14 @@ var mcploCmd = cli.Command{
 	ShortName: "mcplo",
 	Usage:     "call MCPrepareLockout API of notary",
 	Action:    mcPrepareLockout,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "mcname",
-			Usage: "name of main chain contract which you want to lockout",
-			Value: "ethereum",
-		},
-	},
 }
 
 func mcPrepareLockout(ctx *cli.Context) (err error) {
-	mcName := ctx.String("mcname")
+	if GlobalConfig.RunTime == nil {
+		fmt.Println("must call pli first")
+		os.Exit(-1)
+	}
+	mcName := GlobalConfig.RunTime.MCName
 	if mcName == cfg.ETH.Name {
 		return mcPrepareLockout4Eth(mcName)
 	}

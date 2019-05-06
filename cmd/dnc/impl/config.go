@@ -28,6 +28,7 @@ import (
 )
 
 type runTime struct {
+	MCName              string              `json:"mc_name"`
 	Secret              string              `json:"secret"`
 	SecretHash          string              `json:"secret_hash"`
 	BtcLockScript       []byte              `json:"btc_lock_script"`

@@ -53,6 +53,10 @@ func prepareLockin(ctx *cli.Context) error {
 		fmt.Println("pli must run with --amount")
 		os.Exit(-1)
 	}
+	if mcName != cfg.ETH.Name && mcName != cfg.BTC.Name {
+		fmt.Println("wrong mcname")
+		os.Exit(-1)
+	}
 	expiration := ctx.Uint64("expiration")
 	fmt.Printf("start to prepare lockin :\n ======> [chain=%s amount=%d expiartion=%d]\n", mcName, amount, expiration)
 	if mcName == cfg.ETH.Name {
@@ -108,6 +112,7 @@ func prepareLockinOnBitcoin(amount int64, expiration uint64) (err error) {
 
 	// 记录runtime数据
 	GlobalConfig.RunTime = &runTime{
+		MCName:              cfg.BTC.Name,
 		Secret:              secret.String(),
 		SecretHash:          secretHash.String(),
 		BtcLockScript:       lockScript,
@@ -152,6 +157,7 @@ func prepareLockinOnEthereum(mcName string, amount int64, expiration uint64) (er
 	expiration2 := getEthLastBlockNumber(conn) + expiration
 	fmt.Printf(" ======> [secret=%s, secretHash=%s]\n", secret.String(), secretHash.String())
 	GlobalConfig.RunTime = &runTime{
+		MCName:     cfg.ETH.Name,
 		Secret:     secret.String(),
 		SecretHash: secretHash.String(),
 	}

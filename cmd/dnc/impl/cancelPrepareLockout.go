@@ -18,17 +18,14 @@ var cploCmd = cli.Command{
 	ShortName: "cplo",
 	Usage:     "call side chain contract cancel prepare lock out",
 	Action:    cancelPrepareLockout,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "mcname",
-			Usage: "name of main chain contract which you want to lockout",
-			Value: "ethereum",
-		},
-	},
 }
 
 func cancelPrepareLockout(ctx *cli.Context) error {
-	contract := getSCContractAddressByMCName(ctx.String("mcname"))
+	if GlobalConfig.RunTime == nil {
+		fmt.Println("must call pli first")
+		os.Exit(-1)
+	}
+	contract := getSCContractAddressByMCName(GlobalConfig.RunTime.MCName)
 	fmt.Printf("start to cancel prepare lockout :\n ======> [contract=%s account=%s]\n", contract.String(), GlobalConfig.EthUserAddress)
 
 	// 1. init connect

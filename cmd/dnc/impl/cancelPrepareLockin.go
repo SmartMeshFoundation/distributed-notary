@@ -27,17 +27,14 @@ var cpliCmd = cli.Command{
 	ShortName: "cpli",
 	Usage:     "call main chain contract cancel prepare lock in",
 	Action:    cancelPrepareLockin,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "mcname",
-			Usage: "name of main chain contract which you want to lockin",
-			Value: "ethereum",
-		},
-	},
 }
 
 func cancelPrepareLockin(ctx *cli.Context) error {
-	mcName := ctx.String("mcname")
+	if GlobalConfig.RunTime == nil {
+		fmt.Println("must call pli first")
+		os.Exit(-1)
+	}
+	mcName := GlobalConfig.RunTime.MCName
 	if mcName == cfg.ETH.Name {
 		return cancelPrepareLockin4Eth(mcName)
 	}
