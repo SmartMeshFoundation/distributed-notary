@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"path/filepath"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/service"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
@@ -109,14 +110,15 @@ func startMain(ctx *cli.Context) {
 }
 
 func mainCtx(ctx *cli.Context) (err error) {
+	fmt.Printf("dnotary start in env %s\n", cfg.Env)
 	// 1. 加载配置
-	var cfg *params.Config
-	cfg, err = config(ctx)
+	var startCfg *params.Config
+	startCfg, err = config(ctx)
 	if err != nil {
 		return
 	}
 	// 2. 初始化DispatchService
-	ds, err := service.NewDispatchService(cfg)
+	ds, err := service.NewDispatchService(startCfg)
 	if err != nil {
 		return
 	}

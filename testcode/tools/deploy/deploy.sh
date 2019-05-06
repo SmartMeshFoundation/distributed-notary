@@ -1,1 +1,0 @@
-./deploy --smc-rpc-endpoint=http://192.168.124.13:28545 --eth-rpc-endpoint=http://127.0.0.1:9001 --keystore-path=../../../testdata/keystore

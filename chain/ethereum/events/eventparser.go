@@ -10,6 +10,7 @@ import (
 
 	"time"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -19,7 +20,7 @@ import (
 
 func createBaseEventFromEthereumLog(name chain.EventName, log types.Log) *chain.BaseEvent {
 	e := &chain.BaseEvent{}
-	e.ChainName = ChainName
+	e.ChainName = cfg.ETH.Name
 	e.FromAddress = log.Address
 	e.BlockNumber = log.BlockNumber
 	e.Time = time.Now()

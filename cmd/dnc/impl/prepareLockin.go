@@ -10,9 +10,9 @@ import (
 
 	"math/big"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -41,7 +41,7 @@ var pliCmd = cli.Command{
 		cli.Uint64Flag{
 			Name:  "expiration",
 			Usage: "expiration of htlc",
-			Value: 500,
+			Value: 900,
 		},
 	},
 }
@@ -55,9 +55,9 @@ func prepareLockin(ctx *cli.Context) error {
 	}
 	expiration := ctx.Uint64("expiration")
 	fmt.Printf("start to prepare lockin :\n ======> [chain=%s amount=%d expiartion=%d]\n", mcName, amount, expiration)
-	if mcName == events.ChainName {
+	if mcName == cfg.ETH.Name {
 		return prepareLockinOnEthereum(mcName, amount, expiration)
-	} else if mcName == bitcoin.ChainName || mcName == "btc" {
+	} else if mcName == cfg.BTC.Name || mcName == "btc" {
 		return prepareLockinOnBitcoin(amount, expiration)
 	}
 	return errors.New("unknown chain name")
@@ -173,7 +173,7 @@ func getBtcAddresses(net *chaincfg.Params) (userAddress, notaryAddress btcutil.A
 	}
 	fmt.Printf(" ======> [userAddress=%s type=%s]\n", userAddress.String(), reflect.TypeOf(userAddress))
 	userAddress.ScriptAddress()
-	notaryAddress, err = btcutil.DecodeAddress(getSCTokenByMCName(bitcoin.ChainName).MCLockedPublicKeyHashStr, net)
+	notaryAddress, err = btcutil.DecodeAddress(getSCTokenByMCName(cfg.BTC.Name).MCLockedPublicKeyHashStr, net)
 	if err != nil {
 		fmt.Println("DecodeAddress err : ", err)
 		os.Exit(-1)

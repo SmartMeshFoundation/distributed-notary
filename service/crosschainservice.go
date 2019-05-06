@@ -15,12 +15,10 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
-	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/wire"
@@ -55,7 +53,7 @@ type CrossChainService struct {
 
 // NewCrossChainService :
 func NewCrossChainService(db *models.DB, dispatchService dispatchServiceBackend, scTokenMetaInfo *models.SideChainTokenMetaInfo) *CrossChainService {
-	scChain, err := dispatchService.getChainByName(smcevents.ChainName)
+	scChain, err := dispatchService.getChainByName(cfg.SMC.Name)
 	if err != nil {
 		panic("never happen")
 	}
@@ -94,7 +92,7 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	secretHash := localLockinInfo.SecretHash
 	amount := new(big.Int).Sub(localLockinInfo.Amount, localLockinInfo.CrossFee) // 扣除手续费
 	// 0. 获取nonce
-	nonce, err := cs.dispatchService.applyNonceFromNonceServer(smcevents.ChainName, privateKeyInfo.Key, req.SecretHash.String(), amount)
+	nonce, err := cs.dispatchService.applyNonceFromNonceServer(cfg.SMC.Name, privateKeyInfo.Key, req.SecretHash.String(), amount)
 	if err != nil {
 		return
 	}
@@ -130,11 +128,11 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 
 func (cs *CrossChainService) callMCLockin(lockinInfo *models.LockinInfo) (err error) {
 	// 无需使用分布式签名,用自己的签名就好
-	if cs.meta.MCName == events.ChainName {
+	if cs.meta.MCName == cfg.ETH.Name {
 		// 以太坊直接使用自己私钥调用合约即可
 		auth := bind.NewKeyedTransactor(cs.selfPrivateKey)
 		return cs.mcProxy.Lockin(auth, lockinInfo.MCUserAddressHex, lockinInfo.Secret)
-	} else if cs.meta.MCName == bitcoin.ChainName {
+	} else if cs.meta.MCName == cfg.BTC.Name {
 		// 比特币的lockin操作需要分布式签名
 		return cs.callBTCLockin(lockinInfo)
 	}
@@ -200,10 +198,10 @@ func (cs *CrossChainService) callSCCancelLockin(userAddressHex string) (err erro
 
 // MCPLO 需使用分布式签名
 func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
-	if localLockoutInfo.MCChainName == events.ChainName {
+	if localLockoutInfo.MCChainName == cfg.ETH.Name {
 		return cs.callEthereumPrepareLockout(req, privateKeyInfo, localLockoutInfo)
 	}
-	if localLockoutInfo.MCChainName == bitcoin.ChainName {
+	if localLockoutInfo.MCChainName == cfg.BTC.Name {
 		return cs.callBitcoinPrepareLockout(req, privateKeyInfo, localLockoutInfo)
 	}
 	err = fmt.Errorf("unknown chain : %s", localLockoutInfo.MCChainName)
@@ -320,10 +318,10 @@ func (cs *CrossChainService) callSCLockout(userAddressHex string, secret common.
 }
 
 func (cs *CrossChainService) callMCCancelLockout(userAddressHex string) (err error) {
-	if cs.meta.MCName == events.ChainName {
+	if cs.meta.MCName == cfg.ETH.Name {
 		return cs.callEthereumCancelLockout(userAddressHex)
 	}
-	//if cs.meta.MCName == bitcoin.ChainName {
+	//if cs.meta.MCName == cfg.BTC.Name {
 	//	return cs.callBitcoinCancelLockout(userAddressHex)
 	//}
 	err = fmt.Errorf("unknown chain : %s", cs.meta.MCName)
@@ -372,31 +370,31 @@ func (cs *CrossChainService) callBitcoinCancelLockout(lockoutInfo *models.Lockou
 /*
 根据侧链超时事件计算主链超时时间
 */
-func (cs *CrossChainService) calculateMCExpiration(scExpiration uint64) uint64 {
-	scBlockPeriodTime := cs.sc.GetBlockPeriodTime()
-	mcBlockPeriodTime := cs.mc.GetBlockPeriodTime()
-	scExpirationSecond := time.Duration(scExpiration-cs.scLastedBlockNumber) * scBlockPeriodTime
-	mcExpirationSecond := scExpirationSecond - scBlockPeriodTime*(time.Duration(params.ForkConfirmNumber)*5-1)
-	mcExpirationBlocks := int64(mcExpirationSecond / mcBlockPeriodTime)
-	mcExpiration := cs.mcLastedBlockNumber + uint64(mcExpirationBlocks)
-	return mcExpiration
+func (cs *CrossChainService) calculateMCExpiration(scExpiration uint64) (mcExpiration uint64) {
+	scCfg := cfg.GetCfgByChainName(cs.sc.GetChainName())
+	mcCfg := cfg.GetCfgByChainName(cs.mc.GetChainName())
+	scExpirationSecond := time.Duration(scExpiration-cs.scLastedBlockNumber) * scCfg.BlockPeriod
+	mcExpirationSecond := scExpirationSecond / 2
+	mcExpirationBlocks := int64(mcExpirationSecond / mcCfg.BlockPeriod)
+	mcExpiration = cs.mcLastedBlockNumber + uint64(mcExpirationBlocks)
+	return
 }
 
 /*
 根据主链超时事件计算侧链超时时间
 */
-func (cs *CrossChainService) calculateSCExpiration(mcExpiration uint64) uint64 {
-	scBlockPeriodTime := cs.sc.GetBlockPeriodTime()
-	mcBlockPeriodTime := cs.mc.GetBlockPeriodTime()
-	mcExpirationSecond := time.Duration(mcExpiration-cs.mcLastedBlockNumber) * mcBlockPeriodTime
-	scExpirationSecond := mcExpirationSecond - scBlockPeriodTime*(time.Duration(params.ForkConfirmNumber)*5-1)
-	scExpirationBlocks := int64(scExpirationSecond / scBlockPeriodTime)
-	scExpiration := cs.scLastedBlockNumber + uint64(scExpirationBlocks)
-	return scExpiration
+func (cs *CrossChainService) calculateSCExpiration(mcExpiration uint64) (scExpiration uint64) {
+	scCfg := cfg.GetCfgByChainName(cs.sc.GetChainName())
+	mcCfg := cfg.GetCfgByChainName(cs.mc.GetChainName())
+	mcExpirationSecond := time.Duration(mcExpiration-cs.mcLastedBlockNumber) * mcCfg.BlockPeriod
+	scExpirationSecond := mcExpirationSecond / 2
+	scExpirationBlocks := int64(scExpirationSecond / scCfg.BlockPeriod)
+	scExpiration = cs.scLastedBlockNumber + uint64(scExpirationBlocks)
+	return
 }
 
 func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.SCPrepareLockinRequest) (lockinInfo *models.LockinInfo, err error) {
-	if cs.meta.MCName == events.ChainName {
+	if cs.meta.MCName == cfg.ETH.Name {
 		// 以太坊,收到用户请求时,lockinInfo必须已经存在,仅做校验工作
 		mcUserAddress := common.BytesToAddress(req.MCUserAddress)
 		lockinInfo, err = cs.lockinHandler.getLockin(req.SecretHash)
@@ -418,7 +416,7 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 		}
 		return
 	}
-	if cs.meta.MCName == bitcoin.ChainName {
+	if cs.meta.MCName == cfg.BTC.Name {
 		btcService := cs.mc.(*bitcoin.BTCService)
 		net := btcService.GetNetParam()
 		mcUserAddress, err2 := btcutil.NewAddressPubKeyHash(req.MCUserAddress, net)
@@ -442,12 +440,11 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 		}
 		// 3. 校验mcExpiration
 		mcExpiration := req.MCExpiration.Uint64()
-		if mcExpiration-btcPrepareLockinInfo.BlockNumber <= params.MinLockinMCExpiration {
-			err2 = fmt.Errorf("mcExpiration must bigger than %d", params.MinLockinMCExpiration)
+		if mcExpiration-btcPrepareLockinInfo.BlockNumber <= cfg.GetMinExpirationBlock4User(cfg.BTC.Name) {
+			err2 = fmt.Errorf("mcExpiration must bigger than %d", cfg.GetMinExpirationBlock4User(cfg.BTC.Name))
 			return nil, err2
 		}
 		// 4 计算scExpiration
-		//scExpiration := cs.scLastedBlockNumber + (mcExpiration - btcPrepareLockinInfo.BlockNumber - 5*params.ForkConfirmNumber - 1)
 		scExpiration := cs.calculateSCExpiration(mcExpiration)
 		// 5. 构造LockinInfo
 		amount := big.NewInt(int64(req.MCLockedAmount))

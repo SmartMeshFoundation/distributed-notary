@@ -14,10 +14,8 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
-	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
-	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -245,7 +243,7 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	scTokenMetaInfo.MCLockedContractDeploySessionID = mcDeploySessionID
 	scTokenMetaInfo.CreateTime = time.Now().Unix()
 	scTokenMetaInfo.OrganiserID = as.dispatchService.getSelfNotaryInfo().ID
-	if scTokenMetaInfo.MCName == bitcoin.ChainName {
+	if scTokenMetaInfo.MCName == cfg.BTC.Name {
 		scTokenMetaInfo.MCLockedPublicKeyHashStr = privateKeyInfo.ToBTCPubKeyAddress(as.dispatchService.getBtcNetworkParam()).AddressPubKeyHash().String()
 	}
 	err = as.db.NewSCTokenMetaInfo(&scTokenMetaInfo)
@@ -273,11 +271,11 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 }
 
 func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, sessionID common.Hash, err error) {
-	if chainName == bitcoin.ChainName {
+	if chainName == cfg.BTC.Name {
 		// 比特币不需要合约
 		return
 	}
-	if chainName != ethevents.ChainName {
+	if chainName != cfg.ETH.Name {
 		err = errors.New("only support ethereum as main chain now")
 		return
 	}
@@ -289,7 +287,7 @@ func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyI
 
 func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, sessionID common.Hash, err error) {
 	var c chain.Chain
-	c, err = as.dispatchService.getChainByName(smcevents.ChainName)
+	c, err = as.dispatchService.getChainByName(cfg.SMC.Name)
 	if err != nil {
 		return
 	}

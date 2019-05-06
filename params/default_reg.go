@@ -1,3 +1,0 @@
-// +build REG
-
-package params

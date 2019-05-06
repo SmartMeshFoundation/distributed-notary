@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"math/big"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -24,9 +25,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nkbai/log"
 )
-
-// ChainName 公链名
-var ChainName = "bitcoin"
 
 // OutpointUse 定义utxo的用处
 type OutpointUse int
@@ -55,7 +53,6 @@ type BTCOutpointRelevantInfo struct {
 
 // BTCService :
 type BTCService struct {
-	chainName    string
 	host         string
 	rpcUser      string
 	rpcPass      string
@@ -73,7 +70,6 @@ type BTCService struct {
 // NewBTCService :
 func NewBTCService(host, rpcUser, rpcPass, certFilePath string) (bs *BTCService, err error) {
 	bs = &BTCService{
-		chainName:             ChainName,
 		host:                  host,
 		rpcUser:               rpcUser,
 		rpcPass:               rpcPass,
@@ -129,19 +125,9 @@ func NewBTCService(host, rpcUser, rpcPass, certFilePath string) (bs *BTCService,
 	return
 }
 
-// GetBlockPeriodTime impl chain.Chain
-func (bs *BTCService) GetBlockPeriodTime() time.Duration {
-	return blockPeriodSeconds
-}
-
-// GetCrossFeeRate impl chain.Chain
-func (bs *BTCService) GetCrossFeeRate() int64 {
-	return crossFeeRate
-}
-
 // GetChainName impl chain.Chain
 func (bs *BTCService) GetChainName() string {
-	return bs.chainName
+	return cfg.BTC.Name
 }
 
 // GetEventChan impl chain.Chain
@@ -283,7 +269,7 @@ func (bs *BTCService) onFilteredBlockDisconnected(height int32, header *wire.Blo
 新块处理
 */
 func (bs *BTCService) onFilteredBlockConnected(height int32, header *wire.BlockHeader, txs []*btcutil.Tx) {
-	if height%logPeriod == 0 {
+	if height%int32(cfg.BTC.BlockNumberLogPeriod) == 0 {
 		log.Trace(fmt.Sprintf("Bitcoin  new block : %d", height))
 	}
 	// 1. 生成NewBlock事件
@@ -298,7 +284,7 @@ func (bs *BTCService) onFilteredBlockConnected(height int32, header *wire.BlockH
 	var eventsToSend []chain.Event
 	var confirmBlockNumbers []int32
 	for blockNumber := range bs.confirmMap {
-		if blockNumber <= height-confirmBlockNumber {
+		if blockNumber <= height-int32(cfg.BTC.ConfirmBlockNumber) {
 			for _, tx := range bs.confirmMap[blockNumber] {
 				eventsToSend = append(eventsToSend, bs.createEventsFromTx(blockNumber, tx)...)
 			}

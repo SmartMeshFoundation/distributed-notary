@@ -13,6 +13,7 @@ import (
 
 	"crypto/ecdsa"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/client"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
@@ -34,7 +35,6 @@ type SMCService struct {
 	c               *client.SafeEthClient
 	host            string
 	lastBlockNumber uint64
-	chainName       string
 
 	tokenProxyMap     map[common.Address]*proxy.SideChainErc20TokenProxy
 	tokenProxyMapLock sync.Mutex
@@ -53,7 +53,7 @@ type SMCService struct {
 func NewSMCService(host string, contractAddresses ...common.Address) (ss *SMCService, err error) {
 	// init client
 	var c *ethclient.Client
-	ctx, cancelFunc := context.WithTimeout(context.Background(), spectrumRPCTimeout)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), cfg.SMC.RPCTimeout)
 	c, err = ethclient.DialContext(ctx, host)
 	cancelFunc()
 	if err != nil {
@@ -67,7 +67,6 @@ func NewSMCService(host string, contractAddresses ...common.Address) (ss *SMCSer
 		connectStatusChangeChanMap: make(map[string]chan commons.ConnectStatusChange),
 		eventChan:                  make(chan chain.Event, 100),
 		eventsDone:                 make(map[common.Hash]uint64),
-		chainName:                  events.ChainName,
 	}
 	err = ss.checkConnectStatus()
 	if err != nil {
@@ -86,16 +85,6 @@ func NewSMCService(host string, contractAddresses ...common.Address) (ss *SMCSer
 		}
 	}
 	return
-}
-
-// GetBlockPeriodTime impl chain.Chain
-func (ss *SMCService) GetBlockPeriodTime() time.Duration {
-	return blockPeriodSeconds
-}
-
-// GetCrossFeeRate impl chain.Chain
-func (ss *SMCService) GetCrossFeeRate() int64 {
-	return 0
 }
 
 // SetLastBlockNumber :
@@ -201,7 +190,7 @@ func (ss *SMCService) RecoverDisconnect() {
 		default:
 			//never block
 		}
-		ctx, cancelFunc := context.WithTimeout(context.Background(), spectrumRPCTimeout)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), cfg.SMC.RPCTimeout)
 		c, err = ethclient.DialContext(ctx, ss.host)
 		cancelFunc()
 		ss.c = client.NewSafeClient(c)
@@ -220,7 +209,7 @@ func (ss *SMCService) RecoverDisconnect() {
 
 // GetChainName : impl chain.Chain
 func (ss *SMCService) GetChainName() string {
-	return ss.chainName
+	return cfg.SMC.Name
 }
 
 // DeployContract : impl chain.Chain 这里暂时只有EthereumToken一个合约,后续优化该接口为支持多主链
@@ -317,7 +306,7 @@ func (ss *SMCService) checkConnectStatus() (err error) {
 	if ss.c == nil || ss.c.Client == nil {
 		return client.ErrNotConnected
 	}
-	ctx, cancelFunc := context.WithTimeout(context.Background(), spectrumRPCTimeout)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), cfg.SMC.RPCTimeout)
 	defer cancelFunc()
 	_, err = ss.c.HeaderByNumber(ctx, big.NewInt(1))
 	if err != nil {
@@ -332,7 +321,7 @@ func (ss *SMCService) loop() {
 	currentBlock := ss.lastBlockNumber
 	retryTime := 0
 	for {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), spectrumRPCTimeout)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), cfg.SMC.RPCTimeout)
 		h, err := ss.c.HeaderByNumber(ctx, nil)
 		if err != nil {
 			log.Error(fmt.Sprintf("SmcService.EventListener HeaderByNumber err=%s", err))
@@ -362,7 +351,7 @@ func (ss *SMCService) loop() {
 		lastedBlock := h.Number.Uint64()
 		// 这里如果出现切换公链导致获取到的新块比当前块更小的话,只需要等待即可
 		if currentBlock >= lastedBlock {
-			time.Sleep(pollPeriod / 2)
+			time.Sleep(cfg.SMC.BlockNumberPollPeriod / 2)
 			retryTime++
 			if retryTime > 10 {
 				log.Warn(fmt.Sprintf("SmcService.EventListener get same block number %d from chain %d times,maybe something wrong with smc ...", lastedBlock, retryTime))
@@ -373,26 +362,26 @@ func (ss *SMCService) loop() {
 		if lastedBlock != currentBlock+1 {
 			log.Warn(fmt.Sprintf("SmcService.EventListener missed %d blocks", lastedBlock-currentBlock-1))
 		}
-		if lastedBlock%logPeriod == 0 {
+		if lastedBlock%cfg.SMC.BlockNumberLogPeriod == 0 {
 			log.Trace(fmt.Sprintf("Spectrum new block : %d", lastedBlock))
 		}
 		var fromBlockNumber, toBlockNumber uint64
-		if currentBlock < 2*confirmBlockNumber {
+		if currentBlock < 2*cfg.SMC.ConfirmBlockNumber {
 			fromBlockNumber = 0
 		} else {
-			fromBlockNumber = currentBlock - 2*confirmBlockNumber
+			fromBlockNumber = currentBlock - 2*cfg.SMC.ConfirmBlockNumber
 		}
-		if lastedBlock < confirmBlockNumber {
+		if lastedBlock < cfg.SMC.ConfirmBlockNumber {
 			toBlockNumber = 0
 		} else {
-			toBlockNumber = lastedBlock - confirmBlockNumber
+			toBlockNumber = lastedBlock - cfg.SMC.ConfirmBlockNumber
 		}
 		// get all events between currentBlock and confirmBlock
 		es, err := ss.queryAllEvents(fromBlockNumber, toBlockNumber)
 		if err != nil {
 			log.Error(fmt.Sprintf("SmcService.EventListener queryAllStateChange err=%s", err))
 			// 如果这里出现err,不能继续处理该blocknumber,否则会丢事件,直接从该块重新处理即可
-			time.Sleep(pollPeriod / 2)
+			time.Sleep(cfg.SMC.BlockNumberPollPeriod / 2)
 			continue
 		}
 		if len(es) > 0 {
@@ -417,7 +406,7 @@ func (ss *SMCService) loop() {
 		}
 		// wait to next time
 		select {
-		case <-time.After(pollPeriod):
+		case <-time.After(cfg.SMC.BlockNumberPollPeriod):
 		case <-ss.listenerQuitChan:
 			ss.listenerQuitChan = nil
 			log.Info(fmt.Sprintf("SmcService.EventListener quit complete"))
@@ -546,7 +535,7 @@ func buildQueryBatch(contractsAddress []common.Address, fromBlock uint64, toBloc
 }
 
 func getQueryContext() context.Context {
-	ctx, cf := context.WithDeadline(context.Background(), time.Now().Add(defaultPollTimeout))
+	ctx, cf := context.WithDeadline(context.Background(), time.Now().Add(cfg.SMC.RPCTimeout))
 	if cf != nil {
 	}
 	return ctx

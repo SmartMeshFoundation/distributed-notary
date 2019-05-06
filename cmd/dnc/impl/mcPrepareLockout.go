@@ -10,8 +10,8 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/urfave/cli"
@@ -33,10 +33,10 @@ var mcploCmd = cli.Command{
 
 func mcPrepareLockout(ctx *cli.Context) (err error) {
 	mcName := ctx.String("mcname")
-	if mcName == events.ChainName {
+	if mcName == cfg.ETH.Name {
 		return mcPrepareLockout4Eth(mcName)
 	}
-	if mcName == bitcoin.ChainName {
+	if mcName == cfg.BTC.Name {
 		return mcPrepareLockout4Btc(mcName)
 	}
 	return errors.New("unknown chain name")

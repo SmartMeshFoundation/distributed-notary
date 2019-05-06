@@ -7,12 +7,12 @@ import (
 
 	"time"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
@@ -133,14 +133,14 @@ func (cs *CrossChainService) onMCNewBlockEvent(blockNumber uint64) (err error) {
 	if len(lockoutListNeedCancel) > 0 {
 		for _, lockout := range lockoutListNeedCancel {
 			if lockout.NotaryIDInCharge == cs.selfNotaryID {
-				if cs.meta.MCName == ethevents.ChainName {
+				if cs.meta.MCName == cfg.ETH.Name {
 					// 如果我是负责人,尽快cancel,这里如果调用合约出错,也继续去尝试cancel下一个
 					err = cs.callMCCancelLockout(lockout.MCUserAddressHex)
 					if err != nil {
 						log.Error("callMCCancelLockout err = %s", err.Error())
 					}
 				}
-				if cs.meta.MCName == bitcoin.ChainName {
+				if cs.meta.MCName == cfg.BTC.Name {
 					// 比特币的时候,流程正常的话,取消交易已经在PrepareLockout的时候就已经构造并发送出去了,不用在这里再发一次
 				}
 			}
@@ -186,8 +186,8 @@ func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareL
 		return
 	}
 	// 1.5 校验mcExpiration
-	if mcExpiration-event.BlockNumber <= params.MinLockinMCExpiration {
-		err = fmt.Errorf("mcExpiration must bigger than %d", params.MinLockinMCExpiration)
+	if mcExpiration-event.BlockNumber <= cfg.GetMinExpirationBlock4User(cs.meta.MCName) {
+		err = fmt.Errorf("mcExpiration must bigger than %d", cfg.GetMinExpirationBlock4User(cs.meta.MCName))
 		return
 	}
 	// 1.6 计算scExpiration
@@ -196,7 +196,7 @@ func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareL
 
 	// 2. 构造LockinInfo
 	lockinInfo := &models.LockinInfo{
-		MCChainName:      ethevents.ChainName,
+		MCChainName:      cfg.ETH.Name,
 		SecretHash:       secretHash,
 		Secret:           utils.EmptyHash,
 		MCUserAddressHex: event.Account.String(),
@@ -459,12 +459,12 @@ func (cs *CrossChainService) onSCPrepareLockout(event smcevents.PrepareLockoutEv
 		return
 	}
 	// 1.5 校验scExpiration
-	if scExpiration-event.BlockNumber <= params.MinLockoutSCExpiration {
-		err = fmt.Errorf("scExpiration must bigger than %d", params.MinLockoutSCExpiration)
+	minExpiration := cfg.GetMinExpirationBlock4User(cs.sc.GetChainName())
+	if scExpiration-event.BlockNumber <= minExpiration {
+		err = fmt.Errorf("scExpiration must bigger than %d", minExpiration)
 		return
 	}
 	// 1.6 计算mcExpiration
-	//mcExpiration := cs.mcLastedBlockNumber + (scExpiration - event.BlockNumber - 5*params.ForkConfirmNumber - 1)
 	mcExpiration := cs.calculateMCExpiration(scExpiration)
 
 	// 2. 构造LockoutInfo

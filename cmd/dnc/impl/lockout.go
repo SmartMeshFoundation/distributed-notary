@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -37,9 +37,9 @@ var locmd = cli.Command{
 func lockout(ctx *cli.Context) error {
 	mcName := ctx.String("mcname")
 	fmt.Printf("start to lockout :\n ======> [chain=%s ]\n", mcName)
-	if mcName == events.ChainName {
+	if mcName == cfg.ETH.Name {
 		return lockoutOnEthereum(mcName)
-	} else if mcName == bitcoin.ChainName || mcName == "btc" {
+	} else if mcName == cfg.BTC.Name || mcName == "btc" {
 		return lockoutOnBitcoin(mcName)
 	}
 	return errors.New("unknown chain name")

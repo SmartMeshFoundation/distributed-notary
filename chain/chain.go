@@ -3,7 +3,6 @@ package chain
 import (
 	"crypto/ecdsa"
 	"math/big"
-	"time"
 
 	"errors"
 
@@ -21,7 +20,6 @@ Chain :
 */
 type Chain interface {
 	GetChainName() string
-	GetBlockPeriodTime() time.Duration
 	GetEventChan() <-chan Event
 	StartEventListener() error
 	StopEventListener()
@@ -31,7 +29,6 @@ type Chain interface {
 	SetLastBlockNumber(lastBlockNumber uint64)
 	GetContractProxy(contractAddress common.Address) ContractProxy
 	GetConn() *ethclient.Client
-	GetCrossFeeRate() int64
 
 	Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo common.Address, amount *big.Int, nonce ...int) (err error) // for debug
 }

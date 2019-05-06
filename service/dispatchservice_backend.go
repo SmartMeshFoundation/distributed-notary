@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
-
 	"github.com/SmartMeshFoundation/distributed-notary/pbft/pbft"
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
@@ -19,9 +17,9 @@ import (
 
 	"crypto/ecdsa"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
-	spectrumevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ethereum/go-ethereum/common"
@@ -67,7 +65,7 @@ type dispatchServiceBackend interface {
 }
 
 func (ds *DispatchService) getBtcNetworkParam() *chaincfg.Params {
-	c, err := ds.getChainByName(bitcoin.ChainName)
+	c, err := ds.getChainByName(cfg.BTC.Name)
 	if err != nil {
 		log.Error(err.Error())
 		return nil
@@ -94,15 +92,11 @@ func (ds *DispatchService) getChainByName(chainName string) (c chain.Chain, err 
 }
 
 func (ds *DispatchService) calculateCrossFee(chainName string, amount *big.Int) *big.Int {
-	var ok bool
-	c, ok := ds.chainMap[chainName]
-	if !ok {
-		panic("wrong code")
-	}
-	if c.GetCrossFeeRate() == 0 {
+	feeRate := cfg.GetCrossFeeRate(chainName)
+	if feeRate == 0 {
 		return big.NewInt(0)
 	}
-	return new(big.Int).Div(amount, big.NewInt(c.GetCrossFeeRate()))
+	return new(big.Int).Div(amount, big.NewInt(feeRate))
 }
 
 func (ds *DispatchService) getNotaryService() *NotaryService {
@@ -152,7 +146,7 @@ func (ds *DispatchService) getSCTokenMetaInfoBySCTokenAddress(scTokenAddress com
 
 func (ds *DispatchService) registerNewSCToken(scTokenMetaInfo *models.SideChainTokenMetaInfo) (err error) {
 	// 注册侧链合约:
-	err = ds.chainMap[spectrumevents.ChainName].RegisterEventListenContract(scTokenMetaInfo.SCToken)
+	err = ds.chainMap[cfg.SMC.Name].RegisterEventListenContract(scTokenMetaInfo.SCToken)
 	if err != nil {
 		log.Error("RegisterEventListenContract on side chain err : %s", err.Error())
 		return
@@ -315,11 +309,11 @@ func (ds *DispatchService) getPbftService(key string) (ps pbft.PBFTAuxiliary, er
 
 func chainName2PBFTType(chainName string) pbftType {
 	switch chainName {
-	case spectrumevents.ChainName:
+	case cfg.SMC.Name:
 		return pbftTypeEthereum
-	case events.ChainName:
+	case cfg.ETH.Name:
 		return pbftTypeEthereum
-	case bitcoin.ChainName:
+	case cfg.BTC.Name:
 		return pbftTypeBTC
 	}
 	return pbftTypeUnkown

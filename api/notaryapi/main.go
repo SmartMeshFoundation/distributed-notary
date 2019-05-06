@@ -16,8 +16,8 @@ import (
 	"crypto/ecdsa"
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -94,7 +94,7 @@ func NewNotaryAPI(host string, selfPrivateKey *ecdsa.PrivateKey, notaries []*mod
 		if common.HexToAddress(notary.AddressStr) == crypto.PubkeyToAddress(selfPrivateKey.PublicKey) {
 			continue
 		}
-		sendingChan := make(chan api.Req, 10*params.ShareCount)
+		sendingChan := make(chan api.Req, 10*cfg.Notaries.ShareCount)
 		notaryAPI.sendingChanMap.Store(notary.ID, sendingChan)
 		go notaryAPI.notaryMsgSendLoop(notary.ID, sendingChan)
 	}

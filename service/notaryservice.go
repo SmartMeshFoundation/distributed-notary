@@ -7,12 +7,10 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
-	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
-	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/service/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
@@ -182,10 +180,10 @@ func (ns *NotaryService) onPKNRequest(req api.Req) {
 */
 func (ns *NotaryService) startDistributedSignAndWait(msgToSign messagetosign.MessageToSign, privateKeyInfo *models.PrivateKeyInfo) (signature []byte, sessionID common.Hash, err error) {
 	// 1. DSMAsk
-	notaryNumNeedExpectSelf := params.ThresholdCount
+	notaryNumNeedExpectSelf := cfg.Notaries.ThresholdCount
 	if msgToSign.GetName() == messagetosign.SpectrumContractDeployTXDataName {
 		// 如果需要签名的是部署合约的tx,则要求所有公证人参与
-		notaryNumNeedExpectSelf = params.ShareCount - 1
+		notaryNumNeedExpectSelf = cfg.Notaries.ShareCount - 1
 	}
 	var otherDSMNotaryIDs []int
 	sessionID, otherDSMNotaryIDs, err = ns.startDSMAsk(notaryNumNeedExpectSelf, privateKeyInfo.Key, msgToSign)
@@ -460,7 +458,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		}
 		// 2. 获取本地scTokenProxy
 		var c chain.Chain
-		c, err = ns.dispatchService.getChainByName(smcevents.ChainName)
+		c, err = ns.dispatchService.getChainByName(cfg.SMC.Name)
 		scTokenProxy := c.GetContractProxy(localLockinInfo.SCTokenAddress)
 		// 2. 校验
 		err = m.VerifySignData(scTokenProxy, privateKeyInfo, localLockinInfo, ns.dispatchService.getBtcNetworkParam())
@@ -482,7 +480,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		scToken := ns.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress)
 		// 3. 获取本地mcProxy
 		var c chain.Chain
-		c, err = ns.dispatchService.getChainByName(ethevents.ChainName)
+		c, err = ns.dispatchService.getChainByName(cfg.ETH.Name)
 		mcProxy := c.GetContractProxy(scToken.MCLockedContractAddress)
 		// 4. 校验
 		err = m.VerifySignData(mcProxy, privateKeyInfo, localLockoutInfo)
@@ -516,7 +514,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
 		// 0. 获取bs
 		var c chain.Chain
-		c, err = ns.dispatchService.getChainByName(bitcoin.ChainName)
+		c, err = ns.dispatchService.getChainByName(cfg.BTC.Name)
 		if err != nil {
 			return
 		}
@@ -537,7 +535,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
 		// 0. 获取bs
 		var c chain.Chain
-		c, err = ns.dispatchService.getChainByName(bitcoin.ChainName)
+		c, err = ns.dispatchService.getChainByName(cfg.BTC.Name)
 		if err != nil {
 			return
 		}

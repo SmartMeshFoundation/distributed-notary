@@ -3,6 +3,7 @@ package events
 import (
 	"time"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 )
@@ -16,7 +17,7 @@ type NewBlockEvent struct {
 func CreateNewBlockEvent(blockNumber uint64) NewBlockEvent {
 	e := NewBlockEvent{}
 	e.BaseEvent = &chain.BaseEvent{}
-	e.ChainName = ChainName
+	e.ChainName = cfg.ETH.Name
 	e.FromAddress = utils.EmptyAddress
 	e.BlockNumber = blockNumber
 	e.Time = time.Now()

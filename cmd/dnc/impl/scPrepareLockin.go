@@ -9,8 +9,7 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/ethereum/go-ethereum/common"
@@ -33,9 +32,9 @@ var scpliCmd = cli.Command{
 
 func scPrepareLockin(ctx *cli.Context) (err error) {
 	mcName := ctx.String("mcname")
-	if mcName == events.ChainName {
+	if mcName == cfg.ETH.Name {
 		scPrepareLockIn4Eth(mcName)
-	} else if mcName == bitcoin.ChainName {
+	} else if mcName == cfg.BTC.Name {
 		scPrepareLockIn4Btc(mcName)
 	}
 	return

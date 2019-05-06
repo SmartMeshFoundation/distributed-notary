@@ -11,12 +11,11 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum"
-	ethereumevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum"
-	spectrumevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
@@ -64,10 +63,10 @@ type DispatchService struct {
 }
 
 // NewDispatchService :
-func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
+func NewDispatchService(config *params.Config) (ds *DispatchService, err error) {
 	// 1. 加载私钥
-	am := accounts.NewAccountManager(cfg.KeystorePath)
-	privateKeyBin, err := am.GetPrivateKey(cfg.Address, cfg.Password)
+	am := accounts.NewAccountManager(config.KeystorePath)
+	privateKeyBin, err := am.GetPrivateKey(config.Address, config.Password)
 	if err != nil {
 		log.Error("load private key err : %s", err.Error())
 		return
@@ -78,7 +77,7 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		return
 	}
 	// 2. 打开db,如果是第一次启动,读取notary.conf并写入db
-	db := models.SetUpDB("sqlite3", cfg.DataBasePath)
+	db := models.SetUpDB("sqlite3", config.DataBasePath)
 	notaries, err := db.GetNotaryInfo()
 	if err != nil {
 		log.Error("get notary info from db err : %s", err.Error())
@@ -86,9 +85,9 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 	}
 	if len(notaries) == 0 {
 		// first start
-		notaries, err = db.NewNotaryInfoFromConfFile(cfg.NotaryConfFilePath)
+		notaries, err = db.NewNotaryInfoFromConfFile(config.NotaryConfFilePath)
 		if err != nil {
-			log.Error("get notary info from file %s err : %s", cfg.NotaryConfFilePath, err.Error())
+			log.Error("get notary info from file %s err : %s", config.NotaryConfFilePath, err.Error())
 			return
 		}
 		if len(notaries) < 2 {
@@ -97,17 +96,13 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 			return
 		}
 	}
-	// 2.5 根据notaries数量初始化 ShareCount及ThresholdCount
-	params.ShareCount = len(notaries)
-	params.ThresholdCount = params.ShareCount / 3 * 2
-	if params.ShareCount%3 > 1 {
-		params.ThresholdCount++
-	}
-	log.Info("ShareCount=%d ThresholdCount=%d", params.ShareCount, params.ThresholdCount)
+	// 2.5 注册公证人信息到cfg
+	cfg.RegisterNotaries(notaries, crypto.PubkeyToAddress(privateKey.PublicKey))
+	log.Info("ShareCount=%d ThresholdCount=%d", cfg.Notaries.ShareCount, cfg.Notaries.ThresholdCount)
 	// 3. init dispatch service
 	ds = &DispatchService{
-		userAPI:                      userapi.NewUserAPI(cfg.UserAPIListen),
-		notaryAPI:                    notaryapi.NewNotaryAPI(cfg.NotaryAPIListen, privateKey, notaries),
+		userAPI:                      userapi.NewUserAPI(config.UserAPIListen),
+		notaryAPI:                    notaryapi.NewNotaryAPI(config.NotaryAPIListen, privateKey, notaries),
 		chainMap:                     make(map[string]chain.Chain),
 		db:                           db,
 		quitChan:                     make(chan struct{}),
@@ -116,28 +111,25 @@ func NewDispatchService(cfg *params.Config) (ds *DispatchService, err error) {
 		notaries:                     notaries,
 	}
 	// 3.5 初始化nonce-server-host
-	ds.nonceServerHost = cfg.NonceServerHost
+	ds.nonceServerHost = config.NonceServerHost
 	if ds.nonceServerHost == "" {
 		log.Error("param nonce-server can not be empty", err.Error())
 		return
 	}
 	// 4. 初始化侧链事件监听
-	chainName := spectrumevents.ChainName
-	ds.chainMap[chainName], err = spectrum.NewSMCService(cfg.SmcRPCEndPoint)
+	ds.chainMap[cfg.SMC.Name], err = spectrum.NewSMCService(config.SmcRPCEndPoint)
 	if err != nil {
 		log.Error("new SMCService err : %s", err.Error())
 		return
 	}
 	// 5. 初始化Eth事件监听
-	chainName = ethereumevents.ChainName
-	ds.chainMap[chainName], err = ethereum.NewETHService(cfg.EthRPCEndPoint)
+	ds.chainMap[cfg.ETH.Name], err = ethereum.NewETHService(config.EthRPCEndPoint)
 	if err != nil {
 		log.Error("new ETHService err : %s", err.Error())
 		return
 	}
 	// 5.4 初始化Btc事件监听
-	chainName = bitcoin.ChainName
-	ds.chainMap[chainName], err = bitcoin.NewBTCService(cfg.BtcRPCEndPoint, cfg.BtcRPCUser, cfg.BtcRPCPass, cfg.BtcRPCCertFilePath)
+	ds.chainMap[cfg.BTC.Name], err = bitcoin.NewBTCService(config.BtcRPCEndPoint, config.BtcRPCUser, config.BtcRPCPass, config.BtcRPCCertFilePath)
 	if err != nil {
 		log.Error("new BTCService err : %s", err.Error())
 		return
@@ -350,7 +342,7 @@ func (ds *DispatchService) dispatchEvent(e chain.Event) {
 	if e.GetSCTokenAddress() == utils.EmptyAddress {
 		// 主链事件,根据主链合约地址FromAddress调度,遍历,后续可优化,维护一个主链合约地址-SCToken地址的map即可
 		for _, service := range ds.scToken2CrossChainServiceMap {
-			if e.GetChainName() == bitcoin.ChainName && service.meta.MCName == bitcoin.ChainName {
+			if e.GetChainName() == cfg.BTC.Name && service.meta.MCName == cfg.BTC.Name {
 				// 比特币事件
 				go service.OnEvent(e)
 				return

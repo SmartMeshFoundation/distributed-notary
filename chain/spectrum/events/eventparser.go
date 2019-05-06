@@ -10,6 +10,7 @@ import (
 
 	"time"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,7 +19,7 @@ import (
 
 func createBaseEventFromSpectrumLog(name chain.EventName, log types.Log) *chain.BaseEvent {
 	e := &chain.BaseEvent{}
-	e.ChainName = ChainName
+	e.ChainName = cfg.SMC.Name
 	e.FromAddress = log.Address
 	e.BlockNumber = log.BlockNumber
 	e.Time = time.Now()

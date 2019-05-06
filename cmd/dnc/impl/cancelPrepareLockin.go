@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -38,10 +38,10 @@ var cpliCmd = cli.Command{
 
 func cancelPrepareLockin(ctx *cli.Context) error {
 	mcName := ctx.String("mcname")
-	if mcName == events.ChainName {
+	if mcName == cfg.ETH.Name {
 		return cancelPrepareLockin4Eth(mcName)
 	}
-	if mcName == bitcoin.ChainName || mcName == "btc" {
+	if mcName == cfg.BTC.Name || mcName == "btc" {
 		return cancelPrepareLocin4Btc()
 	}
 	fmt.Println("Unknown chain name : ", mcName)

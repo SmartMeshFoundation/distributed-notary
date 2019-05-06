@@ -9,9 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// MCChainName 公链名
-var ChainName = "ethereum"
-
 // lockedEthereumABI :
 var lockedEthereumABI abi.ABI
 

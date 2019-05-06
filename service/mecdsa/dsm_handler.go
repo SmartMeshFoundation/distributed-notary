@@ -13,11 +13,11 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/feldman"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/proofs"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -74,7 +74,7 @@ func NewDSMHandler(db *models.DB, self *models.NotaryInfo, message messagetosign
 		selfNotaryID:      self.ID,
 		privateKeyInfo:    privateKeyInfo,
 		notaryClient:      notaryClient,
-		receiveChan:       make(chan api.Req, 10*params.ShareCount),
+		receiveChan:       make(chan api.Req, 10*cfg.Notaries.ShareCount),
 		phase1DoneChan:    make(chan bool, 2),
 		phase2DoneChan:    make(chan bool, 2),
 		phase3DoneChan:    make(chan bool, 2),
@@ -119,7 +119,7 @@ StartDSMAndWaitFinish 主线程,负责控制一次dsm的流程
 */
 func (dh *DSMHandler) StartDSMAndWaitFinish() (signature []byte, err error) {
 	// 1. 人数校验
-	if len(dh.signMessage.S) <= params.ThresholdCount {
+	if len(dh.signMessage.S) <= cfg.Notaries.ThresholdCount {
 		err = fmt.Errorf("candidates notary too less")
 		log.Info(sessionLogMsg(dh.sessionID, err.Error()))
 		return

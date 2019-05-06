@@ -7,11 +7,11 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/feldman"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/proofs"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/nkbai/log"
@@ -66,7 +66,7 @@ func NewPKNHandler(db *models.DB, self *models.NotaryInfo, otherNotaryIDs []int,
 		selfNotaryID:   self.ID,
 		otherNotaryIDs: otherNotaryIDs,
 		privateKeyInfo: privateKeyInfo,
-		receiveChan:    make(chan api.Req, 10*params.ShareCount),
+		receiveChan:    make(chan api.Req, 10*cfg.Notaries.ShareCount),
 		phase1DoneChan: make(chan bool, 2),
 		phase2DoneChan: make(chan bool, 2),
 		phase3DoneChan: make(chan bool, 2),
@@ -175,7 +175,7 @@ func (ph *PKNHandler) generatePhase1PubKeyProof() (msg *models.KeyGenBroadcastMe
 
 /*
 receivePhase1PubKeyProof phase 1.2 接受其他公证人传递过来的公钥片证明信息,
-如果凑齐了所有公证人(params.ShareCount)的公钥片信息,那么就可以组合出来此次协商最终的公钥.
+如果凑齐了所有公证人(cfg.Notaries.ShareCount)的公钥片信息,那么就可以组合出来此次协商最终的公钥.
 但是到目前为止没有一个公证人知道最终公钥对应的私钥片
 */
 func (ph *PKNHandler) receivePhase1PubKeyProof(m *models.KeyGenBroadcastMessage1, index int) {
@@ -198,7 +198,7 @@ func (ph *PKNHandler) receivePhase1PubKeyProof(m *models.KeyGenBroadcastMessage1
 func (ph *PKNHandler) checkPhase1Done() {
 	p := ph.privateKeyInfo
 	//除了自己以外的因素都凑齐了
-	if len(p.PubKeysProof1) == params.ShareCount-1 {
+	if len(p.PubKeysProof1) == cfg.Notaries.ShareCount-1 {
 		x, y := share.S.ScalarBaseMult(p.UI.Bytes())
 		for _, m := range p.PubKeysProof1 {
 			x, y = share.PointAdd(x, y, m.Proof.PK.X, m.Proof.PK.Y)
@@ -254,7 +254,7 @@ func (ph *PKNHandler) receivePhase2PaillierPubKeyProof(m *models.KeyGenBroadcast
 func (ph *PKNHandler) checkPhase2Done() {
 	p := ph.privateKeyInfo
 	//所有因素都凑齐了
-	if len(p.PaillierKeysProof2) == params.ShareCount {
+	if len(p.PaillierKeysProof2) == cfg.Notaries.ShareCount {
 		ph.notify(ph.phase2DoneChan, nil)
 	}
 }
@@ -287,7 +287,7 @@ func (ph *PKNHandler) generatePhase3SecretShare() (msgs map[int]*models.KeyGenBr
 			return
 		}
 	}
-	vss, secretShares := feldman.Share(params.ThresholdCount, params.ShareCount, p.UI)
+	vss, secretShares := feldman.Share(cfg.Notaries.ThresholdCount, cfg.Notaries.ShareCount, p.UI)
 	msg := &models.KeyGenBroadcastMessage3{
 		Vss:         vss,
 		SecretShare: secretShares[ph.selfNotaryID],
@@ -295,7 +295,7 @@ func (ph *PKNHandler) generatePhase3SecretShare() (msgs map[int]*models.KeyGenBr
 	}
 	p.SecretShareMessage3[ph.selfNotaryID] = msg
 	msgs = make(map[int]*models.KeyGenBroadcastMessage3)
-	for i := 0; i < params.ShareCount; i++ {
+	for i := 0; i < cfg.Notaries.ShareCount; i++ {
 		if i == ph.selfNotaryID {
 			continue
 		}
@@ -337,7 +337,7 @@ func (ph *PKNHandler) receivePhase3SecretShare(msg *models.KeyGenBroadcastMessag
 func (ph *PKNHandler) checkPhase3Done() {
 	p := ph.privateKeyInfo
 	//所有因素都凑齐了.可以计算我自己持有的私钥片 sum(f(i)) f(i)解释:公证人生成了n个多项式 ,把所有第i个多项式的结果相加)
-	if len(p.SecretShareMessage3) == params.ShareCount {
+	if len(p.SecretShareMessage3) == cfg.Notaries.ShareCount {
 		p.XI = share.SPrivKey{D: new(big.Int)}
 		for _, s := range p.SecretShareMessage3 {
 			share.ModAdd(p.XI, s.SecretShare)
@@ -386,7 +386,7 @@ func (ph *PKNHandler) receivePhase4VerifyTotalPubKey(msg *models.KeyGenBroadcast
 
 func (ph *PKNHandler) checkPhase4Done() {
 	p := ph.privateKeyInfo
-	if len(p.LastPubkeyProof4) == params.ShareCount {
+	if len(p.LastPubkeyProof4) == cfg.Notaries.ShareCount {
 		//可以校验pubkey之和是否有效
 		x, y := new(big.Int), new(big.Int)
 		x.Set(p.LastPubkeyProof4[0].Proof.PK.X)

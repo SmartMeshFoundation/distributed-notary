@@ -8,8 +8,8 @@ import (
 	"math/big"
 
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcutil"
@@ -87,7 +87,7 @@ func (d *SpectrumPrepareLockinTxData) Parse(buf []byte) error {
 // VerifySignData :
 func (d *SpectrumPrepareLockinTxData) VerifySignData(scTokenProxy chain.ContractProxy, privateKeyInfo *models.PrivateKeyInfo, localLockinInfo *models.LockinInfo, btcNetParam *chaincfg.Params) (err error) {
 	// 1. 校验本地lockinInfo状态
-	if localLockinInfo.MCChainName == bitcoin.ChainName {
+	if localLockinInfo.MCChainName == cfg.BTC.Name {
 		// 比特币地址校验
 		mcUserAddressInRequest, err2 := btcutil.NewAddressPubKeyHash(d.UserRequest.MCUserAddress, btcNetParam)
 		if err2 != nil {

@@ -11,15 +11,17 @@ import (
 
 	"github.com/SmartMeshFoundation/Photon/utils"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/curv/share"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/stretchr/testify/assert"
 )
 
 func init() {
-	params.ThresholdCount = 2
-	params.ShareCount = 5
+	cfg.Notaries = &cfg.NotaryCfg{
+		ShareCount:     5,
+		ThresholdCount: 2,
+	}
 }
 
 type notaryClientForLocalPKNTest struct {

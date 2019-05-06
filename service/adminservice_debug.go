@@ -5,14 +5,13 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
-	ethevents "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/events"
-	smcevents "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/events"
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	ethparams "github.com/ethereum/go-ethereum/params"
 )
 
 func (as *AdminService) onDebugTransferToAccountRequest(req *userapi.DebugTransferToAccountRequest) {
 	amount := new(big.Int).Mul(big.NewInt(ethparams.Finney), big.NewInt(1000))
-	namespace := []string{smcevents.ChainName, ethevents.ChainName}
+	namespace := []string{cfg.SMC.Name, cfg.ETH.Name}
 	for _, name := range namespace {
 		c, err := as.dispatchService.getChainByName(name)
 		if err != nil {

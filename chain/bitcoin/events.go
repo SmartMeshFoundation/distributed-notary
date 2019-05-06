@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"time"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/btcsuite/btcd/wire"
@@ -27,7 +28,7 @@ type NewBlockEvent struct {
 func createNewBlockEvent(blockNumber uint64) NewBlockEvent {
 	e := NewBlockEvent{}
 	e.BaseEvent = &chain.BaseEvent{}
-	e.ChainName = ChainName
+	e.ChainName = cfg.BTC.Name
 	e.FromAddress = utils.EmptyAddress
 	e.BlockNumber = blockNumber
 	e.Time = time.Now()
@@ -47,7 +48,7 @@ type LockinEvent struct {
 func createLockinEvent(blockNumber uint64, txHashStr string, secretHash common.Hash, txOuts []*wire.TxOut) LockinEvent {
 	e := LockinEvent{}
 	e.BaseEvent = &chain.BaseEvent{}
-	e.ChainName = ChainName
+	e.ChainName = cfg.BTC.Name
 	e.FromAddress = utils.EmptyAddress
 	e.BlockNumber = blockNumber
 	e.Time = time.Now()
@@ -68,7 +69,7 @@ type CancelLockinEvent struct {
 func createCancelLockinEvent(blockNumber uint64, secretHash common.Hash) CancelLockinEvent {
 	e := CancelLockinEvent{}
 	e.BaseEvent = &chain.BaseEvent{}
-	e.ChainName = ChainName
+	e.ChainName = cfg.BTC.Name
 	e.FromAddress = utils.EmptyAddress
 	e.BlockNumber = blockNumber
 	e.Time = time.Now()
@@ -96,7 +97,7 @@ type PrepareLockoutEvent struct {
 func createPrepareLockoutEvent(blockNumber uint64, tx *wire.MsgTx, outpointRelevantInfo *BTCOutpointRelevantInfo) (event PrepareLockoutEvent) {
 	e := PrepareLockoutEvent{}
 	e.BaseEvent = &chain.BaseEvent{}
-	e.ChainName = ChainName
+	e.ChainName = cfg.BTC.Name
 	e.FromAddress = utils.EmptyAddress
 	e.BlockNumber = blockNumber
 	e.Time = time.Now()
@@ -133,7 +134,7 @@ type LockoutSecretEvent struct {
 func createLockoutEvent(blockNumber uint64, secret common.Hash) LockoutSecretEvent {
 	e := LockoutSecretEvent{}
 	e.BaseEvent = &chain.BaseEvent{}
-	e.ChainName = ChainName
+	e.ChainName = cfg.BTC.Name
 	e.FromAddress = utils.EmptyAddress
 	e.BlockNumber = blockNumber
 	e.Time = time.Now()
@@ -152,7 +153,7 @@ type CancelLockoutEvent struct {
 func createCancelLockoutEvent(blockNumber uint64, secretHash common.Hash) CancelLockoutEvent {
 	e := CancelLockoutEvent{}
 	e.BaseEvent = &chain.BaseEvent{}
-	e.ChainName = ChainName
+	e.ChainName = cfg.BTC.Name
 	e.FromAddress = utils.EmptyAddress
 	e.BlockNumber = blockNumber
 	e.Time = time.Now()
