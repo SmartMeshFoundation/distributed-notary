@@ -3,8 +3,8 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 
@@ -15,9 +15,10 @@ import (
 )
 
 type scPrepareLockinRequest struct {
-	SCToken     common.Address
-	UserAddress common.Address //主侧链用户地址
-	SecretHash  common.Hash
+	SCToken       common.Address
+	UserAddress   common.Address //主侧链用户地址
+	UserPublicKey []byte         // 公钥
+	SecretHash    common.Hash
 }
 type scPrepareLockinResponse struct {
 	TxHash common.Hash
@@ -48,7 +49,7 @@ func scPrepareLockin(w rest.ResponseWriter, r *rest.Request) {
 		MCUserAddress:        req.UserAddress[:],
 		//SCUserAddress:        req.UserAddress,
 	}
-	screq.Signer = req.UserAddress[:]
+	screq.SetSigner(crypto.ToECDSAPub(req.UserPublicKey))
 	sr.Req = screq
 	data, err := json.Marshal(screq)
 	if err != nil {
@@ -88,7 +89,7 @@ func mcPrepareLockout(w rest.ResponseWriter, r *rest.Request) {
 		//MCUserAddress:        req.UserAddress,
 		SCUserAddress: req.UserAddress,
 	}
-	screq.Signer = req.UserAddress[:]
+	screq.SetSigner(crypto.ToECDSAPub(req.UserPublicKey))
 	sr.Req = screq
 	data, err := json.Marshal(screq)
 	if err != nil {
