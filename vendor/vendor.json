@@ -125,6 +125,12 @@
 			"revisionTime": "2019-02-13T02:52:34Z"
 		},
 		{
+			"checksumSHA1": "FntZnabohdAMIODrijAKyf92ZLw=",
+			"path": "github.com/btcsuite/btcd/txscript",
+			"revision": "c26ffa870fd817666a857af1bf6498fabba1ffe3",
+			"revisionTime": "2019-06-29T00:36:39Z"
+		},
+		{
 			"checksumSHA1": "ruKchP41kPZFFUS940weplW73I8=",
 			"path": "github.com/btcsuite/btcd/wire",
 			"revision": "306aecffea325e97f513b3ff0cf7895a5310651d",
