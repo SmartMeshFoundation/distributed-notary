@@ -122,7 +122,7 @@ func queryStatus(w rest.ResponseWriter, r *rest.Request) {
 		} else {
 			success(w, sr)
 		}
-		log.Trace(fmt.Sprintf("Restful Api SendMessage ----> pubkey2Address ,err=%v", err))
+		//log.Trace(fmt.Sprintf("Restful Api SendMessage ----> pubkey2Address ,err=%v", err))
 	}()
 	var req statusReq
 	err = r.DecodeJsonPayload(&req)
@@ -178,6 +178,7 @@ func queryStatus(w rest.ResponseWriter, r *rest.Request) {
 		return
 
 	}
+	fmt.Println("=============", req.Account.String())
 	value, err = mclient.BalanceAt(ctx, req.Account, nil)
 	if err != nil {
 		return

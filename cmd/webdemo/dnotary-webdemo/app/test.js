@@ -506,7 +506,7 @@ $(function () {
                 showTip("[Error] " +  '<br/><br/>Please Retry!');
                 return
             }
-            r = r.Data[0] //假定只有一组合约,后续需要完善
+            r = r.data[0] //假定只有一组合约,后续需要完善
             mainChainContract = r.mc_locked_contract_address
             sideChainContract = r.sc_token
             notaryPrivateKeyId = r.sc_token_owner_key
