@@ -17,7 +17,7 @@ func init() {
 		BlockPeriod:           time.Second,
 		ConfirmBlockNumber:    0,
 		BlockNumberPollPeriod: 14 * time.Millisecond,
-		BlockNumberLogPeriod:  20,
+		BlockNumberLogPeriod:  1,
 		RPCTimeout:            3 * time.Second,
 		CrossFeeRate:          10000,
 	}
@@ -27,7 +27,7 @@ func init() {
 		BlockPeriod:           time.Second,
 		ConfirmBlockNumber:    0,
 		BlockNumberPollPeriod: 14 * time.Millisecond,
-		BlockNumberLogPeriod:  20,
+		BlockNumberLogPeriod:  1,
 		RPCTimeout:            3 * time.Second,
 		CrossFeeRate:          10000,
 	}
@@ -37,7 +37,7 @@ func init() {
 		BlockPeriod:        time.Second,
 		ConfirmBlockNumber: 0,
 		//BlockNumberPollPeriod: 500 * time.Millisecond, // BTC不使用该参数
-		BlockNumberLogPeriod: 20,
+		BlockNumberLogPeriod: 1,
 		//RPCTimeout:           3 * time.Second, // BTC不使用该参数
 		CrossFeeRate: 10000,
 	}
