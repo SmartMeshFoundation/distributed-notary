@@ -45,8 +45,8 @@ func scPrepareLockin(w rest.ResponseWriter, r *rest.Request) {
 		BaseReqWithSCToken:   api.NewBaseReqWithSCToken(req.SCToken),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		SecretHash:           req.SecretHash,
-		MCUserAddress:        req.UserAddress,
-		SCUserAddress:        req.UserAddress,
+		MCUserAddress:        req.UserAddress[:],
+		//SCUserAddress:        req.UserAddress,
 	}
 	sr.Req = screq
 	data, err := json.Marshal(screq)
@@ -84,8 +84,8 @@ func mcPrepareLockout(w rest.ResponseWriter, r *rest.Request) {
 		BaseReqWithSCToken:   api.NewBaseReqWithSCToken(req.SCToken),
 		BaseReqWithSignature: api.NewBaseReqWithSignature(),
 		SecretHash:           req.SecretHash,
-		MCUserAddress:        req.UserAddress,
-		SCUserAddress:        req.UserAddress,
+		//MCUserAddress:        req.UserAddress,
+		SCUserAddress: req.UserAddress,
 	}
 	sr.Req = screq
 	data, err := json.Marshal(screq)

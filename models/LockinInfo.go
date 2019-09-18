@@ -53,7 +53,7 @@ type LockinInfo struct {
 	MCChainName               string         `json:"mc_chain_name"`                  // 链名
 	SecretHash                common.Hash    `json:"secret_hash"`                    // 密码hash,db唯一ID
 	Secret                    common.Hash    `json:"secret"`                         // 密码
-	MCUserAddressHex          string         `json:"mc_user_address_hex"`            // 用户主链地址,格式根据链不同不同
+	MCUserAddressHex          string         `json:"mc_user_address"`                // 用户主链地址,格式根据链不同不同
 	SCUserAddress             common.Address `json:"sc_user_address"`                // 用户侧链地址,即在Spectrum上的地址
 	SCTokenAddress            common.Address `json:"sc_token_address"`               // SCToken
 	Amount                    *big.Int       `json:"amount"`                         // 金额

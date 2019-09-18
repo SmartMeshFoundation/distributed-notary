@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
+
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 
 	"github.com/SmartMeshFoundation/Photon/log"
@@ -16,7 +18,6 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 
 	putils "github.com/SmartMeshFoundation/Photon/utils"
-	"github.com/SmartMeshFoundation/distributed-notary/params"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 
 	mcontracts "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
@@ -166,7 +167,7 @@ func mprepareLockin(from, contract common.Address, m map[string]interface{}) (tr
 	ExpirationVal := m["Expiration"]
 	log.Info(fmt.Sprintf("Expiration= %s", reflect.TypeOf(ExpirationVal)))
 	Expiration := int64(ExpirationVal.(float64))
-	if Expiration < int64(params.MinLockinMCExpiration) {
+	if Expiration < int64(cfg.GetMinExpirationBlock4User(cfg.ETH.Name)) {
 		err = fmt.Errorf("expiration error")
 		return
 	}
@@ -226,7 +227,7 @@ func sprepareLockout(from, contract common.Address, m map[string]interface{}) (t
 		err = fmt.Errorf("empty secret hash")
 		return
 	}
-	if expiration < int64(params.MinLockinSCExpiration) {
+	if expiration < int64(cfg.GetMinExpirationBlock4User(cfg.SMC.Name)) {
 		err = fmt.Errorf("expiration error ")
 		return
 	}
