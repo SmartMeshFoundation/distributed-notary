@@ -7,7 +7,6 @@ var mainChainEndpoint = "http://"+runhost+":19888"
 var sideChainEndpoint = "http://"+runhost+":17888"
 var pagetimer;
 var key = localStorage["mykey"]; //秘钥
-var pubkey = key.getPub(); // 公钥
 var nodes_Ip; //公证人列表
 var myaccount = localStorage["myaccount"]; //当前账户地址
 var mainChainContract; //主链合约地址
@@ -67,7 +66,6 @@ function createKey(obj) {
     $("#privateKey").attr("readonly", "readonly");
     key = new Bitcoin.ECKey(false);
     key.setCompressed(false);
-    pubkey = key.getPub();
     var pubkeyHex = key.getPubKeyHex();
     var privatekey = key.getBitcoinHexFormat();
     $("#privateKey").val(privatekey);
@@ -338,7 +336,7 @@ function notifyNotaryPreareLockin(obj) {
     var req = {}
     req.SCToken = sideChainContract
     req.UserAddress = myaccount
-    req.UserPublicKey = pubkey
+    req.UserPublicKey = key.getPub()
     req.SecretHash = currentLockinSecretHash
     if (!req.SecretHash){
         alert("please prepare lock in first")
@@ -944,7 +942,7 @@ function notifyNotaryPreareLockout(obj) {
     var req = {}
     req.SCToken = sideChainContract
     req.UserAddress = myaccount
-    req.UserPublicKey = pubkey
+    req.UserPublicKey = key.getPub()
     req.SecretHash = currentLockoutSecretHash
     if (!req.SecretHash){
         alert("please prepare lock out first")
