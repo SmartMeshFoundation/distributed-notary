@@ -48,6 +48,7 @@ func scPrepareLockin(w rest.ResponseWriter, r *rest.Request) {
 		MCUserAddress:        req.UserAddress[:],
 		//SCUserAddress:        req.UserAddress,
 	}
+	screq.Signer = req.UserAddress[:]
 	sr.Req = screq
 	data, err := json.Marshal(screq)
 	if err != nil {
@@ -87,6 +88,7 @@ func mcPrepareLockout(w rest.ResponseWriter, r *rest.Request) {
 		//MCUserAddress:        req.UserAddress,
 		SCUserAddress: req.UserAddress,
 	}
+	screq.Signer = req.UserAddress[:]
 	sr.Req = screq
 	data, err := json.Marshal(screq)
 	if err != nil {
