@@ -59,7 +59,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "btc-rpc-endpoint",
 			Usage: "host:port of bitcoin rpc server",
-			Value: "192.168.124.13:18556",
+			//Value: "192.168.124.10:18556",
 		},
 		cli.StringFlag{
 			Name:  "btc-rpc-user",

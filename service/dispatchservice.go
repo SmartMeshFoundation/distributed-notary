@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"sync"
 
 	"github.com/SmartMeshFoundation/distributed-notary/pbft/pbft"
@@ -13,7 +14,6 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
@@ -129,10 +129,12 @@ func NewDispatchService(config *params.Config) (ds *DispatchService, err error) 
 		return
 	}
 	// 5.4 初始化Btc事件监听
-	ds.chainMap[cfg.BTC.Name], err = bitcoin.NewBTCService(config.BtcRPCEndPoint, config.BtcRPCUser, config.BtcRPCPass, config.BtcRPCCertFilePath)
-	if err != nil {
-		log.Error("new BTCService err : %s", err.Error())
-		return
+	if config.BtcRPCEndPoint != "" {
+		ds.chainMap[cfg.BTC.Name], err = bitcoin.NewBTCService(config.BtcRPCEndPoint, config.BtcRPCUser, config.BtcRPCPass, config.BtcRPCCertFilePath)
+		if err != nil {
+			log.Error("new BTCService err : %s", err.Error())
+			return
+		}
 	}
 	// 5.5 初始化BlockNumberService,这里同时会初始化每条链的LastBlockNumber
 	ds.blockNumberService, err = NewBlockNumberService(db, ds.chainMap)
