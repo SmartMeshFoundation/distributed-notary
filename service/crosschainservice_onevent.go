@@ -577,7 +577,7 @@ func (cs *CrossChainService) onMCPrepareLockout4Bitcoin(event bitcoin.PrepareLoc
 */
 func (cs *CrossChainService) onMCPrepareLockout4Ethereum(event ethevents.PrepareLockoutEvent) (err error) {
 	// 1. 查询
-	secretHash, mcExpiration, amount, err := cs.mcProxy.QueryLockout(event.Account.String())
+	secretHash, mcExpiration, _, err := cs.mcProxy.QueryLockout(event.Account.String())
 	if err != nil {
 		err = fmt.Errorf("mcProxy.QueryLockout err = %s", err.Error())
 		return
@@ -593,10 +593,11 @@ func (cs *CrossChainService) onMCPrepareLockout4Ethereum(event ethevents.Prepare
 		err = fmt.Errorf("local lockoutInfo status does't right,something must wrong, local lockoutInfo:\n%s", utils.ToJSONStringFormat(lockoutInfo))
 		return
 	}
-	if lockoutInfo.Amount.Cmp(amount) != 0 {
-		err = fmt.Errorf("amount does't match")
-		return
-	}
+	// 这里没必要校验金额,签名时已经校验了
+	//if lockoutInfo.Amount.Cmp(amount) != 0 {
+	//	err = fmt.Errorf("amount does't match")
+	//	return
+	//}
 
 	// 4. 修改状态,等待后续调用
 	lockoutInfo.MCExpiration = mcExpiration // 这里由于自己本地块号和该笔MCPrepareLockout交易发起公证人的块号有些微差距,取合约上的值

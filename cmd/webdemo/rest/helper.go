@@ -178,7 +178,6 @@ func queryStatus(w rest.ResponseWriter, r *rest.Request) {
 		return
 
 	}
-	fmt.Println("=============", req.Account.String())
 	value, err = mclient.BalanceAt(ctx, req.Account, nil)
 	if err != nil {
 		return

@@ -109,7 +109,7 @@ func (d *EthereumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProx
 	mcUserAddressHex := d.UserRequest.GetSignerETHAddress().String()
 	mcExpiration := localLockoutInfo.MCExpiration
 	secretHash := localLockoutInfo.SecretHash
-	amount := localLockoutInfo.Amount
+	amount := new(big.Int).Sub(localLockoutInfo.Amount, localLockoutInfo.CrossFee) // 扣除手续费
 	var local *EthereumPrepareLockoutTxData
 	local = NewEthereumPrepareLockoutTxData(mcProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, d.Nonce)
 	if bytes.Compare(local.GetSignBytes(), d.GetSignBytes()) != 0 {

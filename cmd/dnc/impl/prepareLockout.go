@@ -90,7 +90,7 @@ func prepareLockout(ctx *cli.Context) error {
 		SecretHash: secretHash.String(),
 	}
 	updateConfigFile()
-	_, scToken := getSCContractProxy("bitcoin")
+	_, scToken := getSCContractProxy(mcName)
 	balance, err := scToken.Contract.BalanceOf(nil, common.HexToAddress(GlobalConfig.SmcUserAddress))
 	fmt.Printf(" ======> [token balance=%d]\n", balance.Uint64())
 	fmt.Println("call params :")
