@@ -246,7 +246,7 @@ function doPrePareLockin(amount, secrethash, expiration) {
                 ))
                 doSendTx(r, "main",function(){
                     // alert("notify notary to assign ethereum token for you")
-                    setTimeout(notifyNotaryPreareLockin,5000) //延时五秒执行,让公证人节点知道交易
+                    setTimeout(notifyNotaryPreareLockin,15000) //延时五秒执行,让公证人节点知道交易
                 })
             },
             error: function (e) {
@@ -398,7 +398,7 @@ function doNotifyNotaryPrepareLockin(rFromHelpService) {
             queryStatus()
             //lockin for side chain
             //等待5秒钟
-            setTimeout(sideChainLockin,5000)
+            setTimeout(sideChainLockin,15000)
         },
         err:function(e){
             hideMaskLayer()
@@ -922,7 +922,7 @@ function doPrePareLockout(amount, secrethash, expiration) {
                 ))
                 doSendTx(r, "side",function(){
                    // alert("notify the notary to  prepare your eth on Ethereum ")
-                    setTimeout(notifyNotaryPreareLockout,5000)
+                    setTimeout(notifyNotaryPreareLockout,15000)
                 })
             },
             error: function (e) {
@@ -1002,7 +1002,7 @@ function doNotifyNotaryPrepareLockout(rFromHelpService) {
             r=r.Data
             console.log("mcpreparelockout help service:  " + JSON.stringify(r))
             queryStatus()
-            setTimeout(mainChainLockout,5000)
+            setTimeout(mainChainLockout,15000)
 
         },
         err:function(e){
