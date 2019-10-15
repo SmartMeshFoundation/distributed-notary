@@ -164,7 +164,8 @@ func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
 	dataHash := utils.Sha3(data)
 	publicKey, err := utils.Ecrecover(dataHash, sig)
 	if err != nil {
-		panic(err)
+		log.Error(fmt.Sprintf("ecrecover err : %s", err.Error()))
+		return false
 	}
 	req.SetSignature(sig)
 	signerEthAddress := crypto.PubkeyToAddress(*publicKey)
@@ -175,7 +176,8 @@ func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
 	sig[64] = 1
 	publicKey, err = utils.Ecrecover(dataHash, sig)
 	if err != nil {
-		panic(err)
+		log.Error(fmt.Sprintf("ecrecover err : %s", err.Error()))
+		return false
 	}
 	req.SetSignature(sig)
 	signerEthAddress = crypto.PubkeyToAddress(*publicKey)
