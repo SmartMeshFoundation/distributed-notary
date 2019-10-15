@@ -159,9 +159,11 @@ func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
 	if err != nil {
 		return false
 	}
-	//fmt.Println("data to verify :", string(data))
-	//fmt.Println("sig:", common.Bytes2Hex(sig))
 	dataHash := utils.Sha3(data)
+	log.Trace("data hash : %s", dataHash.String())
+	//fmt.Println("data to verify :", string(data))
+	//fmt.Println("data hash :", dataHash.String())
+	//fmt.Println("sig:", common.Bytes2Hex(sig))
 	publicKey, err := utils.Ecrecover(dataHash, sig)
 	if err != nil {
 		log.Error(fmt.Sprintf("ecrecover err : %s", err.Error()))
