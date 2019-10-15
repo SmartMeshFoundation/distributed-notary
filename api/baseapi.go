@@ -104,6 +104,15 @@ func (ba *BaseAPI) SendToService(req Req) {
 	return
 }
 
+// SendToService 该方法只负责发送到Service,不校验签名且不考虑返回值
+func (ba *BaseAPI) SendToServiceWithoutVerifySign(req Req) {
+	ba.requestChan <- req
+	if _, ok := req.(ReqWithResponse); !ok {
+		LogAPI(req, nil)
+	}
+	return
+}
+
 // WaitServiceResponse 阻塞等待Service层对请求的返回
 func (ba *BaseAPI) WaitServiceResponse(req ReqWithResponse, timeout ...time.Duration) *BaseResponse {
 	var resp *BaseResponse

@@ -1,6 +1,7 @@
 package userapi
 
 import (
+	"fmt"
 	"github.com/SmartMeshFoundation/Photon/utils"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/ant0ine/go-json-rest/rest"
@@ -42,21 +43,23 @@ type MCPrepareLockoutRequest struct {
 }
 
 func (ua *UserAPI) mcPrepareLockout(w rest.ResponseWriter, r *rest.Request) {
-	scTokenStr := r.PathParam("sctoken")
-	req := &MCPrepareLockoutRequest{
-		BaseReq:             api.NewBaseReq(APIUserNameMCPrepareLockout),
-		BaseReqWithResponse: api.NewBaseReqWithResponse(),
-		BaseReqWithSCToken:  api.NewBaseReqWithSCToken(common.HexToAddress(scTokenStr)),
-	}
+	//scTokenStr := r.PathParam("sctoken")
+	//req := &MCPrepareLockoutRequest{
+	//	BaseReq:             api.NewBaseReq(APIUserNameMCPrepareLockout),
+	//	BaseReqWithResponse: api.NewBaseReqWithResponse(),
+	//	BaseReqWithSCToken:  api.NewBaseReqWithSCToken(common.HexToAddress(scTokenStr)),
+	//}
+	req := &MCPrepareLockoutRequest{}
 	err := r.DecodeJsonPayload(req)
 	if err != nil {
-		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, fmt.Sprintf("decode json payload err : %s", err.Error())))
 		return
 	}
 	if req.SecretHash == utils.EmptyHash {
-		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong))
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "secret hash can not be empty"))
 		return
 	}
+	req.NewResponseChan()
 	ua.SendToService(req)
 	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }
