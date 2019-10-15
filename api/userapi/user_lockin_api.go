@@ -7,7 +7,6 @@ import (
 	"github.com/SmartMeshFoundation/Photon/utils"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -42,9 +41,10 @@ type SCPrepareLockinRequest struct {
 	api.BaseReqWithResponse
 	api.BaseReqWithSCToken
 	api.BaseReqWithSignature
-	SecretHash     common.Hash    `json:"secret_hash"`
-	MCUserAddress  []byte         `json:"mc_user_address"`            // 主链PrepareLockin使用的地址,校验用
-	MCTXHash       chainhash.Hash `json:"mc_tx_hash,omitempty"`       // 当主链为BTC的时候使用
+	SecretHash    common.Hash `json:"secret_hash"`
+	MCUserAddress []byte      `json:"mc_user_address"` // 主链PrepareLockin使用的地址,校验用
+	//MCTXHash       chainhash.Hash `json:"mc_tx_hash,omitempty"`       // 当主链为BTC的时候使用
+	MCTXHash       []byte         `json:"mc_tx_hash,omitempty"`       // 当主链为BTC的时候使用
 	MCExpiration   *big.Int       `json:"mc_expiration,omitempty"`    // 当主链为BTC的时候使用
 	MCLockedAmount btcutil.Amount `json:"mc_locked_amount,omitempty"` // 当主链为BTC的时候使用
 }

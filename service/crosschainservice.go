@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"fmt"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 
 	"errors"
 
@@ -434,7 +435,12 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 		builder := btcService.GetPrepareLockInScriptBuilder(mcUserAddress, notaryAddress, req.MCLockedAmount, req.SecretHash[:], req.MCExpiration)
 		lockScript, lockAddr, _ := builder.GetPKScript()
 		// 2. 从链上查询tx并在其中查找锁定地址为上一步生成的hash值的outpoint及交易发生的blockNumber
-		btcPrepareLockinInfo, err2 := btcService.GetPrepareLockinInfo(req.MCTXHash, lockAddr.String(), req.MCLockedAmount)
+		mcTXHash, err2 := chainhash.NewHash(req.MCTXHash)
+		if err2 != nil {
+			log.Error(err2.Error())
+			return nil, err2
+		}
+		btcPrepareLockinInfo, err2 := btcService.GetPrepareLockinInfo(*mcTXHash, lockAddr.String(), req.MCLockedAmount)
 		if err2 != nil {
 			return nil, err2
 		}

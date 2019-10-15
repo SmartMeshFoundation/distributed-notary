@@ -59,7 +59,7 @@ func scPrepareLockIn4Btc(mcName string) {
 		SecretHash:           common.HexToHash(GlobalConfig.RunTime.SecretHash),
 		MCUserAddress:        GlobalConfig.RunTime.BtcUserAddressBytes,
 		//SCUserAddress:        common.HexToAddress(GlobalConfig.SmcUserAddress),
-		MCTXHash:       mcTXHash,
+		MCTXHash:       mcTXHash.CloneBytes(),
 		MCExpiration:   GlobalConfig.RunTime.BtcExpiration,
 		MCLockedAmount: GlobalConfig.RunTime.BtcAmount,
 	}
