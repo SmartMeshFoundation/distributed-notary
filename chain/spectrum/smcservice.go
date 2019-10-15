@@ -354,7 +354,7 @@ func (ss *SMCService) loop() {
 			time.Sleep(cfg.SMC.BlockNumberPollPeriod / 2)
 			retryTime++
 			if retryTime > 10 {
-				log.Warn(fmt.Sprintf("SmcService.EventListener get same block number %d from chain %d times,maybe something wrong with smc ...", lastedBlock, retryTime))
+				//log.Warn(fmt.Sprintf("SmcService.EventListener get same block number %d from chain %d times,maybe something wrong with smc ...", lastedBlock, retryTime))
 			}
 			continue
 		}

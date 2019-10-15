@@ -354,7 +354,7 @@ func (ss *ETHService) loop() {
 			time.Sleep(cfg.ETH.BlockNumberPollPeriod / 2)
 			retryTime++
 			if retryTime > 10 {
-				log.Warn(fmt.Sprintf("ETHService.EventListener get same block number %d from chain %d times,maybe something wrong with geth ...", lastedBlock, retryTime))
+				//log.Warn(fmt.Sprintf("ETHService.EventListener get same block number %d from chain %d times,maybe something wrong with geth ...", lastedBlock, retryTime))
 			}
 			continue
 		}
