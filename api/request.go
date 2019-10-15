@@ -160,6 +160,7 @@ func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
 		return false
 	}
 	dataHash := utils.Sha3(data)
+	log.Trace("data : %s", string(data))
 	log.Trace("data hash : %s", dataHash.String())
 	//fmt.Println("data to verify :", string(data))
 	//fmt.Println("data hash :", dataHash.String())
