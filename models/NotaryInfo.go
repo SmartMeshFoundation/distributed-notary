@@ -22,6 +22,7 @@ type NotaryInfo struct {
 	ID         int    `json:"id"`                   // 公证人编号, 预先定死
 	Name       string `json:"name"`
 	Host       string `json:"host"` //how to contact with this notary
+	APIHost    string `json:"api_host"`
 	AddressStr string `json:"address"`
 }
 
@@ -88,6 +89,7 @@ func (db *DB) NewNotaryInfoFromConfFile(confFilePath string) (notaries []*Notary
 			ID:         id,
 			Name:       "Notary-" + s[0],
 			Host:       s[2],
+			APIHost:    s[3],
 			AddressStr: s[1],
 		}
 		err = db.Save(&notaryInfo).Error

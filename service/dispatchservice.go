@@ -83,7 +83,7 @@ func NewDispatchService(config *params.Config) (ds *DispatchService, err error) 
 		log.Error("get notary info from db err : %s", err.Error())
 		return
 	}
-	if len(notaries) == 0 {
+	if len(notaries) == 0 || notaries[0].APIHost == "" {
 		// first start
 		notaries, err = db.NewNotaryInfoFromConfFile(config.NotaryConfFilePath)
 		if err != nil {
