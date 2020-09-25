@@ -74,3 +74,28 @@ func (ua *UserAPI) scPrepareLockin(w rest.ResponseWriter, r *rest.Request) {
 	ua.SendToService(req)
 	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
 }
+
+/*
+对scPrepareLockin封装,方便js处理,现在这种编码方式对js很不优化.
+*/
+func (ua *UserAPI) scPrepareLockin2(w rest.ResponseWriter, r *rest.Request) {
+	//scTokenStr := r.PathParam("sctoken")
+	//req := &SCPrepareLockinRequest{
+	//	BaseReq:             api.NewBaseReq(APIUserNameSCPrepareLockin),
+	//	BaseReqWithResponse: api.NewBaseReqWithResponse(),
+	//	BaseReqWithSCToken:  api.NewBaseReqWithSCToken(common.HexToAddress(scTokenStr)),
+	//}
+	req := &SCPrepareLockinRequest2{}
+	err := r.DecodeJsonPayload(req)
+	if err != nil {
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, fmt.Sprintf("decode json payload err : %s", err.Error())))
+		return
+	}
+	if req.SecretHash == utils.EmptyHash {
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "secret hash cat"))
+		return
+	}
+	req.NewResponseChan()
+	ua.SendToService(req)
+	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
+}

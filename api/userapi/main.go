@@ -21,13 +21,15 @@ const (
 	APIAdminNameRegisterNewSCToken = APIAdminNamePrefix + "RegisterNewSCToken" // 注册一个新的侧链token
 	APIAdminNameCancelNonce        = APIAdminNamePrefix + "CancelNonce"        // 用一笔小额交易销毁一个nonce
 
-	APIUserNamePrefix           = "User-"
-	APIUserNameGetNotaryList    = APIUserNamePrefix + "GetNotaryList"  // 公证人列表查询
-	APIUserNameGetSCTokenList   = APIUserNamePrefix + "GetSCTokenList" // 当前支持的SCToken列表查询
-	APIUserNameGetLockinStatus  = APIUserNamePrefix + "GetLockinStatus"
-	APIUserNameSCPrepareLockin  = APIUserNamePrefix + "SCPrepareLockin"
-	APIUserNameGetLockoutStatus = APIUserNamePrefix + "GetLockoutStatus"
-	APIUserNameMCPrepareLockout = APIUserNamePrefix + "MCPrepareLockout"
+	APIUserNamePrefix            = "User-"
+	APIUserNameGetNotaryList     = APIUserNamePrefix + "GetNotaryList"  // 公证人列表查询
+	APIUserNameGetSCTokenList    = APIUserNamePrefix + "GetSCTokenList" // 当前支持的SCToken列表查询
+	APIUserNameGetLockinStatus   = APIUserNamePrefix + "GetLockinStatus"
+	APIUserNameSCPrepareLockin   = APIUserNamePrefix + "SCPrepareLockin"
+	APIUserNameSCPrepareLockin2  = APIUserNamePrefix + "SCPrepareLockin2" //封装SCPrepareLockin,方便js处理
+	APIUserNameGetLockoutStatus  = APIUserNamePrefix + "GetLockoutStatus"
+	APIUserNameMCPrepareLockout  = APIUserNamePrefix + "MCPrepareLockout"
+	APIUserNameMCPrepareLockout2 = APIUserNamePrefix + "MCPrepareLockout2" //封装MCPrepareLockout,方便js处理
 
 	APIDebugNamePrefix            = "Debug-"
 	APIDebugNameTransferToAccount = APIDebugNamePrefix + "TransferToAccount" // 给某个账户在所有链上转10eth,为了测试
@@ -97,9 +99,11 @@ func NewUserAPI(host string) *UserAPI {
 		// lockin
 		rest.Get(APIName2URLMap[APIUserNameGetLockinStatus], userAPI.getLockinStatus),
 		rest.Post(APIName2URLMap[APIUserNameSCPrepareLockin], userAPI.scPrepareLockin),
+		rest.Post(APIName2URLMap[APIUserNameSCPrepareLockin2], userAPI.scPrepareLockin2),
 		// lockout
 		rest.Get(APIName2URLMap[APIUserNameGetLockoutStatus], userAPI.getLockoutStatus),
 		rest.Post(APIName2URLMap[APIUserNameMCPrepareLockout], userAPI.mcPrepareLockout),
+		rest.Post(APIName2URLMap[APIUserNameMCPrepareLockout2], userAPI.mcPrepareLockout2),
 		/*
 			admin api
 		*/
