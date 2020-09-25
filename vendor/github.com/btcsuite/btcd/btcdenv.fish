@@ -1,0 +1,1 @@
+alias btcctl "btcctl --simnet --wallet --rpcuser=bai --rpcpass=bai "
