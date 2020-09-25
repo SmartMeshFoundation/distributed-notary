@@ -78,11 +78,15 @@ func (ua *UserAPI) mcPrepareLockout2(w rest.ResponseWriter, r *rest.Request) {
 		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, fmt.Sprintf("decode json payload err : %s", err.Error())))
 		return
 	}
-	req2 := req.toMCPrepareLockoutRequest()
-	if req2.SecretHash == utils.EmptyHash {
-		api.HTTPReturnJSON(w, api.NewFailResponse(req2.RequestID, api.ErrorCodeParamsWrong, "secret hash can not be empty"))
+	if req.SecretHash == utils.EmptyHash {
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "secret hash can not be empty"))
 		return
 	}
+	if !req.VerifySign() {
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodePermissionDenied, "signature verified failed"))
+		return
+	}
+	req2 := req.toMCPrepareLockoutRequest()
 	req2.NewResponseChan()
 	ua.SendToServiceWithoutVerifySign(req2)
 	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req2))

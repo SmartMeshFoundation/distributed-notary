@@ -95,7 +95,12 @@ func (ua *UserAPI) scPrepareLockin2(w rest.ResponseWriter, r *rest.Request) {
 		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodeParamsWrong, "secret hash cat"))
 		return
 	}
-	req.NewResponseChan()
-	ua.SendToService(req)
-	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req))
+	if !req.VerifySign() {
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.RequestID, api.ErrorCodePermissionDenied, "signature verified failed"))
+		return
+	}
+	req2 := req.toSCPrepareLockinRequest()
+	req2.NewResponseChan()
+	ua.SendToServiceWithoutVerifySign(req2)
+	api.HTTPReturnJSON(w, ua.WaitServiceResponse(req2))
 }
