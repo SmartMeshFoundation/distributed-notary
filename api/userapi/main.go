@@ -58,9 +58,11 @@ func init() {
 	// lockin
 	APIName2URLMap[APIUserNameGetLockinStatus] = "/api/1/user/lockin/:sctoken/:secrethash"
 	APIName2URLMap[APIUserNameSCPrepareLockin] = "/api/1/user/scpreparelockin/:sctoken"
+	APIName2URLMap[APIUserNameSCPrepareLockin2] = "/api/1/user/scpreparelockin2/:sctoken"
 	// lockout
 	APIName2URLMap[APIUserNameGetLockoutStatus] = "/api/1/user/lockout/:sctoken/:secrethash"
 	APIName2URLMap[APIUserNameMCPrepareLockout] = "/api/1/user/mcpreparelockout/:sctoken"
+	APIName2URLMap[APIUserNameMCPrepareLockout2] = "/api/1/user/mcpreparelockout2/:sctoken"
 	/*
 		debug
 	*/
