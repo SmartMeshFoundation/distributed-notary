@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/labstack/gommon/log"
+	utils "github.com/nkbai/goutils"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -166,7 +169,9 @@ func (lim *lockinInfoModel) fromLockinInfo(l *LockinInfo) *lockinInfoModel {
 // NewLockinInfo :
 func (db *DB) NewLockinInfo(lockinInfo *LockinInfo) (err error) {
 	var t lockinInfoModel
-	return db.Create(t.fromLockinInfo(lockinInfo)).Error
+	t.fromLockinInfo(lockinInfo)
+	log.Infof("NewLockinInfo %s", utils.StringInterface(t, 3))
+	return db.Create(&t).Error
 }
 
 // GetAllLockinInfo :
