@@ -23,6 +23,8 @@ func TestLockinInfo(t *testing.T) {
 		SCUserAddress:  utils.NewRandomAddress(),
 		Amount:         big.NewInt(5),
 		MCLockStatus:   LockStatusLock,
+		CrossFee:       big.NewInt(1),
+		//SCExpiration:   1<<64 - 1, uint64最高位不能为1
 	}
 	var err error
 	list, err := db.GetAllLockinInfo()

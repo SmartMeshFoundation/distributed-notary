@@ -185,8 +185,10 @@ func (cs *CrossChainService) onMCPrepareLockin4Ethereum(event ethevents.PrepareL
 		err = fmt.Errorf("mcProxy.QueryLockin err = %s", err.Error())
 		return
 	}
+	log.Info("onMCPrepareLockin4Ethereum mcExpiration ,secretHash=%s,mcExpiration=%d", secretHash, mcExpiration)
 	// 1.5 校验mcExpiration
-	if mcExpiration-event.BlockNumber <= cfg.GetMinExpirationBlock4User(cs.meta.MCName) {
+	//如果写mcExpiration-event.BlockNumber存在溢出.
+	if mcExpiration <= cfg.GetMinExpirationBlock4User(cs.meta.MCName)+event.BlockNumber {
 		err = fmt.Errorf("mcExpiration must bigger than %d", cfg.GetMinExpirationBlock4User(cs.meta.MCName))
 		return
 	}
