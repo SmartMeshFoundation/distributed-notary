@@ -98,6 +98,7 @@ func (p *SideChainErc20TokenProxy) Lockin(opts *bind.TransactOpts, accountHex st
 		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
 		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
 	}
+	fmt.Printf("lockin tx=%s\n", tx)
 	return
 }
 
@@ -135,6 +136,7 @@ func (p *SideChainErc20TokenProxy) PrepareLockout(opts *bind.TransactOpts, accou
 		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
 		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
 	}
+	fmt.Printf("preparelockout tx=%s\n", tx)
 	return
 }
 

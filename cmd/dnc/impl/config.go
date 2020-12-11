@@ -69,7 +69,7 @@ var GlobalConfig *dncConfig
 
 // DefaultConfig :
 var DefaultConfig = &dncConfig{
-	NotaryHost: "http://127.0.0.1:8030",
+	NotaryHost: "http://transport01.smartmesh.cn:8032",
 	Keystore:   "../../testdata/keystore",
 
 	BtcRPCUser:         "wuhan",
@@ -83,15 +83,15 @@ var DefaultConfig = &dncConfig{
 
 	EthUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	EthUserPassword: "123",
-	EthRPCEndpoint:  "http://127.0.0.1:19888",
+	EthRPCEndpoint:  "http://106.52.171.12:18003",
 
 	SmcUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	SmcUserPassword: "123",
-	SmcRPCEndpoint:  "http://127.0.0.1:17888",
+	SmcRPCEndpoint:  "http://106.52.171.12:17004",
 }
 
 //var configDir = path.Join(".dnc-client")c
-var configFile = filepath.Join(".dnc-config")
+var configFile = filepath.Join("dnc.json")
 
 func init() {
 	var err error
@@ -228,7 +228,7 @@ func RefreshSCTokenList() (err error) {
 }
 
 func updateConfigFile() {
-	err := ioutil.WriteFile(configFile, []byte(utils.ToJSONString(GlobalConfig)), 0777)
+	err := ioutil.WriteFile(configFile, []byte(utils.ToJSONStringFormat(GlobalConfig)), 0777)
 	if err != nil {
 		panic(err)
 	}

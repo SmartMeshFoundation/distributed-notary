@@ -78,6 +78,7 @@ func (p *LockedEthereumProxy) PrepareLockin(opts *bind.TransactOpts, accountHex 
 		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
 		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
 	}
+	fmt.Printf("PrepareLockin tx=%s\n", tx)
 	return
 }
 
@@ -151,6 +152,7 @@ func (p *LockedEthereumProxy) Lockout(opts *bind.TransactOpts, accountHex string
 		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
 		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
 	}
+	fmt.Printf("lockout tx=%s\n", tx)
 	return
 }
 

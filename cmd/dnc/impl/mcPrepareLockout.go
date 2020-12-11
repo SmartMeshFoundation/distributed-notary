@@ -1,8 +1,12 @@
 package dnc
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"fmt"
 
@@ -101,21 +105,37 @@ func mcPrepareLockout4Eth(mcName string) (err error) {
 		fmt.Println("must call plo first")
 		os.Exit(-1)
 	}
-	url := GlobalConfig.NotaryHost + "/api/1/user/mcpreparelockout/" + scTokenInfo.SCToken.String()
-	req := &userapi.MCPrepareLockoutRequest{
-		BaseReq:              api.NewBaseReq(userapi.APIUserNameMCPrepareLockout),
-		BaseReqWithResponse:  api.NewBaseReqWithResponse(),
-		BaseReqWithSCToken:   api.NewBaseReqWithSCToken(scTokenInfo.SCToken),
-		BaseReqWithSignature: api.NewBaseReqWithSignature(),
-		SecretHash:           common.HexToHash(GlobalConfig.RunTime.SecretHash),
-		SCUserAddress:        common.HexToAddress(GlobalConfig.SmcUserAddress),
+	url := GlobalConfig.NotaryHost + "/api/1/user/mcpreparelockout2/" + scTokenInfo.SCToken.String()
+	req := &userapi.MCPrepareLockoutRequest2{
+		BaseReq:             api.NewBaseReq(userapi.APIUserNameMCPrepareLockout),
+		BaseReqWithResponse: api.NewBaseReqWithResponse(),
+		BaseReqWithSCToken:  api.NewBaseReqWithSCToken(scTokenInfo.SCToken),
+		SecretHash:          common.HexToHash(GlobalConfig.RunTime.SecretHash),
+		SCUserAddress:       common.HexToAddress(GlobalConfig.SmcUserAddress),
 	}
-	privateKey, err := getPrivateKey(GlobalConfig.EthUserAddress, GlobalConfig.EthUserPassword)
+	key, err := getPrivateKey(GlobalConfig.EthUserAddress, GlobalConfig.EthUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	req.Sign(req, privateKey)
+	pubkey := crypto.CompressPubkey(&key.PublicKey) //[]byte类型
+	req.Signer = hex.EncodeToString(pubkey)
+	data, err := json.Marshal(req)
+	if err != nil {
+		panic(err)
+		return
+	}
+	fmt.Printf("req=%s\n", string(data))
+	digest := crypto.Keccak256([]byte(data))
+	//digest=f6b80c169ad021cbea0a8d225872bd56b8d41e15daec5173630734ea431edb48
+	fmt.Printf("digest=%s", hex.EncodeToString(digest))
+	signaturee, err := crypto.Sign(digest, key)
+	if err != nil {
+		panic(err)
+		return
+	}
+	req.Signature = hex.EncodeToString(signaturee)
+
 	payload := utils.ToJSONString(req)
 	var resp api.BaseResponse
 	err = call(http.MethodPost, url, payload, &resp)

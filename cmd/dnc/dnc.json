@@ -1,0 +1,40 @@
+{
+	"notary_host": "http://transport01.smartmesh.cn:8032",
+	"keystore": "./keystore",
+	"btc_rpc_user": "wuhan",
+	"btc_rpc_pass": "wuhan",
+	"btc_rpc_cert_file_path": "",
+	"btc_rpc_endpoint": "192.168.124.13:18556",
+	"btc_user_address": "SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY",
+	"btc_wallet_rpc_cert_file_path": "",
+	"btc_wallet_rpc_endpoint": "192.168.124.13:18554",
+	"eth_user_address": "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
+	"eth_user_password": "123",
+	"eth_rpc_endpoint": "http://106.52.171.12:18003",
+	"smc_user_address": "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
+	"smc_user_password": "123",
+	"smc_rpc_endpoint": "http://106.52.171.12:17004",
+	"sc_token_list": [
+		{
+			"sc_token": "0x7b6cfc6a9edd6a1f81af4f8b860eebc26bf1ae4b",
+			"sc_token_name": "ethereum-Token",
+			"sc_token_owner_key": "0xf16ebdf72d336731f7f09dcde52637ee7d16d9af2c8ed68777f8582957dd73a1",
+			"mc_locked_contract_address": "0x7b6cfc6a9edd6a1f81af4f8b860eebc26bf1ae4b",
+			"mc_name": "ethereum",
+			"mc_locked_contract_owner_key": "0xf16ebdf72d336731f7f09dcde52637ee7d16d9af2c8ed68777f8582957dd73a1",
+			"create_time": "2020-12-11 17:32:51 +0800 CST",
+			"organiser_id": 2
+		}
+	],
+	"run_time": {
+		"mc_name": "ethereum",
+		"secret": "0xdc82cf5b81c4de8baaaa6b6b89c3409de3b781f2f1adfb3fe5c212f814e3949a",
+		"secret_hash": "0xa941334c1954945c09b89eb2e2a54bf6c9bee82b4be2ac00fbf72342308aed38",
+		"btc_lock_script": null,
+		"btc_user_address_bytes": null,
+		"btc_tx_hash": "",
+		"btc_expiration": null,
+		"btc_amount": 0,
+		"lockout_info": null
+	}
+}
