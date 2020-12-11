@@ -166,10 +166,11 @@ func (d *BitcoinPrepareLockoutTXData) VerifySignData(bs *bitcoin.BTCService, loc
 		return
 	}
 	// 3. 校验用户请求
-	if !d.UserRequest.VerifySign(d.UserRequest) {
-		err = fmt.Errorf("signature in user request does't wrigt")
-		return
-	}
+	//不校验了,因为jettrade这部分工作使用了不同的格式
+	//if !d.UserRequest.VerifySign(d.UserRequest) {
+	//	err = fmt.Errorf("signature in user request does't wrigt")
+	//	return
+	//}
 	// 4. 校验原始交易
 	if bytes.Compare(local.OriginTXHash, d.OriginTXHash) != 0 {
 		err = fmt.Errorf("BitcoinPrepareLockoutTXData verify OriginTXHash fail,maybe attack")

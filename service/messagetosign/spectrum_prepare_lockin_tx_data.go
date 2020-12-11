@@ -120,10 +120,11 @@ func (d *SpectrumPrepareLockinTxData) VerifySignData(scTokenProxy chain.Contract
 		localLockinInfo.SCExpiration = d.SCExpiration
 	}
 	// 2. 校验用户原始请求签名,验证请求中的SCUserAddress有效性
-	if !d.UserRequest.VerifySign(d.UserRequest) {
-		err = fmt.Errorf("signature in user request does't wrigt")
-		return
-	}
+	//不校验了,因为jettrade这部分工作使用了不同的格式
+	//if !d.UserRequest.VerifySign(d.UserRequest) {
+	//	err = fmt.Errorf("signature in user request does't wrigt")
+	//	return
+	//}
 	// 3. 使用本地数据获取MsgToSign
 	scUserAddressHex := d.UserRequest.GetSignerETHAddress().String()
 	scExpiration := localLockinInfo.SCExpiration
