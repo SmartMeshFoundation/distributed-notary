@@ -94,6 +94,12 @@
 			"revisionTime": "2018-08-29T11:20:57Z"
 		},
 		{
+			"checksumSHA1": "tVG7+nh3dUK6F+5pttPMQolpuwk=",
+			"path": "github.com/btcsuite/btcd",
+			"revision": "e8cc9a1408cf5642dc75745137aa1788d89ac6f5",
+			"revisionTime": "2019-05-16T04:30:06Z"
+		},
+		{
 			"checksumSHA1": "eVH6ttDfEiYTzPMf4UO0W6mrpTk=",
 			"origin": "github.com/SmartMeshFoundation/Photon/vendor/github.com/btcsuite/btcd/btcec",
 			"path": "github.com/btcsuite/btcd/btcec",
