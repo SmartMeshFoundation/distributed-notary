@@ -501,10 +501,11 @@
 			"revisionTime": "2018-12-19T01:56:12Z"
 		},
 		{
-			"checksumSHA1": "QKxIA4TrBD5Uk1fVtutfF1suWxU=",
+			"checksumSHA1": "Mz1GlWBDPfjnmOYL/2CGudUQbRU=",
 			"path": "github.com/nkbai/log",
 			"revision": "86998e435e8c493f244a3fc3a93407978e39dcfb",
-			"revisionTime": "2018-05-19T14:16:59Z"
+			"revisionTime": "2018-05-19T14:16:59Z",
+			"tree": true
 		},
 		{
 			"checksumSHA1": "eVoyhpCbyPg6D3P63EStHNO6iIQ=",
