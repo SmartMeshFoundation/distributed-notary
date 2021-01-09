@@ -71,6 +71,7 @@ func (p *LockedEthereumProxy) PrepareLockin(opts *bind.TransactOpts, accountHex 
 	if err != nil {
 		return
 	}
+	log.Infof("Ethereum PrepareLockin tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -90,6 +91,7 @@ func (p *LockedEthereumProxy) Lockin(opts *bind.TransactOpts, accountHex string,
 	if err != nil {
 		return
 	}
+	log.Infof("Ethereum Lockin tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -108,6 +110,7 @@ func (p *LockedEthereumProxy) CancelLockin(opts *bind.TransactOpts, accountHex s
 	if err != nil {
 		return
 	}
+	log.Infof("Ethereum CancelLockin tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -127,12 +130,13 @@ func (p *LockedEthereumProxy) PrepareLockout(opts *bind.TransactOpts, accountHex
 	if err != nil {
 		return
 	}
+	log.Infof("Ethereum PrepareLockout tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
 		err = fmt.Errorf("call contract PrepareLockout success but tx %s failed", r.TxHash.String())
-		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
-		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
+		log.Errorf("failed tx :\n%s", utils.ToJSONStringFormat(tx))
+		log.Errorf("failed receipt :\n%s", utils.ToJSONStringFormat(r))
 	}
 	return
 }
@@ -145,6 +149,7 @@ func (p *LockedEthereumProxy) Lockout(opts *bind.TransactOpts, accountHex string
 	if err != nil {
 		return
 	}
+	log.Infof("Ethereum Lockout tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -164,6 +169,7 @@ func (p *LockedEthereumProxy) CancelLockout(opts *bind.TransactOpts, accountHex 
 	if err != nil {
 		return
 	}
+	log.Infof("Ethereum CancelLockout tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {

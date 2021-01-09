@@ -73,6 +73,7 @@ func (p *SideChainErc20TokenProxy) PrepareLockin(opts *bind.TransactOpts, accoun
 	if err != nil {
 		return
 	}
+	log.Infof("spectrum PrepareLockin tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -91,6 +92,7 @@ func (p *SideChainErc20TokenProxy) Lockin(opts *bind.TransactOpts, accountHex st
 	if err != nil {
 		return
 	}
+	log.Infof("spectrum Lockin tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -110,6 +112,7 @@ func (p *SideChainErc20TokenProxy) CancelLockin(opts *bind.TransactOpts, account
 	if err != nil {
 		return
 	}
+	log.Infof("spectrum CancelLockin tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -129,6 +132,7 @@ func (p *SideChainErc20TokenProxy) PrepareLockout(opts *bind.TransactOpts, accou
 	if err != nil {
 		return
 	}
+	log.Infof("spectrum PrepareLockout tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -148,6 +152,7 @@ func (p *SideChainErc20TokenProxy) Lockout(opts *bind.TransactOpts, accountHex s
 	if err != nil {
 		return
 	}
+	log.Infof("spectrum Lockout tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -166,6 +171,7 @@ func (p *SideChainErc20TokenProxy) CancelLockout(opts *bind.TransactOpts, accoun
 	if err != nil {
 		return
 	}
+	log.Infof("spectrum CancelLockout tx=%s", tx.Hash())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
