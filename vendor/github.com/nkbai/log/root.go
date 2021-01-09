@@ -37,60 +37,41 @@ func Root() Logger {
 
 // Trace is a convenient alias for Root().Trace
 func Trace(format string, ctx ...interface{}) {
-	root.write(format, LvlTrace, ctx )
-}
-func Tracef(format string, args ...interface{}) {
-	format = fmt.Sprintf(format, args...)
+	format = fmt.Sprintf(format, ctx...)
 	root.write(format, LvlTrace, nil)
 }
+
 // Debug is a convenient alias for Root().Debug
 func Debug(format string, ctx ...interface{}) {
-	root.write(format, LvlDebug, ctx)
-}
-// Debugf is a convenient alias for Root().Debug
-func Debugf(format string, args ...interface{}) {
-	format = fmt.Sprintf(format, args...)
+	format = fmt.Sprintf(format, ctx...)
 	root.write(format, LvlDebug, nil)
 }
+
 // Info is a convenient alias for Root().Info
 func Info(format string, ctx ...interface{}) {
-	root.write(format, LvlInfo, ctx)
-}
-// Infof is a convenient alias for Root().Info
-func Infof(format string, args ...interface{}) {
-	format = fmt.Sprintf(format, args...)
+	format = fmt.Sprintf(format, ctx...)
 	root.write(format, LvlInfo, nil)
 }
+
 // Warn is a convenient alias for Root().Warn
 func Warn(format string, ctx ...interface{}) {
-	root.write(format, LvlWarn, ctx)
-}
-// Warnf is a convenient alias for Root().Warn
-func Warnf(format string, args ...interface{}) {
-	format = fmt.Sprintf(format, args...)
+	format = fmt.Sprintf(format, ctx...)
 	root.write(format, LvlWarn, nil)
 }
 
 // Error is a convenient alias for Root().Error
 func Error(format string, ctx ...interface{}) {
-	root.write(format, LvlError, ctx)
-}
-// Errorf is a convenient alias for Root().Error
-func Errorf(format string, args ...interface{}) {
-	format = fmt.Sprintf(format, args...)
+	format = fmt.Sprintf(format, ctx...)
 	root.write(format, LvlError, nil)
 }
+
 // Crit is a convenient alias for Root().Crit
 func Crit(format string, ctx ...interface{}) {
-	root.write(format, LvlCrit, ctx)
-	os.Exit(1)
-}
-// Crit is a convenient alias for Root().Crit
-func Critf(format string, args ...interface{}) {
-	format = fmt.Sprintf(format, args...)
+	format = fmt.Sprintf(format, ctx...)
 	root.write(format, LvlCrit, nil)
 	os.Exit(1)
 }
+
 //StringInterface conver any object to string and it's depth is `depth`
 func StringInterface(i interface{}, depth int) string {
 	stringer, ok := i.(fmt.Stringer)

@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"reflect"
-	"runtime"
 	"sync"
 
 	"github.com/go-stack/stack"
@@ -369,8 +368,7 @@ func DefaultCallerFuncHandler(h Handler) Handler {
 
 //DefaultStreamHandler DefaultStreamHandler
 func DefaultStreamHandler(wr io.Writer) Handler {
-	//disable color for windows 
-	fmtr := TerminalFormat(runtime.GOOS != "windows")
+	fmtr := TerminalFormat(true)
 	h := FuncHandler(func(r *Record) error {
 		_, err := wr.Write(fmtr.Format(r))
 		return err
