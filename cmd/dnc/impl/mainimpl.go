@@ -58,6 +58,7 @@ func StartMain() {
 			test
 		*/
 		benchmarkCmd,
+		transferCmd,
 	}
 	app.Name = "dnc"
 	app.Version = Version

@@ -2,9 +2,12 @@ package dnc
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"reflect"
 	"time"
+
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"os"
 
@@ -150,6 +153,8 @@ func prepareLockinOnEthereum(mcName string, amount int64, expiration uint64) (er
 		fmt.Println(err)
 		os.Exit(-1)
 	}
+	keybin := crypto.FromECDSA(privateKey)
+	fmt.Println("key=%s", hex.EncodeToString(keybin))
 	// 4. call pli
 	auth := bind.NewKeyedTransactor(privateKey)
 	secret := utils.NewRandomHash()
