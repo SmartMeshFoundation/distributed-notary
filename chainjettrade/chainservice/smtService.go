@@ -2,7 +2,13 @@ package chainservice
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"math/big"
+
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
+
+	"github.com/SmartMeshFoundation/distributed-notary/chain"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
@@ -15,14 +21,61 @@ import (
 	"github.com/nkbai/log"
 )
 
+type SMTProxy struct {
+	*contracts.Doc721
+	c *chainjettrade.SafeEthClient
+}
+
+func (p *SMTProxy) CreateAndIssuePO2(opts *bind.TransactOpts, tokenId *big.Int, documentInfo string, PONum string, buyer common.Address, farmer common.Address) (tx *types.Transaction, err error) {
+	ponum, err := hex.DecodeString(PONum)
+	if err != nil {
+		return
+	}
+	var _ponum [32]byte
+	copy(_ponum[:], ponum)
+	tx, err = p.CreateAndIssuePO(opts, tokenId, documentInfo, _ponum, buyer, farmer)
+	if err != nil {
+		log.Error("IssuePOWait %s", err)
+		return
+	}
+	return
+}
+func (p *SMTProxy) IssuePOWait(opts *bind.TransactOpts, tokenId *big.Int, documentInfo string, PONum string, buyer common.Address, farmer common.Address) (err error) {
+	tx, err := p.CreateAndIssuePO2(opts, tokenId, documentInfo, PONum, buyer, farmer)
+	log.Info("spectrum IssuePO tx=%s", tx.Hash().String())
+	ctx := context.Background()
+	r, err := bind.WaitMined(ctx, p.c, tx)
+	if r.Status != types.ReceiptStatusSuccessful {
+		err = fmt.Errorf("call contract IssuePO success but tx %s failed", r.TxHash.String())
+		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
+		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
+	}
+	return
+}
+func (p *SMTProxy) SignDOBuyerWait(opts *bind.TransactOpts, tokenID *big.Int) (err error) {
+	tx, err := p.SignDOBuyer(opts, tokenID)
+	if err != nil {
+		log.Error("SignDOBuyerWait %s", err)
+		return
+	}
+	log.Info("spectrum SignDOBuyerWait tx=%s", tx.Hash().String())
+	ctx := context.Background()
+	r, err := bind.WaitMined(ctx, p.c, tx)
+	if r.Status != types.ReceiptStatusSuccessful {
+		err = fmt.Errorf("call contract SignDOBuyerWait success but tx %s failed", r.TxHash.String())
+		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
+		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
+	}
+	return
+}
+
 type ChainSmtService struct {
 	*ChainService
-	proxy           *contracts.Doc721
-	contractAddress common.Address
+	Proxy SMTProxy
 }
 
 func NewChainSmtService(host string, contractAddress common.Address) (ces *ChainSmtService, err error) {
-	ss, err := NewChainService(host)
+	ss, err := NewChainService(host, "jettrade-smtservice", contractAddress)
 	if err != nil {
 		return
 	}
@@ -31,21 +84,23 @@ func NewChainSmtService(host string, contractAddress common.Address) (ces *Chain
 		return
 	}
 	ces = &ChainSmtService{
-		ChainService:    ss,
-		proxy:           proxy,
-		contractAddress: contractAddress,
+		ChainService: ss,
+		Proxy:        SMTProxy{proxy, ss.c},
 	}
 	ss.co = ces
 	return
 }
-func (ss *ChainSmtService) parserLogsToEventsAndSort(logs []types.Log) (es []chainjettrade.Event, err error) {
+func (ss *ChainSmtService) GetChainName() string {
+	return cfg.SMC.Name
+}
+func (ss *ChainSmtService) parserLogsToEventsAndSort(logs []types.Log) (es []chain.Event, err error) {
 	if len(logs) == 0 {
 		return
 	}
 	for _, l := range logs {
 		eventName := events.TopicToEventName[l.Topics[0]]
 		// 根据已处理流水去重
-		if doneBlockNumber, ok := ss.eventsDone[l.TxHash]; ok {
+		if doneBlockNumber, ok := ss.eventsDone[l.TxHash.String()+eventName]; ok {
 			if doneBlockNumber == l.BlockNumber {
 				//log.Trace(fmt.Sprintf("get event txhash=%s repeated,ignore...", l.TxHash.String()))
 				continue
@@ -108,23 +163,10 @@ func (ss *ChainSmtService) parserLogsToEventsAndSort(logs []types.Log) (es []cha
 				es = append(es, e)
 			}
 		default:
-			log.Warn(fmt.Sprintf("SmcService.EventListener receive unkonwn type event from chain : \n%s\n", utils.ToJSONStringFormat(l)))
+			//erc 721有很多event是我们不需要关心的
+			//log.Trace(fmt.Sprintf("SmcService.EventListener receive unkonwn type event from chain : \n%s\n", utils.ToJSONStringFormat(l)))
 		}
-		// 记录处理流水
-		ss.eventsDone[l.TxHash] = l.BlockNumber
+		ss.eventsDone[l.TxHash.String()+eventName] = l.BlockNumber
 	}
 	return
-}
-func (ss *ChainSmtService) CreateNewBlockEvent(blockNumber uint64) chainjettrade.NewBlockEvent {
-	return events.CreateNewBlockEvent(blockNumber)
-}
-
-// DeployContract : impl chaintmp.Chain 这里暂时只有EthereumToken一个合约,后续优化该接口为支持多主链
-func (ss *ChainSmtService) DeployContract(opts *bind.TransactOpts, notaryAddress common.Address) (contractAddress common.Address, err error) {
-	contractAddress, tx, _, err := contracts.DeployDoc721(opts, ss.c, notaryAddress)
-	if err != nil {
-		return
-	}
-	ctx := context.Background()
-	return bind.WaitDeployed(ctx, ss.c, tx)
 }

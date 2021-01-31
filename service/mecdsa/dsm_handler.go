@@ -259,6 +259,7 @@ func (dh *DSMHandler) OnRequest(req api.Req) {
 	select {
 	case dh.receiveChan <- req:
 	default:
+		log.Error("%T onRequest lost req=%s", dh, log.StringInterface(req, 3))
 		// never block
 	}
 	//dh.receiveChan <- req
@@ -1077,11 +1078,13 @@ func (dh *DSMHandler) notify(c chan bool, err error) {
 		select {
 		case dh.quitChan <- err:
 		default:
+			log.Error("%T notify err  lost,err=%s", dh, err)
 			// never block
 		}
 		select {
 		case dh.quitChan <- err:
 		default:
+			log.Error("%T notify err  lost,err=%s", dh, err)
 			// never block
 		}
 	} else {

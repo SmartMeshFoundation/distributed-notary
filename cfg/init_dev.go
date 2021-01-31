@@ -19,7 +19,7 @@ func init() {
 		ConfirmBlockNumber:    0,
 		BlockNumberPollPeriod: 500 * time.Millisecond,
 		BlockNumberLogPeriod:  20,
-		RPCTimeout:            3 * time.Second,
+		RPCTimeout:            10 * time.Second,
 		CrossFeeRate:          10000,
 	}
 
@@ -29,7 +29,7 @@ func init() {
 		ConfirmBlockNumber:    0,
 		BlockNumberPollPeriod: 500 * time.Millisecond,
 		BlockNumberLogPeriod:  20,
-		RPCTimeout:            3 * time.Second,
+		RPCTimeout:            10 * time.Second,
 		CrossFeeRate:          10000,
 	}
 

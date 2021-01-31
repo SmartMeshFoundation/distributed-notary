@@ -427,6 +427,21 @@ func parseMessageToSign(msgName string, buf []byte) (msg messagetosign.MessageTo
 	case messagetosign.BitcoinCancelPrepareLockoutTXDataName:
 		msg = new(messagetosign.BitcoinCancelPrepareLockoutTXData)
 		err = msg.Parse(buf)
+	case messagetosign.JettradeTxIssuePODataName:
+		msg = new(messagetosign.JettradeTxIssuePOData)
+		err = msg.Parse(buf)
+	case messagetosign.JettradeTxIssueINVDataName:
+		msg = new(messagetosign.JettradeTxIssueINVData)
+		err = msg.Parse(buf)
+	case messagetosign.JettradeTxSignPODataName:
+		msg = new(messagetosign.JettradeTxSignPOData)
+		err = msg.Parse(buf)
+	case messagetosign.JettradeTxSignDOBuyerDataName:
+		msg = new(messagetosign.JettradeTxSignDOBuyerData)
+		err = msg.Parse(buf)
+	case messagetosign.JettradeTxSignDOFFDataName:
+		msg = new(messagetosign.JettradeTxSignDOFFData)
+		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")
 	}
@@ -438,6 +453,16 @@ func parseMessageToSign(msgName string, buf []byte) (msg messagetosign.MessageTo
 */
 func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *models.PrivateKeyInfo, msg messagetosign.MessageToSign, senderID int) (err error) {
 	switch m := msg.(type) {
+	case *messagetosign.JettradeTxIssuePOData:
+		return nil
+	case *messagetosign.JettradeTxSignDOFFData:
+		return nil
+	case *messagetosign.JettradeTxSignDOBuyerData:
+		return nil
+	case *messagetosign.JettradeTxSignPOData:
+		return nil
+	case *messagetosign.JettradeTxIssueINVData:
+		return nil
 	// 1. 合约部署消息
 	case *messagetosign.SpectrumContractDeployTXData:
 		log.Trace(SessionLogMsg(sessionID, "Got %s-%s MsgToSign,run checkMsgToSign...", m.GetName(), m.DeployChainName))

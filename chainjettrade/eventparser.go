@@ -6,24 +6,26 @@ import (
 	"math/big"
 	"reflect"
 
+	"github.com/SmartMeshFoundation/distributed-notary/chain"
+
 	"strings"
 
 	"time"
 
-	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func CreateBaseEventFromLog(name EventName, log types.Log) *BaseEvent {
-	e := &BaseEvent{}
-	e.ChainName = cfg.SMC.Name
+func CreateBaseEventFromLog(name chain.EventName, chainName string, log types.Log) *chain.BaseEvent {
+	e := &chain.BaseEvent{}
+	e.ChainName = chainName
 	e.FromAddress = log.Address
 	e.BlockNumber = log.BlockNumber
 	e.Time = time.Now()
 	e.EventName = name
 	e.SCTokenAddress = log.Address // spectrum 为侧链,侧链合约地址即为SCTokenAddress
+	e.TxHash = log.TxHash
 	return e
 }
 

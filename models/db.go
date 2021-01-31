@@ -42,6 +42,8 @@ func SetUpDB(dbtype, path string) (mdb *DB) {
 	db.AutoMigrate(&Nonce{})
 	db.AutoMigrate(&BTCOutpoint{})
 	db.AutoMigrate(&OpNonce{})
+	//db.DropTable(&jettradeEventInfoModel{})
+	db.AutoMigrate(&jettradeEventInfoModel{})
 	//db.Model(&ChannelParticipantInfo{}).AddForeignKey("channel_id", "channels(channel_id)", "CASCADE", "CASCADE") // Foreign key need to define manually
 	//db.AutoMigrate(&SettledChannel{})
 	//db.AutoMigrate(&latestBlockNumber{})

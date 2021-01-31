@@ -238,6 +238,7 @@ func (ss *SMCService) changeStatus(newStatus commons.ConnectStatus) {
 		select {
 		case ch <- *sc:
 		default:
+			log.Error("%T changeStatus lost,status=%d", ss, newStatus)
 			// never block
 		}
 	}

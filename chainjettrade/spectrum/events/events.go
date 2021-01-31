@@ -1,13 +1,9 @@
 package events
 
 import (
-	"time"
-
 	"github.com/SmartMeshFoundation/distributed-notary/cfg"
-	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/chainjettrade"
 	"github.com/SmartMeshFoundation/distributed-notary/chainjettrade/spectrum/contracts"
-	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -18,7 +14,7 @@ func CreateIssueDocumentPOEvent(log types.Log) (event chainjettrade.IssueDocumen
 	if err != nil {
 		return
 	}
-	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameIssueDocumentPO, log)
+	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameIssueDocumentPO, cfg.SMC.Name, log)
 	// params
 	event.From = e.From
 	event.To = e.To
@@ -33,7 +29,7 @@ func CreateSignDocumentPOEvent(log types.Log) (event chainjettrade.SignDocumentP
 	if err != nil {
 		return
 	}
-	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameSignDocumentPO, log)
+	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameSignDocumentPO, cfg.SMC.Name, log)
 	// params
 	// params
 	event.From = e.From
@@ -49,7 +45,7 @@ func CreateIssueDocumentDOEvent(log types.Log) (event chainjettrade.IssueDocumen
 	if err != nil {
 		return
 	}
-	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameIssueDocumentDO, log)
+	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameIssueDocumentDO, cfg.SMC.Name, log)
 	// params
 	// params
 	event.From = e.From
@@ -65,7 +61,7 @@ func CreateSignDocumentDOFFEvent(log types.Log) (event chainjettrade.SignDocumen
 	if err != nil {
 		return
 	}
-	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameSignDocumentDOFF, log)
+	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameSignDocumentDOFF, cfg.SMC.Name, log)
 	// params
 	// params
 	event.From = e.From
@@ -81,7 +77,7 @@ func CreateSignDocumentDOBuyerEvent(log types.Log) (event chainjettrade.SignDocu
 	if err != nil {
 		return
 	}
-	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameSignDocumentDOBuyer, log)
+	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameSignDocumentDOBuyer, cfg.SMC.Name, log)
 	// params
 	// params
 	event.From = e.From
@@ -97,24 +93,11 @@ func CreateIssueDocumentINVEvent(log types.Log) (event chainjettrade.IssueDocume
 	if err != nil {
 		return
 	}
-	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameIssueDocumentINV, log)
+	event.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameIssueDocumentINV, cfg.SMC.Name, log)
 	// params
 	// params
 	event.From = e.From
 	event.To = e.To
 	event.TokenID = e.TokenId
 	return
-}
-
-// CreateNewBlockEvent :
-func CreateNewBlockEvent(blockNumber uint64) chainjettrade.NewBlockEvent {
-	e := chainjettrade.NewBlockEvent{}
-	e.BaseEvent = &chainjettrade.BaseEvent{}
-	e.ChainName = cfg.ETH.Name
-	e.FromAddress = utils.EmptyAddress
-	e.BlockNumber = blockNumber
-	e.Time = time.Now()
-	e.EventName = chain.NewBlockNumberEventName
-	e.SCTokenAddress = utils.EmptyAddress
-	return e
 }

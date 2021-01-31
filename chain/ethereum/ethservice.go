@@ -295,6 +295,7 @@ func (ss *ETHService) changeStatus(newStatus commons.ConnectStatus) {
 		select {
 		case ch <- *sc:
 		default:
+			log.Error("%T changeStatus lost,newStatus=%d", ss, newStatus)
 			// never block
 		}
 	}

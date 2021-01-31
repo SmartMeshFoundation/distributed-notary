@@ -3,6 +3,8 @@ package userapi
 import (
 	"fmt"
 
+	"github.com/SmartMeshFoundation/distributed-notary/api/userapi/jettradeapi"
+
 	"time"
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
@@ -88,8 +90,9 @@ type UserAPI struct {
 // NewUserAPI :
 func NewUserAPI(host string) *UserAPI {
 	var userAPI UserAPI
-	router, err := rest.MakeRouter(
-		/*
+	var ja = jettradeapi.NewJetTradeAPI(nil)
+	jroutes := ja.GetRoute()
+	uroutes := []*rest.Route{ /*
 			api about private key
 		*/
 		rest.Put(APIName2URLMap[APIAdminNameCreatePrivateKey], userAPI.createPrivateKey),
@@ -119,7 +122,9 @@ func NewUserAPI(host string) *UserAPI {
 		rest.Get(APIName2URLMap[APIDebugNameGetAllLockoutInfo], userAPI.getAllLockoutInfo),
 		rest.Get(APIName2URLMap[APIDebugNameTransferToAccount], userAPI.transferToAccount),
 		rest.Get(APIName2URLMap[APIDebugNameGetAllUtxo], userAPI.getAllBTCUtxo),
-	)
+	}
+	allroutes := append(uroutes, jroutes...)
+	router, err := rest.MakeRouter(allroutes...)
 	if err != nil {
 		log.Crit(fmt.Sprintf("maker router :%s", err))
 	}
@@ -138,5 +143,6 @@ func NewUserAPI(host string) *UserAPI {
 	userAPI.BaseAPI = api.NewBaseAPI("UserAPI-Server", host, router, corsMiddleware)
 	userAPI.Timeout = defaultAPITimeout
 	userAPI.IPPort = host
+	ja.BaseAPI = &userAPI.BaseAPI
 	return &userAPI
 }

@@ -229,6 +229,7 @@ func (c *BoundContract) transact(opts *TransactOpts, contract *common.Address, i
 			return nil, fmt.Errorf("failed to estimate gas needed: %v", err)
 		}
 	}
+	fmt.Println("gaslimit is ",gasLimit)
 	//fmt.Printf("send Transaction with nonce=%d,fromaddress=%s\n", nonce, opts.From.String())
 	// Create the transaction, sign it and schedule it for execution
 	var rawTx *types.Transaction

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -90,6 +91,16 @@ func main() {
 			Name:  "nonce-server",
 			Usage: "http://host:port of nonce server",
 			Value: "http://127.0.0.1:8020",
+		},
+		cli.StringFlag{
+			Name:  "jettrade-eth-address",
+			Usage: "doc721 etereum address",
+			Value: "",
+		},
+		cli.StringFlag{
+			Name:  "jettrade-spectrum-address",
+			Usage: "doc721 spectrum address",
+			Value: "",
 		},
 	}
 	app.Action = startMain
@@ -186,5 +197,11 @@ func config(ctx *cli.Context) (cfg *params.Config, err error) {
 	cfg.NotaryAPIListen = ctx.String("notary-listen")
 	// 10. nonce-server
 	cfg.NonceServerHost = ctx.String("nonce-server")
+	cfg.JettradeEthereumAddress = ctx.String("jettrade-eth-address")
+	cfg.JettradeSpectrumAddress = ctx.String("jettrade-spectrum-address")
+	if len(cfg.JettradeSpectrumAddress) == 0 || len(cfg.JettradeEthereumAddress) == 0 {
+		err = errors.New("must specify jettrade contract address")
+		return
+	}
 	return
 }

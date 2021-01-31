@@ -34,6 +34,7 @@ type BaseEvent struct {
 
 	EventName      EventName      `json:"event_name"`
 	SCTokenAddress common.Address `json:"sc_token_address"` // 该事件对应的侧链Token地址,主链事件该值为utils.EmptyHash
+	TxHash         common.Hash
 }
 
 // GetSCTokenAddress :

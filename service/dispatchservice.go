@@ -3,8 +3,12 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"sync"
+
+	"github.com/SmartMeshFoundation/distributed-notary/api/userapi/jettradeapi"
+
+	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
+	jchainservice "github.com/SmartMeshFoundation/distributed-notary/chainjettrade/chainservice"
 
 	"github.com/SmartMeshFoundation/distributed-notary/pbft/pbft"
 
@@ -60,6 +64,9 @@ type DispatchService struct {
 	scToken2CrossChainServiceMapLock sync.Mutex
 	notaries                         []*models.NotaryInfo
 	lock                             sync.Mutex
+	ethJettradeService               *jchainservice.ChainEthService
+	spectrumJettradeService          *jchainservice.ChainSmtService
+	js                               *JettradeService
 }
 
 // NewDispatchService :
@@ -168,6 +175,28 @@ func NewDispatchService(config *params.Config) (ds *DispatchService, err error) 
 			return
 		}
 	}
+	jettradeEthAddress := common.HexToAddress(config.JettradeEthereumAddress)
+	jettradeSpectrumAddress := common.HexToAddress(config.JettradeSpectrumAddress)
+	ds.ethJettradeService, err = jchainservice.NewChainEthService(config.EthRPCEndPoint, jettradeEthAddress)
+	if err != nil {
+		log.Error("NewChainEthService err %s", err)
+		return
+	}
+	ds.spectrumJettradeService, err = jchainservice.NewChainSmtService(config.SmcRPCEndPoint, jettradeSpectrumAddress)
+	if err != nil {
+		log.Error("NewChainSmtService err %s", err)
+		return
+	}
+	ds.js = newJettradeService(ds)
+	err = ds.js.init()
+	if err != nil {
+		log.Error("newJettradeService err %s", err)
+		return
+	}
+	lastEthblockNumber := ds.blockNumberService.GetLastBlockNumber(cfg.ETH.Name)
+	ds.ethJettradeService.SetLastBlockNumber(lastEthblockNumber)
+	lastSmtBlockNumber := ds.blockNumberService.GetLastBlockNumber(cfg.SMC.Name)
+	ds.spectrumJettradeService.SetLastBlockNumber(lastSmtBlockNumber)
 	return
 }
 
@@ -179,6 +208,8 @@ func (ds *DispatchService) Start() (err error) {
 	for _, v := range ds.chainMap {
 		go ds.chainEventDispatcherLoop(v)
 	}
+	go ds.chainJettradeEventDispatcher(ds.ethJettradeService.ChainService)
+	go ds.chainJettradeEventDispatcher(ds.spectrumJettradeService.ChainService)
 	// 3. 启动所有链的事件监听
 	for _, c := range ds.chainMap {
 		err = c.StartEventListener()
@@ -188,8 +219,16 @@ func (ds *DispatchService) Start() (err error) {
 	}
 	// 4. 启动API
 	ds.notaryAPI.Start(false)
-	ds.userAPI.Start(true)
+	err = ds.spectrumJettradeService.StartEventListener()
+	if err != nil {
+		return
+	}
+	err = ds.ethJettradeService.StartEventListener()
+	if err != nil {
+		return
+	}
 	log.Info("DispatchService start complete ...")
+	ds.userAPI.Start(true)
 	return
 }
 
@@ -201,6 +240,8 @@ func (ds *DispatchService) Stop() {
 	for _, c := range ds.chainMap {
 		c.StopEventListener()
 	}
+	ds.ethJettradeService.StopEventListener()
+	ds.spectrumJettradeService.StopEventListener()
 	close(ds.quitChan)
 }
 
@@ -295,6 +336,8 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Req) {
 			}
 
 		}
+	case jettradeapi.JettradeReq:
+		go ds.js.onRequest(req)
 	case api.Req:
 		go ds.adminService.OnRequest(req)
 	}
@@ -329,7 +372,29 @@ func (ds *DispatchService) chainEventDispatcherLoop(c chain.Chain) {
 		}
 	}
 }
-
+func (ds *DispatchService) chainJettradeEventDispatcher(c *jchainservice.ChainService) {
+	logPrefix := fmt.Sprintf("Chain %s : ", c.Name)
+	log.Info(fmt.Sprintf("%s dispather start ...", logPrefix))
+	for {
+		select {
+		case e, ok := <-c.GetEventChan():
+			if !ok {
+				err := fmt.Errorf("%s read event chan err ", logPrefix)
+				panic(err)
+			}
+			if e.GetEventName() == chain.NewBlockNumberEventName {
+				// 保存新块号到DB
+				panic("其他合约都不维护出块事件")
+			} else {
+				// 合约事件,根据合约地址调度
+				ds.js.onEvent(e)
+			}
+		case <-ds.quitChan:
+			log.Info(fmt.Sprintf("%s dispather stop success", logPrefix))
+			return
+		}
+	}
+}
 func (ds *DispatchService) dispatchEvent2All(e chain.Event) {
 	// 通知所有Service
 	ds.adminService.OnEvent(e)
@@ -361,11 +426,12 @@ func (ds *DispatchService) dispatchEvent(e chain.Event) {
 	} else {
 		// 侧链事件,直接根据SCToken地址调度
 		service, ok := ds.scToken2CrossChainServiceMap[e.GetSCTokenAddress()]
-		if !ok {
-			// never happen
-			panic(fmt.Errorf("can not find CrossChainService with SCToken %s", e.GetSCTokenAddress().String()))
+		if ok {
+			// 事件业务逻辑处理
+			go service.OnEvent(e)
+		} else {
+			panic("不可能发生")
 		}
-		// 事件业务逻辑处理
-		go service.OnEvent(e)
+
 	}
 }

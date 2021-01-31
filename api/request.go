@@ -213,6 +213,7 @@ ReqWithResponse **********************************************
 该类请求提供返回值相关处理方法
 */
 type ReqWithResponse interface {
+	Req
 	GetRequestID() string
 	GetResponseChan() chan *BaseResponse
 	NewResponseChan()
@@ -282,6 +283,7 @@ func (r *BaseReqWithResponse) WriteErrorResponse(errorCode ErrorCode, errorMsg .
 	select {
 	case r.responseChan <- NewFailResponse(r.RequestID, errorCode, errorMsg...):
 	default:
+		log.Error("WriteErrorResponse lost,errcode=%d,errorMsg=%s", errorCode, errorMsg)
 		// never block
 	}
 }

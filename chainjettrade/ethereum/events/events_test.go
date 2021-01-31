@@ -3,6 +3,8 @@ package events
 import (
 	"testing"
 
+	"github.com/SmartMeshFoundation/distributed-notary/cfg"
+
 	"github.com/SmartMeshFoundation/distributed-notary/chainjettrade"
 
 	"fmt"
@@ -13,7 +15,7 @@ import (
 
 func TestCreateLockinSecretEvent(t *testing.T) {
 	var e chainjettrade.IssueDocumentPOEvent
-	e.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameIssueDocumentPO, types.Log{
+	e.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameIssueDocumentPO, cfg.ETH.Name, types.Log{
 		Address:     utils.NewRandomAddress(),
 		BlockNumber: 1,
 	},

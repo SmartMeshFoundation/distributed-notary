@@ -156,6 +156,7 @@ func (ph *PKNHandler) OnRequest(req api.Req) {
 	select {
 	case ph.receiveChan <- req:
 	default:
+		log.Error("%T OnRequest  lost,req=%s", ph, log.StringInterface(req, 3))
 		// never block
 	}
 }
@@ -434,11 +435,13 @@ func (ph *PKNHandler) notify(c chan bool, err error) {
 		select {
 		case ph.quitChan <- err:
 		default:
+			log.Error("%T notify err  lost,err=%s", ph, err)
 			// never block
 		}
 		select {
 		case ph.quitChan <- err:
 		default:
+			log.Error("%T notify err  lost,err=%s", ph, err)
 			// never block
 		}
 	} else {
@@ -446,6 +449,7 @@ func (ph *PKNHandler) notify(c chan bool, err error) {
 		select {
 		case c <- true:
 		default:
+			log.Error("%T notify bool  lost", ph)
 			// never block
 		}
 	}
