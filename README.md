@@ -5,6 +5,6 @@ This is distributed-notary module,it can be used for the cross-chain between Eth
 
 # Example
 
-User can operate [SmartMesh Atmoshpere](http://transport01.smartmesh.cn:8080/static/) for cross-chain function.
+User can test [SmartMesh Atmoshpere](http://transport01.smartmesh.cn:8080/static/) for cross-chain function.
 
 
