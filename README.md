@@ -1,6 +1,6 @@
 # Distributed-Notary
 
-This is distributed-notary module,it can be used for the cross-chain between Ethereum, BSC, heco, Spectrum.
+This is distributed-notary module,it can be used for the cross-chain between Ethereum, BSC, Heco, Spectrum.
 
 
 # Example
