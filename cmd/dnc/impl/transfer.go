@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"os"
 
+	"github.com/ethereum/go-ethereum/params"
+
 	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
 	"github.com/ethereum/go-ethereum/ethclient"
 
@@ -44,7 +46,7 @@ var transferCmd = cli.Command{
 		},
 		cli.Int64Flag{
 			Name:  "amount",
-			Usage: "transfer amount, the unit is 1wei",
+			Usage: "transfer amount, the unit is 1e15 wei",
 		},
 	},
 }
@@ -113,8 +115,9 @@ func transferForDebug(ctx *cli.Context) {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-
-	msg := ethereum.CallMsg{From: fromAddr, To: &toAccount, Value: big.NewInt(amount), Data: nil}
+	amountBig := big.NewInt(amount)
+	amountBig.Mul(amountBig, big.NewInt(params.Finney))
+	msg := ethereum.CallMsg{From: fromAddr, To: &toAccount, Value: amountBig, Data: nil}
 	gasLimit, err := conn.EstimateGas(txCtx, msg)
 	if err != nil {
 		fmt.Printf("failed to estimate gas needed: %v\n", err)
@@ -130,7 +133,7 @@ func transferForDebug(ctx *cli.Context) {
 		fmt.Printf("failed to get networkID : %v\n", err)
 		os.Exit(-1)
 	}
-	rawTx := types.NewTransaction(currentNonce, toAccount, big.NewInt(amount), gasLimit, gasPrice, nil)
+	rawTx := types.NewTransaction(currentNonce, toAccount, amountBig, gasLimit, gasPrice, nil)
 	signedTx, err := auth.Signer(types.NewEIP155Signer(chainID), auth.From, rawTx)
 	if err != nil {
 		fmt.Println(err)
