@@ -6,7 +6,7 @@
 #cd ../deploygeth
 #sh ./deploygeth.sh
 #cd ../run
-#kill 历史dnotary
+#kill  历史dnotary
 cd ../../cmd/dnotary 
 go install
 cd -
