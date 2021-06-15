@@ -118,7 +118,7 @@ func (ss *ETHService) RegisterEventListenContract(contractAddresses ...common.Ad
 			return err
 		}
 		ss.lockedEthereumProxyMap[addr] = p
-		log.Info("EthService start to listen events of contract %s", addr.String())
+		log.Info("EthService start to listen events of contract  %s", addr.String())
 	}
 	ss.lockedEthereumProxyMapLock.Unlock()
 	return nil

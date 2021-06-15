@@ -36,6 +36,7 @@ func NewJettradeEventInfo(chainName, eventName string, fromContractAddress, from
 	}
 }
 
+//jettradeEventInfoModel
 type jettradeEventInfoModel struct {
 	ID               int `gorm:"primary_key"`
 	ChainName        string

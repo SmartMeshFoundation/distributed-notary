@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+//TestJettradeEventInfo
 func TestJettradeEventInfo(t *testing.T) {
 	db := SetupTestDB()
 	defer db.Close()

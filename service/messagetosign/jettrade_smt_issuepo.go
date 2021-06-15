@@ -16,7 +16,7 @@ import (
 
 const JettradeTxIssuePODataName = "IssuePO"
 
-//只是为了满足接口,并不真的做校验
+//只是为了满足接口,   并不真的做校验
 type JettradeTxIssuePOData struct {
 	UserRequest *jettradeapi.IssuePOOnSpectrumRequest
 	Nonce       uint64

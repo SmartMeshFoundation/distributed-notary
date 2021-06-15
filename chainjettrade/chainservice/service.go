@@ -100,7 +100,7 @@ func (ss *ChainService) GetEventChan() <-chan chain.Event {
 func (ss *ChainService) RegisterConnectStatusChangeChan(name string) <-chan commons.ConnectStatusChange {
 	ch, ok := ss.connectStatusChangeChanMap[name]
 	if ok {
-		log.Warn("%s RegisterConnectStatusChangeChan should only call once", ss.Name)
+		log.Warn("%s RegisterConnectStatusChangeChan should only call once ", ss.Name)
 		return ch
 	}
 	ch = make(chan commons.ConnectStatusChange, 1)

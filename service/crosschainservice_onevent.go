@@ -31,7 +31,7 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 		if cs.meta.MCName == event.ChainName {
 			err = cs.onMCNewBlockEvent(event.BlockNumber)
 			if err != nil {
-				log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s", e.GetEventName(), err.Error()))
+				log.Error(SCTokenLogMsg(cs.meta, "%s event deal err =%s ", e.GetEventName(), err.Error()))
 			}
 		}
 		return

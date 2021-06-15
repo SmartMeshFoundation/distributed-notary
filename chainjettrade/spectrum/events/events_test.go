@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+//commnet
 func TestCreateLockinSecretEvent(t *testing.T) {
 	ast := assert.New(t)
 	var e chainjettrade.IssueDocumentPOEvent

@@ -126,7 +126,7 @@ func NewUserAPI(host string) *UserAPI {
 	allroutes := append(uroutes, jroutes...)
 	router, err := rest.MakeRouter(allroutes...)
 	if err != nil {
-		log.Crit(fmt.Sprintf("maker router :%s", err))
+		log.Crit(fmt.Sprintf("maker router  :%s", err))
 	}
 	// 跨域
 	corsMiddleware := &rest.CorsMiddleware{

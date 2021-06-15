@@ -182,7 +182,7 @@ func (ss *SMCService) RecoverDisconnect() {
 		ss.c.Client.Close()
 	}
 	for {
-		log.Info("SmcService tyring to reconnect smc ...")
+		log.Info("SmcService tyring to reconnect smc ... ")
 		select {
 		case <-ss.listenerQuitChan:
 			ss.changeStatus(commons.Closed)

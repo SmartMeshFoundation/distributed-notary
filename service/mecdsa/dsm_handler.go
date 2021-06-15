@@ -29,7 +29,7 @@ import (
 DSMHandler 控制一次签名的完整周期
 */
 type DSMHandler struct {
-	Running bool //主线程启动控制
+	Running bool // 主线程启动控制
 
 	db             *models.DB
 	sessionID      common.Hash

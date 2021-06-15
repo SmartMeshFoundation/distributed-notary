@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// CreateLockoutEvent :
+// CreateLockoutEvent  :
 func CreateIssueDocumentPOEvent(log types.Log) (event chainjettrade.IssueDocumentPOEvent, err error) {
 	e := &contracts.Doc721IssueDocumentPO{}
 	err = chainjettrade.UnpackLog(&docABI, e, EventNameIssueDocumentPO, &log)

@@ -16,7 +16,7 @@ import (
 
 const JettradeTxSignDOFFDataName = "SignDOFF"
 
-//只是为了满足接口,并不真的做校验
+//只是为了满足接口, 并不真的做校验
 type JettradeTxSignDOFFData struct {
 	UserRequest *jettradeapi.SignDOFFOnEthereumRequest
 	Nonce       uint64

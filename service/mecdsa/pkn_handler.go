@@ -18,7 +18,7 @@ import (
 )
 
 /*
-PKNHandler 控制一次私钥协商的完整周期
+PKNHandler  控制一次私钥协商的完整周期
 */
 type PKNHandler struct {
 	db             *models.DB

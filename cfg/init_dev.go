@@ -37,7 +37,7 @@ func init() {
 		Name:               "bitcoin",
 		BlockPeriod:        time.Second,
 		ConfirmBlockNumber: 0,
-		//BlockNumberPollPeriod: 500 * time.Millisecond, // BTC不使用该参数
+		//BlockNumberPollPeriod: 500 * time.Millisecond , // BTC不使用该参数
 		BlockNumberLogPeriod: 20,
 		//RPCTimeout:           3 * time.Second, // BTC不使用该参数
 		CrossFeeRate: 10000,

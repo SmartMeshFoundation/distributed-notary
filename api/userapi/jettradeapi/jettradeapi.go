@@ -116,7 +116,7 @@ func (ua *JettradeAPI) DeployContract(w rest.ResponseWriter, r *rest.Request) {
 func (ua *JettradeAPI) doreq(req api.ReqWithResponse, w rest.ResponseWriter, r *rest.Request) {
 	err := r.DecodeJsonPayload(req)
 	if err != nil {
-		api.HTTPReturnJSON(w, api.NewFailResponse(req.GetRequestID(), api.ErrorCodeParamsWrong, fmt.Sprintf("decode json payload err : %s", err.Error())))
+		api.HTTPReturnJSON(w, api.NewFailResponse(req.GetRequestID(), api.ErrorCodeParamsWrong, fmt.Sprintf("decode json payload err  : %s", err.Error())))
 		return
 	}
 	req.NewResponseChan()

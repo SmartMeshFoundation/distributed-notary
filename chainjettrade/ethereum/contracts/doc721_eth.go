@@ -63,7 +63,7 @@ type AddressTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// AddressFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+// AddressFilterer is an auto generated  log filtering Go binding around an Ethereum contract events.
 type AddressFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }

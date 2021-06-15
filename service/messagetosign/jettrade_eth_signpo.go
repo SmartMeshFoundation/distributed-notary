@@ -16,7 +16,7 @@ import (
 
 const JettradeTxSignPODataName = "SignPO"
 
-//只是为了满足接口,并不真的做校验
+//只是为了满足接口, 并不真的做校验
 type JettradeTxSignPOData struct {
 	UserRequest *jettradeapi.SignPOONEthereumRequest
 	Nonce       uint64

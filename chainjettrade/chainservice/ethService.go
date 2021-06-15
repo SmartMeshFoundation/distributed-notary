@@ -29,7 +29,7 @@ func (p *EthProxy) SignPOWait(opts *bind.TransactOpts, tokenId *big.Int) (err er
 
 	tx, err := p.SignPO(opts, tokenId)
 	if err != nil {
-		log.Error("SignPOWait %s", err)
+		log.Error("SignPOWait %s ", err)
 		return
 	}
 	log.Info("spectrum SignPOWait tx=%s", tx.Hash().String())

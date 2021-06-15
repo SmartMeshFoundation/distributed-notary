@@ -29,7 +29,7 @@ var transferCmd = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "mcname",
-			Usage: "name of main chain contract which you want to transfer",
+			Usage: "name of main chain contract which you want to transfer ",
 			Value: "ethereum",
 		},
 		cli.StringFlag{

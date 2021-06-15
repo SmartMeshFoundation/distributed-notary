@@ -11,6 +11,11 @@ import (
 	utils "github.com/nkbai/goutils"
 )
 
+/*
+为什么有preprepare,prepare,commit,三阶段呢?
+两阶段提交,为什么有prepare/commit,而不是直接commit
+https://www.cnblogs.com/AndyAo/p/8228099.html
+*/
 var (
 	changeViewTimeout = 5000 * time.Millisecond
 	checkpointDiv     = 100
@@ -162,7 +167,7 @@ func (s *Server) handleRequestLeader(args *RequestArgs) error {
 			} else {
 				if !ent.sendReply { //没有发送过应答,重来协商一遍?
 					log.Trace("%s[Re/B/PrePrepare]:PrePrepareArgs:%+v", s, *(ent.pp))
-					s.broadcast(true, newPrePrepareMessage(ent.pp))
+					s.broadcast(true, newPrePrepareMessage(ent.pp)) //只有leader节点广播preprepare消息
 				} else {
 					s.reply(ent)
 				}
@@ -234,7 +239,7 @@ func (s *Server) PrePrepare(args PrePrepareArgs) error {
 
 			log.Trace("%s[B/Prepare]:PrepareArgs:%+v", s, pArgs)
 
-			s.broadcast(true, newPrepareMessage(&pArgs))
+			s.broadcast(true, newPrepareMessage(&pArgs)) //无论是主从节点,都要向所有参与者广播prepare消息
 		}
 	}
 	return nil

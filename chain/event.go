@@ -37,7 +37,7 @@ type BaseEvent struct {
 	TxHash         common.Hash
 }
 
-// GetSCTokenAddress :
+// GetSCTokenAddress  :
 func (be *BaseEvent) GetSCTokenAddress() common.Address {
 	return be.SCTokenAddress
 }

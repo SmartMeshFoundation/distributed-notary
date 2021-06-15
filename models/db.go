@@ -24,7 +24,7 @@ func SetUpDB(dbtype, path string) (mdb *DB) {
 	db, err := gorm.Open(dbtype, dbtype, path+"?cache=shared")
 	db.DB().SetMaxOpenConns(1)
 	if err != nil {
-		panic("failed to connect database")
+		panic("failed to connect database ")
 	}
 	if false {
 		db = db.Debug()

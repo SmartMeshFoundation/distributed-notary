@@ -2,7 +2,7 @@ package params
 
 import "github.com/ethereum/go-ethereum/common"
 
-// Config :
+// Config  :
 type Config struct {
 	DataBasePath            string
 	Address                 common.Address

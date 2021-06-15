@@ -107,7 +107,7 @@ func NewBaseReqWithSignature() BaseReqWithSignature {
 func (r *BaseReqWithSignature) GetSigner() *ecdsa.PublicKey {
 	pubKey, err := crypto.DecompressPubkey(r.Signer)
 	if err != nil {
-		log.Error(" crypto.DecompressPubkey err : %s", err.Error())
+		log.Error(" crypto.DecompressPubkey err  : %s", err.Error())
 	}
 	return pubKey
 }

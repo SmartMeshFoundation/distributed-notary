@@ -33,7 +33,7 @@ DispatchService :
 核心调度service,管理所有chains, notaryService及所有消息分发, 单例,常驻3个线程,分别为:
 	1. chainEventDispatcherLoop 事件调度线程,负责监听所有链的所有事件并分发至对应的notaryService
 	2. APIRequestDispatcherLoop 用户请求调度线程
-	3. NotaryRequestDispatcherLoop 节点消息调度线程
+	3. NotaryRequestDispatcherLoop 节点消息 调度线程
 
 调度器除异常崩溃外,不参与错误处理,仅记录日志,调度器本身支持高并发,业务逻辑的线程安全及顺序性等问题,交由业务service处理
 */

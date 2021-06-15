@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
-// Reference imports to suppress errors if they are not otherwise used.
+// Reference imports to suppress  errors if they are not otherwise used.
 var (
 	_ = big.NewInt
 	_ = strings.NewReader

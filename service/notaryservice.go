@@ -20,7 +20,7 @@ import (
 	"github.com/nkbai/log"
 )
 
-// NotaryService :
+// NotaryService   :
 type NotaryService struct {
 	notaryClient       notaryapi.NotaryClient
 	privateKey         *ecdsa.PrivateKey

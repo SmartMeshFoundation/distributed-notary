@@ -35,7 +35,7 @@ func (p *SMTProxy) CreateAndIssuePO2(opts *bind.TransactOpts, tokenId *big.Int, 
 	copy(_ponum[:], ponum)
 	tx, err = p.CreateAndIssuePO(opts, tokenId, documentInfo, _ponum, buyer, farmer)
 	if err != nil {
-		log.Error("IssuePOWait %s", err)
+		log.Error("IssuePOWait %s ", err)
 		return
 	}
 	return

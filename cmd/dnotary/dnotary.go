@@ -25,7 +25,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "datadir",
-			Usage: "Directory for storing distributed-notary data.",
+			Usage: "Directory for  storing distributed-notary data.",
 			Value: "./.dnotary-data",
 		},
 		cli.StringFlag{

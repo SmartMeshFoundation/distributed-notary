@@ -32,6 +32,8 @@ type SignDocumentPOEvent struct {
 	*chain.BaseEvent
 	ShareData
 }
+
+//IssueDocumentDOEvent
 type IssueDocumentDOEvent struct {
 	*chain.BaseEvent
 	ShareData

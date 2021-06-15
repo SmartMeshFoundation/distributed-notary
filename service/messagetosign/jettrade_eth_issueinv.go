@@ -16,7 +16,7 @@ import (
 
 const JettradeTxIssueINVDataName = "IssueINV"
 
-//只是为了满足接口,并不真的做校验
+//只是为了满足接口, 并不真的做校验
 type JettradeTxIssueINVData struct {
 	UserRequest *jettradeapi.IssueINVOnEthereumRequest
 	Nonce       uint64

@@ -19,7 +19,7 @@ func init() {
 	var err error
 	docABI, err = abi.JSON(strings.NewReader(contracts.Doc721ABI))
 	if err != nil {
-		panic(fmt.Sprintf("secretRegistryAbi parse err %s", err))
+		panic(fmt.Sprintf(" secretRegistryAbi parse err %s", err))
 	}
 	TopicToEventName = make(map[common.Hash]string)
 	TopicToEventName[docABI.Events[EventNameIssueDocumentPO].Id()] = EventNameIssueDocumentPO

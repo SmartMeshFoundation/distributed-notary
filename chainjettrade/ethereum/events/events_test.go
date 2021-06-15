@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+//comment
 func TestCreateLockinSecretEvent(t *testing.T) {
 	var e chainjettrade.IssueDocumentPOEvent
 	e.BaseEvent = chainjettrade.CreateBaseEventFromLog(EventNameIssueDocumentPO, cfg.ETH.Name, types.Log{

@@ -54,7 +54,7 @@ func CreateIssueDocumentDOEvent(log types.Log) (event chainjettrade.IssueDocumen
 	return
 }
 
-// CreateLockoutEvent :
+// CreateLockoutEven t :
 func CreateSignDocumentDOFFEvent(log types.Log) (event chainjettrade.SignDocumentDOFFEvent, err error) {
 	e := &contracts.Doc721SignDocumentDOFF{}
 	err = chainjettrade.UnpackLog(&docABI, e, EventNameSignDocumentDOFF, &log)
