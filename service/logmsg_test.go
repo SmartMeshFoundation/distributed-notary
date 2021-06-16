@@ -20,7 +20,7 @@ func TestSign(t *testing.T) {
 	secp256k1halfN := new(big.Int).Div(secp256k1N, big.NewInt(2))
 	privateKey, _ := crypto.GenerateKey()
 	count := 0
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 10240; i++ {
 		msgToSign := utils.NewRandomHash()
 		sig, err := crypto.Sign(msgToSign[:], privateKey)
 		fmt.Println(len(sig), err)

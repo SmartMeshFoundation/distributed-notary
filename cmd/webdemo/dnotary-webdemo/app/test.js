@@ -460,8 +460,8 @@ function queryStatus(obj) {
         //https://chain.smartmesh.io/token.html?source=commonts&tokenF=0x4931ada8fc103e81dbeb35ed04abf58686c1a9b4
         if(myaccount) {
             $("#MainChainBalance").html('<a  target="_blank" href="https://ropsten.etherscan.io/address/'+myaccount+'">'+  getMainChainWeb3().fromWei(r.MainChainBalance, "ether")+" Ether</a>")
-            $("#SideChainBalance").html ('<a target="_blank" href="https://chain.smartmesh.io/address.html?address='+myaccount+'">'+getMainChainWeb3().fromWei(r.SideChainBalance, "ether") +' SMT</a>')
-            $("#SideChainTokenBalance").html('<a target="_blank" href="https://chain.smartmesh.io/token.html?tokenF='+sideChainContract+'&tokenT=' +myaccount+'">'+getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether") +' EtherToken</a>')
+            $("#SideChainBalance").html ('<a target="_blank" href="https://chain.smartmesh.cn/address.html?address='+myaccount+'">'+getMainChainWeb3().fromWei(r.SideChainBalance, "ether") +' SMT</a>')
+            $("#SideChainTokenBalance").html('<a target="_blank" href="https://chain.smartmesh.cn/token.html?tokenF='+sideChainContract+'&tokenT=' +myaccount+'">'+getMainChainWeb3().fromWei(r.SideChainTokenBalance, "ether") +' EtherToken</a>')
             //https://chain.smartmesh.io/token.html?tokenF=0xbb4b3fa1448060e718540fbf7b74ed3d9f37d70e&tokenT=0x95af380b52d2e453b44a985682746f6600700d20
 
         }
