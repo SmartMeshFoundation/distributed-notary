@@ -2,7 +2,7 @@ package events
 
 import (
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/heco/contracts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -16,12 +16,12 @@ type CancelLockinEvent struct {
 
 // CreateCancelLockinEvent :
 func CreateCancelLockinEvent(log types.Log) (event CancelLockinEvent, err error) {
-	e := &contracts.LockedEthereumCancelLockin{}
-	err = unpackLog(&lockedEthereumABI, e, LockedEthereumCancelLockinEventName, &log)
+	e := &contracts.HecoTokenCancelLockin{}
+	err = unpackLog(&hecoTokenABI, e, HecoTokenCancelLockinEventName, &log)
 	if err != nil {
 		return
 	}
-	event.BaseEvent = createBaseEventFromEthereumLog(LockedEthereumCancelLockinEventName, log)
+	event.BaseEvent = createBaseEventFromHecoLog(HecoTokenCancelLockinEventName, log)
 	// params
 	event.Account = e.Account
 	event.SecretHash = e.SecretHash

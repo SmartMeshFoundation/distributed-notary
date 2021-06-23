@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/SmartMeshFoundation/distributed-notary/accounts"
-	etclient "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
-	ethproxy "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/proxy"
+	hecoclient "github.com/SmartMeshFoundation/distributed-notary/chain/heco/client"
+	hecoproxy "github.com/SmartMeshFoundation/distributed-notary/chain/heco/proxy"
 	smcclient "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/client"
 	smcproxy "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/proxy"
 	"github.com/SmartMeshFoundation/distributed-notary/service"
@@ -82,7 +82,7 @@ func getPrivateKey(addressHex, password string) (privateKey *ecdsa.PrivateKey, e
 	return
 }
 
-func getEthLastBlockNumber(c *etclient.SafeEthClient) uint64 {
+func getHecoLastBlockNumber(c *hecoclient.SafeEthClient) uint64 {
 	h, err := c.HeaderByNumber(context.Background(), nil)
 	if err != nil {
 		panic(err)
@@ -153,15 +153,15 @@ func wei2Eth(weiAmount *big.Int) *big.Int {
 	return new(big.Int).Div(weiAmount, big.NewInt(int64(params.Shannon)))
 }
 
-func getEthConn() *etclient.SafeEthClient {
+func getHecoConn() *hecoclient.SafeEthClient {
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
-	c, err := ethclient.DialContext(ctx2, GlobalConfig.EthRPCEndpoint)
+	c, err := ethclient.DialContext(ctx2, GlobalConfig.HecoRPCEndpoint)
 	cancelFunc()
 	if err != nil {
 		fmt.Println("connect to eth fail : ", err)
 		os.Exit(-1)
 	}
-	return etclient.NewSafeClient(c)
+	return hecoclient.NewSafeClient(c)
 }
 func getSmcConn() *smcclient.SafeEthClient {
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
@@ -174,7 +174,38 @@ func getSmcConn() *smcclient.SafeEthClient {
 	return smcclient.NewSafeClient(c)
 }
 
-func getSCContractProxy(mcName string) (*smcclient.SafeEthClient, *smcproxy.SideChainErc20TokenProxy) {
+func getSCContractProxy(mcName string) (*hecoclient.SafeEthClient, *hecoproxy.SideChainErc20TokenProxy) {
+	if GlobalConfig.SCTokenList == nil {
+		fmt.Println("must run dnc config refresh first")
+		os.Exit(-1)
+	}
+	// 1. init connect
+	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
+	c, err := ethclient.DialContext(ctx2, GlobalConfig.HecoRPCEndpoint)
+	cancelFunc()
+	if err != nil {
+		fmt.Println("connect to eth fail : ", err)
+		os.Exit(-1)
+	}
+	conn := hecoclient.NewSafeClient(c)
+
+	lastBlockNumber, err := conn.HeaderByNumber(context.Background(), nil)
+	if err != nil {
+		fmt.Println("HeaderByNumber err : ", err)
+		os.Exit(-1)
+	}
+	fmt.Printf("[SC] lasted block number = %d\n", lastBlockNumber.Number.Uint64())
+
+	// 2. init contract proxy
+	cp, err := hecoproxy.NewSideChainErc20TokenProxy(conn, getSCContractAddressByMCName(mcName))
+	if err != nil {
+		fmt.Println("init contract proxy err : ", err)
+		os.Exit(-1)
+	}
+	return conn, cp
+}
+
+func getMCContractProxy(mcName string) (*smcclient.SafeEthClient, *smcproxy.LockedSpectrumProxy) {
 	if GlobalConfig.SCTokenList == nil {
 		fmt.Println("must run dnc config refresh first")
 		os.Exit(-1)
@@ -194,40 +225,9 @@ func getSCContractProxy(mcName string) (*smcclient.SafeEthClient, *smcproxy.Side
 		fmt.Println("HeaderByNumber err : ", err)
 		os.Exit(-1)
 	}
-	fmt.Printf("[SC] lasted block number = %d\n", lastBlockNumber.Number.Uint64())
-
-	// 2. init contract proxy
-	cp, err := smcproxy.NewSideChainErc20TokenProxy(conn, getSCContractAddressByMCName(mcName))
-	if err != nil {
-		fmt.Println("init contract proxy err : ", err)
-		os.Exit(-1)
-	}
-	return conn, cp
-}
-
-func getMCContractProxy(mcName string) (*etclient.SafeEthClient, *ethproxy.LockedEthereumProxy) {
-	if GlobalConfig.SCTokenList == nil {
-		fmt.Println("must run dnc config refresh first")
-		os.Exit(-1)
-	}
-	// 1. init connect
-	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
-	c, err := ethclient.DialContext(ctx2, GlobalConfig.EthRPCEndpoint)
-	cancelFunc()
-	if err != nil {
-		fmt.Println("connect to eth fail : ", err)
-		os.Exit(-1)
-	}
-	conn := etclient.NewSafeClient(c)
-
-	lastBlockNumber, err := conn.HeaderByNumber(context.Background(), nil)
-	if err != nil {
-		fmt.Println("HeaderByNumber err : ", err)
-		os.Exit(-1)
-	}
 	fmt.Printf("[MC] lasted block number = %d\n", lastBlockNumber.Number.Uint64())
 	// 2. init contract proxy
-	cp, err := ethproxy.NewLockedEthereumProxy(conn, getMCContractAddressByMCName(mcName))
+	cp, err := smcproxy.NewLockedSpectrumProxy(conn, getMCContractAddressByMCName(mcName))
 	if err != nil {
 		fmt.Println("init contract proxy err : ", err)
 		os.Exit(-1)

@@ -18,7 +18,7 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/service"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
@@ -133,14 +133,14 @@ func benchmarkDSM(mcName string, num int) {
 		os.Exit(-1)
 	}
 	fmt.Printf("==> DSM Benchmark prepare start mcName=%s num=%d\n", mcName, num)
-	mcKey, err := getPrivateKey(GlobalConfig.EthUserAddress, GlobalConfig.EthUserPassword)
+	mcKey, err := getPrivateKey(GlobalConfig.SmcUserAddress, GlobalConfig.SmcUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
 	scToken := getSCTokenByMCName(mcName)
 	_, mcp := getMCContractProxy(mcName)
-	es, err := ethereum.NewETHService(GlobalConfig.EthRPCEndpoint)
+	es, err := spectrum.NewSMCService(GlobalConfig.SmcRPCEndpoint)
 	if err != nil {
 		fmt.Println("connect to eth fail : ", err)
 		os.Exit(-1)

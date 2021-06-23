@@ -19,7 +19,6 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ethereum/go-ethereum/common"
@@ -64,15 +63,6 @@ type dispatchServiceBackend interface {
 	updateLockoutInfoNotaryIDInChargeID(scTokenAddress common.Address, secretHash common.Hash, notaryID int) (err error)
 }
 
-func (ds *DispatchService) getBtcNetworkParam() *chaincfg.Params {
-	c, err := ds.getChainByName(cfg.BTC.Name)
-	if err != nil {
-		log.Error(err.Error())
-		return nil
-	}
-	c2, _ := c.(*bitcoin.BTCService)
-	return c2.GetNetParam()
-}
 func (ds *DispatchService) getSelfPrivateKey() *ecdsa.PrivateKey {
 	return ds.notaryService.privateKey
 }
@@ -287,7 +277,7 @@ func (ds *DispatchService) getPbftService(key string) (ps pbft.PBFTAuxiliary, er
 		ds.notaryService.notaryClient,
 		ds, ds.db)
 	switch typ {
-	case pbftTypeEthereum:
+	case pbftTypeSpectrum:
 		ds.pbftServices[key] = ps2
 		err = ps2.server.UpdateAS(ps2)
 		if err != nil {
@@ -310,11 +300,9 @@ func (ds *DispatchService) getPbftService(key string) (ps pbft.PBFTAuxiliary, er
 func chainName2PBFTType(chainName string) pbftType {
 	switch chainName {
 	case cfg.SMC.Name:
-		return pbftTypeEthereum
-	case cfg.ETH.Name:
-		return pbftTypeEthereum
-	case cfg.BTC.Name:
-		return pbftTypeBTC
+		return pbftTypeSpectrum
+	case cfg.HECO.Name:
+		return pbftTypeSpectrum
 	}
 	return pbftTypeUnkown
 }

@@ -9,10 +9,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func TestCreateBaseEvent(t *testing.T) {
-	var e LockoutSecretEvent
-	e.BaseEvent = createBaseEventFromEthereumLog(LockedEthereumLockoutSecretEventName, types.Log{
+func TestCreateLockinSecretEvent(t *testing.T) {
+	var e LockinSecretEvent
+	e.BaseEvent = createBaseEventFromHecoLog(HecoTokenLockinSecretEventName, types.Log{
+		Address:     utils.NewRandomAddress(),
 		BlockNumber: 1,
-	})
+	},
+	)
 	fmt.Println(utils.ToJSONStringFormat(e))
 }

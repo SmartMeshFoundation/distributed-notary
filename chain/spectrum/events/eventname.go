@@ -9,34 +9,33 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// atmosphereTokenABI :
-var atmosphereTokenABI abi.ABI
+// lockedSpectrumABI :
+var lockedSpectrumABI abi.ABI
 
 // TopicToEventName :
 var TopicToEventName map[common.Hash]string
 
 func init() {
 	var err error
-	atmosphereTokenABI, err = abi.JSON(strings.NewReader(contracts.AtmosphereTokenABI))
+	lockedSpectrumABI, err = abi.JSON(strings.NewReader(contracts.LockedSpectrumABI))
 	if err != nil {
 		panic(fmt.Sprintf("secretRegistryAbi parse err %s", err))
 	}
 	TopicToEventName = make(map[common.Hash]string)
-	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenPrepareLockinEventName].Id()] = AtmosphereTokenPrepareLockinEventName
-	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenLockinSecretEventName].Id()] = AtmosphereTokenLockinSecretEventName
-	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenPrepareLockoutEventName].Id()] = AtmosphereTokenPrepareLockoutEventName
-	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenLockoutEventName].Id()] = AtmosphereTokenLockoutEventName
-	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenCancelLockinEventName].Id()] = AtmosphereTokenCancelLockinEventName
-	TopicToEventName[atmosphereTokenABI.Events[AtmosphereTokenCancelLockoutEventName].Id()] = AtmosphereTokenCancelLockoutEventName
-
+	TopicToEventName[lockedSpectrumABI.Events[LockedSpectrumPrepareLockinEventName].Id()] = LockedSpectrumPrepareLockinEventName
+	TopicToEventName[lockedSpectrumABI.Events[LockedSpectrumLockoutSecretEventName].Id()] = LockedSpectrumLockoutSecretEventName
+	TopicToEventName[lockedSpectrumABI.Events[LockedSpectrumPrepareLockoutEventName].Id()] = LockedSpectrumPrepareLockoutEventName
+	TopicToEventName[lockedSpectrumABI.Events[LockedSpectrumLockinEventName].Id()] = LockedSpectrumLockinEventName
+	TopicToEventName[lockedSpectrumABI.Events[LockedSpectrumCancelLockinEventName].Id()] = LockedSpectrumCancelLockinEventName
+	TopicToEventName[lockedSpectrumABI.Events[LockedSpectrumCancelLockoutEventName].Id()] = LockedSpectrumCancelLockoutEventName
 }
 
 /* #nosec */
 const (
-	AtmosphereTokenPrepareLockinEventName  = "PrepareLockin"
-	AtmosphereTokenLockinSecretEventName   = "LockinSecret"
-	AtmosphereTokenPrepareLockoutEventName = "PrepareLockout"
-	AtmosphereTokenLockoutEventName        = "Lockout"
-	AtmosphereTokenCancelLockinEventName   = "CancelLockin"
-	AtmosphereTokenCancelLockoutEventName  = "CancelLockout"
+	LockedSpectrumPrepareLockinEventName  = "PrepareLockin"
+	LockedSpectrumLockoutSecretEventName  = "LockoutSecret"
+	LockedSpectrumPrepareLockoutEventName = "PrepareLockout"
+	LockedSpectrumLockinEventName         = "Lockin"
+	LockedSpectrumCancelLockinEventName   = "CancelLockin"
+	LockedSpectrumCancelLockoutEventName  = "CancelLockout"
 )

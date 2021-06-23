@@ -4,7 +4,7 @@ import (
 	"math/big"
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/heco/contracts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -18,12 +18,12 @@ type PrepareLockoutEvent struct {
 
 // CreatePrepareLockoutEvent :
 func CreatePrepareLockoutEvent(log types.Log) (event PrepareLockoutEvent, err error) {
-	e := &contracts.LockedEthereumPrepareLockout{}
-	err = unpackLog(&lockedEthereumABI, e, LockedEthereumPrepareLockoutEventName, &log)
+	e := &contracts.HecoTokenPrepareLockout{}
+	err = unpackLog(&hecoTokenABI, e, HecoTokenPrepareLockoutEventName, &log)
 	if err != nil {
 		return
 	}
-	event.BaseEvent = createBaseEventFromEthereumLog(LockedEthereumPrepareLockoutEventName, log)
+	event.BaseEvent = createBaseEventFromHecoLog(HecoTokenPrepareLockoutEventName, log)
 	// params
 	event.Account = e.Account
 	event.Amount = e.Value

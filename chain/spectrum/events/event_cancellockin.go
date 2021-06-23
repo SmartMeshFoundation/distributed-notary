@@ -16,12 +16,12 @@ type CancelLockinEvent struct {
 
 // CreateCancelLockinEvent :
 func CreateCancelLockinEvent(log types.Log) (event CancelLockinEvent, err error) {
-	e := &contracts.AtmosphereTokenCancelLockin{}
-	err = unpackLog(&atmosphereTokenABI, e, AtmosphereTokenCancelLockinEventName, &log)
+	e := &contracts.LockedSpectrumCancelLockin{}
+	err = unpackLog(&lockedSpectrumABI, e, LockedSpectrumCancelLockinEventName, &log)
 	if err != nil {
 		return
 	}
-	event.BaseEvent = createBaseEventFromSpectrumLog(AtmosphereTokenCancelLockinEventName, log)
+	event.BaseEvent = createBaseEventFromEthereumLog(LockedSpectrumCancelLockinEventName, log)
 	// params
 	event.Account = e.Account
 	event.SecretHash = e.SecretHash

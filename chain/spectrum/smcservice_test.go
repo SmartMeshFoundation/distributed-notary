@@ -13,11 +13,11 @@ import (
 
 func TestChain(t *testing.T) {
 	// params
-	spectrumHost := "http://192.168.124.13:28545"
-	var spectrumContract1Address common.Address
-	spectrumContract1Address = common.HexToAddress("0x0f75Cc3e01d6802bca296094cEcdBb88fc50e0a6")
+	smcHost := "http://127.0.0.1:9001"
+	var contractAddress common.Address
+	contractAddress = common.HexToAddress("0x720bF7a52fDb3f656E0E653E09C4e57DC1e655eE")
 	// 1. 创建service
-	smc, err := NewSMCService(spectrumHost, spectrumContract1Address)
+	smc, err := NewSMCService(smcHost, contractAddress)
 	if err != nil {
 		t.Error(err)
 		return
@@ -33,7 +33,8 @@ func TestChain(t *testing.T) {
 			fmt.Println("收到事件:\n", utils.ToJSONStringFormat(e))
 		}
 	}()
-	proxy := smc.GetProxyByTokenAddress(spectrumContract1Address)
+
+	proxy := smc.GetProxyByLockedSpectrumAddress(contractAddress)
 	name, err := proxy.Contract.Name(nil)
 	if err != nil {
 		t.Error(err)

@@ -23,8 +23,8 @@ func init() {
 		CrossFeeRate:          10000,
 	}
 
-	ETH = &ChainCfg{
-		Name:                  "ethereum",
+	HECO = &ChainCfg{
+		Name:                  "heco",
 		BlockPeriod:           time.Second,
 		ConfirmBlockNumber:    0,
 		BlockNumberPollPeriod: 500 * time.Millisecond,
@@ -33,15 +33,6 @@ func init() {
 		CrossFeeRate:          10000,
 	}
 
-	BTC = &ChainCfg{
-		Name:               "bitcoin",
-		BlockPeriod:        time.Second,
-		ConfirmBlockNumber: 0,
-		//BlockNumberPollPeriod: 500 * time.Millisecond, // BTC不使用该参数
-		BlockNumberLogPeriod: 20,
-		//RPCTimeout:           3 * time.Second, // BTC不使用该参数
-		CrossFeeRate: 10000,
-	}
 	/*
 		跨链
 	*/

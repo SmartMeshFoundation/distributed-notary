@@ -2,7 +2,7 @@ package events
 
 import (
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -15,12 +15,12 @@ type LockoutSecretEvent struct {
 
 // CreateLockoutSecretEvent :
 func CreateLockoutSecretEvent(log types.Log) (event LockoutSecretEvent, err error) {
-	e := &contracts.LockedEthereumLockoutSecret{}
-	err = unpackLog(&lockedEthereumABI, e, LockedEthereumLockoutSecretEventName, &log)
+	e := &contracts.LockedSpectrumLockoutSecret{}
+	err = unpackLog(&lockedSpectrumABI, e, LockedSpectrumLockoutSecretEventName, &log)
 	if err != nil {
 		return
 	}
-	event.BaseEvent = createBaseEventFromEthereumLog(LockedEthereumLockoutSecretEventName, log)
+	event.BaseEvent = createBaseEventFromEthereumLog(LockedSpectrumLockoutSecretEventName, log)
 	// params
 	event.Secret = e.Secret
 	return

@@ -7,21 +7,21 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// LockoutEvent :
-type LockoutEvent struct {
+// LockinEvent :
+type LockinEvent struct {
 	*chain.BaseEvent
 	Account    common.Address `json:"account"` // lockout的用户地址
 	SecretHash common.Hash    `json:"secret_hash"`
 }
 
-// CreateLockoutEvent :
-func CreateLockoutEvent(log types.Log) (event LockoutEvent, err error) {
-	e := &contracts.AtmosphereTokenLockout{}
-	err = unpackLog(&atmosphereTokenABI, e, AtmosphereTokenLockoutEventName, &log)
+// CreateLockinEvent :
+func CreateLockinEvent(log types.Log) (event LockinEvent, err error) {
+	e := &contracts.LockedSpectrumLockin{}
+	err = unpackLog(&lockedSpectrumABI, e, LockedSpectrumLockinEventName, &log)
 	if err != nil {
 		return
 	}
-	event.BaseEvent = createBaseEventFromSpectrumLog(AtmosphereTokenLockoutEventName, log)
+	event.BaseEvent = createBaseEventFromEthereumLog(LockedSpectrumLockinEventName, log)
 	// params
 	event.Account = e.Account
 	event.SecretHash = e.SecretHash

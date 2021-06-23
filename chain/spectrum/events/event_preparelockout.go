@@ -18,12 +18,12 @@ type PrepareLockoutEvent struct {
 
 // CreatePrepareLockoutEvent :
 func CreatePrepareLockoutEvent(log types.Log) (event PrepareLockoutEvent, err error) {
-	e := &contracts.AtmosphereTokenPrepareLockout{}
-	err = unpackLog(&atmosphereTokenABI, e, AtmosphereTokenPrepareLockoutEventName, &log)
+	e := &contracts.LockedSpectrumPrepareLockout{}
+	err = unpackLog(&lockedSpectrumABI, e, LockedSpectrumPrepareLockoutEventName, &log)
 	if err != nil {
 		return
 	}
-	event.BaseEvent = createBaseEventFromSpectrumLog(AtmosphereTokenPrepareLockoutEventName, log)
+	event.BaseEvent = createBaseEventFromEthereumLog(LockedSpectrumPrepareLockoutEventName, log)
 	// params
 	event.Account = e.Account
 	event.Amount = e.Value

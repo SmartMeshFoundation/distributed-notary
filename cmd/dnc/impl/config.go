@@ -16,44 +16,27 @@ import (
 
 	"io/ioutil"
 
-	"math/big"
-
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/service"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
-	"github.com/btcsuite/btcutil"
 	"github.com/urfave/cli"
 )
 
 type runTime struct {
-	MCName              string              `json:"mc_name"`
-	Secret              string              `json:"secret"`
-	SecretHash          string              `json:"secret_hash"`
-	BtcLockScript       []byte              `json:"btc_lock_script"`
-	BtcUserAddressBytes []byte              `json:"btc_user_address_bytes"`
-	BtcTXHash           string              `json:"btc_tx_hash"`
-	BtcExpiration       *big.Int            `json:"btc_expiration"`
-	BtcAmount           btcutil.Amount      `json:"btc_amount"`
-	LockoutInfo         *models.LockoutInfo `json:"lockout_info"`
+	MCName      string              `json:"mc_name"`
+	Secret      string              `json:"secret"`
+	SecretHash  string              `json:"secret_hash"`
+	LockoutInfo *models.LockoutInfo `json:"lockout_info"`
 }
 type dncConfig struct {
 	NotaryHost string `json:"notary_host"`
 	Keystore   string `json:"keystore"`
 
-	BtcRPCUser         string `json:"btc_rpc_user"`
-	BtcRPCPass         string `json:"btc_rpc_pass"`
-	BtcRPCCertFilePath string `json:"btc_rpc_cert_file_path"`
-	BtcRPCEndpoint     string `json:"btc_rpc_endpoint"`
-	BtcUserAddress     string `json:"btc_user_address"`
-
-	BtcWalletRPCCertFilePath string `json:"btc_wallet_rpc_cert_file_path"`
-	BtcWalletRPCEndpoint     string `json:"btc_wallet_rpc_endpoint"`
-
-	EthUserAddress  string `json:"eth_user_address"`
-	EthUserPassword string `json:"eth_user_password"`
-	EthRPCEndpoint  string `json:"eth_rpc_endpoint"`
+	HecoUserAddress  string `json:"heco_user_address"`
+	HecoUserPassword string `json:"heco_user_password"`
+	HecoRPCEndpoint  string `json:"heco_rpc_endpoint"`
 
 	SmcUserAddress  string `json:"smc_user_address"`
 	SmcUserPassword string `json:"smc_user_password"`
@@ -72,18 +55,9 @@ var DefaultConfig = &dncConfig{
 	NotaryHost: "http://transport01.smartmesh.cn:8032",
 	Keystore:   "../../testdata/keystore",
 
-	BtcRPCUser:         "wuhan",
-	BtcRPCPass:         "wuhan",
-	BtcRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcd/rpc.cert"),
-	BtcRPCEndpoint:     "192.168.124.13:18556",
-	BtcUserAddress:     "SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY",
-
-	BtcWalletRPCEndpoint:     "192.168.124.13:18554",
-	BtcWalletRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcwallet/rpc.cert"),
-
-	EthUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
-	EthUserPassword: "123",
-	EthRPCEndpoint:  "http://106.52.171.12:18003",
+	HecoUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
+	HecoUserPassword: "123",
+	HecoRPCEndpoint:  "http://106.52.171.12:18003",
 
 	SmcUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	SmcUserPassword: "123",
@@ -159,12 +133,12 @@ func configManage(ctx *cli.Context) error {
 		case "keystore":
 			GlobalConfig.Keystore = s[1]
 
-		case "eua", "eth-user-address":
-			GlobalConfig.EthUserAddress = s[1]
-		case "eup", "eth-user-password":
-			GlobalConfig.EthUserPassword = s[1]
-		case "eth", "eth-rpc-endpoint":
-			GlobalConfig.EthRPCEndpoint = s[1]
+		case "hua", "heco-user-address":
+			GlobalConfig.HecoUserAddress = s[1]
+		case "hup", "heco-user-password":
+			GlobalConfig.HecoUserPassword = s[1]
+		case "hre", "heco-rpc-endpoint":
+			GlobalConfig.HecoRPCEndpoint = s[1]
 
 		case "sua", "smc-user-address":
 			GlobalConfig.SmcUserAddress = s[1]

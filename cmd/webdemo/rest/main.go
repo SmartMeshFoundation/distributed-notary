@@ -8,14 +8,14 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
-//缺省主链接入点
-var MainChainEndpoint = "http://127.0.0.1:8545"
+//缺省主链接入点 spectrum
+var MainChainEndpoint = "http://106.52.171.12:18003"
 
-//侧链接入点
-var SideChainEndpoint = "http://127.0.0.1:8545"
+//侧链接入点 heco
+var SideChainEndpoint = "http://106.52.171.12:8545"
 
 //default port
-var Port = 8080
+var Port = 8081
 
 func RestMain() {
 	api := rest.NewApi()

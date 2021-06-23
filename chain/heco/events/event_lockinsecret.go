@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/heco/contracts"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -18,8 +18,8 @@ type LockinSecretEvent struct {
 
 // CreateLockinSecretEvent :
 func CreateLockinSecretEvent(log types.Log) (event LockinSecretEvent, err error) {
-	e := &contracts.AtmosphereTokenLockinSecret{}
-	err = unpackLog(&atmosphereTokenABI, e, AtmosphereTokenLockinSecretEventName, &log)
+	e := &contracts.HecoTokenLockinSecret{}
+	err = unpackLog(&hecoTokenABI, e, HecoTokenLockinSecretEventName, &log)
 	if err != nil {
 		fmt.Println("=======================log:")
 		fmt.Println(utils.ToJSONStringFormat(log))
@@ -27,7 +27,7 @@ func CreateLockinSecretEvent(log types.Log) (event LockinSecretEvent, err error)
 		fmt.Println(utils.ToJSONStringFormat(e))
 		return
 	}
-	event.BaseEvent = createBaseEventFromSpectrumLog(AtmosphereTokenLockinSecretEventName, log)
+	event.BaseEvent = createBaseEventFromHecoLog(HecoTokenLockinSecretEventName, log)
 	// params
 	event.Secret = e.Secret
 	return

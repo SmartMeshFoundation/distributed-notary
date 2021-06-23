@@ -243,9 +243,7 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 	scTokenMetaInfo.MCLockedContractDeploySessionID = mcDeploySessionID
 	scTokenMetaInfo.CreateTime = time.Now().Unix()
 	scTokenMetaInfo.OrganiserID = as.dispatchService.getSelfNotaryInfo().ID
-	if scTokenMetaInfo.MCName == cfg.BTC.Name {
-		scTokenMetaInfo.MCLockedPublicKeyHashStr = privateKeyInfo.ToBTCPubKeyAddress(as.dispatchService.getBtcNetworkParam()).AddressPubKeyHash().String()
-	}
+
 	err = as.db.NewSCTokenMetaInfo(&scTokenMetaInfo)
 	if err != nil {
 		log.Error("err when NewSCTokenMetaInfo : %s", err.Error())
@@ -271,12 +269,8 @@ func (as *AdminService) onRegisterSCTokenRequest(req *userapi.RegisterSCTokenReq
 }
 
 func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, sessionID common.Hash, err error) {
-	if chainName == cfg.BTC.Name {
-		// 比特币不需要合约
-		return
-	}
-	if chainName != cfg.ETH.Name {
-		err = errors.New("only support ethereum as main chain now")
+	if chainName != cfg.SMC.Name {
+		err = errors.New("only support spectrum as main chain now")
 		return
 	}
 	var c chain.Chain
@@ -291,7 +285,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 	if err != nil {
 		return
 	}
-	tokenName := "EtherToken"
+	tokenName := "SmtToken"
 	return as.distributedDeployOnSpectrum(c, privateKeyInfo, tokenName)
 }
 

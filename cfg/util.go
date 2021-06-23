@@ -4,10 +4,8 @@ package cfg
 func GetCfgByChainName(name string) *ChainCfg {
 	if name == SMC.Name {
 		return SMC
-	} else if name == BTC.Name {
-		return BTC
-	} else if name == ETH.Name {
-		return ETH
+	} else if name == HECO.Name {
+		return HECO
 	}
 	panic("wrong code")
 }

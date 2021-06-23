@@ -456,7 +456,7 @@ function queryStatus(obj) {
         $("#SideChainBlockNumber").html(r.SideChainBlockNumber)
 
         $("#mainChainContractBalance").html('<a target="_blank" href="https://ropsten.etherscan.io/address/'+mainChainContract+'">'+  getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether")+" Ether</a>")   //(getMainChainWeb3().fromWei(r.MainChainContractBalance, "ether"))
-        $("#sideChainContractBalance").html('<a target="_blank" href="https://chain.smartmesh.io/token.html?source=commonts&tokenF='+sideChainContract+'">'+getMainChainWeb3().fromWei(r.SideChainContractBalance, "ether") +' EtherToken</a>')
+        $("#sideChainContractBalance").html('<a target="_blank" href="https://chain.smartmesh.cn/token.html?source=commonts&tokenF='+sideChainContract+'">'+getMainChainWeb3().fromWei(r.SideChainContractBalance, "ether") +' EtherToken</a>')
         //https://chain.smartmesh.io/token.html?source=commonts&tokenF=0x4931ada8fc103e81dbeb35ed04abf58686c1a9b4
         if(myaccount) {
             $("#MainChainBalance").html('<a  target="_blank" href="https://ropsten.etherscan.io/address/'+myaccount+'">'+  getMainChainWeb3().fromWei(r.MainChainBalance, "ether")+" Ether</a>")

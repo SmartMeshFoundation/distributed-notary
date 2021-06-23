@@ -11,7 +11,7 @@ import (
 
 func (as *AdminService) onDebugTransferToAccountRequest(req *userapi.DebugTransferToAccountRequest) {
 	amount := new(big.Int).Mul(big.NewInt(ethparams.Finney), big.NewInt(1000))
-	namespace := []string{cfg.SMC.Name, cfg.ETH.Name}
+	namespace := []string{cfg.SMC.Name, cfg.SMC.Name}
 	for _, name := range namespace {
 		c, err := as.dispatchService.getChainByName(name)
 		if err != nil {

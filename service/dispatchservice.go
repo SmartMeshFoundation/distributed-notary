@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"sync"
 
 	"github.com/SmartMeshFoundation/distributed-notary/pbft/pbft"
@@ -14,7 +13,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/heco"
 	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/params"
@@ -117,24 +116,16 @@ func NewDispatchService(config *params.Config) (ds *DispatchService, err error) 
 		return
 	}
 	// 4. 初始化侧链事件监听
-	ds.chainMap[cfg.SMC.Name], err = spectrum.NewSMCService(config.SmcRPCEndPoint)
+	ds.chainMap[cfg.HECO.Name], err = heco.NewHECOService(config.SmcRPCEndPoint)
 	if err != nil {
 		log.Error("new SMCService err : %s", err.Error())
 		return
 	}
-	// 5. 初始化Eth事件监听
-	ds.chainMap[cfg.ETH.Name], err = ethereum.NewETHService(config.EthRPCEndPoint)
+	// 5. 初始化SMC事件监听
+	ds.chainMap[cfg.SMC.Name], err = spectrum.NewSMCService(config.EthRPCEndPoint)
 	if err != nil {
 		log.Error("new ETHService err : %s", err.Error())
 		return
-	}
-	// 5.4 初始化Btc事件监听
-	if config.BtcRPCEndPoint != "" {
-		ds.chainMap[cfg.BTC.Name], err = bitcoin.NewBTCService(config.BtcRPCEndPoint, config.BtcRPCUser, config.BtcRPCPass, config.BtcRPCCertFilePath)
-		if err != nil {
-			log.Error("new BTCService err : %s", err.Error())
-			return
-		}
 	}
 	// 5.5 初始化BlockNumberService,这里同时会初始化每条链的LastBlockNumber
 	ds.blockNumberService, err = NewBlockNumberService(db, ds.chainMap)
@@ -344,11 +335,6 @@ func (ds *DispatchService) dispatchEvent(e chain.Event) {
 	if e.GetSCTokenAddress() == utils.EmptyAddress {
 		// 主链事件,根据主链合约地址FromAddress调度,遍历,后续可优化,维护一个主链合约地址-SCToken地址的map即可
 		for _, service := range ds.scToken2CrossChainServiceMap {
-			if e.GetChainName() == cfg.BTC.Name && service.meta.MCName == cfg.BTC.Name {
-				// 比特币事件
-				go service.OnEvent(e)
-				return
-			}
 			if service.getMCContractAddress() == e.GetFromAddress() {
 				// 事件业务逻辑处理
 				go service.OnEvent(e)

@@ -1,4 +1,4 @@
-package ethereum
+package heco
 
 import (
 	"testing"
@@ -13,11 +13,11 @@ import (
 
 func TestChain(t *testing.T) {
 	// params
-	ethHost := "http://127.0.0.1:9001"
-	var contractAddress common.Address
-	contractAddress = common.HexToAddress("0x720bF7a52fDb3f656E0E653E09C4e57DC1e655eE")
+	HecoHost := "http://106.52.171.12:8545"
+	var hecoContract1Address common.Address
+	hecoContract1Address = common.HexToAddress("0x0f75Cc3e01d6802bca296094cEcdBb88fc50e0a6")
 	// 1. 创建service
-	eth, err := NewETHService(ethHost, contractAddress)
+	heco, err := NewHECOService(HecoHost, hecoContract1Address)
 	if err != nil {
 		t.Error(err)
 		return
@@ -26,15 +26,14 @@ func TestChain(t *testing.T) {
 	//smc.RegisterEventListenContract(spectrumContract1Address)
 	//smc.UnRegisterEventListenContract(spectrumContract1Address)
 	// 3. 启动service.listener
-	eth.StartEventListener()
+	heco.StartEventListener()
 	go func() {
 		for {
-			e := <-eth.GetEventChan()
+			e := <-heco.GetEventChan()
 			fmt.Println("收到事件:\n", utils.ToJSONStringFormat(e))
 		}
 	}()
-
-	proxy := eth.GetProxyByLockedEthereumAddress(contractAddress)
+	proxy := heco.GetProxyByTokenAddress(hecoContract1Address)
 	name, err := proxy.Contract.Name(nil)
 	if err != nil {
 		t.Error(err)
@@ -43,5 +42,5 @@ func TestChain(t *testing.T) {
 	fmt.Println("name : ", name)
 	// end
 	time.Sleep(30 * time.Second)
-	eth.StopEventListener()
+	heco.StopEventListener()
 }

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/SmartMeshFoundation/distributed-notary-wuhan-latest/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/service/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
@@ -417,15 +417,6 @@ func parseMessageToSign(msgName string, buf []byte) (msg messagetosign.MessageTo
 		err = msg.Parse(buf)
 	case messagetosign.EthereumCancelNonceTxDataName:
 		msg = new(messagetosign.EthereumCancelNonceTxData)
-		err = msg.Parse(buf)
-	case messagetosign.BitcoinLockinTXDataName:
-		msg = new(messagetosign.BitcoinLockinTXData)
-		err = msg.Parse(buf)
-	case messagetosign.BitcoinPrepareLockoutTXDataName:
-		msg = new(messagetosign.BitcoinPrepareLockoutTXData)
-		err = msg.Parse(buf)
-	case messagetosign.BitcoinCancelPrepareLockoutTXDataName:
-		msg = new(messagetosign.BitcoinCancelPrepareLockoutTXData)
 		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")

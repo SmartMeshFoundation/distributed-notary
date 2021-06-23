@@ -14,7 +14,7 @@ import (
 )
 
 // ErrNotConnected :
-var ErrNotConnected = errors.New("eth not connected")
+var ErrNotConnected = errors.New("heco not connected")
 
 //SafeEthClient :
 type SafeEthClient struct {

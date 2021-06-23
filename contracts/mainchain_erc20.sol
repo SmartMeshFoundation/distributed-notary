@@ -14,7 +14,7 @@ contract Owned {
     address public owner;
 
     /// @notice The Constructor assigns the message sender to be `owner`
-      constructor() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -39,18 +39,18 @@ contract Owned {
 
 
 
-contract LockedEthereum is Owned {
+contract LockedSpectrum is Owned {
 
     function () public {
         revert();
     }
 
-    string public name = "LockedEthereum for atmosphere";                   //fancy name
+    string public name = "LockedSpectrum for atmosphere";                   //fancy name
     string public version = 'v0.1';
-    string public constant symbol = "LETH";
+    string public constant symbol = "LSMT";
 
     struct LockinInfo  {
-     bytes32 SecretHash; //这是lockin发起人提供的hash
+        bytes32 SecretHash; //这是lockin发起人提供的hash
         uint256 Expiration; //锁过期时间
         uint256 value; //转入金额
     }
@@ -68,7 +68,7 @@ contract LockedEthereum is Owned {
     }
     mapping(address=>LockoutInfo) public lockout_htlc; //lockout 过程中的HTLC
 
-      constructor() public {
+    constructor() public {
 
     }
     //ze:主链expiration
@@ -136,7 +136,7 @@ contract LockedEthereum is Owned {
         require(value>0);
         require(li.value==0);
         require(expiration > block.number + 300);
-//        require(expiration>50000); //不能低于三天,这样一旦公证人做出了错误的lockout,也应该
+        //        require(expiration>50000); //不能低于三天,这样一旦公证人做出了错误的lockout,也应该
         li.value=value;
         li.SecretHash=secret_hash;
         li.Expiration=expiration;

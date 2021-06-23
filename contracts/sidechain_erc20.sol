@@ -118,7 +118,7 @@ contract StandardToken is Token,Owned {
     mapping (address => mapping (address => uint256)) allowed;
 }
 
-contract AtmosphereToken is StandardToken {
+contract HecoToken is StandardToken {
 
     function () public {
         revert();

@@ -17,7 +17,7 @@ type NewBlockEvent struct {
 func CreateNewBlockEvent(blockNumber uint64) NewBlockEvent {
 	e := NewBlockEvent{}
 	e.BaseEvent = &chain.BaseEvent{}
-	e.ChainName = cfg.ETH.Name
+	e.ChainName = cfg.HECO.Name
 	e.FromAddress = utils.EmptyAddress
 	e.BlockNumber = blockNumber
 	e.Time = time.Now()

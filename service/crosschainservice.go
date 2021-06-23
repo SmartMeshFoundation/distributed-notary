@@ -3,27 +3,19 @@ package service
 import (
 	"bytes"
 	"crypto/ecdsa"
-	"fmt"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-
 	"errors"
+	"fmt"
 
 	"math/big"
 
 	"time"
 
-	"strings"
-
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/userapi"
 	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
-	"github.com/SmartMeshFoundation/distributed-notary/utils"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcutil"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -129,62 +121,12 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 
 func (cs *CrossChainService) callMCLockin(lockinInfo *models.LockinInfo) (err error) {
 	// 无需使用分布式签名,用自己的签名就好
-	if cs.meta.MCName == cfg.ETH.Name {
+	if cs.meta.MCName == cfg.SMC.Name {
 		// 以太坊直接使用自己私钥调用合约即可
 		auth := bind.NewKeyedTransactor(cs.selfPrivateKey)
 		return cs.mcProxy.Lockin(auth, lockinInfo.MCUserAddressHex, lockinInfo.Secret)
-	} else if cs.meta.MCName == cfg.BTC.Name {
-		// 比特币的lockin操作需要分布式签名
-		return cs.callBTCLockin(lockinInfo)
 	}
 	return errors.New("unknown chain")
-}
-
-func (cs *CrossChainService) callBTCLockin(lockinInfo *models.LockinInfo) (err error) {
-	// 0. 获取bs
-	bs := cs.mc.(*bitcoin.BTCService)
-	// 1. privateKey状态校验
-	privateKeyInfo, err := cs.lockinHandler.db.LoadPrivateKeyInfo(cs.meta.SCTokenOwnerKey)
-	if err != nil {
-		return
-	}
-	if privateKeyInfo.Status != models.PrivateKeyNegotiateStatusFinished {
-		panic("never happen")
-	}
-	// 2. 估算主链交易手续费
-	fee := int64(1000)
-	// 3. 构造MsgToSign
-	msgToSign, err := messagetosign.NewBitcoinLockinTXData(bs, lockinInfo, privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()), fee)
-	if err != nil {
-		return
-	}
-	// 4. 签名
-	var dsmSignature []byte
-	// 考虑到公证人之间区块高度同步的误差导致其他公证人拒绝本次签名,如果签名出错,则重试
-	for {
-		dsmSignature, _, err = cs.dispatchService.getNotaryService().startDistributedSignAndWait(msgToSign, privateKeyInfo)
-		if err != nil {
-			log.Error(fmt.Sprintf("callBTCLockin startDistributedSignAndWait error, retry in 10 seconds"))
-			time.Sleep(10 * time.Second)
-			continue
-		}
-		break
-	}
-
-	// 5. 构造RawTransaction
-	tx, err := msgToSign.BuildRawTransaction(dsmSignature)
-	if err != nil {
-		return
-	}
-	// 6. 发送交易到链上
-	log.Info("call PrepareLockin on bitcoin with account=%s", privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()))
-	txHash, err := bs.GetBtcRPCClient().SendRawTransaction(tx, false)
-	if err != nil {
-		log.Error(fmt.Sprintf("callBTCLockin SendRawTransaction err : %s", err.Error()))
-		return
-	}
-	log.Trace("callBTCLockin txHash=%s", txHash.String())
-	return
 }
 
 func (cs *CrossChainService) callSCCancelLockin(userAddressHex string) (err error) {
@@ -199,74 +141,11 @@ func (cs *CrossChainService) callSCCancelLockin(userAddressHex string) (err erro
 
 // MCPLO 需使用分布式签名
 func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
-	if localLockoutInfo.MCChainName == cfg.ETH.Name {
+	if localLockoutInfo.MCChainName == cfg.SMC.Name {
 		return cs.callEthereumPrepareLockout(req, privateKeyInfo, localLockoutInfo)
-	}
-	if localLockoutInfo.MCChainName == cfg.BTC.Name {
-		return cs.callBitcoinPrepareLockout(req, privateKeyInfo, localLockoutInfo)
 	}
 	err = fmt.Errorf("unknown chain : %s", localLockoutInfo.MCChainName)
 	log.Error(err.Error())
-	return
-}
-func (cs *CrossChainService) callBitcoinPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
-	amount := localLockoutInfo.Amount
-	// 0. 获取可用utxo
-	utxoKeysStr, err := cs.dispatchService.applyUTXO(cs.meta.MCName, privateKeyInfo.Key, req.SecretHash.String(), amount)
-	if err != nil {
-		return
-	}
-	// 1. 获取bs
-	bs := cs.mc.(*bitcoin.BTCService)
-	// 1.5 获取fee
-	fee := int64(1000)
-	// 2. 对需要使用的每个utxo发起DSM
-	utxoKeys := strings.Split(utxoKeysStr, "-")
-	var tx *wire.MsgTx
-	for index := range utxoKeys {
-		//构造
-		msgToSign, err2 := messagetosign.NewBitcoinPrepareLockoutTXData(req, bs, localLockoutInfo, privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()), cs.lockoutHandler.db, utxoKeysStr, fee, index)
-		if err2 != nil {
-			err = err2
-			return
-		}
-		if tx == nil {
-			// 保存一份originTx,用于收集填写Signature
-			tx = msgToSign.GetOriginTxCopy()
-		}
-		// 签名
-		var signature []byte
-		signature, _, err = cs.dispatchService.getNotaryService().startDistributedSignAndWait(msgToSign, privateKeyInfo)
-		if err != nil {
-			return
-		}
-		// 按比特币标准调整签名
-		tx.TxIn[index].SignatureScript = msgToSign.BuildBTCSignatureScript(signature)
-		// 注册outpoint监听
-		outpointToListen := msgToSign.GetOriginTxCopy().TxIn[index].PreviousOutPoint
-		err = bs.RegisterOutpoint(outpointToListen, &bitcoin.BTCOutpointRelevantInfo{
-			Use:           bitcoin.OutpointUseToPrepareLockout,
-			SecretHash:    req.SecretHash,
-			LockScriptHex: common.Bytes2Hex(privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()).PubKey().SerializeCompressed()),
-			Data4PrepareLockout: &bitcoin.BTCOutpointRelevantInfo4PrepareLockout{
-				// 保存用户主链取钱的地址
-				UserAddressPublicKeyHashHex: req.GetSignerBTCPublicKey(bs.GetNetParam()).AddressPubKeyHash().String(),
-				MCExpiration:                localLockoutInfo.MCExpiration,
-				TxOutLockScriptHex:          msgToSign.GetLockScriptHex(),
-			},
-		})
-		if err != nil {
-			log.Error(err.Error())
-		}
-	}
-	// 4. 发送交易
-	log.Info("call PrepareLockout on bitcoin with account=%s", privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()))
-	txHash, err := bs.GetBtcRPCClient().SendRawTransaction(tx, false)
-	if err != nil {
-		log.Error(fmt.Sprintf("callBTCLockin SendRawTransaction err : %s", err.Error()))
-		return
-	}
-	log.Trace("callBTCPrepareLockout txHash=%s", txHash.String())
 	return
 }
 
@@ -319,7 +198,7 @@ func (cs *CrossChainService) callSCLockout(userAddressHex string, secret common.
 }
 
 func (cs *CrossChainService) callMCCancelLockout(userAddressHex string) (err error) {
-	if cs.meta.MCName == cfg.ETH.Name {
+	if cs.meta.MCName == cfg.SMC.Name {
 		return cs.callEthereumCancelLockout(userAddressHex)
 	}
 	//if cs.meta.MCName == cfg.BTC.Name {
@@ -334,38 +213,6 @@ func (cs *CrossChainService) callEthereumCancelLockout(userAddressHex string) (e
 	// 以太坊 无需使用分布式签名,用自己的签名就好
 	auth := bind.NewKeyedTransactor(cs.selfPrivateKey)
 	return cs.scTokenProxy.CancelLockout(auth, userAddressHex)
-}
-
-func (cs *CrossChainService) callBitcoinCancelLockout(lockoutInfo *models.LockoutInfo) (err error) {
-	// 0. privateKey状态校验
-	privateKeyInfo, err := cs.lockinHandler.db.LoadPrivateKeyInfo(cs.meta.SCTokenOwnerKey)
-	if err != nil {
-		return
-	}
-	if privateKeyInfo.Status != models.PrivateKeyNegotiateStatusFinished {
-		panic("never happen")
-	}
-	// 1. 估算手续费
-	fee := int64(1000)
-	// 2. 构造MsgToSign
-	bs := cs.mc.(*bitcoin.BTCService)
-	msgToSign := messagetosign.NewBitcoinCancelPrepareLockoutTXData(lockoutInfo, privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()), fee)
-	// 3. 签名
-	dsmSignature, _, err := cs.dispatchService.getNotaryService().startDistributedSignAndWait(msgToSign, privateKeyInfo)
-	// 4. 构造RawTransaction
-	tx, err := msgToSign.BuildRawTransaction(dsmSignature)
-	if err != nil {
-		return
-	}
-	// 6. 发送交易到链上
-	log.Info("call CancelPrepareLockout on bitcoin with account=%s lockTime=%d", privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()), tx.LockTime)
-	txHash, err := bs.GetBtcRPCClient().SendRawTransaction(tx, false)
-	if err != nil {
-		log.Error(fmt.Sprintf("callBitcoinCancelLockout SendRawTransaction err : %s", err.Error()))
-		return
-	}
-	log.Trace("callBitcoinCancelLockout txHash=%s", txHash.String())
-	return
 }
 
 /*
@@ -395,7 +242,7 @@ func (cs *CrossChainService) calculateSCExpiration(mcExpiration uint64) (scExpir
 }
 
 func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.SCPrepareLockinRequest) (lockinInfo *models.LockinInfo, err error) {
-	if cs.meta.MCName == cfg.ETH.Name {
+	if cs.meta.MCName == cfg.SMC.Name {
 		// 以太坊,收到用户请求时,lockinInfo必须已经存在,仅做校验工作
 		mcUserAddress := common.BytesToAddress(req.MCUserAddress)
 		lockinInfo, err = cs.lockinHandler.getLockin(req.SecretHash)
@@ -414,84 +261,6 @@ func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.
 		if lockinInfo.SCLockStatus != models.LockStatusNone {
 			err = fmt.Errorf("SCLockStatus %d wrong", lockinInfo.SCLockStatus)
 			return
-		}
-		return
-	}
-	if cs.meta.MCName == cfg.BTC.Name {
-		btcService := cs.mc.(*bitcoin.BTCService)
-		net := btcService.GetNetParam()
-		mcUserAddress, err2 := btcutil.NewAddressPubKeyHash(req.MCUserAddress, net)
-		if err2 != nil {
-			log.Error(err2.Error())
-			return nil, err2
-		}
-		notaryPublicKeyHash, err2 := btcutil.DecodeAddress(cs.meta.MCLockedPublicKeyHashStr, net)
-		if err2 != nil {
-			panic("never happen")
-		}
-		notaryAddress := notaryPublicKeyHash.(*btcutil.AddressPubKeyHash)
-		// 比特币,收到用户请求之前,公证人无从得知任何信息,所以这里必须根据用户的请求验证链上数据,并构造lockinInfo
-		// 1. 根据用户参数本地生成脚本hash
-		builder := btcService.GetPrepareLockInScriptBuilder(mcUserAddress, notaryAddress, req.MCLockedAmount, req.SecretHash[:], req.MCExpiration)
-		lockScript, lockAddr, _ := builder.GetPKScript()
-		// 2. 从链上查询tx并在其中查找锁定地址为上一步生成的hash值的outpoint及交易发生的blockNumber
-		mcTXHash, err2 := chainhash.NewHash(req.MCTXHash)
-		if err2 != nil {
-			log.Error(err2.Error())
-			return nil, err2
-		}
-		btcPrepareLockinInfo, err2 := btcService.GetPrepareLockinInfo(*mcTXHash, lockAddr.String(), req.MCLockedAmount)
-		if err2 != nil {
-			return nil, err2
-		}
-		// 3. 校验mcExpiration
-		mcExpiration := req.MCExpiration.Uint64()
-		if mcExpiration-btcPrepareLockinInfo.BlockNumber <= cfg.GetMinExpirationBlock4User(cfg.BTC.Name) {
-			err2 = fmt.Errorf("mcExpiration must bigger than %d", cfg.GetMinExpirationBlock4User(cfg.BTC.Name))
-			return nil, err2
-		}
-		// 4 计算scExpiration
-		scExpiration := cs.calculateSCExpiration(mcExpiration)
-		// 5. 构造LockinInfo
-		amount := big.NewInt(int64(req.MCLockedAmount))
-		lockinInfo = &models.LockinInfo{
-			MCChainName:      cs.meta.MCName,
-			SecretHash:       req.SecretHash,
-			Secret:           utils.EmptyHash,
-			MCUserAddressHex: mcUserAddress.String(),
-			SCUserAddress:    req.GetSignerETHAddress(),
-			SCTokenAddress:   cs.meta.SCToken,
-			Amount:           amount,
-			MCExpiration:     mcExpiration,
-			SCExpiration:     scExpiration,
-			MCLockStatus:     models.LockStatusLock,
-			SCLockStatus:     models.LockStatusNone,
-			//Data:               data,
-			NotaryIDInCharge:          models.UnknownNotaryIDInCharge,
-			StartTime:                 btcPrepareLockinInfo.BlockNumberTime,
-			StartMCBlockNumber:        btcPrepareLockinInfo.BlockNumber,
-			BTCPrepareLockinTXHashHex: btcPrepareLockinInfo.TxHash.String(),
-			BTCPrepareLockinVout:      uint32(btcPrepareLockinInfo.Index),
-			CrossFee:                  cs.dispatchService.calculateCrossFee(cs.meta.MCName, amount), // 计算跨链手续费
-		}
-		// 6. 调用handler处理
-		err2 = cs.lockinHandler.registerLockin(lockinInfo)
-		if err2 != nil {
-			err2 = fmt.Errorf("lockinHandler.registerLockin err2 = %s", err2.Error())
-			return nil, err2
-		}
-		// 7. 注册需要监听的outpoint到BTCService
-		err2 = btcService.RegisterOutpoint(wire.OutPoint{
-			Hash:  btcPrepareLockinInfo.TxHash,
-			Index: lockinInfo.BTCPrepareLockinVout,
-		}, &bitcoin.BTCOutpointRelevantInfo{
-			Use:           bitcoin.OutpointUseToLockinOrCancel,
-			SecretHash:    req.SecretHash,
-			LockScriptHex: common.Bytes2Hex(lockScript),
-		})
-		if err2 != nil {
-			log.Error("lockinHandler.RegisterOutpoint err2 = %s", err2.Error())
-			// 这里不返回错误,注册失败不能影响操作
 		}
 		return
 	}

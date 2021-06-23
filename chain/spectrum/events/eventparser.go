@@ -12,19 +12,20 @@ import (
 
 	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
+	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func createBaseEventFromSpectrumLog(name chain.EventName, log types.Log) *chain.BaseEvent {
+func createBaseEventFromEthereumLog(name chain.EventName, log types.Log) *chain.BaseEvent {
 	e := &chain.BaseEvent{}
 	e.ChainName = cfg.SMC.Name
 	e.FromAddress = log.Address
 	e.BlockNumber = log.BlockNumber
 	e.Time = time.Now()
 	e.EventName = name
-	e.SCTokenAddress = log.Address // spectrum 为侧链,侧链合约地址即为SCTokenAddress
+	e.SCTokenAddress = utils.EmptyAddress // ethereum 为主链,填空
 	return e
 }
 

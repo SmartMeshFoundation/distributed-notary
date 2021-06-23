@@ -23,7 +23,7 @@ const (
 	/*
 		用于创建协商nonce的PBFT
 	*/
-	pbftTypeEthereum
+	pbftTypeSpectrum
 	/*
 		用于创建协商btc prepareLockout的Cutxo
 	*/

@@ -32,11 +32,8 @@ type ChainCfg struct {
 // SMC Spectrum链相关参数
 var SMC *ChainCfg
 
-// BTC Bitcoin链相关参数
-var BTC *ChainCfg
-
-// ETH Ethereum链相关参数
-var ETH *ChainCfg
+// HECO Ethereum链相关参数
+var HECO *ChainCfg
 
 // CrossCfg 跨链相关参数
 type CrossCfg struct {

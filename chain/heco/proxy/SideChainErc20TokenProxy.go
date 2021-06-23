@@ -2,11 +2,13 @@ package proxy
 
 import (
 	"context"
+
 	"fmt"
+
 	"math/big"
 
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/client"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/heco/client"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/heco/contracts"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -14,32 +16,32 @@ import (
 	"github.com/nkbai/log"
 )
 
-// LockedEthereumProxy :
-type LockedEthereumProxy struct {
-	Contract *contracts.LockedEthereum
+// SideChainErc20TokenProxy :
+type SideChainErc20TokenProxy struct {
+	Contract *contracts.HecoToken
 	conn     *client.SafeEthClient
 }
 
-// NewLockedEthereumProxy :
-func NewLockedEthereumProxy(conn *client.SafeEthClient, contractAddress common.Address) (p *LockedEthereumProxy, err error) {
-	code, err := conn.CodeAt(context.Background(), contractAddress, nil)
+// NewSideChainErc20TokenProxy :
+func NewSideChainErc20TokenProxy(conn *client.SafeEthClient, tokenAddress common.Address) (p *SideChainErc20TokenProxy, err error) {
+	code, err := conn.CodeAt(context.Background(), tokenAddress, nil)
 	if err == nil && len(code) > 0 {
-		c, err2 := contracts.NewLockedEthereum(contractAddress, conn)
+		c, err2 := contracts.NewHecoToken(tokenAddress, conn)
 		if err = err2; err != nil {
 			return
 		}
-		p = &LockedEthereumProxy{
+		p = &SideChainErc20TokenProxy{
 			Contract: c,
 			conn:     conn,
 		}
 		return
 	}
-	err = fmt.Errorf("no code at %s", contractAddress.String())
+	err = fmt.Errorf("no code at %s", tokenAddress.String())
 	return
 }
 
 // QueryLockin impl chain.ContractProxy
-func (p *LockedEthereumProxy) QueryLockin(accountHex string) (secretHash common.Hash, expiration uint64, amount *big.Int, err error) {
+func (p *SideChainErc20TokenProxy) QueryLockin(accountHex string) (secretHash common.Hash, expiration uint64, amount *big.Int, err error) {
 	account := common.HexToAddress(accountHex)
 	var cExpiration *big.Int
 	secretHash, cExpiration, amount, err = p.Contract.QueryLockin(nil, account)
@@ -51,7 +53,7 @@ func (p *LockedEthereumProxy) QueryLockin(accountHex string) (secretHash common.
 }
 
 // QueryLockout impl chain.ContractProxy
-func (p *LockedEthereumProxy) QueryLockout(accountHex string) (secretHash common.Hash, expiration uint64, amount *big.Int, err error) {
+func (p *SideChainErc20TokenProxy) QueryLockout(accountHex string) (secretHash common.Hash, expiration uint64, amount *big.Int, err error) {
 	account := common.HexToAddress(accountHex)
 	var cExpiration *big.Int
 	secretHash, cExpiration, amount, err = p.Contract.QueryLockout(nil, account)
@@ -62,16 +64,15 @@ func (p *LockedEthereumProxy) QueryLockout(accountHex string) (secretHash common
 	return
 }
 
-// PrepareLockin : impl chain.ContractProxy
-// 主链的PrepareLockin由用户发起,不需要使用accountHex参数,传""即可
-func (p *LockedEthereumProxy) PrepareLockin(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
-	opts.Value = amount
+// PrepareLockin impl chain.ContractProxy
+func (p *SideChainErc20TokenProxy) PrepareLockin(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
+	account := common.HexToAddress(accountHex)
 	expiration2 := new(big.Int).SetUint64(expiration)
-	tx, err := p.Contract.PrepareLockin(opts, secretHash, expiration2)
+	var tx *types.Transaction
+	tx, err = p.Contract.PrepareLockin(opts, account, secretHash, expiration2, amount)
 	if err != nil {
 		return
 	}
-	log.Info("Ethereum PrepareLockin tx=%s", tx.Hash().String())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -79,19 +80,17 @@ func (p *LockedEthereumProxy) PrepareLockin(opts *bind.TransactOpts, accountHex 
 		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
 		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
 	}
-	fmt.Printf("PrepareLockin tx=%s\n", tx)
 	return
 }
 
 // Lockin impl chain.ContractProxy
-func (p *LockedEthereumProxy) Lockin(opts *bind.TransactOpts, accountHex string, secret common.Hash) (err error) {
+func (p *SideChainErc20TokenProxy) Lockin(opts *bind.TransactOpts, accountHex string, secret common.Hash) (err error) {
 	account := common.HexToAddress(accountHex)
 	var tx *types.Transaction
 	tx, err = p.Contract.Lockin(opts, account, secret)
 	if err != nil {
 		return
 	}
-	log.Info("Ethereum Lockin tx=%s", tx.Hash().String())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -103,14 +102,13 @@ func (p *LockedEthereumProxy) Lockin(opts *bind.TransactOpts, accountHex string,
 }
 
 // CancelLockin impl chain.ContractProxy
-func (p *LockedEthereumProxy) CancelLockin(opts *bind.TransactOpts, accountHex string) (err error) {
+func (p *SideChainErc20TokenProxy) CancelLockin(opts *bind.TransactOpts, accountHex string) (err error) {
 	account := common.HexToAddress(accountHex)
 	var tx *types.Transaction
 	tx, err = p.Contract.CancelLockin(opts, account)
 	if err != nil {
 		return
 	}
-	log.Info("Ethereum CancelLockin tx=%s", tx.Hash().String())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -121,16 +119,15 @@ func (p *LockedEthereumProxy) CancelLockin(opts *bind.TransactOpts, accountHex s
 	return
 }
 
-// PrepareLockout : impl chain.ContractProxy
-func (p *LockedEthereumProxy) PrepareLockout(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
-	//opts.Value = amount
-	account := common.HexToAddress(accountHex)
+// PrepareLockout impl chain.ContractProxy
+// 侧链的PrepareLockout由用户发起,不需要使用accountHex参数,传""即可
+func (p *SideChainErc20TokenProxy) PrepareLockout(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
 	expiration2 := new(big.Int).SetUint64(expiration)
-	tx, err := p.Contract.PrepareLockoutHTLC(opts, account, secretHash, expiration2, amount)
+	var tx *types.Transaction
+	tx, err = p.Contract.PrepareLockout(opts, secretHash, expiration2, amount)
 	if err != nil {
 		return
 	}
-	log.Info("Ethereum PrepareLockout tx=%s", tx.Hash().String())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -142,14 +139,13 @@ func (p *LockedEthereumProxy) PrepareLockout(opts *bind.TransactOpts, accountHex
 }
 
 // Lockout impl chain.ContractProxy
-func (p *LockedEthereumProxy) Lockout(opts *bind.TransactOpts, accountHex string, secret common.Hash) (err error) {
+func (p *SideChainErc20TokenProxy) Lockout(opts *bind.TransactOpts, accountHex string, secret common.Hash) (err error) {
 	account := common.HexToAddress(accountHex)
 	var tx *types.Transaction
 	tx, err = p.Contract.Lockout(opts, account, secret)
 	if err != nil {
 		return
 	}
-	log.Info("Ethereum Lockout tx=%s", tx.Hash().String())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
@@ -157,19 +153,17 @@ func (p *LockedEthereumProxy) Lockout(opts *bind.TransactOpts, accountHex string
 		log.Error("failed tx :\n%s", utils.ToJSONStringFormat(tx))
 		log.Error("failed receipt :\n%s", utils.ToJSONStringFormat(r))
 	}
-	fmt.Printf("lockout tx=%s\n", tx)
 	return
 }
 
 // CancelLockout impl chain.ContractProxy
-func (p *LockedEthereumProxy) CancelLockout(opts *bind.TransactOpts, accountHex string) (err error) {
+func (p *SideChainErc20TokenProxy) CancelLockout(opts *bind.TransactOpts, accountHex string) (err error) {
 	account := common.HexToAddress(accountHex)
 	var tx *types.Transaction
-	tx, err = p.Contract.CancleLockOut(opts, account)
+	tx, err = p.Contract.CancelLockOut(opts, account)
 	if err != nil {
 		return
 	}
-	log.Info("Ethereum CancelLockout tx=%s", tx.Hash().String())
 	ctx := context.Background()
 	r, err := bind.WaitMined(ctx, p.conn, tx)
 	if r.Status != types.ReceiptStatusSuccessful {
