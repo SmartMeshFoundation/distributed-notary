@@ -37,8 +37,6 @@ contract Owned {
     }
 }
 
-
-
 contract LockedEthereum is Owned {
 
     function () public {
@@ -71,8 +69,8 @@ contract LockedEthereum is Owned {
       constructor() public {
 
     }
-    //ze:主链expiration
-    //ce:侧链expiration
+    //ze: mainchain expiration
+    //ce:sidechain expiration
     //z:主链确认块数转换到侧链的确认块数(比如spectrum和以太坊都是15秒,那转换比率就是1)
     //c:侧链确认块数
     //用户:交易发起人
