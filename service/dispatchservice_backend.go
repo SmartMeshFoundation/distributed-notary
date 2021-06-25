@@ -181,7 +181,7 @@ func (ds *DispatchService) updateLockoutInfoNotaryIDInChargeID(scTokenAddress co
 	return lh.updateLockout(lockinInfo)
 }
 
-var debugpbft = false
+var debugpbft = true
 
 //纯粹试了测试需要,避开pbft, 走传统的nonce server
 func (ds *DispatchService) applyNonceFromNonceServerFake(chainName string, privKeyID common.Hash, reason string) (nonce uint64, err error) {
