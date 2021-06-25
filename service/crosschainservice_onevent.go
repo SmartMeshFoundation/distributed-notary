@@ -64,7 +64,7 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 		err = cs.onSCPrepareLockout(event)
 	case smcevents.PrepareLockoutEvent: // MCPLO
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC PrepareLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
-		err = cs.onMCPrepareLockout4Ethereum(event)
+		err = cs.onMCPrepareLockout4Spectrum(event)
 	case smcevents.LockoutSecretEvent: // MCLOS
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC LockoutSecretEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onMCLockoutSecret4Spectrum(event)
@@ -73,7 +73,7 @@ func (cs *CrossChainService) OnEvent(e chain.Event) {
 		err = cs.onSCLockout(event)
 	case smcevents.CancelLockoutEvent: // MCCancelLO
 		log.Info(SCTokenLogMsg(cs.meta, "Receive MC CancelLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
-		err = cs.onMCCancelLockout4Ethereum(event)
+		err = cs.onMCCancelLockout4Spectrum(event)
 	case hecoevents.CancelLockoutEvent: // SCCancelLO
 		log.Info(SCTokenLogMsg(cs.meta, "Receive SC CancelLockoutEvent :\n%s", utils.ToJSONStringFormat(event)))
 		err = cs.onSCCancelLockout(event)
@@ -153,7 +153,7 @@ func (cs *CrossChainService) onMCPrepareLockin4Spectrum(event smcevents.PrepareL
 		err = fmt.Errorf("mcProxy.QueryLockin err = %s", err.Error())
 		return
 	}
-	log.Info("onMCPrepareLockin4Ethereum mcExpiration ,secretHash=%s,mcExpiration=%d", secretHash, mcExpiration)
+	log.Info("onMCPrepareLockin4Spectrum mcExpiration ,secretHash=%s,mcExpiration=%d", secretHash, mcExpiration)
 	// 1.5 校验mcExpiration
 	//如果写mcExpiration-event.BlockNumber存在溢出.
 	if mcExpiration <= cfg.GetMinExpirationBlock4User(cs.meta.MCName)+event.BlockNumber {
@@ -409,7 +409,7 @@ func (cs *CrossChainService) onSCPrepareLockout(event hecoevents.PrepareLockoutE
 该事件的发起方为公证人,可能为自己
 事件为已确认事件,修改LockoutInfo状态
 */
-func (cs *CrossChainService) onMCPrepareLockout4Ethereum(event smcevents.PrepareLockoutEvent) (err error) {
+func (cs *CrossChainService) onMCPrepareLockout4Spectrum(event smcevents.PrepareLockoutEvent) (err error) {
 	// 1. 查询
 	secretHash, mcExpiration, _, err := cs.mcProxy.QueryLockout(event.Account.String())
 	if err != nil {
@@ -516,7 +516,7 @@ func (cs *CrossChainService) onSCLockout(event hecoevents.LockoutEvent) (err err
 /*
 主链取消
 */
-func (cs *CrossChainService) onMCCancelLockout4Ethereum(event smcevents.CancelLockoutEvent) (err error) {
+func (cs *CrossChainService) onMCCancelLockout4Spectrum(event smcevents.CancelLockoutEvent) (err error) {
 	// 1. 获取本地LockoutInfo信息
 	lockoutInfo, err := cs.lockoutHandler.getLockout(event.SecretHash)
 	if err != nil {

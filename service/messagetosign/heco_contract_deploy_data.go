@@ -21,19 +21,19 @@ import (
 
 var errShouldBe = errors.New("should error")
 
-// SpectrumContractDeployTXDataName 用做消息传输时识别
-const SpectrumContractDeployTXDataName = "SpectrumContractDeployTXData"
+// HecoContractDeployTXDataName 用做消息传输时识别
+const HecoContractDeployTXDataName = "HecoContractDeployTXData"
 
-// SpectrumContractDeployTXData :
-type SpectrumContractDeployTXData struct {
+// HecoContractDeployTXData :
+type HecoContractDeployTXData struct {
 	BytesToSign     []byte `json:"bytes_to_sign"`
 	Nonce           uint64 `json:"nonce"`
 	DeployChainName string `json:"deploy_chain_name"`
 	TokenName       string `json:"token_name"` // 如果为侧链token,需要token名
 }
 
-// NewSpectrumContractDeployTX :
-func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address, nonce uint64, params ...string) (tx *SpectrumContractDeployTXData) {
+// NewHecoContractDeployTX :
+func NewHecoContractDeployTX(c chain.Chain, callerAddress common.Address, nonce uint64, params ...string) (tx *HecoContractDeployTXData) {
 	var txBytes []byte
 	transactor := &bind.TransactOpts{
 		From:  callerAddress,
@@ -51,7 +51,7 @@ func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address, no
 		// 这里不可能发生
 		panic(err)
 	}
-	tx = &SpectrumContractDeployTXData{
+	tx = &HecoContractDeployTXData{
 		Nonce:           nonce,
 		BytesToSign:     txBytes,
 		DeployChainName: c.GetChainName(),
@@ -63,17 +63,17 @@ func NewSpectrumContractDeployTX(c chain.Chain, callerAddress common.Address, no
 }
 
 // GetSignBytes : impl MessageToSign
-func (s *SpectrumContractDeployTXData) GetSignBytes() []byte {
+func (s *HecoContractDeployTXData) GetSignBytes() []byte {
 	return s.BytesToSign
 }
 
 // GetName : impl MessageToSign
-func (s *SpectrumContractDeployTXData) GetName() string {
-	return SpectrumContractDeployTXDataName
+func (s *HecoContractDeployTXData) GetName() string {
+	return HecoContractDeployTXDataName
 }
 
 // GetTransportBytes : impl MessageToSign
-func (s *SpectrumContractDeployTXData) GetTransportBytes() []byte {
+func (s *HecoContractDeployTXData) GetTransportBytes() []byte {
 	buf, err := json.Marshal(s)
 	if err != nil {
 		panic(err)
@@ -82,23 +82,23 @@ func (s *SpectrumContractDeployTXData) GetTransportBytes() []byte {
 }
 
 // Parse : impl MessageToSign
-func (s *SpectrumContractDeployTXData) Parse(buf []byte) error {
+func (s *HecoContractDeployTXData) Parse(buf []byte) error {
 	if buf == nil || len(buf) == 0 {
-		return errors.New("can not parse empty data to SpectrumContractDeployTXData")
+		return errors.New("can not parse empty data to HecoContractDeployTXData")
 	}
 	return json.Unmarshal(buf, s)
 }
 
 // VerifySignBytes :
-func (s *SpectrumContractDeployTXData) VerifySignBytes(c chain.Chain, callerAddress common.Address) (err error) {
-	var local *SpectrumContractDeployTXData
+func (s *HecoContractDeployTXData) VerifySignBytes(c chain.Chain, callerAddress common.Address) (err error) {
+	var local *HecoContractDeployTXData
 	if s.DeployChainName == cfg.SMC.Name {
-		local = NewSpectrumContractDeployTX(c, callerAddress, s.Nonce, s.TokenName)
+		local = NewHecoContractDeployTX(c, callerAddress, s.Nonce, s.TokenName)
 	} else {
-		local = NewSpectrumContractDeployTX(c, callerAddress, s.Nonce)
+		local = NewHecoContractDeployTX(c, callerAddress, s.Nonce)
 	}
 	if bytes.Compare(local.GetSignBytes(), s.GetSignBytes()) != 0 {
-		err = fmt.Errorf("SpectrumContractDeployTXData.VerifySignBytes() fail,maybe attack")
+		err = fmt.Errorf("HecoContractDeployTXData.VerifySignBytes() fail,maybe attack")
 	}
 	return
 }

@@ -85,13 +85,13 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	secretHash := localLockinInfo.SecretHash
 	amount := new(big.Int).Sub(localLockinInfo.Amount, localLockinInfo.CrossFee) // 扣除手续费
 	// 0. 获取nonce
-	nonce, err := cs.dispatchService.applyNonceFromNonceServer(cfg.SMC.Name, privateKeyInfo.Key, req.SecretHash.String(), amount)
+	nonce, err := cs.dispatchService.applyNonceFromNonceServer(cfg.HECO.Name, privateKeyInfo.Key, req.SecretHash.String(), amount)
 	if err != nil {
 		return
 	}
 	// 1. 构造MessageToSign
 	var msgToSign messagetosign.MessageToSign
-	msgToSign = messagetosign.NewSpectrumPrepareLockinTxData(cs.scTokenProxy, req, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, nonce)
+	msgToSign = messagetosign.NewHecoPrepareLockinTxData(cs.scTokenProxy, req, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, nonce)
 	// 2. 发起分布式签名
 	var signature []byte
 	var _ common.Hash
@@ -99,7 +99,7 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	if err != nil {
 		return
 	}
-	log.Info("call PrepareLockin on spectrum with account=%s, signature=%s", privateKeyInfo.ToAddress().String(), common.Bytes2Hex(signature))
+	log.Info("call PrepareLockin on heco with account=%s, signature=%s", privateKeyInfo.ToAddress().String(), common.Bytes2Hex(signature))
 	// 3. 调用合约
 	transactor := &bind.TransactOpts{
 		From:  privateKeyInfo.ToAddress(),
@@ -142,14 +142,14 @@ func (cs *CrossChainService) callSCCancelLockin(userAddressHex string) (err erro
 // MCPLO 需使用分布式签名
 func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
 	if localLockoutInfo.MCChainName == cfg.SMC.Name {
-		return cs.callEthereumPrepareLockout(req, privateKeyInfo, localLockoutInfo)
+		return cs.callSpectrumPrepareLockout(req, privateKeyInfo, localLockoutInfo)
 	}
 	err = fmt.Errorf("unknown chain : %s", localLockoutInfo.MCChainName)
 	log.Error(err.Error())
 	return
 }
 
-func (cs *CrossChainService) callEthereumPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
+func (cs *CrossChainService) callSpectrumPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
 	// 从本地获取调用合约的参数
 	mcUserAddressHex := req.GetSignerETHAddress().String()
 	mcExpiration := localLockoutInfo.MCExpiration
@@ -163,7 +163,7 @@ func (cs *CrossChainService) callEthereumPrepareLockout(req *userapi.MCPrepareLo
 	}
 	// 1. 构造MessageToSign
 	var msgToSign messagetosign.MessageToSign
-	msgToSign = messagetosign.NewEthereumPrepareLockoutTxData(cs.mcProxy, req, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, nonce)
+	msgToSign = messagetosign.NewSpectrumPrepareLockoutTxData(cs.mcProxy, req, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, nonce)
 	// 2. 发起分布式签名
 	var signature []byte
 	var _ common.Hash
@@ -171,7 +171,7 @@ func (cs *CrossChainService) callEthereumPrepareLockout(req *userapi.MCPrepareLo
 	if err != nil {
 		return
 	}
-	log.Info("call PrepareLockout on ethereum with account=%s, signature=%s", privateKeyInfo.ToAddress().String(), common.Bytes2Hex(signature))
+	log.Info("call PrepareLockout on spectrum with account=%s, signature=%s", privateKeyInfo.ToAddress().String(), common.Bytes2Hex(signature))
 	// 3. 调用合约
 	transactor := &bind.TransactOpts{
 		From:  privateKeyInfo.ToAddress(),
@@ -199,7 +199,7 @@ func (cs *CrossChainService) callSCLockout(userAddressHex string, secret common.
 
 func (cs *CrossChainService) callMCCancelLockout(userAddressHex string) (err error) {
 	if cs.meta.MCName == cfg.SMC.Name {
-		return cs.callEthereumCancelLockout(userAddressHex)
+		return cs.callSpectrumCancelLockout(userAddressHex)
 	}
 	//if cs.meta.MCName == cfg.BTC.Name {
 	//	return cs.callBitcoinCancelLockout(userAddressHex)
@@ -209,8 +209,8 @@ func (cs *CrossChainService) callMCCancelLockout(userAddressHex string) (err err
 	return
 }
 
-func (cs *CrossChainService) callEthereumCancelLockout(userAddressHex string) (err error) {
-	// 以太坊 无需使用分布式签名,用自己的签名就好
+func (cs *CrossChainService) callSpectrumCancelLockout(userAddressHex string) (err error) {
+	// spectrum 无需使用分布式签名,用自己的签名就好
 	auth := bind.NewKeyedTransactor(cs.selfPrivateKey)
 	return cs.scTokenProxy.CancelLockout(auth, userAddressHex)
 }
@@ -243,7 +243,7 @@ func (cs *CrossChainService) calculateSCExpiration(mcExpiration uint64) (scExpir
 
 func (cs *CrossChainService) getLockInInfoBySCPrepareLockInRequest(req *userapi.SCPrepareLockinRequest) (lockinInfo *models.LockinInfo, err error) {
 	if cs.meta.MCName == cfg.SMC.Name {
-		// 以太坊,收到用户请求时,lockinInfo必须已经存在,仅做校验工作
+		// SMC,收到用户请求时,lockinInfo必须已经存在,仅做校验工作
 		mcUserAddress := common.BytesToAddress(req.MCUserAddress)
 		lockinInfo, err = cs.lockinHandler.getLockin(req.SecretHash)
 		if err != nil {

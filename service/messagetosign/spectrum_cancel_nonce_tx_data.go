@@ -16,11 +16,11 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// EthereumCancelNonceTxDataName 用做消息传输时识别
-const EthereumCancelNonceTxDataName = "EthereumCancelNonceTxData"
+// SpectrumCancelNonceTxDataName 用做消息传输时识别
+const SpectrumCancelNonceTxDataName = "SpectrumCancelNonceTxData"
 
-// EthereumCancelNonceTxData :
-type EthereumCancelNonceTxData struct {
+// SpectrumCancelNonceTxData :
+type SpectrumCancelNonceTxData struct {
 	BytesToSign []byte `json:"bytes_to_sign"`
 	ChainName   string `json:"chain_name"`
 	Account     string `json:"account"`
@@ -28,8 +28,8 @@ type EthereumCancelNonceTxData struct {
 }
 
 // NewEthereumCancelNonceTxData :
-func NewEthereumCancelNonceTxData(c chain.Chain, account common.Address, nonce uint64) (data *EthereumCancelNonceTxData, chainID *big.Int, rawTx *types.Transaction, err error) {
-	data = &EthereumCancelNonceTxData{
+func NewSpectrumCancelNonceTxData(c chain.Chain, account common.Address, nonce uint64) (data *SpectrumCancelNonceTxData, chainID *big.Int, rawTx *types.Transaction, err error) {
+	data = &SpectrumCancelNonceTxData{
 		ChainName: c.GetChainName(),
 		Account:   account.String(),
 		Nonce:     nonce,
@@ -64,17 +64,17 @@ func NewEthereumCancelNonceTxData(c chain.Chain, account common.Address, nonce u
 }
 
 // GetSignBytes : impl MessageToSign
-func (d *EthereumCancelNonceTxData) GetSignBytes() []byte {
+func (d *SpectrumCancelNonceTxData) GetSignBytes() []byte {
 	return d.BytesToSign
 }
 
 // GetName : impl MessageToSign
-func (d *EthereumCancelNonceTxData) GetName() string {
-	return EthereumCancelNonceTxDataName
+func (d *SpectrumCancelNonceTxData) GetName() string {
+	return SpectrumCancelNonceTxDataName
 }
 
 // GetTransportBytes : impl MessageToSign
-func (d *EthereumCancelNonceTxData) GetTransportBytes() []byte {
+func (d *SpectrumCancelNonceTxData) GetTransportBytes() []byte {
 	buf, err := json.Marshal(d)
 	if err != nil {
 		panic(err)
@@ -83,21 +83,21 @@ func (d *EthereumCancelNonceTxData) GetTransportBytes() []byte {
 }
 
 // Parse : impl MessageToSign
-func (d *EthereumCancelNonceTxData) Parse(buf []byte) error {
+func (d *SpectrumCancelNonceTxData) Parse(buf []byte) error {
 	if buf == nil || len(buf) == 0 {
-		return errors.New("can not parse empty data to EthereumCancelNonceTxData")
+		return errors.New("can not parse empty data to SpectrumCancelNonceTxData")
 	}
 	return json.Unmarshal(buf, d)
 }
 
 // VerifySignData :
-func (d *EthereumCancelNonceTxData) VerifySignData(c chain.Chain, account common.Address) (err error) {
-	local, _, _, err := NewEthereumCancelNonceTxData(c, account, d.Nonce)
+func (d *SpectrumCancelNonceTxData) VerifySignData(c chain.Chain, account common.Address) (err error) {
+	local, _, _, err := NewSpectrumCancelNonceTxData(c, account, d.Nonce)
 	if err != nil {
 		return
 	}
 	if bytes.Compare(local.GetSignBytes(), d.GetSignBytes()) != 0 {
-		err = fmt.Errorf("EthereumCancelNonceTxData.VerifySignBytes() fail,maybe attack")
+		err = fmt.Errorf("SpectrumCancelNonceTxData.VerifySignBytes() fail,maybe attack")
 	}
 	return
 }

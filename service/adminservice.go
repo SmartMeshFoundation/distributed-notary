@@ -275,21 +275,21 @@ func (as *AdminService) distributedDeployMCContact(chainName string, privateKeyI
 	}
 	var c chain.Chain
 	c, err = as.dispatchService.getChainByName(chainName)
-	// 暂时主链只有ethereum,复用spcetrum的signer
-	return as.distributedDeployOnSpectrum(c, privateKeyInfo)
+	// 暂时主链只有spectrum,复用heco的signer
+	return as.distributedDeployOnHeco(c, privateKeyInfo)
 }
 
 func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateKeyInfo) (contractAddress common.Address, sessionID common.Hash, err error) {
 	var c chain.Chain
-	c, err = as.dispatchService.getChainByName(cfg.SMC.Name)
+	c, err = as.dispatchService.getChainByName(cfg.HECO.Name)
 	if err != nil {
 		return
 	}
-	tokenName := "SmtToken"
-	return as.distributedDeployOnSpectrum(c, privateKeyInfo, tokenName)
+	tokenName := "HecoToken"
+	return as.distributedDeployOnHeco(c, privateKeyInfo, tokenName)
 }
 
-func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo, params ...string) (contractAddress common.Address, sessionID common.Hash, err error) {
+func (as *AdminService) distributedDeployOnHeco(c chain.Chain, privateKeyInfo *models.PrivateKeyInfo, params ...string) (contractAddress common.Address, sessionID common.Hash, err error) {
 	// 0. 获取nonce
 	nonce, err := as.dispatchService.applyNonceFromNonceServer(c.GetChainName(), privateKeyInfo.Key, "deployContract", big.NewInt(0))
 	if err != nil {
@@ -297,7 +297,7 @@ func (as *AdminService) distributedDeployOnSpectrum(c chain.Chain, privateKeyInf
 	}
 	// 1. 获取待签名的数据
 	var msgToSign messagetosign.MessageToSign
-	msgToSign = messagetosign.NewSpectrumContractDeployTX(c, privateKeyInfo.ToAddress(), nonce, params...)
+	msgToSign = messagetosign.NewHecoContractDeployTX(c, privateKeyInfo.ToAddress(), nonce, params...)
 	// 2. 签名
 	var signature []byte
 	signature, sessionID, err = as.dispatchService.getNotaryService().startDistributedSignAndWait(msgToSign, privateKeyInfo)
@@ -343,9 +343,9 @@ func (as *AdminService) onCancelNonceRequest(req *userapi.CancelNonceRequest) {
 	}
 	// 1. 获取待签名的数据
 	var msgToSign messagetosign.MessageToSign
-	msgToSign, chainID, rawTx, err := messagetosign.NewEthereumCancelNonceTxData(chain, account, req.Nonce)
+	msgToSign, chainID, rawTx, err := messagetosign.NewSpectrumCancelNonceTxData(chain, account, req.Nonce)
 	if err != nil {
-		log.Error("err when NewEthereumCancelNonceTxData : %s", req.ChainName)
+		log.Error("err when NewSpectrumCancelNonceTxData : %s", req.ChainName)
 		req.WriteErrorResponse(api.ErrorCodeException, err.Error())
 		return
 	}

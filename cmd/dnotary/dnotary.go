@@ -49,32 +49,12 @@ func main() {
 		cli.StringFlag{
 			Name:  "smc-rpc-endpoint",
 			Usage: "host:port of spectrum rpc server",
-			Value: "http://127.0.0.1:17888",
+			Value: "http://106.52.171.12:18003",
 		},
 		cli.StringFlag{
-			Name:  "eth-rpc-endpoint",
-			Usage: "host:port of spectrum rpc server",
-			Value: "http://127.0.0.1:19888",
-		},
-		cli.StringFlag{
-			Name:  "btc-rpc-endpoint",
-			Usage: "host:port of bitcoin rpc server",
-			//Value: "192.168.124.10:18556",
-		},
-		cli.StringFlag{
-			Name:  "btc-rpc-user",
-			Usage: "bitcoin rpc username",
-			Value: "wuhan",
-		},
-		cli.StringFlag{
-			Name:  "btc-rpc-pass",
-			Usage: "bitcoin rpc password",
-			Value: "wuhan",
-		},
-		cli.StringFlag{
-			Name:  "btc-rpc-cert-file-path",
-			Usage: "path of bitcoin rpc cert file",
-			Value: filepath.Join(os.Getenv("HOME"), ".btcd/rpc.cert"),
+			Name:  "heco-rpc-endpoint",
+			Usage: "host:port of heco rpc server",
+			Value: "http://106.52.171.12:8545",
 		},
 		cli.StringFlag{
 			Name:  "user-listen",
@@ -173,13 +153,8 @@ func config(ctx *cli.Context) (cfg *params.Config, err error) {
 	cfg.NotaryConfFilePath = ctx.String("notary-config-file")
 	// 6. smc-rpc-endpoint
 	cfg.SmcRPCEndPoint = ctx.String("smc-rpc-endpoint")
-	// 7. smc-rpc-endpoint
-	cfg.EthRPCEndPoint = ctx.String("eth-rpc-endpoint")
-	// 7.5 params of btc-rpc
-	cfg.BtcRPCEndPoint = ctx.String("btc-rpc-endpoint")
-	cfg.BtcRPCUser = ctx.String("btc-rpc-user")
-	cfg.BtcRPCPass = ctx.String("btc-rpc-pass")
-	cfg.BtcRPCCertFilePath = ctx.String("btc-rpc-cert-file-path")
+	// 7. heco-rpc-endpoint
+	cfg.HecoRPCEndPoint = ctx.String("heco-rpc-endpoint")
 	// 8. user-listen
 	cfg.UserAPIListen = ctx.String("user-listen")
 	// 9. notary-listen

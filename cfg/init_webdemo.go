@@ -26,7 +26,7 @@ func init() {
 		Name:                  "heco",
 		BlockPeriod:           time.Second,
 		ConfirmBlockNumber:    0,
-		BlockNumberPollPeriod: 14 * time.Second,
+		BlockNumberPollPeriod: 3 * time.Second,
 		BlockNumberLogPeriod:  1,
 		RPCTimeout:            3 * time.Second,
 		CrossFeeRate:          10000,

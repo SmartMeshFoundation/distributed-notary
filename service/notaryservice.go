@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/SmartMeshFoundation/distributed-notary-wuhan-latest/chain/bitcoin"
 	"github.com/SmartMeshFoundation/distributed-notary/api"
 	"github.com/SmartMeshFoundation/distributed-notary/api/notaryapi"
 	"github.com/SmartMeshFoundation/distributed-notary/cfg"
@@ -14,7 +13,6 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/service/mecdsa"
 	"github.com/SmartMeshFoundation/distributed-notary/service/messagetosign"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
-	"github.com/btcsuite/btcd/wire"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/nkbai/log"
@@ -181,7 +179,7 @@ func (ns *NotaryService) onPKNRequest(req api.Req) {
 func (ns *NotaryService) startDistributedSignAndWait(msgToSign messagetosign.MessageToSign, privateKeyInfo *models.PrivateKeyInfo) (signature []byte, sessionID common.Hash, err error) {
 	// 1. DSMAsk
 	notaryNumNeedExpectSelf := cfg.Notaries.ThresholdCount
-	if msgToSign.GetName() == messagetosign.SpectrumContractDeployTXDataName {
+	if msgToSign.GetName() == messagetosign.HecoContractDeployTXDataName {
 		// 如果需要签名的是部署合约的tx,则要求所有公证人参与
 		notaryNumNeedExpectSelf = cfg.Notaries.ShareCount - 1
 	}
@@ -406,17 +404,17 @@ func (ns *NotaryService) getNotaryInfoByAddress(addr common.Address) (notaryInfo
 */
 func parseMessageToSign(msgName string, buf []byte) (msg messagetosign.MessageToSign, err error) {
 	switch msgName {
-	case messagetosign.SpectrumContractDeployTXDataName:
-		msg = new(messagetosign.SpectrumContractDeployTXData)
+	case messagetosign.HecoContractDeployTXDataName:
+		msg = new(messagetosign.HecoContractDeployTXData)
 		err = msg.Parse(buf)
-	case messagetosign.SpectrumPrepareLockinTxDataName:
-		msg = new(messagetosign.SpectrumPrepareLockinTxData)
+	case messagetosign.HecoPrepareLockinTxDataName:
+		msg = new(messagetosign.HecoPrepareLockinTxData)
 		err = msg.Parse(buf)
-	case messagetosign.EthereumPrepareLockoutTxDataName:
-		msg = new(messagetosign.EthereumPrepareLockoutTxData)
+	case messagetosign.SpectrumPrepareLockoutTxDataName:
+		msg = new(messagetosign.SpectrumPrepareLockoutTxData)
 		err = msg.Parse(buf)
-	case messagetosign.EthereumCancelNonceTxDataName:
-		msg = new(messagetosign.EthereumCancelNonceTxData)
+	case messagetosign.SpectrumCancelNonceTxDataName:
+		msg = new(messagetosign.SpectrumCancelNonceTxData)
 		err = msg.Parse(buf)
 	default:
 		err = fmt.Errorf("got msg to sign which does't support, maybe attack")
@@ -430,7 +428,7 @@ func parseMessageToSign(msgName string, buf []byte) (msg messagetosign.MessageTo
 func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *models.PrivateKeyInfo, msg messagetosign.MessageToSign, senderID int) (err error) {
 	switch m := msg.(type) {
 	// 1. 合约部署消息
-	case *messagetosign.SpectrumContractDeployTXData:
+	case *messagetosign.HecoContractDeployTXData:
 		log.Trace(SessionLogMsg(sessionID, "Got %s-%s MsgToSign,run checkMsgToSign...", m.GetName(), m.DeployChainName))
 		var c chain.Chain
 		c, err = ns.dispatchService.getChainByName(m.DeployChainName)
@@ -439,7 +437,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		}
 		err = m.VerifySignBytes(c, privateKeyInfo.ToAddress())
 	// 2. 侧链PrepareLockin合约调用消息
-	case *messagetosign.SpectrumPrepareLockinTxData:
+	case *messagetosign.HecoPrepareLockinTxData:
 		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
 		// 1. 获取本地lockinInfo
 		var localLockinInfo *models.LockinInfo
@@ -452,14 +450,14 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		c, err = ns.dispatchService.getChainByName(cfg.SMC.Name)
 		scTokenProxy := c.GetContractProxy(localLockinInfo.SCTokenAddress)
 		// 2. 校验
-		err = m.VerifySignData(scTokenProxy, privateKeyInfo, localLockinInfo, ns.dispatchService.getBtcNetworkParam())
+		err = m.VerifySignData(scTokenProxy, privateKeyInfo, localLockinInfo)
 		if err != nil {
 			return
 		}
 		// 2.5. 更新本地locinInfo的NotaryIDInChargeID,记录该lockinInfo的负责人
 		err = ns.dispatchService.updateLockinInfoNotaryIDInChargeID(localLockinInfo.SCTokenAddress, localLockinInfo.SecretHash, senderID)
 	// 3. 主链PrepareLockout合约调用消息
-	case *messagetosign.EthereumPrepareLockoutTxData:
+	case *messagetosign.SpectrumPrepareLockoutTxData:
 		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
 		// 1. 获取本地lockoutInfo
 		var localLockoutInfo *models.LockoutInfo
@@ -471,7 +469,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		scToken := ns.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress)
 		// 3. 获取本地mcProxy
 		var c chain.Chain
-		c, err = ns.dispatchService.getChainByName(cfg.ETH.Name)
+		c, err = ns.dispatchService.getChainByName(cfg.SMC.Name)
 		mcProxy := c.GetContractProxy(scToken.MCLockedContractAddress)
 		// 4. 校验
 		err = m.VerifySignData(mcProxy, privateKeyInfo, localLockoutInfo)
@@ -481,7 +479,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		// 5. 更新本地lockoutInfo的NotaryIDInChargeID,记录该lockinInfo的负责人
 		err = ns.dispatchService.updateLockoutInfoNotaryIDInChargeID(localLockoutInfo.SCTokenAddress, localLockoutInfo.SecretHash, senderID)
 	// 4. nonce销毁消息
-	case *messagetosign.EthereumCancelNonceTxData:
+	case *messagetosign.SpectrumCancelNonceTxData:
 		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
 		// 1. 获取chain
 		var c chain.Chain
@@ -497,78 +495,6 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		}
 		// 3. 校验
 		err = m.VerifySignData(c, account)
-		if err != nil {
-			return
-		}
-		// 5. BitcoinLockin消息
-	case *messagetosign.BitcoinLockinTXData:
-		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
-		// 0. 获取bs
-		var c chain.Chain
-		c, err = ns.dispatchService.getChainByName(cfg.BTC.Name)
-		if err != nil {
-			return
-		}
-		bs := c.(*bitcoin.BTCService)
-		// 1. 获取本地lockinInfo
-		var localLockinInfo *models.LockinInfo
-		localLockinInfo, err = ns.dispatchService.getLockinInfo(m.SCTokenAddress, m.SecretHash)
-		if err != nil {
-			return
-		}
-		// 2. 校验
-		err = m.VerifySignData(bs, localLockinInfo, privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()))
-		if err != nil {
-			return
-		}
-		// 6. BitcoinPrepareLockout消息
-	case *messagetosign.BitcoinPrepareLockoutTXData:
-		log.Trace(SessionLogMsg(sessionID, "Got %s MsgToSign,run checkMsgToSign...", m.GetName()))
-		// 0. 获取bs
-		var c chain.Chain
-		c, err = ns.dispatchService.getChainByName(cfg.BTC.Name)
-		if err != nil {
-			return
-		}
-		bs := c.(*bitcoin.BTCService)
-		// 1. 获取本地lockoutInfo
-		var localLockoutInfo *models.LockoutInfo
-		localLockoutInfo, err = ns.dispatchService.getLockoutInfo(m.SCTokenAddress, m.SecretHash)
-		if err != nil {
-			return
-		}
-		// 2. 校验
-		localLockoutInfo.MCExpiration = m.MCExpiration //使用发起人的主链过期时间,但后续不更新数据库,等事件发生时再更新
-		var outpointToListen wire.OutPoint
-		outpointToListen, err = m.VerifySignData(bs, localLockoutInfo, privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()), ns.db)
-		if err != nil {
-			return
-		}
-		// 3. 获取bs,注册outpoint监听
-		//lockScriptHex := ns.dispatchService.getSCTokenMetaInfoBySCTokenAddress(localLockoutInfo.SCTokenAddress).MCLockedPublicKeyHashStr
-		err = bs.RegisterOutpoint(outpointToListen, &bitcoin.BTCOutpointRelevantInfo{
-			Use:           bitcoin.OutpointUseToPrepareLockout,
-			SecretHash:    m.SecretHash,
-			LockScriptHex: common.Bytes2Hex(privateKeyInfo.ToBTCPubKeyAddress(bs.GetNetParam()).PubKey().SerializeCompressed()),
-			Data4PrepareLockout: &bitcoin.BTCOutpointRelevantInfo4PrepareLockout{
-				// 保存用户主链取钱的地址及真实过期块号
-				UserAddressPublicKeyHashHex: m.UserRequest.GetSignerBTCPublicKey(bs.GetNetParam()).AddressPubKeyHash().String(),
-				MCExpiration:                localLockoutInfo.MCExpiration,
-				TxOutLockScriptHex:          m.GetLockScriptHex(),
-			},
-		})
-		if err != nil {
-			log.Error(err.Error())
-		}
-		// 7. BitcoinCancelPrepareLockout消息
-	case *messagetosign.BitcoinCancelPrepareLockoutTXData:
-		// 1. 获取本地lockoutInfo
-		var localLockoutInfo *models.LockoutInfo
-		localLockoutInfo, err = ns.dispatchService.getLockoutInfo(m.SCTokenAddress, m.SecretHash)
-		if err != nil {
-			return
-		}
-		err = m.VerifySignData(localLockoutInfo, privateKeyInfo.ToBTCPubKeyAddress(ns.dispatchService.getBtcNetworkParam()))
 		if err != nil {
 			return
 		}

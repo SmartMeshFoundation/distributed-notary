@@ -17,8 +17,8 @@ import (
 type chainName string
 
 const (
-	chainNameEthereum = "ethereum"
 	chainNameSpectrum = "spectrum"
+	chainNameHeco     = "heco"
 )
 
 /*
@@ -38,7 +38,7 @@ type nonceService struct {
 	chainMap        map[string]chainClient
 }
 
-func newNonceService(db *models.DB, nsAPI *nonceapi.NonceServerAPI, smcRPCEndPoint, ethRPCEndPoint string) *nonceService {
+func newNonceService(db *models.DB, nsAPI *nonceapi.NonceServerAPI, smcRPCEndPoint, hecoRPCEndPoint string) *nonceService {
 	ns := &nonceService{
 		db:              db,
 		nsAPI:           nsAPI,
@@ -51,11 +51,11 @@ func newNonceService(db *models.DB, nsAPI *nonceapi.NonceServerAPI, smcRPCEndPoi
 		panic(err)
 	}
 	ns.chainMap[chainNameSpectrum] = smcClient
-	ethClient, err := ethclient.Dial(ethRPCEndPoint)
+	hecoClient, err := ethclient.Dial(hecoRPCEndPoint)
 	if err != nil {
 		panic(err)
 	}
-	ns.chainMap[chainNameEthereum] = ethClient
+	ns.chainMap[chainNameHeco] = hecoClient
 	return ns
 }
 

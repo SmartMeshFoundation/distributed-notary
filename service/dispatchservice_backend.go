@@ -20,7 +20,6 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/chain"
 	"github.com/SmartMeshFoundation/distributed-notary/models"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/nkbai/log"
 )
@@ -29,7 +28,7 @@ import (
 	其他service回调DispatchService的入口
 */
 type dispatchServiceBackend interface {
-	getBtcNetworkParam() *chaincfg.Params
+	//getBtcNetworkParam() *chaincfg.Params
 	getSelfPrivateKey() *ecdsa.PrivateKey
 	getSelfNotaryInfo() *models.NotaryInfo
 	getChainByName(chainName string) (c chain.Chain, err error)
@@ -136,7 +135,7 @@ func (ds *DispatchService) getSCTokenMetaInfoBySCTokenAddress(scTokenAddress com
 
 func (ds *DispatchService) registerNewSCToken(scTokenMetaInfo *models.SideChainTokenMetaInfo) (err error) {
 	// 注册侧链合约:
-	err = ds.chainMap[cfg.SMC.Name].RegisterEventListenContract(scTokenMetaInfo.SCToken)
+	err = ds.chainMap[cfg.HECO.Name].RegisterEventListenContract(scTokenMetaInfo.SCToken)
 	if err != nil {
 		log.Error("RegisterEventListenContract on side chain err : %s", err.Error())
 		return
@@ -232,6 +231,7 @@ func (ds *DispatchService) applyNonceFromNonceServer(chainName string, privKeyID
 	}
 	return ps.(*PBFTService).newNonce(fmt.Sprintf("%s-%s-%s", chainName, reason, amount))
 }
+
 func (ds *DispatchService) applyUTXO(chainName string, priveKeyID common.Hash, reason string, amount *big.Int) (utxos string, err error) {
 	key := fmt.Sprintf("%s-%s", chainName, priveKeyID.String())
 	ps, err := ds.getPbftService(key)
@@ -240,6 +240,7 @@ func (ds *DispatchService) applyUTXO(chainName string, priveKeyID common.Hash, r
 	}
 	return ps.(*btcPBFTService).newUTXO(fmt.Sprintf("%s-%s-%s", chainName, reason, amount))
 }
+
 func (ds *DispatchService) getPbftService(key string) (ps pbft.PBFTAuxiliary, err error) {
 	ds.lock.Lock()
 	defer ds.lock.Unlock()
@@ -280,13 +281,6 @@ func (ds *DispatchService) getPbftService(key string) (ps pbft.PBFTAuxiliary, er
 	case pbftTypeSpectrum:
 		ds.pbftServices[key] = ps2
 		err = ps2.server.UpdateAS(ps2)
-		if err != nil {
-			panic(err)
-		}
-	case pbftTypeBTC:
-		ps3 := newBTCPBFTService(ps2)
-		ds.pbftServices[key] = ps3
-		err = ps3.server.UpdateAS(ps3)
 		if err != nil {
 			panic(err)
 		}

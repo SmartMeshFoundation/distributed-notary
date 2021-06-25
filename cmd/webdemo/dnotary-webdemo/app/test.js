@@ -27,25 +27,25 @@ $(function () {
     $("#cointype").hide()
     nodes_Ip = [{
         name: 'Notary0',
-        value: runhost+':8030'
+        value: runhost+':9030'
     }, {
         name: 'Notary1',
-        value: runhost+':8031'
+        value: runhost+':9031'
     }, {
         name: 'Notary2',
-        value: runhost+':8032'
+        value: runhost+':9032'
     }, {
         name: 'Notary3',
-        value: runhost+':8033'
+        value: runhost+':9033'
     }, {
         name: 'Notary4',
-        value: runhost+':8034'
+        value: runhost+':9034'
     }, {
         name: 'Notary5',
-        value: runhost+':8035'
+        value: runhost+':9035'
     }, {
         name: 'Notary6',
-        value: runhost+':8036'
+        value: runhost+':9036'
     },];
 
     $('#selNode').html();
@@ -295,9 +295,9 @@ function doSendTx(r, chain,cb) {
     req.Tx.s = "0x" + stripzero(obj.s)
     req.Tx.v = "0x0"
     if(chain=="main") {
-        updateMaskLayer("send tx to " + mainChainContract + " on Ethereum Ropsten...")
+        updateMaskLayer("send tx to " + mainChainContract + " on Spectrum Ropsten...")
     }else{
-        updateMaskLayer("send tx to " + sideChainContract + " on Spectrum Testnet...")
+        updateMaskLayer("send tx to " + sideChainContract + " on Heco Testnet...")
     }
 
     $.ajax(
@@ -343,7 +343,7 @@ function notifyNotaryPreareLockin(obj) {
         return
     }
 
-    updateMaskLayer("notify notary "+notary+" assign Ethereum Token for me on Spectrum...")
+    updateMaskLayer("notify notary "+notary+" assign Spectrum Token for me on Heco...")
     //使用helpService服务构造发给公证人的PrePareLockin请求,在js断构并计算hash会出问题
     $.ajax({
         url: helpService + "/scPrepareLockin",
@@ -653,7 +653,7 @@ function sideChainLockin(obj) {
         alert("must prepare lockin and notify notary first")
         return
     }
-    updateMaskLayer("get Ethereum Token on Spectrum,please wait ...")
+    updateMaskLayer("get Spectrum Token on Heco,please wait ...")
     $("#signTransaction").text('');
     doSideChainLockin()
 }
@@ -693,7 +693,7 @@ function doSideChainLockin( ) {
                 ))
                 //由helpService在侧连上执行Tx
                 doSendTx(r, "side",function(){
-                    alert("your eth have been moved to spectrum as EthereumToken")
+                    alert("your eth have been moved to heco as htToken")
                     clearLockinSecret()
                     hideMaskLayer()
                 })
@@ -716,7 +716,7 @@ function mainChainCancelLockin(obj) {
         alert("must prepare lockin and notify notary first")
         return
     }
-    showMaskLayer("cancel Ethereum lockin,please wait ...")
+    showMaskLayer("cancel Spectrum lockin,please wait ...")
     $("#signTransaction").text('');
     doMainChainCancelLockin()
 }
@@ -1020,7 +1020,7 @@ function mainChainLockout(obj) {
         alert("must prepare lockout and notify notary first")
         return
     }
-    updateMaskLayer("get ETH Token on Ethereum,please wait ...")
+    updateMaskLayer("get SMT Token on Spectrum,please wait ...")
     $("#signTransaction").text('');
     doMainChainLockout()
 }
@@ -1062,7 +1062,7 @@ function doMainChainLockout( ) {
                 doSendTx(r, "main",function(){
                     hideMaskLayer()
                     clearLockoutSecret()
-                    alert("your EthereumToken have been moved to ethereum as eth")
+                    alert("your SpectrumToken have been moved to Spectrum as eth")
                 })
             },
             error: function (e) {

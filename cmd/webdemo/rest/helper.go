@@ -14,8 +14,8 @@ import (
 	"github.com/SmartMeshFoundation/Photon/log"
 	"github.com/ethereum/go-ethereum/common"
 
-	mcontracts "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
-	scontracts "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
+	scontracts "github.com/SmartMeshFoundation/distributed-notary/chain/heco/contracts"
+	mcontracts "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
@@ -101,11 +101,11 @@ type lockStruct struct {
 type statusResponse struct {
 	MainChainBlockNumber     int64
 	SideChainBlockNumber     int64
-	MainChainContractBalance *big.Int //主链合约锁定多少Eth
+	MainChainContractBalance *big.Int //主链合约锁定多少SMT
 	SideChainContractBalance *big.Int //侧链token总供应量
-	MainChainBalance         *big.Int //账户主链Eth多少
-	SideChainBalance         *big.Int //账户侧链Smt多少
-	SideChainTokenBalance    *big.Int //侧链账户有多少EthToken
+	MainChainBalance         *big.Int //账户主链SMT多少
+	SideChainBalance         *big.Int //账户侧链ht多少
+	SideChainTokenBalance    *big.Int //侧链账户有多少SmtToken
 	MainChainLockIn          *lockStruct
 	MainChainLockout         *lockStruct
 	SideChainLockin          *lockStruct
@@ -160,11 +160,11 @@ func queryStatus(w rest.ResponseWriter, r *rest.Request) {
 	if req.SideChainContract == utils.EmptyAddress {
 		return
 	}
-	mc, err := mcontracts.NewLockedEthereum(req.MainChainContract, mclient)
+	mc, err := mcontracts.NewLockedSpectrum(req.MainChainContract, mclient)
 	if err != nil {
 		return
 	}
-	sc, err := scontracts.NewAtmosphereToken(req.SideChainContract, sclient)
+	sc, err := scontracts.NewHecoToken(req.SideChainContract, sclient)
 	if err != nil {
 		return
 	}

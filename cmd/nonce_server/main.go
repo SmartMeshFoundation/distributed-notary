@@ -27,12 +27,12 @@ func main() {
 		cli.StringFlag{
 			Name:  "smc-rpc-endpoint",
 			Usage: "host:port of spectrum rpc server",
-			Value: "http://127.0.0.1:17888",
+			Value: "http://106.52.171.12:18003",
 		},
 		cli.StringFlag{
-			Name:  "eth-rpc-endpoint",
-			Usage: "host:port of spectrum rpc server",
-			Value: "http://127.0.0.1:19888",
+			Name:  "heco-rpc-endpoint",
+			Usage: "host:port of heco rpc server",
+			Value: "http://106.52.171.12:8545",
 		},
 	}
 	app.Action = StartMain
@@ -49,13 +49,13 @@ func StartMain(ctx *cli.Context) {
 	dataDir := ctx.String("datadir")
 	host := ctx.String("listen")
 	smcRPCEndPoint := ctx.String("smc-rpc-endpoint")
-	ethRPCEndPoint := ctx.String("eth-rpc-endpoint")
+	hecoRPCEndPoint := ctx.String("heco-rpc-endpoint")
 	// 1. 打开db
 	db := models.SetUpDB("sqlite3", dataDir)
 	// 2. init nsAPI
 	api := nonceapi.NewNonceServerAPI(host)
 	// 3. init service
-	service := newNonceService(db, api, smcRPCEndPoint, ethRPCEndPoint)
+	service := newNonceService(db, api, smcRPCEndPoint, hecoRPCEndPoint)
 	go service.start()
 	// 2. 启动api
 	api.Start(true)

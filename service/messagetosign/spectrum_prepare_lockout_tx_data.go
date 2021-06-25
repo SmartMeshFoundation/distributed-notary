@@ -16,11 +16,11 @@ import (
 	"github.com/nkbai/log"
 )
 
-// EthereumPrepareLockoutTxDataName 用做消息传输时识别
-const EthereumPrepareLockoutTxDataName = "EthereumPrepareLockoutTxData"
+// SpectrumPrepareLockoutTxDataName 用做消息传输时识别
+const SpectrumPrepareLockoutTxDataName = "SpectrumPrepareLockoutTxData"
 
-// EthereumPrepareLockoutTxData :
-type EthereumPrepareLockoutTxData struct {
+// SpectrumPrepareLockoutTxData :
+type SpectrumPrepareLockoutTxData struct {
 	BytesToSign  []byte                           `json:"bytes_to_sign"`
 	Nonce        uint64                           `json:"nonce"`
 	UserRequest  *userapi.MCPrepareLockoutRequest `json:"user_request"`  // 用户原始请求,验证用户签名
@@ -28,8 +28,8 @@ type EthereumPrepareLockoutTxData struct {
 }
 
 // NewEthereumPrepareLockoutTxData :
-func NewEthereumPrepareLockoutTxData(mcProxy chain.ContractProxy, req *userapi.MCPrepareLockoutRequest, callerAddress common.Address, mcUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int, nonce uint64) (data *EthereumPrepareLockoutTxData) {
-	data = &EthereumPrepareLockoutTxData{
+func NewSpectrumPrepareLockoutTxData(mcProxy chain.ContractProxy, req *userapi.MCPrepareLockoutRequest, callerAddress common.Address, mcUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int, nonce uint64) (data *SpectrumPrepareLockoutTxData) {
+	data = &SpectrumPrepareLockoutTxData{
 		UserRequest:  req,
 		Nonce:        nonce,
 		MCExpiration: expiration,
@@ -55,17 +55,17 @@ func NewEthereumPrepareLockoutTxData(mcProxy chain.ContractProxy, req *userapi.M
 }
 
 // GetSignBytes : impl MessageToSign
-func (d *EthereumPrepareLockoutTxData) GetSignBytes() []byte {
+func (d *SpectrumPrepareLockoutTxData) GetSignBytes() []byte {
 	return d.BytesToSign
 }
 
 // GetName : impl MessageToSign
-func (d *EthereumPrepareLockoutTxData) GetName() string {
-	return EthereumPrepareLockoutTxDataName
+func (d *SpectrumPrepareLockoutTxData) GetName() string {
+	return SpectrumPrepareLockoutTxDataName
 }
 
 // GetTransportBytes : impl MessageToSign
-func (d *EthereumPrepareLockoutTxData) GetTransportBytes() []byte {
+func (d *SpectrumPrepareLockoutTxData) GetTransportBytes() []byte {
 	buf, err := json.Marshal(d)
 	if err != nil {
 		panic(err)
@@ -74,15 +74,15 @@ func (d *EthereumPrepareLockoutTxData) GetTransportBytes() []byte {
 }
 
 // Parse : impl MessageToSign
-func (d *EthereumPrepareLockoutTxData) Parse(buf []byte) error {
+func (d *SpectrumPrepareLockoutTxData) Parse(buf []byte) error {
 	if buf == nil || len(buf) == 0 {
-		return errors.New("can not parse empty data to EthereumPrepareLockoutTxData")
+		return errors.New("can not parse empty data to SpectrumPrepareLockoutTxData")
 	}
 	return json.Unmarshal(buf, d)
 }
 
 // VerifySignData :
-func (d *EthereumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProxy, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
+func (d *SpectrumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProxy, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
 	// 1. 校验本地lockinInfo状态
 	if localLockoutInfo.SCUserAddress != d.UserRequest.SCUserAddress {
 		err = fmt.Errorf("SCUserAddress wrong")
@@ -111,10 +111,10 @@ func (d *EthereumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProx
 	mcExpiration := localLockoutInfo.MCExpiration
 	secretHash := localLockoutInfo.SecretHash
 	amount := new(big.Int).Sub(localLockoutInfo.Amount, localLockoutInfo.CrossFee) // 扣除手续费
-	var local *EthereumPrepareLockoutTxData
-	local = NewEthereumPrepareLockoutTxData(mcProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, d.Nonce)
+	var local *SpectrumPrepareLockoutTxData
+	local = NewSpectrumPrepareLockoutTxData(mcProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, d.Nonce)
 	if bytes.Compare(local.GetSignBytes(), d.GetSignBytes()) != 0 {
-		err = fmt.Errorf("EthereumPrepareLockoutTxData.VerifySignBytes() fail,maybe attack")
+		err = fmt.Errorf("SpectrumPrepareLockoutTxData.VerifySignBytes() fail,maybe attack")
 	}
 	return
 }

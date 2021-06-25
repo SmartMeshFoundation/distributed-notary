@@ -20,8 +20,8 @@ import (
 	putils "github.com/SmartMeshFoundation/Photon/utils"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 
-	mcontracts "github.com/SmartMeshFoundation/distributed-notary/chain/ethereum/contracts"
-	scontracts "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
+	scontracts "github.com/SmartMeshFoundation/distributed-notary/chain/heco/contracts"
+	mcontracts "github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/contracts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -85,11 +85,11 @@ func generateContractTx(endPoint string, from, contract common.Address, method s
 	if err != nil {
 		return
 	}
-	mc, err := mcontracts.NewLockedEthereum(contract, conn)
+	mc, err := mcontracts.NewLockedSpectrum(contract, conn)
 	if err != nil {
 		return
 	}
-	sc, err := scontracts.NewAtmosphereToken(contract, conn)
+	sc, err := scontracts.NewHecoToken(contract, conn)
 	if err != nil {
 		return
 	}
@@ -167,7 +167,7 @@ func mprepareLockin(from, contract common.Address, m map[string]interface{}) (tr
 	ExpirationVal := m["Expiration"]
 	log.Info(fmt.Sprintf("Expiration= %s", reflect.TypeOf(ExpirationVal)))
 	Expiration := int64(ExpirationVal.(float64))
-	if Expiration < int64(cfg.GetMinExpirationBlock4User(cfg.ETH.Name)) {
+	if Expiration < int64(cfg.GetMinExpirationBlock4User(cfg.SMC.Name)) {
 		err = fmt.Errorf("expiration error")
 		return
 	}

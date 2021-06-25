@@ -116,15 +116,15 @@ func NewDispatchService(config *params.Config) (ds *DispatchService, err error) 
 		return
 	}
 	// 4. 初始化侧链事件监听
-	ds.chainMap[cfg.HECO.Name], err = heco.NewHECOService(config.SmcRPCEndPoint)
+	ds.chainMap[cfg.HECO.Name], err = heco.NewHECOService(config.HecoRPCEndPoint)
 	if err != nil {
-		log.Error("new SMCService err : %s", err.Error())
+		log.Error("new HecoService err : %s", err.Error())
 		return
 	}
 	// 5. 初始化SMC事件监听
-	ds.chainMap[cfg.SMC.Name], err = spectrum.NewSMCService(config.EthRPCEndPoint)
+	ds.chainMap[cfg.SMC.Name], err = spectrum.NewSMCService(config.SmcRPCEndPoint)
 	if err != nil {
-		log.Error("new ETHService err : %s", err.Error())
+		log.Error("new SMCService err : %s", err.Error())
 		return
 	}
 	// 5.5 初始化BlockNumberService,这里同时会初始化每条链的LastBlockNumber
@@ -278,8 +278,6 @@ func (ds *DispatchService) dispatchRestfulRequest(req api.Req) {
 		} else {
 			switch ps2 := ps.(type) {
 			case *PBFTService:
-				ps2.OnRequest(r)
-			case *btcPBFTService:
 				ps2.OnRequest(r)
 			default:
 				panic("impossible pbft service")
