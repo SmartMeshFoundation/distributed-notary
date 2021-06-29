@@ -54,7 +54,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "heco-rpc-endpoint",
 			Usage: "host:port of heco rpc server",
-			Value: "http://106.52.171.12:8545",
+			Value: "http://106.52.171.12:12001",
 		},
 		cli.StringFlag{
 			Name:  "user-listen",

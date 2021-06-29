@@ -17,9 +17,9 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name: "heco-rpc-point",
-			Usage: `"host:port" address of ethereum   JSON-RPC server.\n'
+			Usage: `"host:port" address of heco JSON-RPC server.\n'
 	           'Also accepts a protocol prefix (ws:// or ipc channel) with optional port',`,
-			Value: "http://106.52.171.12:8545",
+			Value: "http://106.52.171.12:12001",
 		},
 		cli.StringFlag{
 			Name: "smc-rpc-point",

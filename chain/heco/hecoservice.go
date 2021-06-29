@@ -363,7 +363,7 @@ func (ss *HECOService) loop() {
 			log.Warn(fmt.Sprintf("HecoService.EventListener missed %d blocks", lastedBlock-currentBlock-1))
 		}
 		if lastedBlock%cfg.HECO.BlockNumberLogPeriod == 0 {
-			log.Trace(fmt.Sprintf("Spectrum new block : %d", lastedBlock))
+			log.Trace(fmt.Sprintf("Heco new block : %d", lastedBlock))
 		}
 		var fromBlockNumber, toBlockNumber uint64
 		if currentBlock < 2*cfg.HECO.ConfirmBlockNumber {

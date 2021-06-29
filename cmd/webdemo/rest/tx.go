@@ -455,7 +455,7 @@ func doSendTx(req sendTxRequest) (tr *types.Receipt, err error) {
 	}
 	conn, err := ethclient.Dial(endPoint)
 	if err != nil {
-		err = fmt.Errorf("eth dial %s", err)
+		err = fmt.Errorf("heco dial %s", err)
 		return
 	}
 	tx := txData2Tx(&req.Tx, req.TxHash, req.Signer)

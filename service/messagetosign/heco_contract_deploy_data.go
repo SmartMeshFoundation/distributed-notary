@@ -17,6 +17,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	utils "github.com/nkbai/goutils"
+	"github.com/nkbai/log"
 )
 
 var errShouldBe = errors.New("should error")
@@ -56,9 +58,11 @@ func NewHecoContractDeployTX(c chain.Chain, callerAddress common.Address, nonce 
 		BytesToSign:     txBytes,
 		DeployChainName: c.GetChainName(),
 	}
-	if c.GetChainName() == cfg.SMC.Name {
+	if c.GetChainName() == cfg.HECO.Name {
 		tx.TokenName = params[0]
 	}
+	log.Trace(fmt.Sprintf("==>tx : %s", utils.StringInterface(tx, 5)))
+
 	return
 }
 
@@ -92,7 +96,7 @@ func (s *HecoContractDeployTXData) Parse(buf []byte) error {
 // VerifySignBytes :
 func (s *HecoContractDeployTXData) VerifySignBytes(c chain.Chain, callerAddress common.Address) (err error) {
 	var local *HecoContractDeployTXData
-	if s.DeployChainName == cfg.SMC.Name {
+	if s.DeployChainName == cfg.HECO.Name {
 		local = NewHecoContractDeployTX(c, callerAddress, s.Nonce, s.TokenName)
 	} else {
 		local = NewHecoContractDeployTX(c, callerAddress, s.Nonce)

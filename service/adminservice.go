@@ -285,7 +285,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 	if err != nil {
 		return
 	}
-	tokenName := "HecoToken"
+	tokenName := "heco"
 	return as.distributedDeployOnHeco(c, privateKeyInfo, tokenName)
 }
 
@@ -365,6 +365,7 @@ func (as *AdminService) onCancelNonceRequest(req *userapi.CancelNonceRequest) {
 		}
 		msgToSign2 := signer.Hash(tx).Bytes()
 		if bytes.Compare(msgToSign.GetSignBytes(), msgToSign2) != 0 {
+			fmt.Sprintf("onCancelNonceRequest:sign1=%s,sign2=%s", common.ToHex(msgToSign.GetSignBytes()), common.ToHex(msgToSign2))
 			err = fmt.Errorf("txbytes when deploy contract step1 and step2 does't match")
 			return nil, err
 		}

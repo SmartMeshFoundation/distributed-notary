@@ -13,9 +13,9 @@ import (
 
 func TestChain(t *testing.T) {
 	// params
-	HecoHost := "http://106.52.171.12:8545"
+	HecoHost := "ws://106.52.171.12:12002"
 	var hecoContract1Address common.Address
-	hecoContract1Address = common.HexToAddress("0x0f75Cc3e01d6802bca296094cEcdBb88fc50e0a6")
+	hecoContract1Address = common.HexToAddress("0x60fBcd7AdaA5377DF8b086eeDD7B33D55453F584")
 	// 1. 创建service
 	heco, err := NewHECOService(HecoHost, hecoContract1Address)
 	if err != nil {

@@ -57,7 +57,7 @@ var DefaultConfig = &dncConfig{
 
 	HecoUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	HecoUserPassword: "123",
-	HecoRPCEndpoint:  "http://106.52.171.12:18003",
+	HecoRPCEndpoint:  "http://106.52.171.12:12001",
 
 	SmcUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	SmcUserPassword: "123",

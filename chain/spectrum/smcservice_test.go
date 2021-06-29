@@ -13,7 +13,7 @@ import (
 
 func TestChain(t *testing.T) {
 	// params
-	smcHost := "http://127.0.0.1:9001"
+	smcHost := "http://106.52.171.12:17004"
 	var contractAddress common.Address
 	contractAddress = common.HexToAddress("0x720bF7a52fDb3f656E0E653E09C4e57DC1e655eE")
 	// 1. 创建service

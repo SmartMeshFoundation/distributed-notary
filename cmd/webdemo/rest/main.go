@@ -12,7 +12,7 @@ import (
 var MainChainEndpoint = "http://106.52.171.12:18003"
 
 //侧链接入点 heco
-var SideChainEndpoint = "http://106.52.171.12:8545"
+var SideChainEndpoint = "http://106.52.171.12:12001"
 
 //default port
 var Port = 8081

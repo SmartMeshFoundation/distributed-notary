@@ -13,12 +13,32 @@ func init() {
 	/*
 		链
 	*/
+	/*
+		SMC = &ChainCfg{
+			Name:                  "spectrum",
+			BlockPeriod:           time.Second,
+			ConfirmBlockNumber:    0,
+			BlockNumberPollPeriod: 500 * time.Millisecond,
+			BlockNumberLogPeriod:  20,
+			RPCTimeout:            3 * time.Second,
+			CrossFeeRate:          10000,
+		}
+
+		HECO = &ChainCfg{
+			Name:                  "heco",
+			BlockPeriod:           time.Second,
+			ConfirmBlockNumber:    0,
+			BlockNumberPollPeriod: 500 * time.Millisecond,
+			BlockNumberLogPeriod:  20,
+			RPCTimeout:            3 * time.Second,
+			CrossFeeRate:          10000,
+		}*/
 	SMC = &ChainCfg{
 		Name:                  "spectrum",
 		BlockPeriod:           time.Second,
 		ConfirmBlockNumber:    0,
-		BlockNumberPollPeriod: 500 * time.Millisecond,
-		BlockNumberLogPeriod:  20,
+		BlockNumberPollPeriod: 14 * time.Second,
+		BlockNumberLogPeriod:  1,
 		RPCTimeout:            3 * time.Second,
 		CrossFeeRate:          10000,
 	}
@@ -27,8 +47,8 @@ func init() {
 		Name:                  "heco",
 		BlockPeriod:           time.Second,
 		ConfirmBlockNumber:    0,
-		BlockNumberPollPeriod: 500 * time.Millisecond,
-		BlockNumberLogPeriod:  20,
+		BlockNumberPollPeriod: 3 * time.Second,
+		BlockNumberLogPeriod:  1,
 		RPCTimeout:            3 * time.Second,
 		CrossFeeRate:          10000,
 	}

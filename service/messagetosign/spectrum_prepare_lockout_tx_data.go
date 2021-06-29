@@ -27,7 +27,7 @@ type SpectrumPrepareLockoutTxData struct {
 	MCExpiration uint64                           `json:"mc_expiration"` // 主链超时块,由于公证人之间可能存在当前块误差,导致计算出来的主链超时块不一致,所以在协商时传递
 }
 
-// NewEthereumPrepareLockoutTxData :
+// NewSpectrumPrepareLockoutTxData :
 func NewSpectrumPrepareLockoutTxData(mcProxy chain.ContractProxy, req *userapi.MCPrepareLockoutRequest, callerAddress common.Address, mcUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int, nonce uint64) (data *SpectrumPrepareLockoutTxData) {
 	data = &SpectrumPrepareLockoutTxData{
 		UserRequest:  req,
