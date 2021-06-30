@@ -37,7 +37,7 @@ var benchmarkCmd = cli.Command{
 		cli.StringFlag{
 			Name:  "mcname",
 			Usage: "name of main chain contract which you want to lockin",
-			Value: "ethereum",
+			Value: "spectrum",
 		},
 		cli.BoolFlag{
 			Name:  "pkn",
@@ -79,7 +79,7 @@ func benchmarkPKN(mcName string, num int) {
 	wg.Add(num)
 	for i := 0; i < num; i++ {
 		go func() {
-			url := fmt.Sprintf("http://127.0.0.1:803%d/api/1/admin/private-key", rand.Intn(7))
+			url := fmt.Sprintf("http://106.52.171.12:1201%d/api/1/admin/private-key", rand.Intn(7))
 			var resp api.BaseResponse
 			s := time.Now()
 			err2 := call(http.MethodPut, url, "", &resp)
@@ -160,7 +160,7 @@ func benchmarkDSM(mcName string, num int) {
 
 	amount := int64(1)
 	expiration := uint64(10000)
-	expiration2 := getEthLastBlockNumber(es.GetClient()) + expiration
+	expiration2 := getSmcLastBlockNumber(es.GetClient()) + expiration
 	fmt.Printf("==> wait for init accounts , include transfer money and PLI  ...\n")
 	baseNonce, err := es.GetClient().NonceAt(context.Background(), crypto.PubkeyToAddress(mcKey.PublicKey), nil)
 	if err != nil {
@@ -173,7 +173,7 @@ func benchmarkDSM(mcName string, num int) {
 		go func(index int, key *ecdsa.PrivateKey, nonce int) {
 			account := crypto.PubkeyToAddress(key.PublicKey)
 			secretHash := secretHashs[index]
-			//2. 主链转账1eth
+			//2. 主链转账1smt
 			err := es.Transfer10ToAccount(mcKey, account, eth2Wei(10*1000000000), nonce)
 			if err != nil {
 				fmt.Println("transfer eth to account fail : ", err)

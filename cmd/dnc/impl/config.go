@@ -52,12 +52,12 @@ var GlobalConfig *dncConfig
 
 // DefaultConfig :
 var DefaultConfig = &dncConfig{
-	NotaryHost: "http://transport01.smartmesh.cn:8032",
+	NotaryHost: "http://106.52.171.12:12012",
 	Keystore:   "../../testdata/keystore",
 
 	HecoUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	HecoUserPassword: "123",
-	HecoRPCEndpoint:  "http://106.52.171.12:12001",
+	HecoRPCEndpoint:  "ws://106.52.171.12:12002",
 
 	SmcUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	SmcUserPassword: "123",

@@ -158,7 +158,7 @@ func getHecoConn() *hecoclient.SafeEthClient {
 	c, err := ethclient.DialContext(ctx2, GlobalConfig.HecoRPCEndpoint)
 	cancelFunc()
 	if err != nil {
-		fmt.Println("connect to eth fail : ", err)
+		fmt.Println("connect to heco chain fail : ", err)
 		os.Exit(-1)
 	}
 	return hecoclient.NewSafeClient(c)
@@ -168,7 +168,7 @@ func getSmcConn() *smcclient.SafeEthClient {
 	c, err := ethclient.DialContext(ctx2, GlobalConfig.SmcRPCEndpoint)
 	cancelFunc()
 	if err != nil {
-		fmt.Println("connect to eth fail : ", err)
+		fmt.Println("connect to spectrum chain fail : ", err)
 		os.Exit(-1)
 	}
 	return smcclient.NewSafeClient(c)
@@ -215,7 +215,7 @@ func getMCContractProxy(mcName string) (*smcclient.SafeEthClient, *smcproxy.Lock
 	c, err := ethclient.DialContext(ctx2, GlobalConfig.SmcRPCEndpoint)
 	cancelFunc()
 	if err != nil {
-		fmt.Println("connect to eth fail : ", err)
+		fmt.Println("connect to spectrum chain fail : ", err)
 		os.Exit(-1)
 	}
 	conn := smcclient.NewSafeClient(c)

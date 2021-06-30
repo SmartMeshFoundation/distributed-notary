@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/client"
-	"github.com/SmartMeshFoundation/distributed-notary/chain/spectrum/proxy"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/heco/client"
+	"github.com/SmartMeshFoundation/distributed-notary/chain/heco/proxy"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/urfave/cli"
@@ -26,14 +26,14 @@ func cancelPrepareLockout(ctx *cli.Context) error {
 		os.Exit(-1)
 	}
 	contract := getSCContractAddressByMCName(GlobalConfig.RunTime.MCName)
-	fmt.Printf("start to cancel prepare lockout :\n ======> [contract=%s account=%s]\n", contract.String(), GlobalConfig.EthUserAddress)
+	fmt.Printf("start to cancel prepare lockout :\n ======> [contract=%s account=%s]\n", contract.String(), GlobalConfig.SmcUserAddress)
 
 	// 1. init connect
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
-	c, err := ethclient.DialContext(ctx2, GlobalConfig.SmcRPCEndpoint)
+	c, err := ethclient.DialContext(ctx2, GlobalConfig.HecoRPCEndpoint)
 	cancelFunc()
 	if err != nil {
-		fmt.Println("connect to eth fail : ", err)
+		fmt.Println("connect to heco chain fail : ", err)
 		os.Exit(-1)
 	}
 	conn := client.NewSafeClient(c)
@@ -45,14 +45,14 @@ func cancelPrepareLockout(ctx *cli.Context) error {
 		os.Exit(-1)
 	}
 	// 3. get auth
-	privateKey, err := getPrivateKey(GlobalConfig.SmcUserAddress, GlobalConfig.SmcUserPassword)
+	privateKey, err := getPrivateKey(GlobalConfig.HecoUserAddress, GlobalConfig.HecoUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
 	// 4. call pli
 	auth := bind.NewKeyedTransactor(privateKey)
-	err = cp.CancelLockout(auth, GlobalConfig.SmcUserAddress)
+	err = cp.CancelLockout(auth, GlobalConfig.HecoUserAddress)
 	if err != nil {
 		fmt.Println("cancel prepare lockout err : ", err.Error())
 		os.Exit(-1)

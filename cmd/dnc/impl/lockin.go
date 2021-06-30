@@ -28,10 +28,10 @@ func lockin(ctx *cli.Context) error {
 		os.Exit(-1)
 	}
 	secret := common.HexToHash(GlobalConfig.RunTime.Secret)
-	fmt.Printf("start to lockin :\n ======> [account=%s secret=%s secretHash=%s]\n", GlobalConfig.SmcUserAddress, secret.String(), utils.ShaSecret(secret[:]).String())
+	fmt.Printf("start to lockin :\n ======> [account=%s secret=%s secretHash=%s]\n", GlobalConfig.HecoUserAddress, secret.String(), utils.ShaSecret(secret[:]).String())
 
 	// 3. get auth
-	privateKey, err := getPrivateKey(GlobalConfig.SmcUserAddress, GlobalConfig.SmcUserPassword)
+	privateKey, err := getPrivateKey(GlobalConfig.HecoUserAddress, GlobalConfig.HecoUserPassword)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -39,7 +39,7 @@ func lockin(ctx *cli.Context) error {
 	// 4. call li
 	auth := bind.NewKeyedTransactor(privateKey)
 
-	err = cp.Lockin(auth, GlobalConfig.SmcUserAddress, secret)
+	err = cp.Lockin(auth, GlobalConfig.HecoUserAddress, secret)
 	if err != nil {
 		fmt.Println("lockin err : ", err.Error())
 		os.Exit(-1)
