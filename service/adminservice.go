@@ -307,7 +307,8 @@ func (as *AdminService) distributedDeployOnHeco(c chain.Chain, privateKeyInfo *m
 	log.Info("deploy contract on %s with account=%s, signature=%s", c.GetChainName(), privateKeyInfo.ToAddress().String(), common.Bytes2Hex(signature))
 	// 4. 部署合约
 	transactor := &bind.TransactOpts{
-		From: privateKeyInfo.ToAddress(),
+		From:  privateKeyInfo.ToAddress(),
+		Nonce: big.NewInt(int64(nonce)),
 		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
 			if address != privateKeyInfo.ToAddress() {
 				return nil, errors.New("not authorized to sign this account")
@@ -365,7 +366,6 @@ func (as *AdminService) onCancelNonceRequest(req *userapi.CancelNonceRequest) {
 		}
 		msgToSign2 := signer.Hash(tx).Bytes()
 		if bytes.Compare(msgToSign.GetSignBytes(), msgToSign2) != 0 {
-			fmt.Sprintf("onCancelNonceRequest:sign1=%s,sign2=%s", common.ToHex(msgToSign.GetSignBytes()), common.ToHex(msgToSign2))
 			err = fmt.Errorf("txbytes when deploy contract step1 and step2 does't match")
 			return nil, err
 		}
