@@ -52,7 +52,7 @@ func cancelPrepareLockin4SMT(mcName string) error {
 	// 2. init contract proxy
 	cp, err := proxy.NewLockedSpectrumProxy(conn, contract)
 	if err != nil {
-		fmt.Println("init contract proxy err : ", err)
+		fmt.Println("cancelPrepareLockin4SMT init contract proxy err : ", err)
 		os.Exit(-1)
 	}
 	// 3. get auth

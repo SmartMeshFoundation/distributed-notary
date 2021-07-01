@@ -76,7 +76,7 @@ func prepareLockinOnSpectrum(mcName string, amount int64, expiration uint64) (er
 	// 2. init contract proxy
 	cp, err := proxy.NewLockedSpectrumProxy(conn, contract)
 	if err != nil {
-		fmt.Println("init contract proxy err : ", err)
+		fmt.Println("prepareLockinOnSpectrum init contract proxy err : ", err)
 		os.Exit(-1)
 	}
 	// 3. get auth
@@ -102,6 +102,6 @@ func prepareLockinOnSpectrum(mcName string, amount int64, expiration uint64) (er
 		fmt.Println("prepare lockin err : ", err.Error())
 		os.Exit(-1)
 	}
-	fmt.Println("PrepareLockin on ethereum SUCCESS")
+	fmt.Println("PrepareLockin on Spectrum SUCCESS")
 	return nil
 }

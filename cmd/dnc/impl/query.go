@@ -63,12 +63,12 @@ func queryContract(ctx *cli.Context) {
 		os.Exit(-1)
 	}
 	fmt.Printf("[MC]user %s account balance : %d\n", utils.APex(common.HexToAddress(GlobalConfig.SmcUserAddress)), mcUserBalance)
-	scUserTokenBalance, err := scp.Contract.BalanceOf(nil, common.HexToAddress(GlobalConfig.SmcUserAddress))
+	scUserTokenBalance, err := scp.Contract.BalanceOf(nil, common.HexToAddress(GlobalConfig.HecoUserAddress))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	fmt.Printf("[SC]user %s sctoken balance : %d\n", utils.APex(common.HexToAddress(GlobalConfig.SmcUserAddress)), scUserTokenBalance)
+	fmt.Printf("[SC]user %s sctoken balance : %d\n", utils.APex(common.HexToAddress(GlobalConfig.HecoUserAddress)), scUserTokenBalance)
 	// 主侧链合约余额查询
 	fmt.Println("\n===> MC/SC Contract account info :")
 	mBalance, err := mconn.BalanceAt(context.Background(), scToken.MCLockedContractAddress, nil)

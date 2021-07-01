@@ -184,7 +184,7 @@ func getSCContractProxy(mcName string) (*hecoclient.SafeEthClient, *hecoproxy.Si
 	c, err := ethclient.DialContext(ctx2, GlobalConfig.HecoRPCEndpoint)
 	cancelFunc()
 	if err != nil {
-		fmt.Println("connect to eth fail : ", err)
+		fmt.Println("connect to heco chain fail : ", err)
 		os.Exit(-1)
 	}
 	conn := hecoclient.NewSafeClient(c)
@@ -199,7 +199,7 @@ func getSCContractProxy(mcName string) (*hecoclient.SafeEthClient, *hecoproxy.Si
 	// 2. init contract proxy
 	cp, err := hecoproxy.NewSideChainErc20TokenProxy(conn, getSCContractAddressByMCName(mcName))
 	if err != nil {
-		fmt.Println("init contract proxy err : ", err)
+		fmt.Println("getSCContractProxy init contract proxy err : ", err)
 		os.Exit(-1)
 	}
 	return conn, cp
@@ -229,7 +229,7 @@ func getMCContractProxy(mcName string) (*smcclient.SafeEthClient, *smcproxy.Lock
 	// 2. init contract proxy
 	cp, err := smcproxy.NewLockedSpectrumProxy(conn, getMCContractAddressByMCName(mcName))
 	if err != nil {
-		fmt.Println("init contract proxy err : ", err)
+		fmt.Println("getMCContractProxy init contract proxy err : ", err)
 		os.Exit(-1)
 	}
 	return conn, cp

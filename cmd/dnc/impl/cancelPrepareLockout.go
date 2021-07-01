@@ -41,7 +41,7 @@ func cancelPrepareLockout(ctx *cli.Context) error {
 	// 2. init contract proxy
 	cp, err := proxy.NewSideChainErc20TokenProxy(conn, contract)
 	if err != nil {
-		fmt.Println("init contract proxy err : ", err)
+		fmt.Println("cancelPrepareLockout init contract proxy err : ", err)
 		os.Exit(-1)
 	}
 	// 3. get auth

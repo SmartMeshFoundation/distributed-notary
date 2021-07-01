@@ -65,7 +65,7 @@ func NewHECOService(host string, contractAddresses ...common.Address) (ss *HECOS
 		connectStatus:              commons.Disconnected,
 		tokenProxyMap:              make(map[common.Address]*proxy.SideChainErc20TokenProxy),
 		connectStatusChangeChanMap: make(map[string]chan commons.ConnectStatusChange),
-		eventChan:                  make(chan chain.Event, 100),
+		eventChan:                  make(chan chain.Event, 1000),
 		eventsDone:                 make(map[common.Hash]uint64),
 	}
 	err = ss.checkConnectStatus()
@@ -379,6 +379,7 @@ func (ss *HECOService) loop() {
 		// get all events between currentBlock and confirmBlock
 		es, err := ss.queryAllEvents(fromBlockNumber, toBlockNumber)
 		if err != nil {
+			log.Error(fmt.Sprintf("HecoService.fromBlockNumber = %d , HecoService.toBlockNumber = %d ", fromBlockNumber, toBlockNumber))
 			log.Error(fmt.Sprintf("HecoService.EventListener queryAllStateChange err=%s", err))
 			// 如果这里出现err,不能继续处理该blocknumber,否则会丢事件,直接从该块重新处理即可
 			time.Sleep(cfg.HECO.BlockNumberPollPeriod / 2)

@@ -1,40 +1,38 @@
 {
-	"notary_host": "http://106.52.171.12:12012",
+	"notary_host": "http://106.52.171.12:12010",
 	"keystore": "./keystore",
-	"btc_rpc_user": "wuhan",
-	"btc_rpc_pass": "wuhan",
-	"btc_rpc_cert_file_path": "",
-	"btc_rpc_endpoint": "192.168.124.13:18556",
-	"btc_user_address": "SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY",
-	"btc_wallet_rpc_cert_file_path": "",
-	"btc_wallet_rpc_endpoint": "192.168.124.13:18554",
-	"heco_user_address": "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
+	"heco_user_address": "0xbb1c0c1f4f5a26a133a1afb496aa4c1735a5665c",
 	"heco_user_password": "123",
-	"heco_rpc_endpoint": "ws://106.52.171.12:12002",
-	"smc_user_address": "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
+	"heco_rpc_endpoint": "https://http-testnet.huobichain.com",
+	"smc_user_address": "0xbb1c0c1f4f5a26a133a1afb496aa4c1735a5665c",
 	"smc_user_password": "123",
 	"smc_rpc_endpoint": "http://106.52.171.12:17004",
 	"sc_token_list": [
 		{
-			"sc_token": "0x7b6cfc6a9edd6a1f81af4f8b860eebc26bf1ae4b",
-			"sc_token_name": "ethereum-Token",
-			"sc_token_owner_key": "0xf16ebdf72d336731f7f09dcde52637ee7d16d9af2c8ed68777f8582957dd73a1",
-			"mc_locked_contract_address": "0x7b6cfc6a9edd6a1f81af4f8b860eebc26bf1ae4b",
-			"mc_name": "ethereum",
-			"mc_locked_contract_owner_key": "0xf16ebdf72d336731f7f09dcde52637ee7d16d9af2c8ed68777f8582957dd73a1",
-			"create_time": "2020-12-11 17:32:51 +0800 CST",
-			"organiser_id": 2
+			"sc_token": "0xb723e64418676e9926b324192d619b587668b81c",
+			"sc_token_name": "spectrum-Token",
+			"sc_token_owner_key": "0xe2bd4fc22bb4824e4c6664a4c3ec78f0a73fca9f6889b4d0d256899585a23826",
+			"mc_locked_contract_address": "0xba7244ce7b3a7d0751c7291f1919cc9f99fd1628",
+			"mc_name": "spectrum",
+			"mc_locked_contract_owner_key": "0xe2bd4fc22bb4824e4c6664a4c3ec78f0a73fca9f6889b4d0d256899585a23826",
+			"create_time": "2021-06-30 01:37:22 +0800 CST",
+			"organiser_id": 0
+		},
+		{
+			"sc_token": "0x2a48ba1e9ecc233e68621e44e120de48fe80da7a",
+			"sc_token_name": "spectrum-Token",
+			"sc_token_owner_key": "0x388fe849d09dac2d1fe0ed78fef69e47a7ea64a9732d674a787d6f6b3da66ce3",
+			"mc_locked_contract_address": "0x2a48ba1e9ecc233e68621e44e120de48fe80da7a",
+			"mc_name": "spectrum",
+			"mc_locked_contract_owner_key": "0x388fe849d09dac2d1fe0ed78fef69e47a7ea64a9732d674a787d6f6b3da66ce3",
+			"create_time": "2021-06-30 12:56:33 +0800 CST",
+			"organiser_id": 0
 		}
 	],
 	"run_time": {
-		"mc_name": "ethereum",
-		"secret": "0xdc82cf5b81c4de8baaaa6b6b89c3409de3b781f2f1adfb3fe5c212f814e3949a",
-		"secret_hash": "0xa941334c1954945c09b89eb2e2a54bf6c9bee82b4be2ac00fbf72342308aed38",
-		"btc_lock_script": null,
-		"btc_user_address_bytes": null,
-		"btc_tx_hash": "",
-		"btc_expiration": null,
-		"btc_amount": 0,
+		"mc_name": "spectrum",
+		"secret": "0x8947176c1d9f50f117405e6351209e9b1a6dc39ae73b8f65c5922807dce5e51d",
+		"secret_hash": "0x2dad02da0e9a0b661b1a0243fd220004910b0f9dc835d6cf86d1ecd1051d7a2e",
 		"lockout_info": null
 	}
 }

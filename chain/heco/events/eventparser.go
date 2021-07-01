@@ -19,7 +19,7 @@ import (
 
 func createBaseEventFromHecoLog(name chain.EventName, log types.Log) *chain.BaseEvent {
 	e := &chain.BaseEvent{}
-	e.ChainName = cfg.SMC.Name
+	e.ChainName = cfg.HECO.Name
 	e.FromAddress = log.Address
 	e.BlockNumber = log.BlockNumber
 	e.Time = time.Now()
