@@ -53,11 +53,11 @@ var GlobalConfig *dncConfig
 // DefaultConfig :
 var DefaultConfig = &dncConfig{
 	NotaryHost: "http://106.52.171.12:12012",
-	Keystore:   "../../testdata/keystore",
+	Keystore:   "./keystore",
 
 	HecoUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	HecoUserPassword: "123",
-	HecoRPCEndpoint:  "ws://106.52.171.12:12002",
+	HecoRPCEndpoint:  "https://http-testnet.hecochain.com",
 
 	SmcUserAddress:  "0x201b20123b3c489b47fde27ce5b451a0fa55fd60",
 	SmcUserPassword: "123",
