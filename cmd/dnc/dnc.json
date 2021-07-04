@@ -3,26 +3,26 @@
 	"keystore": "./keystore",
 	"heco_user_address": "0xbb1c0c1f4f5a26a133a1afb496aa4c1735a5665c",
 	"heco_user_password": "123",
-	"heco_rpc_endpoint": "https://http-testnet.hecochain.com",
+	"heco_rpc_endpoint": "http://106.52.171.12:12001",
 	"smc_user_address": "0xbb1c0c1f4f5a26a133a1afb496aa4c1735a5665c",
 	"smc_user_password": "123",
 	"smc_rpc_endpoint": "http://106.52.171.12:17004",
 	"sc_token_list": [
 		{
-			"sc_token": "0x2a48ba1e9ecc233e68621e44e120de48fe80da7a",
+			"sc_token": "0x82ac8ed5d2d34bdae1a02c1fbeddc0f89137ba83",
 			"sc_token_name": "spectrum-Token",
-			"sc_token_owner_key": "0x388fe849d09dac2d1fe0ed78fef69e47a7ea64a9732d674a787d6f6b3da66ce3",
-			"mc_locked_contract_address": "0x2a48ba1e9ecc233e68621e44e120de48fe80da7a",
+			"sc_token_owner_key": "0x90c4cf5b024dbe05274a68acbc368c87fd98f4cc97141dc371f2c84bcac1eebb",
+			"mc_locked_contract_address": "0x82ac8ed5d2d34bdae1a02c1fbeddc0f89137ba83",
 			"mc_name": "spectrum",
-			"mc_locked_contract_owner_key": "0x388fe849d09dac2d1fe0ed78fef69e47a7ea64a9732d674a787d6f6b3da66ce3",
-			"create_time": "2021-06-30 12:56:33 +0800 CST",
+			"mc_locked_contract_owner_key": "0x90c4cf5b024dbe05274a68acbc368c87fd98f4cc97141dc371f2c84bcac1eebb",
+			"create_time": "2021-07-04 14:56:23 +0800 CST",
 			"organiser_id": 0
 		}
 	],
 	"run_time": {
 		"mc_name": "spectrum",
-		"secret": "0x3f7aafe222b17dbe3612acb59336727f16a7e9695a0d8f9c336f1805067f39bb",
-		"secret_hash": "0xbc90e4e3e07017296c522a0db7a242ab7e739e26246e5c3fb584ef684249243f",
+		"secret": "0x524fd71299c055fe9dcf4c7a07efb58bebee9fbab561c7a267e5ebe941fabe26",
+		"secret_hash": "0xa77f5b4d42b493296ef92090dbb61a75f44f89e34d0db1c15c21056ceab608a8",
 		"lockout_info": null
 	}
 }

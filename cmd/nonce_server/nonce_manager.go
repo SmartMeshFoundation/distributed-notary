@@ -19,7 +19,7 @@ import (
 	"github.com/nkbai/log"
 )
 
-var defaultTimeoutBlock uint64 = 15
+var defaultTimeoutBlock uint64 = 3
 
 type nonceManager struct {
 	account                 common.Address

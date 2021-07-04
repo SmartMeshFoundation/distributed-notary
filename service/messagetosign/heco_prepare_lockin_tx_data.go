@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	utils "github.com/nkbai/goutils"
 	"github.com/nkbai/log"
 )
 
@@ -47,6 +48,8 @@ func NewHecoPrepareLockinTxData(scTokenProxy chain.ContractProxy, req *userapi.S
 	}
 	// 调用合约
 	err := scTokenProxy.PrepareLockin(transactor, scUserAddressHex, secretHash, expiration, amount)
+	log.Info(fmt.Sprintf("========>transactor=%s,scUserAddressHex=%s,secretHash=%s,expiration=%d,amount=%d", utils.StringInterface(transactor, 3), scUserAddressHex, secretHash, expiration, amount))
+
 	if err != errShouldBe {
 		// 这里不可能发生
 		panic(err)

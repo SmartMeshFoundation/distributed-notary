@@ -351,7 +351,8 @@ func (ss *HECOService) loop() {
 		lastedBlock := h.Number.Uint64()
 		// 这里如果出现切换公链导致获取到的新块比当前块更小的话,只需要等待即可
 		if currentBlock >= lastedBlock {
-			time.Sleep(cfg.HECO.BlockNumberPollPeriod / 2)
+			//time.Sleep(cfg.HECO.BlockNumberPollPeriod / 2)
+			time.Sleep(cfg.HECO.BlockNumberPollPeriod)
 			retryTime++
 			if retryTime > 10 {
 				log.Warn(fmt.Sprintf("HecoService.EventListener get same block number %d from chain %d times,maybe something wrong with heco ...", lastedBlock, retryTime))
@@ -382,7 +383,8 @@ func (ss *HECOService) loop() {
 			log.Error(fmt.Sprintf("HecoService.fromBlockNumber = %d , HecoService.toBlockNumber = %d ", fromBlockNumber, toBlockNumber))
 			log.Error(fmt.Sprintf("HecoService.EventListener queryAllStateChange err=%s", err))
 			// 如果这里出现err,不能继续处理该blocknumber,否则会丢事件,直接从该块重新处理即可
-			time.Sleep(cfg.HECO.BlockNumberPollPeriod / 2)
+			//time.Sleep(cfg.HECO.BlockNumberPollPeriod / 2)
+			time.Sleep(cfg.HECO.BlockNumberPollPeriod)
 			continue
 		}
 		if len(es) > 0 {
