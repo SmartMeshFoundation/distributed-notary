@@ -19,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/nkbai/goutils"
 	"github.com/nkbai/log"
 )
 
@@ -46,7 +47,7 @@ type CrossChainService struct {
 
 // NewCrossChainService :
 func NewCrossChainService(db *models.DB, dispatchService dispatchServiceBackend, scTokenMetaInfo *models.SideChainTokenMetaInfo) *CrossChainService {
-	scChain, err := dispatchService.getChainByName(cfg.SMC.Name)
+	scChain, err := dispatchService.getChainByName(cfg.HECO.Name)
 	if err != nil {
 		panic("never happen")
 	}
@@ -80,7 +81,7 @@ func (cs *CrossChainService) getMCContractAddress() common.Address {
 // SCPLI 需使用分布式签名
 func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinRequest, privateKeyInfo *models.PrivateKeyInfo, localLockinInfo *models.LockinInfo) (err error) {
 	// 从本地获取调用合约的参数
-	scUserAddressHex := req.GetSignerETHAddress().String()
+	scUserAddressHex := req.GetSignerSMCAddress().String()
 	scExpiration := localLockinInfo.SCExpiration
 	secretHash := localLockinInfo.SecretHash
 	amount := new(big.Int).Sub(localLockinInfo.Amount, localLockinInfo.CrossFee) // 扣除手续费
@@ -116,6 +117,8 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 			return tx.WithSignature(signer, signature)
 		},
 	}
+	log.Trace(fmt.Sprintf("===>now callSCPrepareLockin,CrossChainService=%s", utils.StringInterface(cs, 5)))
+	log.Trace(fmt.Sprintf("===>now callSCPrepareLockin,scUserAddressHex=%s ,secretHash=%s ,scExpiration=%d ,amount=%d", scUserAddressHex, secretHash.Hex(), scExpiration, amount))
 	return cs.scTokenProxy.PrepareLockin(transactor, scUserAddressHex, secretHash, scExpiration, amount)
 }
 
@@ -151,7 +154,7 @@ func (cs *CrossChainService) callMCPrepareLockout(req *userapi.MCPrepareLockoutR
 
 func (cs *CrossChainService) callSpectrumPrepareLockout(req *userapi.MCPrepareLockoutRequest, privateKeyInfo *models.PrivateKeyInfo, localLockoutInfo *models.LockoutInfo) (err error) {
 	// 从本地获取调用合约的参数
-	mcUserAddressHex := req.GetSignerETHAddress().String()
+	mcUserAddressHex := req.GetSignerSMCAddress().String()
 	mcExpiration := localLockoutInfo.MCExpiration
 	secretHash := localLockoutInfo.SecretHash
 	//amount := localLockoutInfo.Amount

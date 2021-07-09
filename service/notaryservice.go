@@ -230,6 +230,7 @@ func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int, privateKeyID c
 	sessionID = utils.NewRandomHash()
 	log.Trace(SessionLogMsg(sessionID, "DSMAsk start..."))
 	answerChan := make(chan int, len(ns.otherNotaries))
+	log.Trace(fmt.Sprintf("notaryservice startDSMAsk,report has [%d] notaries", len(ns.otherNotaries)))
 	for _, notary := range ns.otherNotaries {
 		go func(notary *models.NotaryInfo) {
 			req := notaryapi.NewDSMAskRequest(sessionID, ns.self, privateKeyID, msgToSign)
@@ -266,9 +267,9 @@ func (ns *NotaryService) startDSMAsk(notaryNumNeedExpectSelf int, privateKeyID c
 func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	_, ok := ns.getNotaryInfoByAddress(req.GetSignerETHAddress())
+	_, ok := ns.getNotaryInfoByAddress(req.GetSignerSMCAddress())
 	if !ok {
-		log.Warn(SessionLogMsg(req.GetSessionID(), "unknown notary %s, maybe attack", req.GetSignerETHAddress().String()))
+		log.Warn(SessionLogMsg(req.GetSessionID(), "unknown notary %s, maybe attack", req.GetSignerSMCAddress().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -299,7 +300,7 @@ func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
 	dh := mecdsa.NewDSMHandler(ns.db, ns.self, msgToSign, sessionID, privateKeyInfo, ns.notaryClient)
 	// 6. 保存dh,这里不会重复
 	ns.dsmHandlerMap.Store(sessionID, dh)
-	log.Trace(SessionLogMsg(req.GetSessionID(), "accept DSMAsk from %s", utils.APex(req.GetSignerETHAddress())))
+	log.Trace(SessionLogMsg(req.GetSessionID(), "accept DSMAsk from %s", utils.APex(req.GetSignerSMCAddress())))
 	req.WriteSuccessResponse(nil)
 	return
 }
@@ -310,9 +311,9 @@ func (ns *NotaryService) onDSMAskRequest(req *notaryapi.DSMAskRequest) {
 func (ns *NotaryService) onDSMNotifySelectionRequest(req *notaryapi.DSMNotifySelectionRequest) {
 	sessionID := req.GetSessionID()
 	// 1. 校验sender
-	_, ok := ns.getNotaryInfoByAddress(req.GetSignerETHAddress())
+	_, ok := ns.getNotaryInfoByAddress(req.GetSignerSMCAddress())
 	if !ok {
-		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSignerETHAddress().String()))
+		log.Warn(SessionLogMsg(sessionID, "unknown notary %s, maybe attack", req.GetSignerSMCAddress().String()))
 		req.WriteErrorResponse(api.ErrorCodePermissionDenied)
 		return
 	}
@@ -447,7 +448,7 @@ func (ns *NotaryService) checkMsgToSign(sessionID common.Hash, privateKeyInfo *m
 		}
 		// 2. 获取本地scTokenProxy
 		var c chain.Chain
-		c, err = ns.dispatchService.getChainByName(cfg.SMC.Name)
+		c, err = ns.dispatchService.getChainByName(cfg.HECO.Name)
 		scTokenProxy := c.GetContractProxy(localLockinInfo.SCTokenAddress)
 		// 2. 校验
 		err = m.VerifySignData(scTokenProxy, privateKeyInfo, localLockinInfo)

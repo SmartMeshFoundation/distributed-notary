@@ -106,9 +106,9 @@ func (ps *PBFTService) SendMessage(msg interface{}, target int) {
 func (ps *PBFTService) OnRequest(req *notaryapi.PBFTMessage) {
 	var n *models.NotaryInfo
 
-	if req.GetSignerETHAddress() != ps.dispatchService.getSelfNotaryInfo().GetAddress() {
+	if req.GetSignerSMCAddress() != ps.dispatchService.getSelfNotaryInfo().GetAddress() {
 		var ok bool
-		n, ok = ps.dispatchService.getNotaryService().getNotaryInfoByAddress(req.GetSignerETHAddress())
+		n, ok = ps.dispatchService.getNotaryService().getNotaryInfoByAddress(req.GetSignerSMCAddress())
 		if !ok {
 			log.Error(fmt.Sprintf("receive req,but signer is unkown,req=%s", utils.StringInterface(req, 3)))
 			return

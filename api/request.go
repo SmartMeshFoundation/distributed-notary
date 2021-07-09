@@ -85,7 +85,7 @@ type ReqWithSignature interface {
 	Sign(req ReqWithSignature, key *ecdsa.PrivateKey)
 	VerifySign(req ReqWithSignature) bool
 
-	GetSignerETHAddress() common.Address
+	GetSignerSMCAddress() common.Address
 	GetSignerBTCPublicKey(net *chaincfg.Params) *btcutil.AddressPubKey
 }
 
@@ -172,7 +172,7 @@ func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
 	}
 	req.SetSignature(sig)
 	signerEthAddress := crypto.PubkeyToAddress(*publicKey)
-	if signerEthAddress == r.GetSignerETHAddress() {
+	if signerEthAddress == r.GetSignerSMCAddress() {
 		return true
 	}
 	//todo 为了兼容来自浏览器的请求,go相关代码不会走到这里
@@ -184,11 +184,11 @@ func (r *BaseReqWithSignature) VerifySign(req ReqWithSignature) bool {
 	}
 	req.SetSignature(sig)
 	signerEthAddress = crypto.PubkeyToAddress(*publicKey)
-	return signerEthAddress == r.GetSignerETHAddress()
+	return signerEthAddress == r.GetSignerSMCAddress()
 }
 
-// GetSignerETHAddress impl ReqWithSignature
-func (r *BaseReqWithSignature) GetSignerETHAddress() common.Address {
+// GetSignerSMCAddress impl ReqWithSignature
+func (r *BaseReqWithSignature) GetSignerSMCAddress() common.Address {
 	if r.Signer == nil {
 		return utils.EmptyAddress
 	}

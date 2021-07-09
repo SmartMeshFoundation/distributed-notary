@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	utilss "github.com/nkbai/goutils"
 	"github.com/nkbai/log"
 )
 
@@ -67,7 +68,12 @@ func (p *LockedSpectrumProxy) QueryLockout(accountHex string) (secretHash common
 func (p *LockedSpectrumProxy) PrepareLockin(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
 	opts.Value = amount
 	expiration2 := new(big.Int).SetUint64(expiration)
+	log.Trace(fmt.Sprintf("===>[LockedSpectrumProxy]bind.TransactOpts=%s", utilss.StringInterface(opts, 5)))
+	log.Trace(fmt.Sprintf("===>[LockedSpectrumProxy]PrepareLockin ,scUserAddressHex=%s ,secretHash=%s ,scExpiration=%d ,amount=%d", accountHex, secretHash.Hex(), expiration, amount))
+
 	tx, err := p.Contract.PrepareLockin(opts, secretHash, expiration2)
+	fmt.Println("from:%s", opts.From.Hex())
+
 	if err != nil {
 		return
 	}

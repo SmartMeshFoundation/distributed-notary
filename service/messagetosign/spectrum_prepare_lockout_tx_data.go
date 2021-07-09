@@ -107,7 +107,7 @@ func (d *SpectrumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProx
 	//	return
 	//}
 	// 3. 使用本地数据获取MsgToSign
-	mcUserAddressHex := d.UserRequest.GetSignerETHAddress().String()
+	mcUserAddressHex := d.UserRequest.GetSignerSMCAddress().String()
 	mcExpiration := localLockoutInfo.MCExpiration
 	secretHash := localLockoutInfo.SecretHash
 	amount := new(big.Int).Sub(localLockoutInfo.Amount, localLockoutInfo.CrossFee) // 扣除手续费

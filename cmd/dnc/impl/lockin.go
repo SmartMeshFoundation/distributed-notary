@@ -38,7 +38,11 @@ func lockin(ctx *cli.Context) error {
 	}
 	// 4. call li
 	auth := bind.NewKeyedTransactor(privateKey)
-
+	fmt.Println("Old default auth.GasPrice=%d", auth.GasPrice)
+	fmt.Println("Old default auth.GasLimit=%d", auth.GasLimit)
+	//仅测试工具用，具体通过https://tc.hecochain.com/price/prediction查询
+	/*auth.GasPrice=big.NewInt(210000000)
+	auth.GasLimit=uint64(100000)*/
 	err = cp.Lockin(auth, GlobalConfig.HecoUserAddress, secret)
 	if err != nil {
 		fmt.Println("lockin err : ", err.Error())

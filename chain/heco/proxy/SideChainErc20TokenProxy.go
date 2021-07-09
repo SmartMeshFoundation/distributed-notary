@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	utilss "github.com/nkbai/goutils"
 	"github.com/nkbai/log"
 )
 
@@ -69,6 +70,10 @@ func (p *SideChainErc20TokenProxy) PrepareLockin(opts *bind.TransactOpts, accoun
 	account := common.HexToAddress(accountHex)
 	expiration2 := new(big.Int).SetUint64(expiration)
 	var tx *types.Transaction
+	/*opts.GasPrice=big.NewInt(2100000000)
+	opts.GasLimit=uint64(1200000)*/
+	log.Trace(fmt.Sprintf("===>[SideChainRec20TokenProxy]bind.TransactOpts=%s", utilss.StringInterface(opts, 5)))
+	log.Trace(fmt.Sprintf("===>nSideChainRec20TokenProxy]PrepareLockin ,scUserAddressHex=%s ,secretHash=%s ,scExpiration=%d ,amount=%d", accountHex, secretHash.Hex(), expiration, amount))
 	tx, err = p.Contract.PrepareLockin(opts, account, secretHash, expiration2, amount)
 	if err != nil {
 		return
@@ -87,6 +92,8 @@ func (p *SideChainErc20TokenProxy) PrepareLockin(opts *bind.TransactOpts, accoun
 func (p *SideChainErc20TokenProxy) Lockin(opts *bind.TransactOpts, accountHex string, secret common.Hash) (err error) {
 	account := common.HexToAddress(accountHex)
 	var tx *types.Transaction
+	/*opts.GasPrice=big.NewInt(2100000000)
+	opts.GasLimit=uint64(1200000)*/
 	tx, err = p.Contract.Lockin(opts, account, secret)
 	if err != nil {
 		return
@@ -105,6 +112,8 @@ func (p *SideChainErc20TokenProxy) Lockin(opts *bind.TransactOpts, accountHex st
 func (p *SideChainErc20TokenProxy) CancelLockin(opts *bind.TransactOpts, accountHex string) (err error) {
 	account := common.HexToAddress(accountHex)
 	var tx *types.Transaction
+	/*opts.GasPrice=big.NewInt(2100000000)
+	opts.GasLimit=uint64(1200000)*/
 	tx, err = p.Contract.CancelLockin(opts, account)
 	if err != nil {
 		return
@@ -124,6 +133,8 @@ func (p *SideChainErc20TokenProxy) CancelLockin(opts *bind.TransactOpts, account
 func (p *SideChainErc20TokenProxy) PrepareLockout(opts *bind.TransactOpts, accountHex string, secretHash common.Hash, expiration uint64, amount *big.Int) (err error) {
 	expiration2 := new(big.Int).SetUint64(expiration)
 	var tx *types.Transaction
+	/*opts.GasPrice=big.NewInt(2100000000)
+	opts.GasLimit=uint64(1200000)*/
 	tx, err = p.Contract.PrepareLockout(opts, secretHash, expiration2, amount)
 	if err != nil {
 		return
@@ -142,6 +153,8 @@ func (p *SideChainErc20TokenProxy) PrepareLockout(opts *bind.TransactOpts, accou
 func (p *SideChainErc20TokenProxy) Lockout(opts *bind.TransactOpts, accountHex string, secret common.Hash) (err error) {
 	account := common.HexToAddress(accountHex)
 	var tx *types.Transaction
+	/*opts.GasPrice=big.NewInt(2100000000)
+	opts.GasLimit=uint64(1200000)*/
 	tx, err = p.Contract.Lockout(opts, account, secret)
 	if err != nil {
 		return
@@ -160,6 +173,8 @@ func (p *SideChainErc20TokenProxy) Lockout(opts *bind.TransactOpts, accountHex s
 func (p *SideChainErc20TokenProxy) CancelLockout(opts *bind.TransactOpts, accountHex string) (err error) {
 	account := common.HexToAddress(accountHex)
 	var tx *types.Transaction
+	/*opts.GasPrice=big.NewInt(2100000000)
+	opts.GasLimit=uint64(1200000)*/
 	tx, err = p.Contract.CancelLockOut(opts, account)
 	if err != nil {
 		return

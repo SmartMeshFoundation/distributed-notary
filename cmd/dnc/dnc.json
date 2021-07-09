@@ -9,20 +9,27 @@
 	"smc_rpc_endpoint": "http://106.52.171.12:17004",
 	"sc_token_list": [
 		{
-			"sc_token": "0x82ac8ed5d2d34bdae1a02c1fbeddc0f89137ba83",
+			"sc_token": "0x75adeed4773ebc4d9ce9e19c6299ec66d0dcba82",
 			"sc_token_name": "spectrum-Token",
-			"sc_token_owner_key": "0x90c4cf5b024dbe05274a68acbc368c87fd98f4cc97141dc371f2c84bcac1eebb",
-			"mc_locked_contract_address": "0x82ac8ed5d2d34bdae1a02c1fbeddc0f89137ba83",
+			"sc_token_owner_key": "0xc88d819ebb4b23a305cc198f9d3c42a70884fa87f91d85a282b21a4e4fc42341",
+			"mc_locked_contract_address": "0x75adeed4773ebc4d9ce9e19c6299ec66d0dcba82",
 			"mc_name": "spectrum",
-			"mc_locked_contract_owner_key": "0x90c4cf5b024dbe05274a68acbc368c87fd98f4cc97141dc371f2c84bcac1eebb",
-			"create_time": "2021-07-04 14:56:23 +0800 CST",
+			"mc_locked_contract_owner_key": "0xc88d819ebb4b23a305cc198f9d3c42a70884fa87f91d85a282b21a4e4fc42341",
+			"create_time": "2021-07-08 18:35:59 +0800 CST",
 			"organiser_id": 0
 		}
 	],
 	"run_time": {
 		"mc_name": "spectrum",
-		"secret": "0x524fd71299c055fe9dcf4c7a07efb58bebee9fbab561c7a267e5ebe941fabe26",
-		"secret_hash": "0xa77f5b4d42b493296ef92090dbb61a75f44f89e34d0db1c15c21056ceab608a8",
+		"secret": "0x473fbf8c735f56fb6b5889118ae60e6d9708c9d64ae9e39df0fd963bffa035d1",
+		"secret_hash": "0x340ece6fb903ab6aa81fdad1c1283acb7e02c00af21b2c089ca4a0ce01c562a7",
 		"lockout_info": null
-	}
+	},
+	"btc_rpc_user": "",
+	"btc_rpc_pass": "",
+	"btc_rpc_cert_file_path": "",
+	"btc_rpc_endpoint": "",
+	"btc_user_address": "",
+	"btc_wallet_rpc_cert_file_path": "",
+	"btc_wallet_rpc_endpoint": ""
 }

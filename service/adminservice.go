@@ -285,7 +285,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 	if err != nil {
 		return
 	}
-	tokenName := "heco"
+	tokenName := "spectrum-Token"
 	return as.distributedDeployOnHeco(c, privateKeyInfo, tokenName)
 }
 
@@ -307,8 +307,8 @@ func (as *AdminService) distributedDeployOnHeco(c chain.Chain, privateKeyInfo *m
 	log.Info("deploy contract on %s with account=%s, signature=%s", c.GetChainName(), privateKeyInfo.ToAddress().String(), common.Bytes2Hex(signature))
 	// 4. 部署合约
 	transactor := &bind.TransactOpts{
-		From:  privateKeyInfo.ToAddress(),
-		Nonce: big.NewInt(int64(nonce)),
+		From: privateKeyInfo.ToAddress(),
+		//Nonce: big.NewInt(int64(nonce)),
 		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
 			if address != privateKeyInfo.ToAddress() {
 				return nil, errors.New("not authorized to sign this account")

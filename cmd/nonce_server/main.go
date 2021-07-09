@@ -17,7 +17,7 @@ func main() {
 		cli.StringFlag{
 			Name:  "datadir",
 			Usage: "Directory for storing nonce-server data.",
-			Value: "./.nonce-server-data",
+			Value: "./nonce-server-data",
 		},
 		cli.StringFlag{
 			Name:  "listen",

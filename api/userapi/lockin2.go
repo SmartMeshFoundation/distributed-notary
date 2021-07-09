@@ -83,7 +83,7 @@ func (r *SCPrepareLockinRequest2) VerifySign() bool {
 	}
 	r.Signature = sigString
 	signerEthAddress := crypto.PubkeyToAddress(*publicKey)
-	if signerEthAddress == r.GetSignerETHAddress() {
+	if signerEthAddress == r.GetSignerSMCAddress() {
 		return true
 	}
 	//todo 为了兼容来自浏览器的请求,go相关代码不会走到这里
@@ -95,11 +95,11 @@ func (r *SCPrepareLockinRequest2) VerifySign() bool {
 	}
 	r.Signature = sigString
 	signerEthAddress = crypto.PubkeyToAddress(*publicKey)
-	return signerEthAddress == r.GetSignerETHAddress()
+	return signerEthAddress == r.GetSignerSMCAddress()
 }
 
-// GetSignerETHAddress impl ReqWithSignature
-func (r *SCPrepareLockinRequest2) GetSignerETHAddress() common.Address {
+// GetSignerSMCAddress impl ReqWithSignature
+func (r *SCPrepareLockinRequest2) GetSignerSMCAddress() common.Address {
 	if len(r.Signer) == 0 {
 		return utils.EmptyAddress
 	}

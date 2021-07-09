@@ -25,9 +25,10 @@ import (
 )
 
 type runTime struct {
-	MCName      string              `json:"mc_name"`
-	Secret      string              `json:"secret"`
-	SecretHash  string              `json:"secret_hash"`
+	MCName     string `json:"mc_name"`
+	Secret     string `json:"secret"`
+	SecretHash string `json:"secret_hash"`
+
 	LockoutInfo *models.LockoutInfo `json:"lockout_info"`
 }
 type dncConfig struct {
@@ -45,6 +46,15 @@ type dncConfig struct {
 	SCTokenList []service.ScTokenInfoToResponse `json:"sc_token_list"`
 
 	RunTime *runTime `json:"run_time"`
+
+	BtcRPCUser         string `json:"btc_rpc_user"`
+	BtcRPCPass         string `json:"btc_rpc_pass"`
+	BtcRPCCertFilePath string `json:"btc_rpc_cert_file_path"`
+	BtcRPCEndpoint     string `json:"btc_rpc_endpoint"`
+	BtcUserAddress     string `json:"btc_user_address"`
+
+	BtcWalletRPCCertFilePath string `json:"btc_wallet_rpc_cert_file_path"`
+	BtcWalletRPCEndpoint     string `json:"btc_wallet_rpc_endpoint"`
 }
 
 // GlobalConfig :
@@ -55,13 +65,22 @@ var DefaultConfig = &dncConfig{
 	NotaryHost: "http://106.52.171.12:12010",
 	Keystore:   "./keystore",
 
-	HecoUserAddress:  "0xbb1c0c1f4f5a26a133a1afb496aa4c1735a5665c",
+	HecoUserAddress:  "0x1bfa51c2ff3eb8a4bc4f1c1c35a0052b8f407327",
 	HecoUserPassword: "123",
 	HecoRPCEndpoint:  "http://106.52.171.12:12001",
 
-	SmcUserAddress:  "0xbb1c0c1f4f5a26a133a1afb496aa4c1735a5665c",
+	SmcUserAddress:  "0x1bfa51c2ff3eb8a4bc4f1c1c35a0052b8f407327",
 	SmcUserPassword: "123",
 	SmcRPCEndpoint:  "http://106.52.171.12:17004",
+
+	BtcRPCUser:         "wuhan",
+	BtcRPCPass:         "wuhan",
+	BtcRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcd/rpc.cert"),
+	BtcRPCEndpoint:     "192.168.124.13:18556",
+	BtcUserAddress:     "SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY", //"SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY",
+
+	BtcWalletRPCEndpoint:     "192.168.124.13:18554",
+	BtcWalletRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcwallet/rpc.cert"),
 }
 
 //var configDir = path.Join(".dnc-client")c

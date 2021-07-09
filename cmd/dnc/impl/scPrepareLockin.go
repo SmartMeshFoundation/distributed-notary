@@ -16,6 +16,7 @@ import (
 	"github.com/SmartMeshFoundation/distributed-notary/cfg"
 	"github.com/SmartMeshFoundation/distributed-notary/utils"
 	"github.com/ethereum/go-ethereum/common"
+	utilss "github.com/nkbai/goutils"
 	"github.com/urfave/cli"
 )
 
@@ -45,6 +46,8 @@ func scPrepareLockIn4Eth(mcName string) {
 		fmt.Println("wrong mcname")
 		os.Exit(-1)
 	}
+	fmt.Println(fmt.Sprintf("scTokenInfo=%s", utilss.StringInterface(scTokenInfo, 3)))
+	fmt.Println(mcName)
 	url := GlobalConfig.NotaryHost + "/api/1/user/scpreparelockin2/" + scTokenInfo.SCToken.String()
 	req := &userapi.SCPrepareLockinRequest2{
 		BaseReq:             api.NewBaseReq(userapi.APIUserNameSCPrepareLockin),

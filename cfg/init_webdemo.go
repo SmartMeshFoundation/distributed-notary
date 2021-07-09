@@ -15,7 +15,7 @@ func init() {
 	SMC = &ChainCfg{
 		Name:                  "spectrum",
 		BlockPeriod:           time.Second,
-		ConfirmBlockNumber:    0,
+		ConfirmBlockNumber:    2,
 		BlockNumberPollPeriod: 14 * time.Second,
 		BlockNumberLogPeriod:  1,
 		RPCTimeout:            3 * time.Second,
@@ -25,7 +25,7 @@ func init() {
 	HECO = &ChainCfg{
 		Name:                  "heco",
 		BlockPeriod:           time.Second,
-		ConfirmBlockNumber:    0,
+		ConfirmBlockNumber:    2,
 		BlockNumberPollPeriod: 3 * time.Second,
 		BlockNumberLogPeriod:  1,
 		RPCTimeout:            3 * time.Second,

@@ -49,7 +49,7 @@ func NewHecoPrepareLockinTxData(scTokenProxy chain.ContractProxy, req *userapi.S
 	// 调用合约
 	err := scTokenProxy.PrepareLockin(transactor, scUserAddressHex, secretHash, expiration, amount)
 	log.Info(fmt.Sprintf("========>transactor=%s,scUserAddressHex=%s,secretHash=%s,expiration=%d,amount=%d", utils.StringInterface(transactor, 3), scUserAddressHex, secretHash, expiration, amount))
-
+	log.Debug(fmt.Sprintf("========>check error(NewHecoPrepareLockinTxData)=%s", err))
 	if err != errShouldBe {
 		// 这里不可能发生
 		panic(err)
@@ -113,7 +113,7 @@ func (d *HecoPrepareLockinTxData) VerifySignData(scTokenProxy chain.ContractProx
 	//	return
 	//}
 	// 3. 使用本地数据获取MsgToSign
-	scUserAddressHex := d.UserRequest.GetSignerETHAddress().String()
+	scUserAddressHex := d.UserRequest.GetSignerSMCAddress().String()
 	scExpiration := localLockinInfo.SCExpiration
 	secretHash := localLockinInfo.SecretHash
 	amount := new(big.Int).Sub(localLockinInfo.Amount, localLockinInfo.CrossFee) // 扣除手续费
