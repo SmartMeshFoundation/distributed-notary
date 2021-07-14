@@ -47,14 +47,14 @@ type dncConfig struct {
 
 	RunTime *runTime `json:"run_time"`
 
-	BtcRPCUser         string `json:"btc_rpc_user"`
-	BtcRPCPass         string `json:"btc_rpc_pass"`
-	BtcRPCCertFilePath string `json:"btc_rpc_cert_file_path"`
-	BtcRPCEndpoint     string `json:"btc_rpc_endpoint"`
-	BtcUserAddress     string `json:"btc_user_address"`
+	/*	BtcRPCUser         string `json:"btc_rpc_user"`
+		BtcRPCPass         string `json:"btc_rpc_pass"`
+		BtcRPCCertFilePath string `json:"btc_rpc_cert_file_path"`
+		BtcRPCEndpoint     string `json:"btc_rpc_endpoint"`
+		BtcUserAddress     string `json:"btc_user_address"`
 
-	BtcWalletRPCCertFilePath string `json:"btc_wallet_rpc_cert_file_path"`
-	BtcWalletRPCEndpoint     string `json:"btc_wallet_rpc_endpoint"`
+		BtcWalletRPCCertFilePath string `json:"btc_wallet_rpc_cert_file_path"`
+		BtcWalletRPCEndpoint     string `json:"btc_wallet_rpc_endpoint"`*/
 }
 
 // GlobalConfig :
@@ -73,14 +73,14 @@ var DefaultConfig = &dncConfig{
 	SmcUserPassword: "123",
 	SmcRPCEndpoint:  "http://106.52.171.12:17004",
 
-	BtcRPCUser:         "wuhan",
-	BtcRPCPass:         "wuhan",
-	BtcRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcd/rpc.cert"),
-	BtcRPCEndpoint:     "192.168.124.13:18556",
-	BtcUserAddress:     "SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY", //"SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY",
+	/*	BtcRPCUser:         "wuhan",
+		BtcRPCPass:         "wuhan",
+		BtcRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcd/rpc.cert"),
+		BtcRPCEndpoint:     "192.168.124.13:18556",
+		BtcUserAddress:     "SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY", //"SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY",
 
-	BtcWalletRPCEndpoint:     "192.168.124.13:18554",
-	BtcWalletRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcwallet/rpc.cert"),
+		BtcWalletRPCEndpoint:     "192.168.124.13:18554",
+		BtcWalletRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcwallet/rpc.cert"),*/
 }
 
 //var configDir = path.Join(".dnc-client")c

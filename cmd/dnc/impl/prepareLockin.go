@@ -37,7 +37,7 @@ var pliCmd = cli.Command{
 		cli.Uint64Flag{
 			Name:  "expiration",
 			Usage: "expiration of htlc",
-			Value: 900,
+			Value: 300,
 		},
 	},
 }
@@ -68,7 +68,7 @@ func prepareLockinOnSpectrum(mcName string, amount int64, expiration uint64) (er
 	c, err := ethclient.DialContext(ctx2, GlobalConfig.SmcRPCEndpoint)
 	cancelFunc()
 	if err != nil {
-		fmt.Println("connect to eth fail : ", err)
+		fmt.Println("connect to Spectrum fail : ", err)
 		os.Exit(-1)
 	}
 	conn := client.NewSafeClient(c)

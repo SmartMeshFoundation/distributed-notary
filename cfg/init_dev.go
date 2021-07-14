@@ -40,7 +40,7 @@ func init() {
 		BlockNumberPollPeriod: 14 * time.Second,
 		BlockNumberLogPeriod:  1,
 		RPCTimeout:            10 * time.Second,
-		CrossFeeRate:          10000,
+		CrossFeeRate:          0,
 	}
 
 	HECO = &ChainCfg{
@@ -50,7 +50,7 @@ func init() {
 		BlockNumberPollPeriod: 3 * time.Second,
 		BlockNumberLogPeriod:  1,
 		RPCTimeout:            10 * time.Second,
-		CrossFeeRate:          10000,
+		CrossFeeRate:          0,
 	}
 
 	/*

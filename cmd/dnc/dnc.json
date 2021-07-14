@@ -1,35 +1,28 @@
 {
 	"notary_host": "http://106.52.171.12:12010",
 	"keystore": "./keystore",
-	"heco_user_address": "0xbb1c0c1f4f5a26a133a1afb496aa4c1735a5665c",
+	"heco_user_address": "0x7104a5d49fd3004cbb994151a710e11389c6e519",
 	"heco_user_password": "123",
 	"heco_rpc_endpoint": "http://106.52.171.12:12001",
-	"smc_user_address": "0xbb1c0c1f4f5a26a133a1afb496aa4c1735a5665c",
+	"smc_user_address": "0x7104a5d49fd3004cbb994151a710e11389c6e519",
 	"smc_user_password": "123",
 	"smc_rpc_endpoint": "http://106.52.171.12:17004",
 	"sc_token_list": [
 		{
-			"sc_token": "0x75adeed4773ebc4d9ce9e19c6299ec66d0dcba82",
+			"sc_token": "0x8356a256cf5f40d7465f37406d7757e0991dddb6",
 			"sc_token_name": "spectrum-Token",
-			"sc_token_owner_key": "0xc88d819ebb4b23a305cc198f9d3c42a70884fa87f91d85a282b21a4e4fc42341",
-			"mc_locked_contract_address": "0x75adeed4773ebc4d9ce9e19c6299ec66d0dcba82",
+			"sc_token_owner_key": "0xc5d4912d802e86daec4ffc9f71aeb0dd6473cd39a41442186eabfcf9c74e76ba",
+			"mc_locked_contract_address": "0x8356a256cf5f40d7465f37406d7757e0991dddb6",
 			"mc_name": "spectrum",
-			"mc_locked_contract_owner_key": "0xc88d819ebb4b23a305cc198f9d3c42a70884fa87f91d85a282b21a4e4fc42341",
-			"create_time": "2021-07-08 18:35:59 +0800 CST",
+			"mc_locked_contract_owner_key": "0xc5d4912d802e86daec4ffc9f71aeb0dd6473cd39a41442186eabfcf9c74e76ba",
+			"create_time": "2021-07-09 17:12:38 +0800 CST",
 			"organiser_id": 0
 		}
 	],
 	"run_time": {
 		"mc_name": "spectrum",
-		"secret": "0x473fbf8c735f56fb6b5889118ae60e6d9708c9d64ae9e39df0fd963bffa035d1",
-		"secret_hash": "0x340ece6fb903ab6aa81fdad1c1283acb7e02c00af21b2c089ca4a0ce01c562a7",
+		"secret": "0x0114a7d8ca6001be3fa1dc4b2fd7a4384752caf56254d464ce3164c3f354963b",
+		"secret_hash": "0x9c9a095feac723ccefceaab18e023ddb9446958acbd2823a12d4ef59093d3f6c",
 		"lockout_info": null
-	},
-	"btc_rpc_user": "",
-	"btc_rpc_pass": "",
-	"btc_rpc_cert_file_path": "",
-	"btc_rpc_endpoint": "",
-	"btc_user_address": "",
-	"btc_wallet_rpc_cert_file_path": "",
-	"btc_wallet_rpc_endpoint": ""
+	}
 }

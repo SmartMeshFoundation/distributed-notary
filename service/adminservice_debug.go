@@ -10,7 +10,8 @@ import (
 )
 
 func (as *AdminService) onDebugTransferToAccountRequest(req *userapi.DebugTransferToAccountRequest) {
-	amount := new(big.Int).Mul(big.NewInt(ethparams.Finney), big.NewInt(300))
+	//amount := new(big.Int).Mul(big.NewInt(ethparams.Finney), big.NewInt(300))
+	amount := new(big.Int).Mul(big.NewInt(ethparams.Finney), big.NewInt(30))
 	namespace := []string{cfg.HECO.Name, cfg.SMC.Name}
 	for _, name := range namespace {
 		c, err := as.dispatchService.getChainByName(name)
