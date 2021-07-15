@@ -37,7 +37,7 @@ var pliCmd = cli.Command{
 		cli.Uint64Flag{
 			Name:  "expiration",
 			Usage: "expiration of htlc",
-			Value: 300,
+			Value: 900,
 		},
 	},
 }

@@ -46,15 +46,6 @@ type dncConfig struct {
 	SCTokenList []service.ScTokenInfoToResponse `json:"sc_token_list"`
 
 	RunTime *runTime `json:"run_time"`
-
-	/*	BtcRPCUser         string `json:"btc_rpc_user"`
-		BtcRPCPass         string `json:"btc_rpc_pass"`
-		BtcRPCCertFilePath string `json:"btc_rpc_cert_file_path"`
-		BtcRPCEndpoint     string `json:"btc_rpc_endpoint"`
-		BtcUserAddress     string `json:"btc_user_address"`
-
-		BtcWalletRPCCertFilePath string `json:"btc_wallet_rpc_cert_file_path"`
-		BtcWalletRPCEndpoint     string `json:"btc_wallet_rpc_endpoint"`*/
 }
 
 // GlobalConfig :
@@ -62,25 +53,16 @@ var GlobalConfig *dncConfig
 
 // DefaultConfig :
 var DefaultConfig = &dncConfig{
-	NotaryHost: "http://106.52.171.12:12010",
+	NotaryHost: "http://106.53.110.57:12010",
 	Keystore:   "./keystore",
 
 	HecoUserAddress:  "0x1bfa51c2ff3eb8a4bc4f1c1c35a0052b8f407327",
 	HecoUserPassword: "123",
-	HecoRPCEndpoint:  "http://106.52.171.12:12001",
+	HecoRPCEndpoint:  "https://http-mainnet-node.huobichain.com",
 
 	SmcUserAddress:  "0x1bfa51c2ff3eb8a4bc4f1c1c35a0052b8f407327",
 	SmcUserPassword: "123",
-	SmcRPCEndpoint:  "http://106.52.171.12:17004",
-
-	/*	BtcRPCUser:         "wuhan",
-		BtcRPCPass:         "wuhan",
-		BtcRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcd/rpc.cert"),
-		BtcRPCEndpoint:     "192.168.124.13:18556",
-		BtcUserAddress:     "SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY", //"SgEQfVdPqBS65jpSNLoddAa9kCouqqxGrY",
-
-		BtcWalletRPCEndpoint:     "192.168.124.13:18554",
-		BtcWalletRPCCertFilePath: filepath.Join(os.Getenv("HOME"), ".btcwallet/rpc.cert"),*/
+	SmcRPCEndpoint:  "https://jsonapi1.smartmesh.cn",
 }
 
 //var configDir = path.Join(".dnc-client")c
