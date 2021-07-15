@@ -137,7 +137,7 @@ contract AtmosphereToken is StandardToken {
     mapping(address=>LockinInfo) public lockin_htlc; //lockin过程中的htlc
     event PrepareLockin(address account, uint256 value);
     event LockinSecret(address account,bytes32 secret);
-    event PrepareLockout(address account, uint256 _value);
+    event PrepareLockout(address account, uint256 _value, bytes32 secret_hash, uint256 expiration);
     event Lockout(address account, bytes32 secretHash);
     event CancelLockin(address account, bytes32 secretHash);
     event CancelLockout(address account, bytes32 secretHash);
@@ -225,7 +225,7 @@ contract AtmosphereToken is StandardToken {
 
         balances[msg.sender]-=value;
 
-        emit PrepareLockout(msg.sender,value);
+        emit PrepareLockout(msg.sender,value,secret_hash,expiration);
     }
     //用户在主链上提交secret,资产已经转移走, 公证人(任何人)观察到密码,销毁相应的token
     function lockout(address from,bytes32 secret)   public {
