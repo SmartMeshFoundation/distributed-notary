@@ -55,7 +55,7 @@ contract LockedSpectrum is Owned {
         uint256 value; //转入金额
     }
     mapping(address=>LockinInfo) public lockin_htlc; //lockin过程中的htlc
-    event PrepareLockin(address account,uint256 value);
+    event PrepareLockin(address account,uint256 value,bytes32 secret_hash,uint256 expiration);
     event LockoutSecret(address account, bytes32 secret);
     event PrepareLockout(address account, uint256 _value);
     event Lockin(address account, bytes32 secretHash);
@@ -89,7 +89,7 @@ contract LockedSpectrum is Owned {
         li.SecretHash=secret_hash;
         li.Expiration=expiration;
         li.value=msg.value;
-        emit PrepareLockin(msg.sender ,msg.value);
+        emit PrepareLockin(msg.sender,msg.value,secret_hash,expiration);
     }
     //公证人观察到侧链上用户提供的密码,凭密码销毁凭据,防止用户在过期以后再次获取到token
     function lockin(address account,bytes32 secret)   public {
