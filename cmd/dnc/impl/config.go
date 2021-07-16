@@ -58,7 +58,7 @@ var DefaultConfig = &dncConfig{
 
 	HecoUserAddress:  "0x1bfa51c2ff3eb8a4bc4f1c1c35a0052b8f407327",
 	HecoUserPassword: "123",
-	HecoRPCEndpoint:  "https://http-mainnet-node.huobichain.com",
+	HecoRPCEndpoint:  "http://39.96.43.115:8545",
 
 	SmcUserAddress:  "0x1bfa51c2ff3eb8a4bc4f1c1c35a0052b8f407327",
 	SmcUserPassword: "123",

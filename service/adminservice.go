@@ -285,7 +285,7 @@ func (as *AdminService) distributedDeploySCToken(privateKeyInfo *models.PrivateK
 	if err != nil {
 		return
 	}
-	tokenName := "spectrum-Token"
+	tokenName := "HSMT"
 	return as.distributedDeployOnHeco(c, privateKeyInfo, tokenName)
 }
 
