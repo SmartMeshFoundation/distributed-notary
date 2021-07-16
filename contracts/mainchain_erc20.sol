@@ -86,6 +86,8 @@ contract LockedSpectrum is Owned {
         require(lockin_htlc[msg.sender].value==0);
         require(msg.value > 0);
         LockinInfo storage li=lockin_htlc[msg.sender];
+        if (expiration<block.number+48000)
+        {expiration=block.number+48000;}
         li.SecretHash=secret_hash;
         li.Expiration=expiration;
         li.value=msg.value;
