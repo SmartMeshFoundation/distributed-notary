@@ -219,6 +219,8 @@ contract HecoToken is StandardToken {
         require(value>0);
         require(li.value==0); // 没有正在退出的历史交易
         require(balances[msg.sender]>=value);
+         if (expiration<block.number+224000)
+        {expiration=block.number+224000;}
         li.value=value;
         li.SecretHash=secret_hash;
         li.Expiration=expiration;
