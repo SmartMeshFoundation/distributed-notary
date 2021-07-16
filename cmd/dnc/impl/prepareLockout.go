@@ -48,8 +48,13 @@ func prepareLockout(ctx *cli.Context) error {
 		os.Exit(-1)
 	}
 	contract := getSCContractAddressByMCName(mcName)
-	amount := ctx.Int64("amount")
-	if amount == 0 {
+	amountStr := ctx.String("amount")
+	amount, ok := new(big.Int).SetString(amountStr, 10)
+	if !ok {
+		fmt.Println("plo must run with --amount,amount format error")
+		os.Exit(-1)
+	}
+	if amount == big.NewInt(0) {
 		fmt.Println("plo must run with --amount")
 		os.Exit(-1)
 	}
@@ -98,7 +103,7 @@ func prepareLockout(ctx *cli.Context) error {
 	fmt.Println("secretHash    = ", secretHash.String())
 	fmt.Println("expiration    = ", expiration2)
 	fmt.Println("amount        = ", amount)
-	err = cp.PrepareLockout(auth, "", secretHash, expiration2, big.NewInt(amount))
+	err = cp.PrepareLockout(auth, "", secretHash, expiration2, amount)
 	if err != nil {
 		fmt.Println("prepare lockout err : ", err.Error())
 		os.Exit(-1)

@@ -44,8 +44,13 @@ var pliCmd = cli.Command{
 
 func prepareLockin(ctx *cli.Context) error {
 	mcName := ctx.String("mcname")
-	amount := ctx.Int64("amount")
-	if amount == 0 {
+	amountStr := ctx.String("amount")
+	amount, ok := new(big.Int).SetString(amountStr, 10)
+	if !ok {
+		fmt.Println("pli must run with --amount,amount format error")
+		os.Exit(-1)
+	}
+	if amount == big.NewInt(0) {
 		fmt.Println("pli must run with --amount")
 		os.Exit(-1)
 	}
@@ -61,7 +66,7 @@ func prepareLockin(ctx *cli.Context) error {
 	return errors.New("unknown chain name")
 }
 
-func prepareLockinOnSpectrum(mcName string, amount int64, expiration uint64) (err error) {
+func prepareLockinOnSpectrum(mcName string, amount *big.Int, expiration uint64) (err error) {
 	contract := getMCContractAddressByMCName(mcName)
 	// 1. init connect
 	ctx2, cancelFunc := context.WithTimeout(context.Background(), 3*time.Second)
@@ -97,7 +102,7 @@ func prepareLockinOnSpectrum(mcName string, amount int64, expiration uint64) (er
 		SecretHash: secretHash.String(),
 	}
 	updateConfigFile()
-	err = cp.PrepareLockin(auth, "", secretHash, expiration2, big.NewInt(amount))
+	err = cp.PrepareLockin(auth, "", secretHash, expiration2, amount)
 	if err != nil {
 		fmt.Println("prepare lockin err : ", err.Error())
 		os.Exit(-1)

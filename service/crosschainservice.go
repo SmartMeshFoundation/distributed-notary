@@ -19,7 +19,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/nkbai/goutils"
 	"github.com/nkbai/log"
 )
 
@@ -117,8 +116,8 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 			return tx.WithSignature(signer, signature)
 		},
 	}
-	log.Trace(fmt.Sprintf("===>now callSCPrepareLockin,CrossChainService=%s", utils.StringInterface(cs, 5)))
-	log.Trace(fmt.Sprintf("===>now callSCPrepareLockin,scUserAddressHex=%s ,secretHash=%s ,scExpiration=%d ,amount=%d", scUserAddressHex, secretHash.Hex(), scExpiration, amount))
+	//log.Trace(fmt.Sprintf("===>now callSCPrepareLockin,CrossChainService=%s", utils.StringInterface(cs, 5)))
+	log.Trace(fmt.Sprintf("===>now callSCPrepareLockin,scUserAddressHex=%s ,secretHash=%s ,scExpiration=%d ,amount=%s", scUserAddressHex, secretHash.Hex(), scExpiration, amount.String()))
 	return cs.scTokenProxy.PrepareLockin(transactor, scUserAddressHex, secretHash, scExpiration, amount)
 }
 

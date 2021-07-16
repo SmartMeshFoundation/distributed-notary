@@ -153,7 +153,7 @@ func (cs *CrossChainService) onMCPrepareLockin4Spectrum(event smcevents.PrepareL
 		err = fmt.Errorf("mcProxy.QueryLockin err = %s", err.Error())
 		return
 	}
-	log.Info("onMCPrepareLockin4Spectrum mcExpiration ,secretHash=%s,mcExpiration=%d", secretHash, mcExpiration)
+	log.Info("onMCPrepareLockin4Spectrum mcExpiration ,secretHash=%s,mcExpiration=%d", secretHash.Hex(), mcExpiration)
 	// 1.5 校验mcExpiration
 	//如果写mcExpiration-event.BlockNumber存在溢出.
 	if mcExpiration <= cfg.GetMinExpirationBlock4User(cs.meta.MCName)+event.BlockNumber {
