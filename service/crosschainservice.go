@@ -168,7 +168,10 @@ func (cs *CrossChainService) callSpectrumPrepareLockout(req *userapi.MCPrepareLo
 	}
 	// 1. 构造MessageToSign
 	var msgToSign messagetosign.MessageToSign
-	msgToSign = messagetosign.NewSpectrumPrepareLockoutTxData(cs.mcProxy, req, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, nonce)
+	msgToSign,err = messagetosign.NewSpectrumPrepareLockoutTxData(cs.mcProxy, req, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, nonce)
+	if err != nil {
+		return
+	}
 	// 2. 发起分布式签名
 	var signature []byte
 	var _ common.Hash
