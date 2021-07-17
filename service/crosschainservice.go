@@ -91,7 +91,10 @@ func (cs *CrossChainService) callSCPrepareLockin(req *userapi.SCPrepareLockinReq
 	}
 	// 1. 构造MessageToSign
 	var msgToSign messagetosign.MessageToSign
-	msgToSign = messagetosign.NewHecoPrepareLockinTxData(cs.scTokenProxy, req, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, nonce)
+	msgToSign,err = messagetosign.NewHecoPrepareLockinTxData(cs.scTokenProxy, req, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, nonce)
+	if err != nil {
+		return
+	}
 	// 2. 发起分布式签名
 	var signature []byte
 	var _ common.Hash
