@@ -118,7 +118,10 @@ func (d *HecoPrepareLockinTxData) VerifySignData(scTokenProxy chain.ContractProx
 	secretHash := localLockinInfo.SecretHash
 	amount := new(big.Int).Sub(localLockinInfo.Amount, localLockinInfo.CrossFee) // 扣除手续费
 	var local *HecoPrepareLockinTxData
-	local = NewHecoPrepareLockinTxData(scTokenProxy, d.UserRequest, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, d.Nonce)
+	local,err = NewHecoPrepareLockinTxData(scTokenProxy, d.UserRequest, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, d.Nonce)
+	if err != nil {
+		return
+	}
 	if bytes.Compare(local.GetSignBytes(), d.GetSignBytes()) != 0 {
 		err = fmt.Errorf("HecoPrepareLockinTxData.VerifySignBytes() fail,maybe attack")
 	}
