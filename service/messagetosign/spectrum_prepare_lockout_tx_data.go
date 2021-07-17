@@ -28,7 +28,7 @@ type SpectrumPrepareLockoutTxData struct {
 }
 
 // NewSpectrumPrepareLockoutTxData :
-func NewSpectrumPrepareLockoutTxData(mcProxy chain.ContractProxy, req *userapi.MCPrepareLockoutRequest, callerAddress common.Address, mcUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int, nonce uint64) (data *SpectrumPrepareLockoutTxData) {
+func NewSpectrumPrepareLockoutTxData(mcProxy chain.ContractProxy, req *userapi.MCPrepareLockoutRequest, callerAddress common.Address, mcUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int, nonce uint64) (data *SpectrumPrepareLockoutTxData, err error) {
 	data = &SpectrumPrepareLockoutTxData{
 		UserRequest:  req,
 		Nonce:        nonce,
@@ -46,11 +46,11 @@ func NewSpectrumPrepareLockoutTxData(mcProxy chain.ContractProxy, req *userapi.M
 		},
 	}
 	// 调用合约
-	err := mcProxy.PrepareLockout(transactor, mcUserAddressHex, secretHash, expiration, amount)
-	if err != errShouldBe {
-		// 这里不可能发生
-		panic(err)
-	}
+	err = mcProxy.PrepareLockout(transactor, mcUserAddressHex, secretHash, expiration, amount)
+// 	if err != errShouldBe {
+// 		// 这里不可能发生
+// 		panic(err)
+// 	}
 	return
 }
 
@@ -112,7 +112,10 @@ func (d *SpectrumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProx
 	secretHash := localLockoutInfo.SecretHash
 	amount := new(big.Int).Sub(localLockoutInfo.Amount, localLockoutInfo.CrossFee) // 扣除手续费
 	var local *SpectrumPrepareLockoutTxData
-	local = NewSpectrumPrepareLockoutTxData(mcProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, d.Nonce)
+	local,err = NewSpectrumPrepareLockoutTxData(mcProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, d.Nonce)
+	if err != nil {
+		return
+	}
 	if bytes.Compare(local.GetSignBytes(), d.GetSignBytes()) != 0 {
 		err = fmt.Errorf("SpectrumPrepareLockoutTxData.VerifySignBytes() fail,maybe attack")
 	}
