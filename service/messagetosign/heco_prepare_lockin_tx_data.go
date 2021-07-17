@@ -29,7 +29,7 @@ type HecoPrepareLockinTxData struct {
 }
 
 // NewHecoPrepareLockinTxData :
-func NewHecoPrepareLockinTxData(scTokenProxy chain.ContractProxy, req *userapi.SCPrepareLockinRequest, callerAddress common.Address, scUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int, nonce uint64) (data *HecoPrepareLockinTxData) {
+func NewHecoPrepareLockinTxData(scTokenProxy chain.ContractProxy, req *userapi.SCPrepareLockinRequest, callerAddress common.Address, scUserAddressHex string, secretHash common.Hash, expiration uint64, amount *big.Int, nonce uint64) (data *HecoPrepareLockinTxData, err error) {
 	data = &HecoPrepareLockinTxData{
 		Nonce:        nonce,
 		UserRequest:  req,
@@ -47,13 +47,13 @@ func NewHecoPrepareLockinTxData(scTokenProxy chain.ContractProxy, req *userapi.S
 		},
 	}
 	// 调用合约
-	err := scTokenProxy.PrepareLockin(transactor, scUserAddressHex, secretHash, expiration, amount)
+	err = scTokenProxy.PrepareLockin(transactor, scUserAddressHex, secretHash, expiration, amount)
 	log.Info(fmt.Sprintf("========>transactor=%s,scUserAddressHex=%s,secretHash=%s,expiration=%d,amount=%d", utils.StringInterface(transactor, 3), scUserAddressHex, secretHash, expiration, amount))
 	log.Debug(fmt.Sprintf("========>check error(NewHecoPrepareLockinTxData)=%s", err))
-	if err != errShouldBe {
-		// 这里不可能发生
-		panic(err)
-	}
+// 	if err != errShouldBe {
+// 		// 这里不可能发生
+// 		panic(err)
+// 	}
 	return
 }
 
