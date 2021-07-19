@@ -50,10 +50,13 @@ func NewHecoPrepareLockinTxData(scTokenProxy chain.ContractProxy, req *userapi.S
 	err = scTokenProxy.PrepareLockin(transactor, scUserAddressHex, secretHash, expiration, amount)
 	log.Info(fmt.Sprintf("========>transactor=%s,scUserAddressHex=%s,secretHash=%s,expiration=%d,amount=%d", utils.StringInterface(transactor, 3), scUserAddressHex, secretHash, expiration, amount))
 	log.Debug(fmt.Sprintf("========>check error(NewHecoPrepareLockinTxData)=%s", err))
-// 	if err != errShouldBe {
-// 		// 这里不可能发生
-// 		panic(err)
-// 	}
+	if err != errShouldBe {
+		// 这里不可能发生
+		//panic(err)
+		return nil, err
+	} else {
+		return data, nil
+	}
 	return
 }
 
@@ -118,7 +121,7 @@ func (d *HecoPrepareLockinTxData) VerifySignData(scTokenProxy chain.ContractProx
 	secretHash := localLockinInfo.SecretHash
 	amount := new(big.Int).Sub(localLockinInfo.Amount, localLockinInfo.CrossFee) // 扣除手续费
 	var local *HecoPrepareLockinTxData
-	local,err = NewHecoPrepareLockinTxData(scTokenProxy, d.UserRequest, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, d.Nonce)
+	local, err = NewHecoPrepareLockinTxData(scTokenProxy, d.UserRequest, privateKeyInfo.ToAddress(), scUserAddressHex, secretHash, scExpiration, amount, d.Nonce)
 	if err != nil {
 		return
 	}

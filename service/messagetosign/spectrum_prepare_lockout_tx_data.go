@@ -47,10 +47,13 @@ func NewSpectrumPrepareLockoutTxData(mcProxy chain.ContractProxy, req *userapi.M
 	}
 	// 调用合约
 	err = mcProxy.PrepareLockout(transactor, mcUserAddressHex, secretHash, expiration, amount)
-// 	if err != errShouldBe {
-// 		// 这里不可能发生
-// 		panic(err)
-// 	}
+	if err != errShouldBe {
+		// 这里不可能发生
+		//panic(err)
+		return nil, err
+	} else {
+		return data, nil
+	}
 	return
 }
 
@@ -112,7 +115,7 @@ func (d *SpectrumPrepareLockoutTxData) VerifySignData(mcProxy chain.ContractProx
 	secretHash := localLockoutInfo.SecretHash
 	amount := new(big.Int).Sub(localLockoutInfo.Amount, localLockoutInfo.CrossFee) // 扣除手续费
 	var local *SpectrumPrepareLockoutTxData
-	local,err = NewSpectrumPrepareLockoutTxData(mcProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, d.Nonce)
+	local, err = NewSpectrumPrepareLockoutTxData(mcProxy, d.UserRequest, privateKeyInfo.ToAddress(), mcUserAddressHex, secretHash, mcExpiration, amount, d.Nonce)
 	if err != nil {
 		return
 	}
