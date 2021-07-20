@@ -19,7 +19,7 @@ import (
 	"github.com/nkbai/log"
 )
 
-var defaultTimeoutBlock uint64 = 3
+var defaultTimeoutBlock uint64 = 15
 
 type nonceManager struct {
 	account                 common.Address
@@ -60,7 +60,7 @@ func (nm *nonceManager) applyNonce(cancelURL string) uint64 {
 	nm.nextNonce++
 	nm.usedNonceToCancelURLMap.Store(nonceToUse, cancelURL)
 	nm.lock.Unlock()
-	go nm.confirmLoop(nonceToUse)
+	//go nm.confirmLoop(nonceToUse)
 	return nonceToUse
 }
 

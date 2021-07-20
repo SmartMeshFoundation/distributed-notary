@@ -277,6 +277,9 @@ func (ss *HECOService) Transfer10ToAccount(key *ecdsa.PrivateKey, accountTo comm
 	if err != nil {
 		return fmt.Errorf("failed to get networkID : %v", err)
 	}
+	log.Trace("HecoService heco client get ChainID=%d", chainID.Int64())
+	chainID = big.NewInt(128)
+	log.Trace("HecoService use fixed ChainID=%d", chainID.Int64())
 	rawTx := types.NewTransaction(currentNonce, accountTo, amount, gasLimit, gasPrice, nil)
 	signedTx, err := auth.Signer(types.NewEIP155Signer(chainID), auth.From, rawTx)
 	if err != nil {
