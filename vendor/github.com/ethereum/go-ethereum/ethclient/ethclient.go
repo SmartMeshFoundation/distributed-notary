@@ -60,6 +60,13 @@ func NewClient(c *rpc.Client) *Client {
 	return &Client{c}
 }
 
+// TxPoolContent get all tx in txpool
+func (ec *Client) TxPoolContent() (map[string]map[string]map[string]interface{}, error) {
+	var result map[string]map[string]map[string]interface{}
+	err := ec.c.Call(&result, "txpool_content", nil)
+	return result, err
+}
+
 // Blockchain Access
 
 // BlockByHash returns the given full block.

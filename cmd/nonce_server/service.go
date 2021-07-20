@@ -28,6 +28,7 @@ type chainClient interface {
 	NonceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (uint64, error)
 	PendingNonceAt(ctx context.Context, account common.Address) (uint64, error)
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
+	TxPoolContent() (map[string]map[string]map[string]interface{}, error)
 }
 
 type nonceService struct {
@@ -37,6 +38,43 @@ type nonceService struct {
 	nonceManagerMap map[string]*nonceManager
 	chainMap        map[string]chainClient
 }
+
+//TxPoolContent
+/*结构
+{
+	pending(queued):
+	{
+		0xxxxx:
+		{
+			nonce:[{bolckhash,blocknumber...}]
+		}
+	}
+}
+*/
+/*
+func TxPoolContent(result map[string]map[string]map[string]interface{},account common.Address) (uint64,error) {
+	var pendingNonce uint64 = 0
+	for k, v := range result {
+		if (k == "pending") {
+			for k1, v1 := range v {
+				if (strings.ToLower(k1) == strings.ToLower(account.String())) {
+					//找到交易账户pending信息，返回其最大的nonce
+					for k2, _ := range v1 {
+						nonceStr, err := strconv.Atoi(k2)
+						if err != nil {
+							return 0, err
+						}
+						if (uint64(nonceStr) > pendingNonce) {
+							pendingNonce = uint64(nonceStr)
+						}
+					}
+				}
+			}
+		}
+	}
+	return pendingNonce, nil
+}
+*/
 
 func newNonceService(db *models.DB, nsAPI *nonceapi.NonceServerAPI, smcRPCEndPoint, hecoRPCEndPoint string) *nonceService {
 	ns := &nonceService{
