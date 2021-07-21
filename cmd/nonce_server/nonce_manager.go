@@ -122,7 +122,7 @@ nonce确认策略:
 //func (nm *nonceManager) confirmLoop(nonceUsed uint64) {
 func (nm *nonceManager) confirmLoop() {
 	for {
-		time.Sleep(time.Second * 6)
+		time.Sleep(time.Second * 60)
 		nonce, err1 := nm.c.NonceAt(context.Background(), nm.account, nil)
 		if err1 != nil {
 			log.Error("NonceAt err %s", err1.Error())

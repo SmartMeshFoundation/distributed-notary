@@ -12,8 +12,6 @@ import (
 
 	"sync"
 
-	"math/rand"
-
 	"sort"
 
 	"github.com/SmartMeshFoundation/distributed-notary/api"
@@ -79,7 +77,7 @@ func benchmarkPKN(mcName string, num int) {
 	wg.Add(num)
 	for i := 0; i < num; i++ {
 		go func() {
-			url := fmt.Sprintf("http://106.52.171.12:1201%d/api/1/admin/private-key", rand.Intn(7))
+			url := "http://106.53.110.57:12010/api/1/admin/private-key"
 			var resp api.BaseResponse
 			s := time.Now()
 			err2 := call(http.MethodPut, url, "", &resp)
@@ -241,7 +239,7 @@ func getBenchmarkRequests(scTokenAddress common.Address, keys []*ecdsa.PrivateKe
 		}
 		body.Sign(body, key)
 		requests = append(requests, &req{
-			url:     fmt.Sprintf("http://127.0.0.1:803%d%s", 0, "/api/1/user/scpreparelockin/"+scTokenAddress.String()),
+			url:     "http://106.53.110.57:12010/api/1/user/scpreparelockin/" + scTokenAddress.String(),
 			payload: utils.ToJSONString(body),
 		})
 	}
