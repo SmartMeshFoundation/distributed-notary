@@ -135,7 +135,9 @@ func (nm *nonceManager) confirmLoop() {
 		}*/
 		//fmt.Println(fmt.Sprintf("====>TxPoolContent()=%s", utilss.StringInterface(result, 5)))
 		minNonce, err3 := nm.TxPoolMiniumNonce(result, nm.account)
-		log.Info("[confirmLoop]minNonce:%d,account= %s", minNonce, nm.account.String())
+		if minNonce > 0 {
+			log.Info("[confirmLoop]minNonce:%d,account= %s", minNonce, nm.account.String())
+		}
 		if err3 != nil {
 			log.Error("NonceAt err %s", err3.Error())
 			continue
